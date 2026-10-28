@@ -2,9 +2,9 @@ import type { RoleId } from '@/core/knowledge/ids';
 import type { AnswerSource, AssistantEvent } from './assistant-event';
 import type { RichComponent } from './components';
 
-export type ResponsePart =
-  | { readonly type: 'text'; readonly text: string }
-  | ({ readonly type: 'component' } & RichComponent);
+export type ComponentPart = { readonly type: 'component' } & RichComponent;
+
+export type ResponsePart = { readonly type: 'text'; readonly text: string } | ComponentPart;
 
 /**
  * A complete answer, before it is streamed. Both the deterministic fast path
