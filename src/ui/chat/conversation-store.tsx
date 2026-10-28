@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import type { TopicId } from '@/core/chat/topic-id';
 import { activeAnswer } from '@/core/conversation/conversation';
 import type { Conversation } from '@/core/conversation/messages';
@@ -36,25 +36,25 @@ export function ConversationsProvider({ children }: { readonly children: ReactNo
   );
   const [inFlight] = useState(() => new Map<TopicId, InFlightAnswer>());
 
-  function update(topic: TopicId, change: Change, seed: Conversation) {
+  const update = useCallback((topic: TopicId, change: Change, seed: Conversation) => {
     setConversations((current) => {
       const previous = current.get(topic) ?? seed;
       return new Map(current).set(topic, typeof change === 'function' ? change(previous) : change);
     });
-  }
+  }, []);
 
-  return (
-    <ConversationStoreContext
-      value={{
-        conversations,
-        update,
-        inFlight,
-        busy: [...conversations.values()].some((conversation) => activeAnswer(conversation)),
-      }}
-    >
-      {children}
-    </ConversationStoreContext>
+  // Every page reads the store, so its value changes only when a conversation does.
+  const store = useMemo<ConversationStore>(
+    () => ({
+      conversations,
+      update,
+      inFlight,
+      busy: [...conversations.values()].some((conversation) => activeAnswer(conversation)),
+    }),
+    [conversations, update, inFlight],
   );
+
+  return <ConversationStoreContext value={store}>{children}</ConversationStoreContext>;
 }
 
 export function useConversationStore(): ConversationStore {

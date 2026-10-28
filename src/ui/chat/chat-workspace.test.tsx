@@ -124,7 +124,7 @@ describe('asking a question', () => {
       within(latestAnswer()).getByRole('list', { name: 'Ask a follow-up' }),
     ).toBeInTheDocument();
     expect(answer).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('Answer ready');
+    expect(screen.getByText('Answer ready')).toHaveRole('status');
   });
 
   it('answers a follow-up to an answer longer than the history carries', async () => {

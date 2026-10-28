@@ -30,7 +30,6 @@ function renderMessage(fields: Partial<Message>) {
     onRetry: vi.fn(),
     onEdit: vi.fn(),
     onRate: vi.fn(),
-    onViewRelated: vi.fn(),
     onAskFollowUp: vi.fn(),
   };
   render(
@@ -193,7 +192,6 @@ describe('a topic introduction', () => {
         onRetry={vi.fn()}
         onEdit={vi.fn()}
         onRate={vi.fn()}
-        onViewRelated={vi.fn()}
         onAskFollowUp={vi.fn()}
       />,
     );

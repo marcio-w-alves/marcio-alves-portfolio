@@ -25,7 +25,7 @@ describe('answer blocks', () => {
         ordered: false,
         items: [text('React'), [{ kind: 'strong', children: text('TypeScript') }]],
       },
-      { kind: 'list', ordered: true, items: [text('First'), text('Second')] },
+      { kind: 'list', ordered: true, start: 1, items: [text('First'), text('Second')] },
     ]);
   });
 
@@ -81,6 +81,21 @@ describe('answer blocks', () => {
     expect(parseBlocks('- one\n\n- two')).toEqual([
       { kind: 'list', ordered: false, items: [text('one')] },
       { kind: 'list', ordered: false, items: [text('two')] },
+    ]);
+  });
+
+  it('keeps counting a numbered list that paragraphs interrupt', () => {
+    const blocks = parseBlocks(
+      '1. **first-repo**\n\nWhat it does.\n\n2. **second-repo**\n\nAnother.\n\n3. **third-repo**',
+    );
+    expect(
+      blocks.flatMap((block) => (block.kind === 'list' && block.ordered ? block.start : [])),
+    ).toEqual([1, 2, 3]);
+  });
+
+  it('starts a numbered list at the number its first item carries', () => {
+    expect(parseBlocks('4. Fourth\n5. Fifth')).toEqual([
+      { kind: 'list', ordered: true, start: 4, items: [text('Fourth'), text('Fifth')] },
     ]);
   });
 
