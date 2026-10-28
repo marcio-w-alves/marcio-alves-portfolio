@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { ReactNode } from 'react';
 import type { TopicId } from '@/core/assistant/topics';
 import { cn } from '../cn';
@@ -12,6 +13,8 @@ export interface SidebarTopic {
   readonly id: TopicId;
   readonly label: string;
   readonly icon: IconName;
+  /** The topic's own page. */
+  readonly href: string;
 }
 
 export interface SidebarLinks {
@@ -26,7 +29,6 @@ interface SidebarProps {
   readonly topics: readonly SidebarTopic[];
   readonly activeTopic: TopicId;
   readonly links: SidebarLinks;
-  readonly onPickTopic: (topic: TopicId) => void;
   readonly onNewConversation: () => void;
   /** Only shown in the drawer layout. */
   readonly onClose: () => void;
@@ -42,7 +44,6 @@ export function Sidebar({
   topics,
   activeTopic,
   links,
-  onPickTopic,
   onNewConversation,
   onClose,
 }: SidebarProps) {
@@ -79,13 +80,7 @@ export function Sidebar({
         <ul className="flex flex-col gap-0.5">
           {topics.map((topic) => (
             <li key={topic.id}>
-              <TopicButton
-                topic={topic}
-                active={topic.id === activeTopic}
-                onPick={() => {
-                  onPickTopic(topic.id);
-                }}
-              />
+              <TopicLink topic={topic} active={topic.id === activeTopic} onNavigate={onClose} />
             </li>
           ))}
         </ul>
@@ -96,22 +91,22 @@ export function Sidebar({
   );
 }
 
-function TopicButton({
+function TopicLink({
   topic,
   active,
-  onPick,
+  onNavigate,
 }: {
   topic: SidebarTopic;
   active: boolean;
-  onPick: () => void;
+  onNavigate: () => void;
 }) {
   return (
-    <button
-      type="button"
-      aria-current={active ? 'true' : undefined}
-      onClick={onPick}
+    <Link
+      href={topic.href}
+      aria-current={active ? 'page' : undefined}
+      onClick={onNavigate}
       className={cn(
-        'group flex h-9 w-full cursor-pointer items-center gap-2.75 rounded-sm bg-transparent px-2.5 text-left font-sans text-13.5 leading-none font-book text-ink-muted',
+        'group flex h-9 w-full cursor-pointer items-center gap-2.75 rounded-sm bg-transparent px-2.5 text-left font-sans text-13.5 leading-none font-book text-ink-muted no-underline',
         'transition-[background-color,color,box-shadow,scale] duration-fast ease-standard active:scale-99',
         '@max-compact/ma:h-11.5 @max-compact/ma:text-15',
         active
@@ -127,7 +122,7 @@ function TopicButton({
         )}
       />
       <span className="min-w-0 flex-1 truncate">{topic.label}</span>
-    </button>
+    </Link>
   );
 }
 

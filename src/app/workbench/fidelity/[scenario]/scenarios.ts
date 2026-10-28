@@ -6,7 +6,6 @@ import {
   applyEvent,
   contextOf,
   createConversation,
-  selectTopic,
 } from '@/core/conversation/conversation';
 import type { Conversation } from '@/core/conversation/messages';
 
@@ -83,7 +82,7 @@ const fresh = (conversation = createConversation(), drawerOpen = false): Scenari
 export const SCENARIOS: Readonly<Record<string, () => Scenario>> = {
   main: () => fresh(),
   mobile: () => fresh(),
-  'state-topic': () => fresh(selectTopic(createConversation(), 'experience')),
+  'state-topic': () => fresh(createConversation('experience')),
   'state-streaming': () =>
     fresh(
       ask(createConversation(), 'What has he built at Deel?', {

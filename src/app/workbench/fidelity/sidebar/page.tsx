@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { topics } from '@/core/assistant/topics';
-import { knowledgeBase } from '@/core/knowledge/knowledge-base';
+import { workspaceProps } from '../../../workspace-props';
 import { SidebarSpecimen } from './sidebar-specimen';
 
 // The design's Sidebar artboard: the sidebar alone, a viewport tall, on ice.
@@ -11,14 +10,10 @@ export const metadata: Metadata = { robots: { index: false } };
 export default function SidebarFidelityPage() {
   if (process.env.NODE_ENV === 'production') notFound();
 
-  const { profile, contact } = knowledgeBase;
+  const { profile, links, topics } = workspaceProps();
   return (
     <div className="h-screen bg-ice">
-      <SidebarSpecimen
-        profile={{ name: profile.name, title: profile.title }}
-        links={contact}
-        topics={topics.map(({ id, label, icon }) => ({ id, label, icon }))}
-      />
+      <SidebarSpecimen profile={profile} links={links} topics={topics} />
     </div>
   );
 }

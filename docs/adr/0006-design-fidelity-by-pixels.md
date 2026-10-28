@@ -29,3 +29,6 @@ timing artefacts undone.
 - The live check caught a deployment that differed from the local build
   (ADR 0008).
 - It runs locally, not in CI: fonts rasterise differently on CI runners.
+- When the product deliberately leaves the design, the board says so: a
+  `departure` with its reason keeps it measured and reported, without failing
+  the gate. Topic pages (POR-34) are the first.

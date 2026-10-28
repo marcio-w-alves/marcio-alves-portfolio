@@ -2,15 +2,17 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { delay, http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
+import { Fragment } from 'react';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { createChatHandler } from '@/app/api/chat/chat-handler';
 import { createAssistant } from '@/core/assistant/assistant';
 import { MAX_QUESTION_LENGTH } from '@/core/assistant/system1/router';
-import { topicById, topics } from '@/core/assistant/topics';
+import { topicById, topics, type TopicId } from '@/core/assistant/topics';
 import { knowledgeBase } from '@/core/knowledge/knowledge-base';
 import { createAnswerCache } from '@/infrastructure/budget/answer-cache';
 import { createModelBudget } from '@/infrastructure/budget/model-budget';
 import { ChatWorkspace } from './chat-workspace';
+import { ConversationsProvider } from './conversation-store';
 
 const CHAT_URL = `${window.location.origin}/api/chat`;
 
@@ -40,24 +42,45 @@ afterAll(() => {
   server.close();
 });
 
-function renderWorkspace() {
+function workspace(topic: TopicId = 'overview') {
   const { profile, contact, welcome } = knowledgeBase;
-  render(
+  return (
     <ChatWorkspace
       profile={{ name: profile.name, title: profile.title }}
       links={contact}
-      topics={topics.map(({ id, label, icon }) => ({ id, label, icon }))}
+      topics={topics.map(({ id, label, icon }) => ({
+        id,
+        label,
+        icon,
+        href: id === 'overview' ? '/' : `/${id}`,
+      }))}
       welcome={welcome}
       maxQuestionLength={MAX_QUESTION_LENGTH}
-    />,
+      topic={topic}
+    />
   );
-  return userEvent.setup();
+}
+
+/** One page of the site, inside the store every page shares. */
+function renderWorkspace(topic: TopicId = 'overview') {
+  const view = render(workspace(topic), { wrapper: ConversationsProvider });
+  return Object.assign(userEvent.setup(), {
+    /** Swaps the page, as navigating does, keeping the store. */
+    navigate: (to: TopicId) => {
+      view.rerender(<Fragment key={to}>{workspace(to)}</Fragment>);
+    },
+  });
 }
 
 const topicsNav = () => screen.getByRole('navigation', { name: 'Topics' });
 const composer = () =>
   screen.getByRole('textbox', { name: 'Ask the portfolio assistant a question' });
 const conversation = () => screen.getByRole('list', { name: 'Conversation' });
+function introduction(): HTMLElement {
+  const [intro] = within(conversation()).getAllByRole('article');
+  if (!intro) throw new Error('no introduction on the page');
+  return intro;
+}
 function latestAnswer(): HTMLElement {
   const answer = within(conversation()).getAllByRole('article').at(-1);
   if (!answer) throw new Error('no answer in the conversation');
@@ -204,44 +227,56 @@ describe('when an answer fails', () => {
   });
 });
 
-describe('topic navigation', () => {
-  it('starts on the overview', () => {
+describe('topic pages', () => {
+  const topicLink = (name: string) => within(topicsNav()).getByRole('link', { name });
+
+  it('marks the overview as the current page on the home page', () => {
     renderWorkspace();
-    expect(within(topicsNav()).getByRole('button', { name: 'Overview' })).toHaveAttribute(
-      'aria-current',
-      'true',
-    );
+    expect(topicLink('Overview')).toHaveAttribute('aria-current', 'page');
+    expect(topicLink('Experience')).toHaveAttribute('href', '/experience');
   });
 
-  it('opens a topic with its introduction and suggestions, without asking the server', async () => {
+  it('opens a topic page on its introduction and its part of the record, without asking the server', () => {
     server.use(http.post(CHAT_URL, () => HttpResponse.error()));
-    const user = renderWorkspace();
-    await user.click(within(topicsNav()).getByRole('button', { name: 'Experience' }));
-    expect(within(topicsNav()).getByRole('button', { name: 'Experience' })).toHaveAttribute(
-      'aria-current',
-      'true',
-    );
-    const topBarTopic = within(screen.getByRole('main'))
-      .getAllByText('Experience')
-      .filter((label) => !conversation().contains(label));
-    expect(topBarTopic).toHaveLength(1);
+    renderWorkspace('experience');
+    expect(topicLink('Experience')).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Experience');
     expect(latestAnswer()).toHaveTextContent(topicById('experience').intro);
+    expect(within(latestAnswer()).getByText('Toptal')).toBeInTheDocument();
     expect(
       within(latestAnswer()).getByRole('list', { name: 'Suggested questions' }),
     ).toBeInTheDocument();
   });
 
-  it('starts over on the same topic', async () => {
+  it('keeps each page to its own conversation, and finds each as it was on coming back', async () => {
     const user = renderWorkspace();
-    await user.click(within(topicsNav()).getByRole('button', { name: 'Projects' }));
+    await user.type(composer(), 'What did he do at Roots?{Enter}');
+    await within(conversation()).findByText(/grew the frontend team/);
+
+    user.navigate('projects');
+    expect(screen.queryByText('What did he do at Roots?')).not.toBeInTheDocument();
+    expect(introduction()).toHaveTextContent(topicById('projects').intro);
+
+    user.navigate('overview');
+    expect(within(conversation()).getByText('What did he do at Roots?')).toBeInTheDocument();
+  });
+
+  it('answers a question asked on a topic page beneath that page', async () => {
+    const user = renderWorkspace('skills');
+    await user.type(composer(), 'How did he grow the team at Roots?{Enter}');
+    await within(conversation()).findByText(/grew the frontend team/);
+    expect(introduction()).toHaveTextContent(topicById('skills').intro);
+  });
+
+  it('starts a topic page over on its introduction, not on the welcome screen', async () => {
+    const user = renderWorkspace('projects');
+    await user.type(composer(), 'What did he do at Roots?{Enter}');
+    await within(conversation()).findByText(/grew the frontend team/);
     const [sidebarButton] = screen.getAllByRole('button', { name: 'New conversation' });
     if (!sidebarButton) throw new Error('no new conversation button');
     await user.click(sidebarButton);
-    expect(screen.queryByRole('list', { name: 'Conversation' })).not.toBeInTheDocument();
-    expect(within(topicsNav()).getByRole('button', { name: 'Projects' })).toHaveAttribute(
-      'aria-current',
-      'true',
-    );
+    expect(screen.queryByText('What did he do at Roots?')).not.toBeInTheDocument();
+    expect(introduction()).toHaveTextContent(topicById('projects').intro);
     expect(screen.getByRole('status')).toHaveTextContent('New conversation started');
   });
 });
@@ -253,7 +288,7 @@ describe('navigation drawer', () => {
     expect(menu).toHaveAttribute('aria-expanded', 'false');
     await user.click(menu);
     expect(menu).toHaveAttribute('aria-expanded', 'true');
-    expect(within(topicsNav()).getByRole('button', { name: 'Overview' })).toHaveFocus();
+    expect(within(topicsNav()).getByRole('link', { name: 'Overview' })).toHaveFocus();
     expect(screen.getByRole('main', { hidden: true })).toHaveAttribute('inert');
   });
 
@@ -274,13 +309,5 @@ describe('navigation drawer', () => {
     await user.click(screen.getByRole('button', { name: 'Close navigation' }));
     expect(menu).toHaveAttribute('aria-expanded', 'false');
     expect(menu).toHaveFocus();
-  });
-
-  it('closes once a topic is chosen', async () => {
-    const user = renderWorkspace();
-    const menu = screen.getByRole('button', { name: 'Open navigation' });
-    await user.click(menu);
-    await user.click(within(topicsNav()).getByRole('button', { name: 'Achievements' }));
-    expect(menu).toHaveAttribute('aria-expanded', 'false');
   });
 });

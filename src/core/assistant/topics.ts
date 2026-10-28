@@ -2,9 +2,8 @@ import { knowledgeBase } from '@/core/knowledge/knowledge-base';
 import { metricValue } from './response-kit';
 
 /**
- * Topics are entry points into the same conversation, not pages: choosing one
- * appends a curated introduction — never a model call — and swaps the
- * suggested questions.
+ * Topics are the site's pages: each opens with a curated introduction and its
+ * part of the record — never a model call — and has its own conversation.
  */
 
 export const TOPIC_IDS = [

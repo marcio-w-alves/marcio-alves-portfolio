@@ -44,7 +44,7 @@ export function AppShell({
     if (drawerOpen === wasOpen.current) return;
     wasOpen.current = drawerOpen;
     if (drawerOpen) {
-      navigationRef.current?.querySelector<HTMLElement>('nav button')?.focus();
+      navigationRef.current?.querySelector<HTMLElement>('nav a')?.focus();
     } else if (navigationRef.current?.contains(document.activeElement)) {
       menuButtonRef.current?.focus();
     }

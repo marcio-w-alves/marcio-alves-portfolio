@@ -13,7 +13,7 @@ test('the navigation drawer opens from the menu, closes on Escape and leads to a
 
   await expect(menu).toHaveAttribute('aria-expanded', 'true');
   await expect(topicsNav).toBeVisible();
-  await expect(topicsNav.getByRole('button', { name: 'Overview' })).toBeFocused();
+  await expect(topicsNav.getByRole('link', { name: 'Overview' })).toBeFocused();
 
   await page.keyboard.press('Escape');
 
@@ -22,15 +22,16 @@ test('the navigation drawer opens from the menu, closes on Escape and leads to a
   await expect(menu).toBeFocused();
 
   await menu.click();
-  await topicsNav.getByRole('button', { name: 'Projects' }).click();
+  await topicsNav.getByRole('link', { name: 'Projects' }).click();
 
+  await expect(page).toHaveURL(/\/projects$/);
   await expect(topicsNav).toBeHidden();
   await expect(
-    answers(page).last().getByText('Beyond his day job, Marcio builds his own products.'),
+    answers(page).first().getByText('Beyond his day job, Marcio builds his own products.'),
   ).toBeVisible();
   await menu.click();
-  await expect(topicsNav.getByRole('button', { name: 'Projects' })).toHaveAttribute(
+  await expect(topicsNav.getByRole('link', { name: 'Projects' })).toHaveAttribute(
     'aria-current',
-    'true',
+    'page',
   );
 });

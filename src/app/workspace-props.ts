@@ -1,6 +1,7 @@
 import { MAX_QUESTION_LENGTH } from '@/core/assistant/system1/router';
 import { topics } from '@/core/assistant/topics';
 import { knowledgeBase } from '@/core/knowledge/knowledge-base';
+import { topicPath } from './topic-routes';
 
 /** What the chat workspace is rendered with, from the record. */
 export function workspaceProps() {
@@ -8,7 +9,7 @@ export function workspaceProps() {
   return {
     profile: { name: profile.name, title: profile.title },
     links: contact,
-    topics: topics.map(({ id, label, icon }) => ({ id, label, icon })),
+    topics: topics.map(({ id, label, icon }) => ({ id, label, icon, href: topicPath(id) })),
     welcome,
     maxQuestionLength: MAX_QUESTION_LENGTH,
   };

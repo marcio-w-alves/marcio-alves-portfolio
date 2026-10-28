@@ -1,5 +1,7 @@
 import type { AssistantEvent } from '../assistant/assistant-event';
 import type { ConversationContext } from '../assistant/response';
+import { text } from '../assistant/response-kit';
+import { topicData } from '../assistant/topic-pages';
 import { suggestions, topicById, type TopicId } from '../assistant/topics';
 import type {
   AssistantMessage,
@@ -28,7 +30,7 @@ function assistantMessage(
   fields: Partial<AssistantMessage>,
 ): AssistantMessage {
   return {
-    id: newId(kind),
+    id: fields.id ?? newId(kind),
     role: 'assistant',
     kind,
     status: 'pending',
@@ -66,26 +68,25 @@ function findAnswer(conversation: Conversation, id: string): AssistantMessage | 
   );
 }
 
-export function createConversation(topic: TopicId = 'overview'): Conversation {
-  return { messages: [], topic, lastIntent: null, ctaShown: false };
-}
-
 /**
- * Topics are entry points into the same thread: choosing one appends a local,
- * curated introduction — never a model call — and keeps every earlier message.
+ * A conversation as a page opens it. The overview starts empty, as the
+ * welcome screen; every other topic is a page of its own that opens with its
+ * introduction and its part of the record, built locally — never a model
+ * call. The introduction's ids are fixed, so the server and the browser
+ * render the same page.
  */
-export function selectTopic(conversation: Conversation, topic: TopicId): Conversation {
-  const next = { ...conversation, topic };
-  if (conversation.messages.length === 0 && topic === 'overview') return next;
-  const last = conversation.messages.at(-1);
-  if (last?.role === 'assistant' && last.kind === 'intro' && last.topicId === topic) return next;
+export function createConversation(topic: TopicId = 'overview'): Conversation {
+  const empty = { messages: [], topic, lastIntent: null, ctaShown: false };
+  if (topic === 'overview') return empty;
+  const parts = [text(topicById(topic).intro), ...topicData(topic)];
   const intro = assistantMessage('intro', {
+    id: `intro-${topic}`,
     status: 'done',
     topicId: topic,
-    parts: [{ type: 'text', id: 'intro', text: topicById(topic).intro }],
+    parts: parts.map((part, index) => ({ ...part, id: `intro-${String(index)}` })),
     followUps: suggestions(topic, 0, INTRO_FOLLOW_UPS),
   });
-  return { ...next, messages: [...conversation.messages, intro] };
+  return { ...empty, messages: [intro] };
 }
 
 export function addExchange(

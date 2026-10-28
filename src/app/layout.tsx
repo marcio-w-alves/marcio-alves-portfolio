@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { knowledgeBase } from '@/core/knowledge/knowledge-base';
 import { siteUrl } from '@/env';
+import { ConversationsProvider } from '@/ui/chat/conversation-store';
 import { fontVariables } from './fonts';
 import './globals.css';
 
@@ -26,7 +27,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
     <html lang="en" className={fontVariables}>
       <body className="bg-bg font-sans text-ink antialiased selection:bg-selection selection:text-ink">
-        {children}
+        <ConversationsProvider>{children}</ConversationsProvider>
       </body>
     </html>
   );

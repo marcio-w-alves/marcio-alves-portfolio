@@ -8,11 +8,11 @@ import { Sidebar, type SidebarLinks } from './sidebar';
 const { profile, contact } = knowledgeBase;
 
 function renderSidebar(links: SidebarLinks = contact) {
-  const handlers = { onPickTopic: vi.fn(), onNewConversation: vi.fn(), onClose: vi.fn() };
+  const handlers = { onNewConversation: vi.fn(), onClose: vi.fn() };
   render(
     <Sidebar
       profile={{ name: profile.name, title: profile.title }}
-      topics={topics.map(({ id, label, icon }) => ({ id, label, icon }))}
+      topics={topics.map(({ id, label, icon }) => ({ id, label, icon, href: `/${id}` }))}
       activeTopic="overview"
       links={links}
       {...handlers}
@@ -29,16 +29,17 @@ describe('Sidebar', () => {
     expect(within(sidebar).getByText(profile.title)).toBeInTheDocument();
   });
 
-  it('marks only the active topic as current and hands a picked topic id to the parent', async () => {
-    const { user, onPickTopic } = renderSidebar();
+  it('links every topic to its page and marks only the current one', () => {
+    renderSidebar();
     const nav = screen.getByRole('navigation', { name: 'Topics' });
-    const current = within(nav)
-      .getAllByRole('button')
-      .filter((button) => button.getAttribute('aria-current') === 'true');
-    expect(current.map((button) => button.textContent)).toEqual(['Overview']);
-
-    await user.click(within(nav).getByRole('button', { name: 'Projects' }));
-    expect(onPickTopic).toHaveBeenCalledWith('projects');
+    const links = within(nav).getAllByRole('link');
+    expect(links.filter((link) => link.getAttribute('aria-current') === 'page')).toEqual([
+      within(nav).getByRole('link', { name: 'Overview' }),
+    ]);
+    expect(within(nav).getByRole('link', { name: 'Projects' })).toHaveAttribute(
+      'href',
+      '/projects',
+    );
   });
 
   it('starts a new conversation from its icon button', async () => {

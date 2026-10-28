@@ -74,11 +74,25 @@ test('robots.txt keeps crawlers out of the workbench and the API, and points to 
   expect(robots).toMatch(/^Sitemap: https?:\/\/[^/]+\/sitemap\.xml$/m);
 });
 
-test('the sitemap lists the home page at its canonical address', async ({ page, request }) => {
-  await page.goto('/');
-  const canonical = String(await page.locator('link[rel="canonical"]').getAttribute('href'));
+test('the sitemap lists the home page and every topic page at their canonical addresses', async ({
+  page,
+  request,
+}) => {
+  const canonicals: string[] = [];
+  for (const path of [
+    '/',
+    '/experience',
+    '/skills',
+    '/projects',
+    '/achievements',
+    '/philosophy',
+    '/education',
+  ]) {
+    await page.goto(path);
+    canonicals.push(String(await page.locator('link[rel="canonical"]').getAttribute('href')));
+  }
   const sitemap = await (await request.get('/sitemap.xml')).text();
 
   const locations = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(([, loc]) => loc);
-  expect(locations).toEqual([new URL(canonical).href]);
+  expect(locations).toEqual(canonicals.map((canonical) => new URL(canonical).href));
 });

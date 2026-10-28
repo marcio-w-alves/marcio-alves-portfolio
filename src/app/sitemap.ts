@@ -1,8 +1,10 @@
 import type { MetadataRoute } from 'next';
+import { TOPIC_IDS } from '@/core/assistant/topics';
 import { siteUrl } from '@/env';
+import { topicPath } from './topic-routes';
 
-// No lastModified: the page has no edit date to report, and the build time
+// No lastModified: the pages have no edit date to report, and the build time
 // would claim a change on every deployment.
 export default function sitemap(): MetadataRoute.Sitemap {
-  return [{ url: new URL('/', siteUrl()).href }];
+  return TOPIC_IDS.map((topic) => ({ url: new URL(topicPath(topic), siteUrl()).href }));
 }
