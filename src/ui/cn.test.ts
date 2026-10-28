@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { cn, THEME_TOKENS } from './cn';
 
-const globals = readFileSync(new URL('../app/globals.css', import.meta.url), 'utf8');
+const globals = readFileSync(new URL('./globals.css', import.meta.url), 'utf8');
 
 function declaredTokens(namespace: string): string[] {
   const pattern = new RegExp(`--${namespace}-([\\w\\\\.-]+?):`, 'g');

@@ -23,6 +23,7 @@ import {
   type AssistantSettings,
   type ServerEnv,
 } from '@/env';
+import type { ModelStatus } from '@/http/health-handler';
 import { createAnswerCache } from '@/infrastructure/budget/answer-cache';
 import { createModelBudget } from '@/infrastructure/budget/model-budget';
 import { createGithubApi } from '@/infrastructure/github/github-api';
@@ -35,7 +36,6 @@ import {
   createCircuitBreaker,
   withCircuitBreaker,
   type CircuitBreaker,
-  type CircuitState,
 } from '@/infrastructure/resilience/circuit-breaker';
 import { EMBEDDING_DIMENSIONS, EMBEDDING_MODEL } from '@/infrastructure/retrieval/index-spec';
 import { createVectorKnowledgeSearch } from '@/infrastructure/retrieval/vector-knowledge-search';
@@ -60,18 +60,6 @@ const TEMPERATURE = 0;
 const TEN_MINUTES = 10 * 60 * 1000;
 
 const { identity } = profile;
-
-/**
- * What the health check may say about the model: whether it is configured,
- * and whether it and retrieval are reachable.
- */
-export interface ModelStatus {
-  readonly model: 'enabled' | 'disabled';
-  /** The chat model's circuit. Null when there is no model to guard. */
-  readonly circuit: CircuitState | null;
-  /** The embeddings circuit behind search. Null when there is no model to guard. */
-  readonly retrieval: CircuitState | null;
-}
 
 export interface Container {
   readonly assistant: Assistant;

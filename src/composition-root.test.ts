@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createChatHandler } from '@/app/api/chat/chat-handler';
+import { createChatHandler } from '@/http/chat-handler';
 import { localize } from '@/core/knowledge/localize';
 import { fixtureKnowledge } from '@/testing/fixture-profile/knowledge';
 import { buildContainer } from './composition-root';

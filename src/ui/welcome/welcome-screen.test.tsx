@@ -1,8 +1,11 @@
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { knowledge } from '@/app/site-knowledge';
+import { profile } from '@/profile';
+import { createSiteContent } from '@/site/site-content';
 import { WelcomeLayout } from './welcome-layout';
 import { WelcomeScreen } from './welcome-screen';
+
+const { knowledge } = createSiteContent(profile.knowledge);
 
 const { welcome } = knowledge;
 

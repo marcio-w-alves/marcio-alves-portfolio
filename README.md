@@ -217,7 +217,7 @@ the spend is actually capped.
 
 ## Design tokens
 
-`src/app/globals.css` is the whole visual vocabulary of the approved design,
+`src/ui/globals.css` is the whole visual vocabulary of the approved design,
 "White & Ice" — white and ice neutrals, ink as the only accent, hairlines
 instead of shadows — declared as Tailwind v4 `@theme` variables: surfaces,
 ink, lines, the accent, a half-pixel type scale named for its values
@@ -311,7 +311,9 @@ utility here; style elements are not allowed. Development additionally allows
 
 ### Search and sharing
 
-The root layout sets the title, description and Open Graph and Twitter tags;
+The pages are built in `src/site` and bound to the profile in `src/site-root.ts`;
+the files under `src/app` only re-export them. The root layout sets the title,
+description and Open Graph and Twitter tags;
 `metadataBase` is `siteUrl()`, so every absolute URL follows the canonical
 origin. Each topic page sets its own title, description and canonical, and the
 sitemap lists them all. The home page adds its canonical and a JSON-LD `Person` built from
@@ -323,8 +325,8 @@ documented skill, never the coursework. `robots.ts` keeps crawlers out of
 `next/og`, in the design's ink on white and Inter Tight, read as WOFF from
 `@fontsource/inter-tight` because the image renderer cannot read the WOFF2
 next/font serves the page. The renderer cannot read the stylesheet either, so
-`brand-colors.ts` carries the few colours it uses and a test keeps them equal
-to the tokens.
+it takes its colours and face from `src/profile/brand.ts`, and a test keeps
+every colour there equal to its token in the stylesheet.
 
 ## Architecture
 
@@ -334,15 +336,23 @@ checked by `pnpm boundaries`, not left to discipline.
 
 ```
 src/
-  app/                  Next.js routes: the page, /api/chat, /api/health, metadata
+  app/                  Next.js route files only: each re-exports a page, a
+                        handler or metadata bound by a root
+  http/                 API handlers: chat (body cap, schema, rate limit, SSE),
+                        health, the client key
+  site/                 The pages built from a profile: layout, home and topic
+                        pages, metadata, JSON-LD, sitemap, robots, share image
+                        and icon
   core/                 Domain and policy, framework-free
     assistant/          Streaming contract, both answer paths, tools, ports
     conversation/       The conversation as pure transitions
-    knowledge/          Career records, each with its source
+    knowledge/          The record's shape, localization, validation, corpus
   infrastructure/       Adapters: OpenAI, retrieval, Wikipedia, GitHub,
                         resilience, budgets, rate limits, logging
-  ui/                   Presentational components over the design tokens
-  composition-root.ts   The single place adapters are bound to ports
+  ui/                   Presentational components and the design tokens
+  profile/              The owner: identity, record, brand colours and fonts
+  composition-root.ts   Binds the profile and the adapters for the API
+  site-root.ts          Binds the profile and its fonts for the pages
 ```
 
 A question, end to end:

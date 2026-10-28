@@ -1,13 +1,16 @@
 import { MAX_QUESTION_LENGTH } from '@/core/assistant/system1/router';
 import type { TopicId } from '@/core/assistant/topics';
 import { createConversation } from '@/core/conversation/conversation';
-import { knowledge, topicCatalog, topicIntro } from './site-knowledge';
-import { topicPath } from './topic-routes';
+import { topicPath } from './routes';
+import type { SiteContent } from './site-content';
 
 const SUGGESTION_COUNT = 4;
 
 /** What the chat workspace is rendered with, from the record. */
-export function workspaceProps(topic: TopicId = 'overview') {
+export function workspaceView(
+  { knowledge, topicCatalog, topicIntro }: SiteContent,
+  topic: TopicId = 'overview',
+) {
   const { profile, contact, welcome, assistant, experience } = knowledge;
   return {
     profile: { name: profile.name, title: profile.title },

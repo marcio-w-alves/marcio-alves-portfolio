@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ZodError } from 'zod';
+import { fixtureBrand } from '@/testing/fixture-profile/brand';
 import { fixtureKnowledge } from '@/testing/fixture-profile/knowledge';
 import { validateProfile, type Identity, type Profile } from './schema';
 
@@ -18,7 +19,13 @@ const identity: Identity = {
   nonIdentifyingTerms: [],
 };
 
-const valid: Profile = { identity, locales: ['en'], knowledge: fixtureKnowledge, evaluation: [] };
+const valid: Profile = {
+  identity,
+  locales: ['en'],
+  knowledge: fixtureKnowledge,
+  brand: fixtureBrand,
+  evaluation: [],
+};
 
 function issuePaths(profile: Profile): PropertyKey[][] {
   try {
@@ -71,6 +78,21 @@ describe('validating a profile', () => {
 
   it('rejects a profile published in no language', () => {
     expect(issuePaths({ ...valid, locales: [] })).toContainEqual(['locales']);
+  });
+
+  it('rejects a brand colour that is not #rrggbb, naming the token', () => {
+    const brand = { ...fixtureBrand, colors: { ...fixtureBrand.colors, ink: '#123' as const } };
+    expect(issuePaths({ ...valid, brand })).toContainEqual(['brand', 'colors', 'ink']);
+  });
+
+  it('rejects an image face whose file the renderer cannot read', () => {
+    const imageFont = { ...fixtureBrand.imageFont, files: { 400: 'a.woff2', 600: 'b.woff' } };
+    expect(issuePaths({ ...valid, brand: { ...fixtureBrand, imageFont } })).toContainEqual([
+      'brand',
+      'imageFont',
+      'files',
+      '400',
+    ]);
   });
 
   it('reports every problem at once, wherever it is', () => {

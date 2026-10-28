@@ -3,8 +3,11 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { MAX_QUESTION_LENGTH } from '@/core/assistant/system1/router';
-import { knowledge } from '@/app/site-knowledge';
+import { profile } from '@/profile';
+import { createSiteContent } from '@/site/site-content';
 import { ChatComposer, ComposerDock, JumpToLatest, type ChatComposerHandle } from '.';
+
+const { knowledge } = createSiteContent(profile.knowledge);
 
 const { welcome } = knowledge;
 

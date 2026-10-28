@@ -1,8 +1,11 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { knowledge, topicCatalog } from '@/app/site-knowledge';
+import { profile as owner } from '@/profile';
+import { createSiteContent } from '@/site/site-content';
 import { Sidebar, type SidebarLinks } from './sidebar';
+
+const { knowledge, topicCatalog } = createSiteContent(owner.knowledge);
 
 const { profile, contact } = knowledge;
 

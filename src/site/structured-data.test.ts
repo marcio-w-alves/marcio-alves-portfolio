@@ -1,34 +1,33 @@
 import { describe, expect, it } from 'vitest';
-import { knowledge } from './site-knowledge';
+import { localize } from '@/core/knowledge/localize';
+import { fixtureKnowledge } from '@/testing/fixture-profile/knowledge';
 import { personStructuredData, serializeStructuredData } from './structured-data';
 
-describe('personStructuredData', () => {
-  const person = personStructuredData(new URL('https://marciomariani.dev'));
+const knowledge = localize(fixtureKnowledge, 'en');
 
-  it('describes Marcio from the record, at the canonical address', () => {
-    expect(person).toMatchObject({
+describe('personStructuredData', () => {
+  const person = personStructuredData(knowledge, new URL('https://ada.example'));
+
+  it('describes the person from the record, at the canonical address', () => {
+    expect(person).toEqual({
       '@context': 'https://schema.org',
       '@type': 'Person',
-      name: 'Marcio Alves',
-      jobTitle: 'Staff-level Frontend Engineer',
-      url: 'https://marciomariani.dev/',
+      name: 'Ada Rivera',
+      jobTitle: 'Principal Platform Engineer',
+      description: 'Ada is a platform engineer who builds internal developer platforms.',
+      url: 'https://ada.example/',
       sameAs: [
-        'https://www.linkedin.com/in/marcio-montenegro',
-        'https://github.com/marcio-w-alves',
+        'https://www.linkedin.com/in/ada-rivera-example',
+        'https://github.com/ada-rivera-example',
       ],
+      knowsAbout: ['Bazel', 'Kubernetes', 'Go', 'Rust'],
     });
-  });
-
-  it('knows about a skill from every group of the record', () => {
-    expect(person.knowsAbout).toEqual(
-      expect.arrayContaining(['React', 'State Management', 'Accessibility', 'Mentoring', 'AWS']),
-    );
   });
 
   it('does not claim coursework as expertise', () => {
     const courses = knowledge.certifications.map(({ name }) => name);
 
-    expect(person.knowsAbout).not.toContain('AngularJS');
+    expect(courses.length).toBeGreaterThan(0);
     expect(person.knowsAbout.some((topic) => courses.includes(topic))).toBe(false);
   });
 });

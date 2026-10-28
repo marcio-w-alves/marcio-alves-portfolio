@@ -1,5 +1,18 @@
-import type { ModelStatus } from '@/composition-root';
 import { deployment } from '@/env';
+
+type CircuitState = 'closed' | 'open' | 'half-open';
+
+/**
+ * What the health check may say about the model: whether it is configured,
+ * and whether it and retrieval are reachable.
+ */
+export interface ModelStatus {
+  readonly model: 'enabled' | 'disabled';
+  /** The chat model's circuit. Null when there is no model to guard. */
+  readonly circuit: CircuitState | null;
+  /** The embeddings circuit behind search. Null when there is no model to guard. */
+  readonly retrieval: CircuitState | null;
+}
 
 interface Dependencies {
   readonly modelStatus: () => ModelStatus;

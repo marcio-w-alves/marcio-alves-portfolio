@@ -1,8 +1,11 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { topicCatalog } from '@/app/site-knowledge';
+import { profile } from '@/profile';
+import { createSiteContent } from '@/site/site-content';
 import { SuggestedQuestions } from './suggested-questions';
+
+const { topicCatalog } = createSiteContent(profile.knowledge);
 
 const welcomeChoices = topicCatalog
   .suggestedQuestions('overview', 0, 4)
