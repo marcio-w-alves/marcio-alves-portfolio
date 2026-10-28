@@ -8,8 +8,9 @@ const VARIANTS = {
 } as const;
 
 const SIZES = {
-  default: 'h-10 rounded-control px-4 text-14',
-  sm: 'h-8 rounded-sm px-3 text-13',
+  // The line height follows the size: tailwind-merge drops a leading set before a font size.
+  default: 'h-10 rounded-control px-4 text-14 leading-none',
+  sm: 'h-8 rounded-sm px-3 text-13 leading-none',
 } as const;
 
 export type ButtonVariant = keyof typeof VARIANTS;
@@ -26,7 +27,7 @@ function buttonClasses(
 ) {
   return cn(
     'inline-flex cursor-pointer items-center justify-center gap-2 leading-none font-medium whitespace-nowrap no-underline',
-    'transition-[background-color,color,box-shadow,transform] duration-fast ease-standard active:scale-98',
+    'transition-[background-color,color,box-shadow,scale] duration-fast ease-standard active:scale-98',
     'disabled:scale-100 disabled:cursor-not-allowed disabled:opacity-50',
     'aria-disabled:scale-100 aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
     VARIANTS[variant],

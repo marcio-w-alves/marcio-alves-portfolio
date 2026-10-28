@@ -150,6 +150,15 @@
   /* Layout */
   --container-column: 820px;
   --container-sidebar: 260px;
+
+  /*
+   * The app's two container breakpoints, read off the root named \`ma\`:
+   * \`@max-compact/ma:\` is the drawer layout, \`@max-phone/ma:\` the phone one.
+   * The design says max-width 860px and 600px, inclusive; Tailwind's \`@max-*\`
+   * is a strict \`width <\`, hence one pixel more.
+   */
+  --container-compact: 861px;
+  --container-phone: 601px;
 }
 
 /* The two named durations, so a component writes the token and not a number. */
@@ -162,11 +171,20 @@
 }
 
 /*
- * Only what no utility can reach: a global focus ring, two text-rendering
- * hints, and the reduced-motion collapse. Surface and type for the document
+ * Only what no utility can reach: the root line height, a global focus
+ * ring, two text-rendering hints, and the reduced-motion collapse. Surface and type for the document
  * itself are utilities on <body>, in the root layout.
  */
 @layer base {
+  /*
+   * Tailwind's preflight sets 1.5 here; the design has no reset and so
+   * inherits the browser's \`normal\`. Every line that sets no height of its own
+   * depends on this, so it follows the design.
+   */
+  html {
+    line-height: normal;
+  }
+
   :focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
