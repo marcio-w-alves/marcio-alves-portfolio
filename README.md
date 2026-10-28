@@ -305,14 +305,34 @@ checked by `pnpm boundaries`, not left to discipline.
 
 ```
 src/
-  app/              Next.js routes — HTTP and UI adapters
-  core/             Domain and use cases, framework-free
-    assistant/      Streaming contract, ports, guardrails, tools
-    knowledge/      Career entities and their sources
-    use-cases/
-  infrastructure/   Adapters: model, retrieval, GitHub, cache
-  ui/               Presentational components
+  app/                  Next.js routes: the page, /api/chat, /api/health, metadata
+  core/                 Domain and policy, framework-free
+    assistant/          Streaming contract, both answer paths, tools, ports
+    conversation/       The conversation as pure transitions
+    knowledge/          Career records, each with its source
+  infrastructure/       Adapters: OpenAI, retrieval, Wikipedia, GitHub,
+                        resilience, budgets, rate limits, logging
+  ui/                   Presentational components over the design tokens
   composition-root.ts   The single place adapters are bound to ports
+```
+
+A question, end to end:
+
+```mermaid
+flowchart LR
+  V[Visitor] -->|question| UI[Chat workspace<br/>src/ui]
+  UI -->|POST /api/chat| H[Chat handler<br/>rate limit · body cap · schema]
+  H --> A[Assistant<br/>src/core]
+  A -->|recognised| S1[System 1<br/>deterministic router]
+  S1 --> KB[(Knowledge base)]
+  A -->|escalated| C{Answer cache<br/>· budget}
+  C --> S2[System 2<br/>gpt-4o-mini + circuit breaker]
+  S2 -->|allow-listed actions only| T[Tools]
+  T --> KB
+  T --> R[RAG index]
+  T --> W[Wikipedia]
+  T --> G[GitHub]
+  A -->|SSE events| UI
 ```
 
 The assistant reaches data only through an allow-list of named actions. It is
@@ -459,7 +479,12 @@ Nothing reads it, the site is not published to a registry, and a number
 sitting in a file is a number somebody eventually edits. **Never bump it by
 hand.**
 
-## Conventions
+## Decisions
 
-Branches `por-<nn>-<slug>`, Conventional Commits carrying the task key, one
-pull request per task.
+The choices worth explaining — and what each one costs — are recorded as
+architecture decision records in [`docs/adr`](docs/adr/README.md).
+
+## Contributing
+
+How to set up, the conventions, and the gates every change passes:
+[CONTRIBUTING.md](CONTRIBUTING.md).
