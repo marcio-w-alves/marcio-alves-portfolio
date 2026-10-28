@@ -2,7 +2,10 @@ import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
 
-const alias = { '@': fileURLToPath(new URL('./src', import.meta.url)) };
+const alias = {
+  '@': fileURLToPath(new URL('./src', import.meta.url)),
+  'server-only': fileURLToPath(new URL('./src/testing/empty-module.ts', import.meta.url)),
+};
 
 export default defineConfig({
   plugins: [react()],

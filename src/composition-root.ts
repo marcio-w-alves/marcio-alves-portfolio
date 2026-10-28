@@ -1,3 +1,4 @@
+import 'server-only';
 import type { ModelBudgetPort } from '@/core/assistant/ports/model-budget.port';
 import { createAssistant, type AnswerReport, type Assistant } from '@/core/assistant/assistant';
 import {

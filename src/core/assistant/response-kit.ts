@@ -4,9 +4,9 @@ import {
   knowledgeBase,
   projectById,
   roleById,
-  sourceOf,
 } from '@/core/knowledge/knowledge-base';
 import type { Project, Role } from '@/core/knowledge/types';
+import { citation } from './citations';
 import type { MetricItem, NoteTone, ProjectView, RoleSection, RoleView } from './components';
 import type {
   AssistantResponse,
@@ -174,7 +174,7 @@ export function response(
     intent,
     parts: parts.filter((part): part is ResponsePart => part !== null),
     followUps: meta.followUps,
-    sources: meta.sources.map(sourceOf),
+    sources: meta.sources.map(citation),
     related: meta.related ?? null,
     grounded: meta.grounded ?? true,
   };

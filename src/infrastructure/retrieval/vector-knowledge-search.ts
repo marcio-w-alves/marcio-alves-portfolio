@@ -1,7 +1,7 @@
+import { citation } from '@/core/assistant/citations';
 import type { EmbeddingPort } from '@/core/assistant/ports/embedding.port';
 import type { KnowledgeSearchPort, Passage } from '@/core/assistant/ports/knowledge-search.port';
 import type { KnowledgeChunk } from '@/core/knowledge/corpus';
-import { sourceOf } from '@/core/knowledge/knowledge-base';
 import type { KnowledgeIndex } from './index-spec';
 
 /**
@@ -65,7 +65,7 @@ export function createVectorKnowledgeSearch({
           id: chunk.id,
           category: chunk.category,
           text: chunk.text,
-          source: sourceOf(chunk.source),
+          source: citation(chunk.source),
           score: cosine(vector, index.vectors[chunk.id] ?? []),
         }))
         .filter((passage) => passage.score >= RELEVANCE_FLOOR)

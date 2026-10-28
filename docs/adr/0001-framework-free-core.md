@@ -20,8 +20,9 @@ adapter in `src/app` or `src/infrastructure`, bound to its port in
 `src/composition-root.ts` and nowhere else.
 
 dependency-cruiser enforces the direction on every commit and in CI: the core
-may not import a package other than Zod, nor reach the app, the adapters or
-the composition root.
+may not import a package other than Zod, nor reach the app, the UI, the
+adapters, `env` or the composition root; inside the core, the knowledge base
+never imports the assistant.
 
 ## Consequences
 
