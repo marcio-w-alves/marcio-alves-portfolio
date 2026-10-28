@@ -77,7 +77,7 @@
   --text-18: 18px;
   --text-26: 26px;
   --text-30: 30px;
-  --text-code: 0.875em;
+  --text-code: 0.86em;
   --text-code--line-height: normal;
 
   /* The assistant's mark: an outlined monogram, smaller still inline on a phone. */
@@ -98,7 +98,7 @@
   --leading-figure: 1.05;
   --leading-caption: 1.45;
   --leading-reading: 1.6;
-  --leading-answer: 1.7;
+  --leading-answer: 1.75;
 
   --tracking-display: -0.045em;
   --tracking-subhead: -0.02em;
@@ -148,7 +148,7 @@
 
   /* Timeline and planned-scope markers */
   --inset-shadow-dot: inset 0 0 0 1.5px var(--color-ink-faint);
-  --shadow-dot-current: 0 0 0 3px var(--color-accent-bg);
+  --shadow-dot-current: 0 0 0 4px var(--color-fill);
 
   /* Motion. One easing curve, two durations — anything else is improvisation. */
   --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -171,8 +171,8 @@
    * A rich block rises a little slower than a message; metrics
    * stagger through --metric-delay, set per item; a disclosure body fades in.
    */
-  --animate-block-enter: rise 280ms var(--ease-standard) both;
-  --animate-metric-rise: rise 300ms var(--ease-standard) var(--metric-delay, 0ms) both;
+  --animate-block-enter: rise 320ms var(--ease-standard) both;
+  --animate-metric-rise: rise 340ms var(--ease-standard) var(--metric-delay, 0ms) both;
   --animate-reveal: fade 200ms var(--ease-standard);
 
   @keyframes rise {
@@ -243,13 +243,13 @@
   --container-contact-narrow: 441px;
   --container-timeline-narrow: 541px;
 
-  --width-bleed: calc(100% + 16px);
+  --width-bleed: calc(100% + 20px);
 
   --grid-template-columns-metrics: repeat(auto-fill, minmax(min(150px, 100%), 1fr));
-  --grid-template-columns-skills: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  --grid-template-columns-skills: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
   --grid-template-columns-projects: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
   --grid-template-columns-scope: repeat(auto-fit, minmax(min(170px, 100%), 1fr));
-  --grid-template-columns-timeline: 136px 20px minmax(0, 1fr);
+  --grid-template-columns-timeline: 132px 20px minmax(0, 1fr);
   --grid-template-columns-timeline-narrow: 16px minmax(0, 1fr);
   --grid-template-columns-impact: 84px minmax(0, 1fr);
 
@@ -267,6 +267,27 @@
   --inset-shadow-rule-right: inset -1px 0 0 var(--color-border);
   --inset-shadow-rule-bottom: inset 0 -1px 0 var(--color-border);
   --tracking-identity: -0.02em;
+
+  /*
+   * The revised answer and its rich blocks: the inline avatar's 8px mark, the
+   * headline figures, a code block's and an open disclosure's 1.7 line, a
+   * card title's tighter tracking, the hairline over a metric or a table
+   * head, a failed answer's rose hairline, and the timeline panel's quicker
+   * rise. A code block's text is the browser's own monospace face: the
+   * design sets its font on the <pre>, and the browser's style for the
+   * <code> inside it replaces the family with `monospace`.
+   */
+  --text-8: 8px;
+  --text-27: 27px;
+  --text-32: 32px;
+  --leading-airy: 1.7;
+  --tracking-heading: -0.025em;
+  --inset-shadow-rule-top-strong: inset 0 1px 0 var(--color-border-strong);
+  --inset-shadow-rule-y: inset 0 1px 0 var(--color-border), inset 0 -1px 0 var(--color-border);
+  --color-danger-ring: #f9dcd8;
+  --shadow-danger-ring: 0 0 0 1px var(--color-danger-ring);
+  --animate-panel-rise: rise 240ms var(--ease-standard);
+  --font-code-block: monospace;
 }
 
 /* The two named durations, so a component writes the token and not a number. */
@@ -286,6 +307,11 @@
 }
 
 /* A row that scrolls sideways without showing a scrollbar. */
+/* The streaming caret, a dot, sits just above the text's baseline. */
+@utility align-caret {
+  vertical-align: 1px;
+}
+
 /* The streaming caret sits on the text's baseline, a line tall. */
 @utility caret-line {
   height: 1.05em;

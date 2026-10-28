@@ -9,7 +9,7 @@ export function ThinkingDots() {
         <span
           key={delay}
           style={{ '--dot-delay': delay } as CSSProperties}
-          className="size-1.25 animate-pulse-dot rounded-full bg-accent"
+          className="size-1.25 animate-pulse-dot rounded-full bg-ink"
         />
       ))}
     </span>

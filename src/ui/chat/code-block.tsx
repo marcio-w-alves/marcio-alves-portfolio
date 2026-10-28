@@ -27,8 +27,8 @@ export function CodeBlock({
   }, [copied]);
 
   return (
-    <figure className="bg-code-bg inset-shadow-ring m-0 animate-block-enter overflow-hidden rounded-md">
-      <figcaption className="flex items-center justify-between gap-3 border-b border-border py-1 pr-1 pl-3.5 font-mono text-11.5 leading-none font-medium text-ink-muted">
+    <figure className="m-0 animate-block-enter overflow-hidden rounded-md bg-ice shadow-ring">
+      <figcaption className="flex items-center justify-between gap-3 py-1 pr-1 pl-4 text-12 text-ink-muted inset-shadow-rule-bottom">
         <span>{language}</span>
         <button
           type="button"
@@ -41,8 +41,8 @@ export function CodeBlock({
           {copied ? 'Copied' : 'Copy code'}
         </button>
       </figcaption>
-      <pre className="m-0 overflow-x-auto px-4 py-3.5 font-mono text-13 leading-prose tab-2 text-ink">
-        <code>{code}</code>
+      <pre className="m-0 overflow-x-auto px-4.5 py-4 font-mono text-13 leading-airy tab-2 text-ink">
+        <code className="font-code-block">{code}</code>
       </pre>
     </figure>
   );

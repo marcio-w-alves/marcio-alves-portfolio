@@ -30,6 +30,9 @@ export const THEME_TOKENS = {
     '8.5',
     '9.5',
     '10',
+    '8',
+    '27',
+    '32',
   ],
   leading: [
     'display',
@@ -43,6 +46,7 @@ export const THEME_TOKENS = {
     'caption',
     'reading',
     'answer',
+    'airy',
   ],
   tracking: [
     'display',
@@ -56,6 +60,7 @@ export const THEME_TOKENS = {
     'title',
     'caps',
     'identity',
+    'heading',
   ],
   'font-weight': ['book'],
   radius: [
