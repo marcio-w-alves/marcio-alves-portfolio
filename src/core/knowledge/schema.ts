@@ -89,6 +89,11 @@ export interface ProjectSource {
   readonly scope: readonly Localized[];
   readonly platforms: readonly Localized[];
   readonly technologies: readonly string[];
+  /**
+   * Where the technologies are stated: a source of the record, or the URL of a
+   * product-site passage that names them. Required as soon as one is listed.
+   */
+  readonly technologiesSource?: string;
   readonly considerations: readonly Localized[];
   /** What the project demonstrably achieved, provable from its public code or site. */
   readonly outcomes: readonly Localized[];
@@ -236,6 +241,31 @@ export interface NotesSource {
   readonly passages: readonly Note[];
 }
 
+/** What a public site is about: one of the record's projects, or a company it lists a role at. */
+export interface SiteSubject {
+  readonly kind: 'project' | 'company';
+  /** The project's id, or the id of the role held at the company. */
+  readonly id: string;
+}
+
+/**
+ * A passage of a product's or a company's public website, as `pnpm sites:ingest`
+ * read it. It describes the product or the company, never the owner's part in it.
+ */
+export interface SitePassage {
+  /** `site/<subject id>/<n>`, stable while the site's text is. */
+  readonly id: string;
+  readonly subject: SiteSubject;
+  /** The page it was read from. */
+  readonly url: string;
+  /** `YYYY-MM-DD`. */
+  readonly fetchedAt: string;
+  /** The page's language, as its `<html lang>` declares it. */
+  readonly language: string;
+  /** In the site's own words and language, which is why it is not `Localized`. */
+  readonly text: string;
+}
+
 /** The public references the assistant may look subjects up in. */
 export interface ReferencesSource {
   /**
@@ -265,6 +295,7 @@ export interface KnowledgeSource {
   /** How an answer credits each source, keyed by source id. Every `source` above is one. */
   readonly sourceLabels: Readonly<Record<string, Localized>>;
   readonly notes: NotesSource;
+  readonly productSites: readonly SitePassage[];
   readonly references: ReferencesSource;
 }
 

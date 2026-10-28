@@ -30,7 +30,8 @@
     "lighthouse": "lhci autorun",
     "rag:build": "pnpm notes:build && tsx --env-file=.env.local scripts/build-knowledge-index.mts",
     "eval:assistant": "tsx --conditions=react-server --env-file=.env.local scripts/evaluate-assistant.mts",
-    "notes:build": "tsx scripts/build-knowledge-notes.mts"
+    "notes:build": "tsx scripts/build-knowledge-notes.mts",
+    "sites:ingest": "tsx scripts/ingest-sites.mts"
   },
   "dependencies": {
     "@fontsource/inter-tight": "5.3.0",
@@ -48,6 +49,7 @@
     "@commitlint/cli": "21.2.4",
     "@commitlint/config-conventional": "21.2.4",
     "@lhci/cli": "0.15.1",
+    "@mozilla/readability": "0.6.0",
     "@playwright/test": "1.64.1",
     "@semantic-release/commit-analyzer": "13.0.1",
     "@semantic-release/github": "12.0.10",
@@ -57,6 +59,7 @@
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",
     "@testing-library/user-event": "14.6.8",
+    "@types/jsdom": "30.0.0",
     "@types/node": "24.19.2",
     "@types/pngjs": "6.0.5",
     "@types/react": "19.3.0",
@@ -74,6 +77,7 @@
     "pngjs": "7.0.0",
     "prettier": "3.9.10",
     "prettier-plugin-tailwindcss": "0.8.1",
+    "robots-parser": "3.0.1",
     "semantic-release": "25.0.9",
     "tailwindcss": "4.3.3",
     "tsx": "4.23.15",

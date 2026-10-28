@@ -1,7 +1,7 @@
 import type { AnswerSource } from '@/core/chat/events';
 import type { EmbeddingPort } from '@/core/assistant/ports/embedding.port';
 import type { KnowledgeSearchPort, Passage } from '@/core/assistant/ports/knowledge-search.port';
-import type { KnowledgeChunk } from '@/core/knowledge/corpus';
+import type { ChunkCategory, KnowledgeChunk } from '@/core/knowledge/corpus';
 import { guard, type CircuitBreaker } from '../resilience/circuit-breaker';
 import type { KnowledgeIndex } from './index-spec';
 
@@ -26,6 +26,18 @@ export const RELEVANCE_FLOOR = 0.22;
  * for, the résumé keeps the whole limit and the notes add at most this many.
  */
 export const NOTES_SHARE = 3;
+
+/**
+ * A product's website is marketing prose that can outscore the record's own
+ * passage about that product, so it joins the results the same way: never in
+ * place of the record, at most this many.
+ */
+export const SITES_SHARE = 2;
+
+const SHARES: Partial<Record<ChunkCategory, number>> = {
+  notes: NOTES_SHARE,
+  'product-sites': SITES_SHARE,
+};
 
 export function cosine(a: readonly number[], b: readonly number[]): number {
   let dot = 0;
@@ -78,11 +90,11 @@ export function createVectorKnowledgeSearch({
         .filter((passage) => passage.score >= RELEVANCE_FLOOR)
         .sort((a, b) => b.score - a.score);
       if (category) return ranked.slice(0, limit);
-      const record = ranked.filter((passage) => passage.category !== 'notes').slice(0, limit);
-      const notes = ranked
-        .filter((passage) => passage.category === 'notes')
-        .slice(0, Math.min(NOTES_SHARE, limit));
-      return [...record, ...notes].sort((a, b) => b.score - a.score);
+      const record = ranked.filter((passage) => !(passage.category in SHARES)).slice(0, limit);
+      const supplements = Object.entries(SHARES).flatMap(([shared, share]) =>
+        ranked.filter((passage) => passage.category === shared).slice(0, Math.min(share, limit)),
+      );
+      return [...record, ...supplements].sort((a, b) => b.score - a.score);
     },
   };
 }

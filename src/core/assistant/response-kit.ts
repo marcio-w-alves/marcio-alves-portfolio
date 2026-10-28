@@ -1,4 +1,5 @@
-import type { Knowledge, Metric, Project, Role } from '@/core/knowledge/schema';
+import { siteSourceId } from '@/core/knowledge/product-sites';
+import type { Knowledge, Metric, Project, Role, SiteSubject } from '@/core/knowledge/schema';
 import type { AnswerSource, RelatedRole } from '../chat/events';
 import { createCitation } from './citations';
 import type {
@@ -75,6 +76,8 @@ export interface ResponseKit {
   /** The engineering problem behind one of the owner's products. */
   readonly productDepth: (projectId: string) => string;
   readonly allRoleSources: () => string[];
+  /** The sources of the public-site pages read for a project or a company, one per page. */
+  readonly siteSources: (subject: SiteSubject) => string[];
   readonly response: (
     intent: string,
     parts: readonly (ResponsePart | null)[],
@@ -92,14 +95,19 @@ function lookup<Item extends { readonly id: string }>(items: readonly Item[], ki
 }
 
 // A card shows what a product is, not whether it is live: the status says that in words.
-function projectView({ source: _source, live: _live, ...view }: Project): ProjectView {
+function projectView({
+  source: _source,
+  live: _live,
+  technologiesSource: _technologiesSource,
+  ...view
+}: Project): ProjectView {
   return view;
 }
 
 export function createResponseKit(knowledge: Knowledge): ResponseKit {
   const roleById = lookup(knowledge.experience, 'role');
   const projectById = lookup(knowledge.projects, 'project');
-  const citation = createCitation(knowledge.sourceLabels);
+  const citation = createCitation(knowledge);
 
   function relatedRole(id: string): RelatedRole {
     return { id, company: roleById(id).company };
@@ -212,6 +220,13 @@ export function createResponseKit(knowledge: Knowledge): ResponseKit {
       return depth;
     },
     allRoleSources: () => knowledge.experience.map((role) => role.source),
+    siteSources: ({ kind, id }) => [
+      ...new Set(
+        knowledge.productSites
+          .filter(({ subject }) => subject.kind === kind && subject.id === id)
+          .map(({ url }) => siteSourceId(url)),
+      ),
+    ],
     response(intent, parts, meta) {
       return {
         intent,

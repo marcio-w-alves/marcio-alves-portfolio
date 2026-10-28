@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { fixtureKnowledge } from '@/testing/fixture-profile/knowledge';
 import { buildCorpus, CHUNK_CATEGORIES } from './corpus';
 import { localize } from './localize';
+import { siteSourceId } from './product-sites';
 
 const knowledge = localize(fixtureKnowledge, 'en');
 const corpus = buildCorpus(knowledge);
@@ -58,11 +59,40 @@ describe('knowledge corpus', () => {
     );
   });
 
-  it('credits every passage to a source the record labels', () => {
-    for (const chunk of corpus) {
+  it('credits every passage of the record to a source the record labels', () => {
+    for (const chunk of corpus.filter(({ category }) => category !== 'product-sites')) {
       expect(Object.keys(knowledge.sourceLabels), chunk.id).toContain(chunk.source);
     }
     expect(corpus.find((chunk) => chunk.id === 'skills:platform')?.source).toBe('cv.skills');
     expect(corpus.find((chunk) => chunk.id === 'notes:1')?.source).toBe('notes');
+  });
+
+  describe('passages of product and company sites', () => {
+    const sites = corpus.filter(({ category }) => category === 'product-sites');
+
+    it('turns every site passage into its own passage, credited to the page it was read from', () => {
+      expect(sites.map(({ id, source }) => [id, source])).toEqual(
+        knowledge.productSites.map(({ id, url }) => [id, siteSourceId(url)]),
+      );
+    });
+
+    it("says in the passage whose site it is, so the product's claims never read as the owner's work", () => {
+      expect(sites.find(({ id }) => id === 'site/pipewright/0')?.text).toBe(
+        'From the public website of Pipewright (pipewright.example), describing the product itself:\n' +
+          'Pipewright rebuilds only the targets a change affects. It is written in Go and caches every step remotely, so a monorepo build finishes in seconds.',
+      );
+      expect(sites.find(({ id }) => id === 'site/acme/0')?.text).toMatch(
+        /^From the public website of Acme \(acme\.example\/about\), describing the company itself:\n/,
+      );
+    });
+
+    it('refuses a site passage about something the record does not hold', () => {
+      const [passage] = knowledge.productSites;
+      if (!passage) throw new Error('The fixture has site passages.');
+      const orphan = { ...passage, subject: { kind: 'project' as const, id: 'unknown' } };
+      expect(() => buildCorpus({ ...knowledge, productSites: [orphan] })).toThrow(
+        'Unknown site subject "unknown".',
+      );
+    });
   });
 });

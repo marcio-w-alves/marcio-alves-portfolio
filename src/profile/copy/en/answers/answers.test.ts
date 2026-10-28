@@ -52,6 +52,18 @@ describe('fast path — the suggestion graph is closed', () => {
 });
 
 describe('fast path — documented answers', () => {
+  it("cites a product's own site, linked, where its card was read from", () => {
+    expect(answer('What is FormDaily?').sources).toContainEqual({
+      id: 'site:https://formdaily.app/',
+      label: 'formdaily.app',
+      url: 'https://formdaily.app/',
+    });
+    expect(answer('Tell me about FictionDraft.').sources.map(({ id }) => id)).toEqual([
+      'projects',
+      'notes',
+    ]);
+  });
+
   it('cites a source for every documented answer', () => {
     for (const question of topics.flatMap((topic) =>
       topic.questions.map((item) => item.question),

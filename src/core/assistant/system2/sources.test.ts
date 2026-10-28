@@ -100,7 +100,7 @@ describe('evidenceOf — what each source of a result vouches for', () => {
 
 /** What each source vouches for when a search returns these passages of a record. */
 function evidenceFrom(knowledge: Knowledge, ids?: readonly string[]): SourceEvidence[] {
-  const citation = createCitation(knowledge.sourceLabels);
+  const citation = createCitation(knowledge);
   const chunks = buildCorpus(knowledge).filter((chunk) => !ids || ids.includes(chunk.id));
   const sources = [...new Set(chunks.map((chunk) => chunk.source))];
   return sources.map((id) => ({

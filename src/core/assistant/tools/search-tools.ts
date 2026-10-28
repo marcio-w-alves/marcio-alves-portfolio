@@ -30,16 +30,21 @@ function distinct(sources: readonly AnswerSource[]): AnswerSource[] {
   return [...new Map(sources.map((source) => [source.id, source])).values()];
 }
 
+/** Passages that join the record's rather than compete with them: retrieval gives each a share. */
+function isSupplement({ category }: Passage): boolean {
+  return category === 'notes' || category === 'product-sites';
+}
+
 /**
  * The roles' own statements come first. Each one added displaces the weakest
- * résumé passage, never a note: the notes keep the share retrieval gave them.
+ * résumé passage, never a note or a site's: those keep the share retrieval gave them.
  */
 function rolesFirst(ranked: readonly Passage[], roles: readonly Passage[]): Passage[] {
   const placed = new Set(roles.map((passage) => passage.id));
   const rest = ranked.filter((passage) => !placed.has(passage.id));
   const added = roles.length + rest.length - ranked.length;
   const weakestRecord = rest
-    .filter((passage) => passage.category !== 'notes')
+    .filter((passage) => !isSupplement(passage))
     .reverse()
     .slice(0, added);
   const displaced = new Set(weakestRecord.map((passage) => passage.id));
@@ -57,6 +62,19 @@ function evidenceBySource(passages: readonly Passage[]): Record<string, string> 
         .join('\n'),
     ]),
   );
+}
+
+const PRODUCT_SITE_NOTE = 'Describes the product or the company, not his role or results.';
+
+/**
+ * A site's passage says so in its own result, beside the text, so the model
+ * reads it as what the product does and not as what he did.
+ */
+function shownPassage({ text, category, score }: Passage) {
+  const shown = { text, category, relevance: Math.round(score * 100) / 100 };
+  return category === 'product-sites'
+    ? { ...shown, about: 'product', note: PRODUCT_SITE_NOTE }
+    : shown;
 }
 
 export const SEARCH_UNAVAILABLE =
@@ -96,7 +114,7 @@ export function createSearchTools(
   const searchKnowledge = defineTool({
     name: SEARCH_KNOWLEDGE,
     description:
-      'Semantic search over his documented record — his résumé, plus his knowledge-base notes on how he works, system design, AI-assisted engineering, studies, own products, goals and interests — for questions no specific action covers. Returns the matching passages; an empty result means the record does not cover the question.',
+      "Semantic search over his documented record — his résumé, plus his knowledge-base notes on how he works, system design, AI-assisted engineering, studies, own products, goals and interests — and over the public websites of his products and of companies he worked for, for questions no specific action covers. Returns the matching passages; a website's passages are marked as about the product, never about him. An empty result means the record does not cover the question.",
     input: {
       query: z.string().trim().min(2).max(300),
     },
@@ -110,11 +128,7 @@ export function createSearchTools(
         data:
           passages.length > 0
             ? {
-                passages: passages.map((passage) => ({
-                  text: passage.text,
-                  category: passage.category,
-                  relevance: Math.round(passage.score * 100) / 100,
-                })),
+                passages: passages.map(shownPassage),
               }
             : {
                 passages: [],

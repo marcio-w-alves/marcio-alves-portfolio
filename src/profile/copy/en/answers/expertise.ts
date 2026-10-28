@@ -18,6 +18,7 @@ export function createExpertiseAnswers(kit: ResponseKit) {
     projectById,
     roleById,
     allRoleSources,
+    siteSources,
     contactCard,
     contactOnce,
     metrics,
@@ -516,7 +517,8 @@ export function createExpertiseAnswers(kit: ResponseKit) {
           'What projects is he working on?',
           'Has he ever built something from scratch?',
         ],
-        sources: ['projects', 'notes'],
+        // The card's description and features were read from the product's own site.
+        sources: ['projects', 'notes', ...siteSources({ kind: 'project', id: projectId })],
       },
     );
   }

@@ -108,6 +108,7 @@ export const projects: readonly ProjectSource[] = [
       'Vitest',
       'Playwright',
     ],
+    technologiesSource: 'projects',
     considerations: [],
     outcomes: [
       {

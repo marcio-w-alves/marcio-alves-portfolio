@@ -946,6 +946,13 @@ Ids, dependencies and sets follow the PRD's task table. **Deps** lists both beha
 
 - Files: `scripts/ingest-sites.mts` + `scripts/ingest/{robots,extract,chunk}.ts` (tests on fixture HTML and robots files), `profile/sites/{allow-list.ts,snapshot.json}`, `core/knowledge/corpus.ts`, `tools/search-tools.ts` (`about`), `system-prompt.ts`, `profile/evaluation/cases.ts` (EN cases), `ui/rich/projects.tsx` (no empty technologies row), `package.json` (`sites:ingest`; dev dependencies `robots-parser`, `@mozilla/readability`).
 - Design: §9.
+- **As built (deviations):**
+  - `render: 'browser'` was dropped. Every allow-listed site renders its text server-side, so a page with under 200 readable characters is skipped and reported instead of being rendered in Chromium.
+  - The snapshot is imported by `src/profile/knowledge/index.ts`, beside `notes.json`, and parsed there with `sitePassagesSchema`; it reaches the corpus as `knowledge.productSites`. An architecture test pins that single importer.
+  - Allow-list: EvCopilot, FormDaily and TargUp from the record's links; Way2b1 (`https://www.way2b1.com/`) and Deel (`https://www.deel.com/about/`) were chosen by web search, pending the owner's confirmation. Left out: this site, Maison Moderne (template text), Paperjam (robots.txt refuses LLM crawlers), Roots (acquired, no site), Shall And Partners, WEBFI and the freelance work (no confirmable site).
+  - `SiteEntry.excludes` curates a site durably: exact paragraphs or `/regex/` sources, validated by the profile schema and dropped before chunking on every run. It removes TargUp's error message, Way2b1's client testimonial and Deel's founder biographies and conflicting funding and customer figures.
+  - Sources are one per page, `site:<url>`, labelled host plus path; site chunks are told apart by the `product-sites` category alone. Retrieval adds at most 2 site passages beside the record's own. Project answers on the fast path cite the site page their card was read from (AC-26.2). The eval harness gained `cites`.
+  - `pnpm sites:ingest` leaves the snapshot unchanged when any page fails, unless `--partial`.
 
 **POR-57 — Retry/edit cancels the in-flight answer (FR-33) · Deps: — · S1**
 
