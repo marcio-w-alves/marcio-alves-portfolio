@@ -103,7 +103,7 @@ describe('tool registry — the allow-list', () => {
     expect(outcome.ok).toBe(false);
     if (!outcome.ok) expect(outcome.error).toMatch(/^The action failed/);
     expect(JSON.stringify(outcome)).not.toContain('db exploded');
-    expect(reported).toEqual([new Error('db exploded')]);
+    expect(reported).toEqual([{ tool: 'getPortfolioStats', error: new Error('db exploded') }]);
   });
 
   it('lets an action stopped by the visitor leaving end the answer, reporting nothing', async () => {

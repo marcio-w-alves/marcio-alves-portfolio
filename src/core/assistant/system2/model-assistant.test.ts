@@ -8,7 +8,7 @@ import type {
 } from '../ports/language-model.port';
 import { createToolRegistry } from '../tools/registry';
 import { createSearchTools } from '../tools/search-tools';
-import { defineTool, type Tool } from '../tools/tool';
+import { defineTool, type Tool, type ToolFailure } from '../tools/tool';
 import {
   createModelAssistant,
   EMPTY_REPLY,
@@ -51,7 +51,10 @@ function rethrow(error: unknown): never {
 }
 
 /** The real allow-list; an action that throws unexpectedly fails the test. */
-function registry(extra: readonly Tool[] = [], reportError: (error: unknown) => void = rethrow) {
+function registry(
+  extra: readonly Tool[] = [],
+  reportError: (failure: ToolFailure) => void = rethrow,
+) {
   return createToolRegistry({ extra, reportError });
 }
 
@@ -490,7 +493,7 @@ describe('model assistant — what reaches the visitor', () => {
     expect(reply).not.toContain('db exploded');
     expect(text(events)).toBe('That is not available right now.');
     expect(events.at(-1)).toMatchObject({ type: 'finish' });
-    expect(reported).toEqual([new Error('db exploded')]);
+    expect(reported).toEqual([{ tool: 'getPortfolioStats', error: new Error('db exploded') }]);
   });
 
   it("hands the visitor's request signal to the actions it runs", async () => {

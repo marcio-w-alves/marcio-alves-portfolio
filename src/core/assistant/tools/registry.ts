@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { createDisplayTools } from './display-tools';
 import { createKnowledgeTools } from './knowledge-tools';
-import { defineTool, type Tool, type ToolOutcome } from './tool';
+import { defineTool, type Tool, type ToolFailure, type ToolOutcome } from './tool';
 
 /**
  * Declining is an action like any other, so an answer that falls outside what
@@ -29,7 +29,7 @@ interface RegistryOptions {
   /** Actions beyond the built-in ones, such as those that reach the network. */
   readonly extra?: readonly Tool[];
   /** Told of every action that throws, with what it threw; the model is never shown that. */
-  readonly reportError: (error: unknown) => void;
+  readonly reportError: (failure: ToolFailure) => void;
 }
 
 function failed(name: string): ToolOutcome {
@@ -59,7 +59,7 @@ export function createToolRegistry({ extra = [], reportError }: RegistryOptions)
       } catch (error) {
         // The visitor left: there is no answer left to save, and nothing failed.
         if (signal?.aborted) throw error;
-        reportError(error);
+        reportError({ tool: name, error });
         return failed(name);
       }
     },

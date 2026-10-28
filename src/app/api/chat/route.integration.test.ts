@@ -479,7 +479,9 @@ describe('POST /api/chat — when retrieval is down', () => {
       retrieval: 'open',
     });
     expect(loggedEvents('retrieval.circuit_opened')).toHaveLength(1);
-    expect(loggedEvents('tool.failed')).toHaveLength(4);
+    expect(loggedEvents('tool.failed').map((entry) => entry.tool)).toEqual(
+      Array.from({ length: 4 }, () => 'searchKnowledge'),
+    );
     expect(reported).toEqual([]);
   });
 });

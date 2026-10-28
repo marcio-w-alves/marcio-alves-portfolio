@@ -6,16 +6,17 @@ import type {
   KnowledgeSearchQuery,
   Passage,
 } from '../ports/knowledge-search.port';
-import { defineTool, type Tool, type ToolResult } from './tool';
+import { defineTool, type Tool, type ToolFailure, type ToolResult } from './tool';
 
 const DEFAULT_LIMIT = 5;
+const SEARCH_KNOWLEDGE = 'searchKnowledge';
 
 function distinct(sources: readonly AnswerSource[]): AnswerSource[] {
   return [...new Map(sources.map((source) => [source.id, source])).values()];
 }
 
 export const SEARCH_UNAVAILABLE =
-  'Search is unavailable right now; answer only from other actions or decline.';
+  'Search is unavailable right now; answer only from other actions or decline. Do not answer from general knowledge.';
 
 const UNAVAILABLE: ToolResult = { data: { passages: [], note: SEARCH_UNAVAILABLE }, sources: [] };
 
@@ -25,20 +26,20 @@ const UNAVAILABLE: ToolResult = { data: { passages: [], note: SEARCH_UNAVAILABLE
  */
 export function createSearchTools(
   search: KnowledgeSearchPort,
-  reportError: (error: unknown) => void,
+  reportError: (failure: ToolFailure) => void,
 ): Tool[] {
   async function find(query: KnowledgeSearchQuery): Promise<Passage[] | null> {
     try {
       return await search.search(query);
     } catch (error) {
       if (query.signal?.aborted) throw error;
-      reportError(error);
+      reportError({ tool: SEARCH_KNOWLEDGE, error });
       return null;
     }
   }
 
   const searchKnowledge = defineTool({
-    name: 'searchKnowledge',
+    name: SEARCH_KNOWLEDGE,
     description:
       "Semantic search over Marcio's documented record — his résumé, plus his knowledge-base notes on how he works, system design, AI-assisted engineering, studies, own products, goals and interests — for questions no specific action covers. Returns the matching passages; an empty result means the record does not cover the question.",
     input: {

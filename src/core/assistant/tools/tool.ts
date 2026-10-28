@@ -26,6 +26,12 @@ export type ToolOutcome =
   | { readonly ok: true; readonly result: ToolResult }
   | { readonly ok: false; readonly error: string };
 
+/** An action that threw, for whoever operates the site; never shown to the model. */
+export interface ToolFailure {
+  readonly tool: string;
+  readonly error: unknown;
+}
+
 export interface Tool {
   readonly name: string;
   readonly description: string;

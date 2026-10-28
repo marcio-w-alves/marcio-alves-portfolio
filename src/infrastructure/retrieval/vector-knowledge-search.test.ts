@@ -1,10 +1,11 @@
-import { http, HttpResponse } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { Agent, getGlobalDispatcher, setGlobalDispatcher } from 'undici';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { EmbeddingPort } from '@/core/assistant/ports/embedding.port';
 import { buildCorpus, type KnowledgeChunk } from '@/core/knowledge/corpus';
 import { createOpenAIClient } from '../openai/openai-client';
-import { createOpenAIEmbeddings } from '../openai/openai-embeddings';
+import { createOpenAIEmbeddings, EmbeddingsTimeoutError } from '../openai/openai-embeddings';
 import { CircuitOpenError, createCircuitBreaker } from '../resilience/circuit-breaker';
 import { EMBEDDING_DIMENSIONS, type KnowledgeIndex } from './index-spec';
 import committed from './knowledge-index.json';
@@ -203,6 +204,10 @@ describe('vector knowledge search — when embeddings fail', () => {
   const EMBEDDINGS_URL = 'https://api.openai.com/v1/embeddings';
   const server = setupServer();
   let outbound = 0;
+  // A fresh connection pool per test: MSW's emulated socket for a request
+  // that timed out can still be tearing down when the next test connects.
+  const sharedConnections = getGlobalDispatcher();
+  let connections: Agent;
 
   beforeAll(() => {
     server.listen({ onUnhandledFrame: 'error' });
@@ -210,11 +215,17 @@ describe('vector knowledge search — when embeddings fail', () => {
       outbound += 1;
     });
   });
-  afterEach(() => {
+  beforeEach(() => {
+    connections = new Agent();
+    setGlobalDispatcher(connections);
+  });
+  afterEach(async () => {
     server.resetHandlers();
     outbound = 0;
+    await connections.destroy();
   });
   afterAll(() => {
+    setGlobalDispatcher(sharedConnections);
     server.close();
   });
 
@@ -233,7 +244,7 @@ describe('vector knowledge search — when embeddings fail', () => {
     );
   }
 
-  function searchThroughOpenAI() {
+  function searchThroughOpenAI({ timeoutMs }: { timeoutMs?: number } = {}) {
     let clock = 0;
     const breaker = newBreaker(() => clock);
     const search = createVectorKnowledgeSearch({
@@ -241,6 +252,7 @@ describe('vector knowledge search — when embeddings fail', () => {
         client: createOpenAIClient('test-key'),
         model: 'text-embedding-3-small',
         dimensions: EMBEDDING_DIMENSIONS,
+        ...(timeoutMs ? { timeoutMs } : {}),
       }),
       index,
       corpus,
@@ -271,6 +283,22 @@ describe('vector knowledge search — when embeddings fail', () => {
     expect(best?.id).toBe('role:toptal');
     expect(outbound).toBe(4);
     expect(breaker.state()).toBe('closed');
+  });
+
+  it('opens the retrieval circuit after embeddings time out repeatedly', async () => {
+    server.use(
+      http.post(EMBEDDINGS_URL, async () => {
+        await delay('infinite');
+        return HttpResponse.json({});
+      }),
+    );
+    const { search } = searchThroughOpenAI({ timeoutMs: 50 });
+    for (let i = 0; i < 3; i += 1) {
+      await expect(search()).rejects.toBeInstanceOf(EmbeddingsTimeoutError);
+    }
+
+    await expect(search()).rejects.toBeInstanceOf(CircuitOpenError);
+    expect(outbound).toBe(3);
   });
 
   it('does not count searches the visitor cancelled as embeddings failing', async () => {

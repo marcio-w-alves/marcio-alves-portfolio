@@ -74,9 +74,7 @@ export function createCircuitBreaker({
 export type CircuitBreaker = ReturnType<typeof createCircuitBreaker>;
 
 function isCancellation(error: unknown): boolean {
-  return (
-    error instanceof Error && (error.name === 'AbortError' || error.name === 'APIUserAbortError')
-  );
+  return error instanceof Error && error.name === 'AbortError';
 }
 
 /** Runs one call through the breaker: refused while it is open, counted when it fails. */

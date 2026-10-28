@@ -9,6 +9,7 @@ import {
 import { createExternalTools } from '@/core/assistant/tools/external-tools';
 import { createToolRegistry } from '@/core/assistant/tools/registry';
 import { createSearchTools } from '@/core/assistant/tools/search-tools';
+import type { ToolFailure } from '@/core/assistant/tools/tool';
 import { buildCorpus } from '@/core/knowledge/corpus';
 import { knowledgeBase } from '@/core/knowledge/knowledge-base';
 import {
@@ -83,8 +84,8 @@ function reportAnswered({ clientId, ...handling }: AnswerReport): void {
   logger.info('chat.answered', { ...handling, client: tagClient(clientId) });
 }
 
-function reportToolError(error: unknown): void {
-  logger.warn('tool.failed', errorFields(error));
+function reportToolError({ tool, error }: ToolFailure): void {
+  logger.warn('tool.failed', { tool, ...errorFields(error) });
 }
 
 function reportRateLimited(clientId: string): void {

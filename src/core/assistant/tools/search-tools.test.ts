@@ -151,7 +151,8 @@ describe('searchKnowledge', () => {
       ok: true,
       result: { data: { passages: [], note: SEARCH_UNAVAILABLE }, sources: [] },
     });
-    expect(reported).toEqual([outage]);
+    expect(reported).toEqual([{ tool: 'searchKnowledge', error: outage }]);
+    expect(SEARCH_UNAVAILABLE).toContain('Do not answer from general knowledge.');
   });
 
   it('stops with the visitor instead of answering when the search was cancelled', async () => {
