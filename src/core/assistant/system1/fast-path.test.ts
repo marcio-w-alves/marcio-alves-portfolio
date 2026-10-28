@@ -20,7 +20,9 @@ function plainText(response: AssistantResponse): string {
 
 describe('fast path — the suggestion graph is closed', () => {
   it('answers every question the interface can suggest, however the visitor navigates', () => {
-    const pending: string[] = topics.flatMap((topic) => [...topic.questions]);
+    const pending: string[] = topics.flatMap((topic) =>
+      topic.questions.map((item) => item.question),
+    );
     const visited = new Set<string>();
     while (pending.length > 0) {
       const question = pending.pop() ?? '';
@@ -36,7 +38,9 @@ describe('fast path — the suggestion graph is closed', () => {
 
 describe('fast path — documented answers', () => {
   it('cites a source for every documented answer', () => {
-    for (const question of topics.flatMap((topic) => [...topic.questions])) {
+    for (const question of topics.flatMap((topic) =>
+      topic.questions.map((item) => item.question),
+    )) {
       const response = answer(question);
       if (response.grounded) expect(response.sources.length, question).toBeGreaterThan(0);
     }
@@ -59,13 +63,34 @@ describe('fast path — documented answers', () => {
   it('states the performance techniques the resume names instead of calling them undocumented', () => {
     const text = plainText(answer('How did he optimize performance?'));
     expect(text).toContain('targeted refactoring and optimization');
-    expect(text).toContain('bundle size optimization');
+    expect(text).toContain('bundle-size optimization');
   });
 
-  it('lists the verbatim resume record when asked about a company', () => {
-    expect(plainText(answer('What did he do at Shall And Partners?'))).toContain(
-      'Promoted from Mid-level to Principal Frontend Developer',
+  it("lists a company's work, leadership and recognition from the record", () => {
+    const text = plainText(answer('What did he do at Shall And Partners?'));
+    expect(text).toContain(
+      '### What the work involved\n- Led development of a progressive web app',
     );
+    expect(text).toContain(
+      '### Leadership\n- Promoted from mid-level to Principal Frontend Developer',
+    );
+    expect(text).toContain('### Recognition\n- Contributed to a web and mobile application');
+  });
+
+  it('separates his live products from the concept, and says which is which', () => {
+    const live = answer('Tell me more about EvCopilot.');
+    const concept = answer('What is FictionDraft?');
+    expect(plainText(live)).toContain("**EvCopilot** is one of Marcio's own products.");
+    expect(plainText(live)).toContain("Usage numbers and business metrics aren't published");
+    expect(plainText(concept)).toContain("**FictionDraft** is one of Marcio's product concepts");
+    expect(plainText(concept)).toContain("It's at the concept stage");
+    expect(concept.followUps[0]).toBe('Tell me more about EvCopilot.');
+  });
+
+  it('lists his courses with his education, cited to the certifications', () => {
+    const response = answer('What courses and certifications does he have?');
+    expect(plainText(response)).toContain('Learn and Understand AngularJS (Udemy)');
+    expect(response.sources.map((source) => source.id)).toContain('resume.certifications');
   });
 });
 
@@ -78,7 +103,9 @@ describe('fast path — technologies', () => {
 
   it('keeps coursework apart from professional experience', () => {
     const response = answer('Does he know Angular?');
-    expect(plainText(response)).toContain('only as coursework');
+    expect(plainText(response)).toContain(
+      'He has completed coursework on it — Angular 2 and 4 Course: From Basic to Pro (Udemy) and Learn and Understand AngularJS (Udemy) — but no professional use is documented.',
+    );
     expect(response.grounded).toBe(false);
   });
 
@@ -89,11 +116,12 @@ describe('fast path — technologies', () => {
   });
 
   it('answers each technology in a question separately, without upgrading one into another', () => {
-    const text = plainText(answer('Has he used Jest for testing?'));
-    expect(text).toContain(
-      "I don't have documented information about Marcio working with **Jest**",
+    const response = answer('Has he used Jest or Kotlin?');
+    expect(plainText(response)).toContain(
+      "I don't have documented information about Marcio working with **Jest** in his roles",
     );
-    expect(text).toContain('Frontend Testing Strategies');
+    expect(plainText(response)).toContain('**Kotlin** appears in his documented experience');
+    expect(response.grounded).toBe(true);
   });
 });
 
@@ -149,7 +177,7 @@ describe('toEvents', () => {
     const items = metrics?.props.items ?? [];
     expect(items[0]).toEqual({
       value: '50%',
-      label: 'Reduction in critical page loading time',
+      label: 'Reduction in loading time on critical pages',
       context: 'Deel',
     });
   });

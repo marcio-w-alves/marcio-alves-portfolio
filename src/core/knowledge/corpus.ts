@@ -1,5 +1,6 @@
 import type { SourceId } from './ids';
 import { knowledgeBase } from './knowledge-base';
+import type { Project } from './types';
 
 /**
  * The knowledge base flattened into categorized passages for retrieval.
@@ -32,6 +33,15 @@ export interface KnowledgeChunk {
 
 function list(items: readonly string[]): string {
   return items.join(', ');
+}
+
+function liveProductText(project: Project): string {
+  const site = project.links.map((link) => link.url).join(', ');
+  return `${project.name}, one of Marcio's own products with a public site (${project.category}), status: ${project.status}. ${project.description} ${project.scopeLabel}: ${list(project.scope)}. Platforms: ${list(project.platforms)}. Public site: ${site}. Only what the public site states is documented — no users, revenue or release dates.`;
+}
+
+function conceptText(project: Project): string {
+  return `${project.name}, one of Marcio's product concepts (${project.category}): ${project.description} ${project.scopeLabel}: ${list(project.scope)}. Only planned scope is documented — no implementation, users, revenue or release dates.`;
 }
 
 export function buildCorpus(): KnowledgeChunk[] {
@@ -93,7 +103,7 @@ export function buildCorpus(): KnowledgeChunk[] {
     ...projects.map((project): KnowledgeChunk => ({
       id: `project:${project.id}`,
       category: 'projects',
-      text: `Independent product concept ${project.name} (${project.category}): ${project.description} Planned scope: ${list(project.scope)}. Only planned scope is documented — no users, revenue, status or release dates.`,
+      text: project.live ? liveProductText(project) : conceptText(project),
       source: project.source,
     })),
     ...principles.map((principle, index): KnowledgeChunk => ({

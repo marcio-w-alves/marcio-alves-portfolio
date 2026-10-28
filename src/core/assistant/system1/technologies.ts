@@ -2,10 +2,9 @@ import type { RoleId } from '@/core/knowledge/ids';
 import { knowledgeBase } from '@/core/knowledge/knowledge-base';
 
 /**
- * Technologies visitors ask about that have no dedicated answer. Whether
- * Marcio has used one is decided by searching the record, not by a list of
- * what is "undocumented" — such a list had already contradicted the resume
- * once, about Kotlin and testing.
+ * Technologies visitors ask about. Whether Marcio has used one is decided by
+ * searching the record, not by a list of what is "undocumented" — such a list
+ * had already contradicted the resume once, about Kotlin and testing.
  *
  * React, TypeScript, Next.js, Node.js and design systems are absent on
  * purpose: each has its own, richer answer.
@@ -23,8 +22,8 @@ function technology(name: string, detect: RegExp, evidence = detect): Technology
   return { name, detect, evidence: new RegExp(evidence.source, 'i') };
 }
 
-// Specific tools before the general practice, so "Jest for testing" reports both.
-export const TECHNOLOGIES: readonly Technology[] = [
+/** The ones the fast path answers by searching the record. */
+export const ROUTED_TECHNOLOGIES: readonly Technology[] = [
   technology('Vue', /\bvue(\.?js)?\b/),
   technology('Angular', /\bangular(js)?\b/),
   technology('Svelte', /\bsvelte\b/),
@@ -52,9 +51,16 @@ export const TECHNOLOGIES: readonly Technology[] = [
   technology('Tailwind CSS', /\btailwind\b/),
   technology('React Hooks', /\b(react )?hooks?\b/, /\breact hooks\b/),
   technology('progressive web apps', /\b(pwas?|progressive web apps?)\b/, /\bprogressive web app/),
+];
+
+// The fast path gives these practices answers of their own; the model still
+// weighs them against the record like any other technology.
+const PRACTICES: readonly Technology[] = [
   technology('accessibility', /\b(accessib\w*|a11y|wcag)\b/, /\baccessib\w*/),
   technology('automated testing', /\b(testing|tests?|tdd|test[- ]driven)\b/, /\btesting\b/),
 ];
+
+export const TECHNOLOGIES: readonly Technology[] = [...ROUTED_TECHNOLOGIES, ...PRACTICES];
 
 export interface WorkEvidence {
   readonly role: RoleId;

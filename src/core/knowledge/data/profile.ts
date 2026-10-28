@@ -20,10 +20,10 @@ export const profile: Profile = {
     'Product Engineering',
   ],
   summary:
-    'Staff Frontend Engineer with deep expertise in React.js and Next.js, focused on scalable architecture, performance optimization, and developer experience. Experienced in designing, implementing, and maintaining scalable applications end-to-end, while driving technical strategy, mentoring engineers, and collaborating cross-functionally with product and design teams. Strong background in planning OKRs, quarterly goals, and engineering deliverables aligned with product needs and user impact.',
+    'Marcio is a Staff-level frontend engineer with deep expertise in React and Next.js, focused on scalable architecture, performance optimization and developer experience.',
   context: 'Marcio has experience working across startups and large, complex software products.',
   focus:
-    'He focuses on building maintainable applications, making sound architectural decisions, improving engineering processes, and aligning technical work with product impact.',
+    'He focuses on building maintainable applications, making sound architectural decisions, raising engineering standards and aligning technical work with product needs and user impact.',
   location: { country: 'Brazil', city: null },
   source: 'profile',
 };

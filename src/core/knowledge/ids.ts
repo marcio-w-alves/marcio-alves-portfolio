@@ -38,7 +38,6 @@ export const SKILL_GROUP_IDS = [
   'frontend',
   'architecture',
   'performance',
-  'practices',
   'leadership',
   'backend',
 ] as const;

@@ -52,16 +52,27 @@ export function Details({ summary, text }: DetailsProps) {
   );
 }
 
-// Blank lines separate paragraphs; single line breaks inside one are soft, as in Markdown.
+const LIST_ITEM = /^\s*(?:[-*]|\d+\.)\s+/;
+
+// Blank lines separate paragraphs and every list item stands as one; any other
+// line break is soft, as in Markdown.
 function paragraphs(text: string): string[] {
-  return text
-    .split(/\n\s*\n/)
-    .map((block) =>
-      block
-        .split('\n')
-        .map((line) => line.trim())
-        .join(' ')
-        .trim(),
-    )
-    .filter((paragraph) => paragraph !== '');
+  const result: string[] = [];
+  let open: string[] = [];
+  const close = () => {
+    if (open.length > 0) result.push(open.join(' '));
+    open = [];
+  };
+  for (const line of text.split('\n')) {
+    if (LIST_ITEM.test(line)) {
+      close();
+      result.push(line.replace(LIST_ITEM, '').trim());
+    } else if (line.trim() === '') {
+      close();
+    } else {
+      open.push(line.trim());
+    }
+  }
+  close();
+  return result;
 }
