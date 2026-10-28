@@ -107,6 +107,11 @@
   --shadow-drawer: 0 0 48px rgb(32 36 32 / 0.18);
   --shadow-focus: 0 0 0 3px rgb(55 107 86 / 0.22);
 
+  /* The "Jump to latest" pill floats over the conversation. */
+  --shadow-floating:
+    0 1px 2px rgb(32 36 32 / 0.05), 0 0 0 1px var(--color-border),
+    0 8px 20px -12px rgb(32 36 32 / 0.3);
+
   /* Motion. One easing curve, two durations — anything else is improvisation. */
   --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
   --duration-fast: 140ms;
@@ -119,6 +124,8 @@
 
   /* The welcome state settles in more slowly than a message does. */
   --animate-fade-slow: fade 450ms var(--ease-standard);
+  /* The "Jump to latest" pill rises a little faster than the default. */
+  --animate-rise-short: rise 200ms var(--ease-standard);
 
   @keyframes rise {
     from {
