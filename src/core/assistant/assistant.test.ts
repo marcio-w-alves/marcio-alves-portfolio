@@ -1,12 +1,34 @@
 import { describe, expect, it } from 'vitest';
 import { createAssistant, type AssistantRequest } from './assistant';
 import type { AssistantEvent } from './assistant-event';
+import type { AnswerCachePort } from './ports/answer-cache.port';
+import type { ModelBudgetPort } from './ports/model-budget.port';
 import type { ModelAssistant, ModelAssistantRequest } from './system2/model-assistant';
 
 const FRESH = { topic: 'overview', lastIntent: null, ctaShown: false };
 
-function request(question: string): AssistantRequest {
-  return { question, history: [], context: FRESH };
+function request(question: string, history: AssistantRequest['history'] = []): AssistantRequest {
+  return { question, history, context: FRESH, clientId: 'visitor-1' };
+}
+
+/** An in-memory cache and a budget that admits or refuses, recording what it was asked. */
+function memoryCache(): AnswerCachePort & {
+  readonly store: Map<string, readonly AssistantEvent[]>;
+} {
+  const store = new Map<string, readonly AssistantEvent[]>();
+  return { store, get: (key) => store.get(key), set: (key, events) => store.set(key, events) };
+}
+
+function budgetThat(admits: boolean): ModelBudgetPort & { readonly admitted: string[] } {
+  const admitted: string[] = [];
+  return {
+    admitted,
+    admit: (clientId) => {
+      admitted.push(clientId);
+      return admits;
+    },
+    record: () => undefined,
+  };
 }
 
 function fakeModel(script: (request: ModelAssistantRequest) => AsyncGenerator<AssistantEvent>) {
@@ -23,16 +45,34 @@ function fakeModel(script: (request: ModelAssistantRequest) => AsyncGenerator<As
 async function collect(
   assistant: ReturnType<typeof createAssistant>,
   question: string,
+  history: AssistantRequest['history'] = [],
 ): Promise<AssistantEvent[]> {
-  const events: AssistantEvent[] = [];
-  for await (const event of assistant.answer(request(question))) events.push(event);
-  return events;
+  return Array.fromAsync(assistant.answer(request(question, history)));
 }
 
 const reported: unknown[] = [];
-function assistantWith(model: ModelAssistant | null) {
+function assistantWith(
+  model: ModelAssistant | null,
+  { budget = budgetThat(true), answerCache = memoryCache() } = {},
+) {
   reported.length = 0;
-  return createAssistant({ modelAssistant: model, reportError: (error) => reported.push(error) });
+  return createAssistant({
+    modelAssistant: model,
+    budget,
+    answerCache,
+    reportError: (error) => reported.push(error),
+  });
+}
+
+/** A model whose every answer is one sentence, counting its calls. */
+function sentenceModel(sentence = 'An answer.') {
+  return fakeModel(async function* (modelRequest) {
+    yield { type: 'start', intent: 'model', related: null };
+    yield { type: 'text-start', id: 'p0' };
+    yield { type: 'text-delta', id: 'p0', delta: sentence };
+    yield { type: 'text-end', id: 'p0' };
+    yield { type: 'finish', followUps: modelRequest.followUps, sources: [] };
+  });
 }
 
 describe('assistant — choosing a path', () => {
@@ -95,5 +135,64 @@ describe('assistant — when the model is unavailable', () => {
       },
     });
     expect(events.filter((event) => event.type === 'start')).toHaveLength(1);
+  });
+});
+
+describe('assistant — spending on the model', () => {
+  it('replays a cached answer to the same question without calling the model or the budget', async () => {
+    const { model, received } = sentenceModel();
+    const budget = budgetThat(true);
+    const assistant = assistantWith(model, { budget });
+    const first = await collect(assistant, 'What is TypeScript?');
+    const second = await collect(assistant, '  what is  typescript?  ');
+    expect(second).toEqual(first);
+    expect(received).toHaveLength(1);
+    expect(budget.admitted).toHaveLength(1);
+  });
+
+  it('does not reuse an answer given in the middle of a conversation, where it depends on history', async () => {
+    const { model, received } = sentenceModel();
+    const answerCache = memoryCache();
+    const assistant = assistantWith(model, { answerCache });
+    const history = [{ role: 'user' as const, text: 'Who is he?' }];
+    await collect(assistant, 'What is TypeScript?', history);
+    await collect(assistant, 'What is TypeScript?', history);
+    expect(received).toHaveLength(2);
+    expect(answerCache.store.size).toBe(0);
+  });
+
+  it('never caches an answer that was interrupted', async () => {
+    const { model } = fakeModel(async function* () {
+      yield { type: 'start', intent: 'model', related: null };
+      throw new Error('reset');
+    });
+    const answerCache = memoryCache();
+    await collect(assistantWith(model, { answerCache }), 'What is TypeScript?');
+    expect(answerCache.store.size).toBe(0);
+  });
+
+  it('answers a visitor over their limit for free, offering questions that still work', async () => {
+    const { model, received } = sentenceModel();
+    const events = await collect(
+      assistantWith(model, { budget: budgetThat(false) }),
+      'Compare his leadership at Deel and Roots.',
+    );
+    expect(received).toHaveLength(0);
+    expect(events[0]).toEqual({ type: 'start', intent: 'rateLimited', related: null });
+    expect(events.at(-1)).toMatchObject({
+      type: 'finish',
+      sources: [],
+      followUps: [
+        'Show me examples of architectural decisions.',
+        'How did he grow the team at Roots?',
+        'Would he fit a technical leadership position?',
+      ],
+    });
+  });
+
+  it('paces by the client asking', async () => {
+    const budget = budgetThat(true);
+    await collect(assistantWith(sentenceModel().model, { budget }), 'What is TypeScript?');
+    expect(budget.admitted).toEqual(['visitor-1']);
   });
 });

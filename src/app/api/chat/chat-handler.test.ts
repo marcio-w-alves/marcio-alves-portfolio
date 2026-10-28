@@ -3,6 +3,9 @@ import { createAssistant, type Assistant } from '@/core/assistant/assistant';
 import type { AssistantEvent } from '@/core/assistant/assistant-event';
 import type { LanguageModelPort, ToolCall } from '@/core/assistant/ports/language-model.port';
 import { createModelAssistant } from '@/core/assistant/system2/model-assistant';
+import { createAnswerCache } from '@/infrastructure/budget/answer-cache';
+import { createModelBudget } from '@/infrastructure/budget/model-budget';
+import { createSlidingWindowLimiter } from '@/infrastructure/rate-limit/sliding-window';
 import { createToolRegistry } from '@/core/assistant/tools/registry';
 import { createChatHandler, MAX_BODY_BYTES } from './chat-handler';
 
@@ -22,17 +25,29 @@ function scriptedModel(call: ToolCall, answer: string): LanguageModelPort {
   };
 }
 
-function handlerWith(assistant: Assistant) {
+const ALWAYS = { admit: () => ({ allowed: true, retryAfterMs: 0 }) };
+
+function handlerWith(
+  assistant: Assistant,
+  requestLimiter: { admit(key: string): { allowed: boolean; retryAfterMs: number } } = ALWAYS,
+) {
   reported.length = 0;
-  return createChatHandler({ assistant, reportError });
+  return createChatHandler({ assistant, reportError, requestLimiter });
 }
 
-const fastPathOnly = createAssistant({ modelAssistant: null, reportError });
+function spending() {
+  return {
+    budget: createModelBudget({ answersPerWindow: 100, windowMs: 60_000, dailyTokens: 1_000_000 }),
+    answerCache: createAnswerCache({ ttlMs: 60_000, maxEntries: 10 }),
+  };
+}
 
-function post(body: unknown, contentType = 'application/json'): Request {
+const fastPathOnly = createAssistant({ modelAssistant: null, reportError, ...spending() });
+
+function post(body: unknown, contentType = 'application/json', ip = '203.0.113.7'): Request {
   return new Request('https://marciomariani.dev/api/chat', {
     method: 'POST',
-    headers: { 'content-type': contentType },
+    headers: { 'content-type': contentType, 'x-real-ip': ip },
     body: typeof body === 'string' ? body : JSON.stringify(body),
   });
 }
@@ -69,6 +84,7 @@ describe('POST /api/chat — answering', () => {
         clock: { now: () => new Date('2026-10-28T00:00:00Z') },
       }),
       reportError,
+      ...spending(),
     });
     const events = await readEvents(
       await handlerWith(assistant)(post({ message: 'Compare Roots and Deel.' })),
@@ -165,5 +181,36 @@ describe('POST /api/chat — the stream', () => {
       },
     });
     expect(reported).toEqual([failure]);
+  });
+});
+
+describe('POST /api/chat — pacing', () => {
+  it('turns away a client over the request limit with 429 and when to retry', async () => {
+    let clock = 0;
+    const limiter = createSlidingWindowLimiter({ limit: 2, windowMs: 60_000, now: () => clock });
+    const handle = handlerWith(fastPathOnly, limiter);
+    expect((await handle(post({ message: 'hi' }))).status).toBe(200);
+    expect((await handle(post({ message: 'hi' }))).status).toBe(200);
+    clock = 15_000;
+    const refused = await handle(post({ message: 'hi' }));
+    expect(refused.status).toBe(429);
+    expect(refused.headers.get('retry-after')).toBe('45');
+    expect(await refused.json()).toEqual({
+      error: { code: 'rate_limited', message: 'Too many questions in a short time.' },
+    });
+  });
+
+  it('paces each client separately', async () => {
+    const limiter = createSlidingWindowLimiter({ limit: 1, windowMs: 60_000 });
+    const handle = handlerWith(fastPathOnly, limiter);
+    expect((await handle(post({ message: 'hi' }, 'application/json', '203.0.113.1'))).status).toBe(
+      200,
+    );
+    expect((await handle(post({ message: 'hi' }, 'application/json', '203.0.113.2'))).status).toBe(
+      200,
+    );
+    expect((await handle(post({ message: 'hi' }, 'application/json', '203.0.113.1'))).status).toBe(
+      429,
+    );
   });
 });

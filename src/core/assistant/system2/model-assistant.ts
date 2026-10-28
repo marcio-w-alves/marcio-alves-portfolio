@@ -1,7 +1,12 @@
 import type { AnswerSource, AssistantEvent } from '../assistant-event';
 import type { RichComponent } from '../components';
 import type { ClockPort } from '../ports/clock.port';
-import type { LanguageModelPort, ModelMessage, ToolCall } from '../ports/language-model.port';
+import type {
+  LanguageModelPort,
+  ModelMessage,
+  ModelUsage,
+  ToolCall,
+} from '../ports/language-model.port';
 import type { ToolRegistry } from '../tools/registry';
 import type { DeclineReason, ToolOutcome } from '../tools/tool';
 import { systemPrompt } from './system-prompt';
@@ -41,6 +46,8 @@ interface Options {
   readonly model: LanguageModelPort;
   readonly tools: ToolRegistry;
   readonly clock: ClockPort;
+  /** Called once per model call with what it cost, for the spending budget. */
+  readonly onUsage?: (usage: ModelUsage) => void;
 }
 
 function parseArguments(raw: string): unknown {
@@ -51,7 +58,7 @@ function parseArguments(raw: string): unknown {
   }
 }
 
-export function createModelAssistant({ model, tools, clock }: Options): ModelAssistant {
+export function createModelAssistant({ model, tools, clock, onUsage }: Options): ModelAssistant {
   const definitions = tools.tools.map(({ name, description, parameters }) => ({
     name,
     description,
@@ -111,6 +118,8 @@ export function createModelAssistant({ model, tools, clock }: Options): ModelAss
             yield { type: 'text-delta', id: 'p0', delta: event.delta };
           } else if (event.type === 'tool-calls') {
             calls = event.calls;
+          } else if (event.type === 'finish') {
+            onUsage?.(event.usage);
           }
         }
         if (calls.length === 0) break;

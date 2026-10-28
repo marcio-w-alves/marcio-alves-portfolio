@@ -122,6 +122,20 @@ The stream is pulled one event at a time, so nothing is generated faster than
 the visitor reads it; when they leave, the stream is cancelled and the
 request's abort signal ends the model call behind it.
 
+### Spending
+
+The model is the only part that costs money, so it is fenced in layers.
+Each client may send 40 requests in any ten minutes (429 with `Retry-After`
+past that) and start 15 model answers; a visitor over the second limit gets a
+free answer explaining it, with suggestions the fast path answers. A
+context-free question already answered is replayed from cache, at no cost and
+without counting against the visitor. Each instance also stops calling the
+model after about two million tokens a UTC day.
+
+All of that is in memory, so per instance: defence in depth, not a quota. The
+hard ceiling is the monthly budget set on the OpenAI project, which is where
+the spend is actually capped.
+
 ## Design tokens
 
 `src/app/globals.css` is the whole visual vocabulary, declared as Tailwind v4

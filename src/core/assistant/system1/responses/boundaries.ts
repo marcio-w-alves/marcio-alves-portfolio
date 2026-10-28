@@ -156,3 +156,20 @@ export function unknown(): AssistantResponse {
     { followUps: CORE_FOLLOW_UPS, sources: [], grounded: false },
   );
 }
+
+/**
+ * For a visitor who has used up their share of model answers. Not an error:
+ * the suggested questions are answered by the fast path, so they keep working
+ * at no cost while the limit resets.
+ */
+export function slowDown(followUps: readonly string[]): AssistantResponse {
+  return response(
+    'rateLimited',
+    [
+      text(
+        "You've asked a lot in a short time, so the full assistant is pausing for a few minutes. The suggested questions below are answered instantly and still work.",
+      ),
+    ],
+    { followUps: followUps.length > 0 ? followUps : CORE_FOLLOW_UPS, sources: [], grounded: false },
+  );
+}
