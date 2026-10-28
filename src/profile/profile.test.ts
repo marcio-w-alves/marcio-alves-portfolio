@@ -101,7 +101,7 @@ describe("the owner's record", () => {
 });
 
 describe("the owner's headline", () => {
-  const HEADLINE = 'Senior Frontend Engineer with tech-lead responsibilities';
+  const HEADLINE = 'Senior Frontend Engineer';
   const site = createSiteContent(profile.knowledge, profile.copy.en.answers, 'en');
   const copy = siteMessages(site.knowledge, profile.copy.en, 'en').site;
   const metadata = rootMetadata(
@@ -119,7 +119,7 @@ describe("the owner's headline", () => {
     expect(metadata.openGraph).toMatchObject({ title: metadata.title });
     expect(metadata.twitter).toMatchObject({ title: metadata.title });
     expect(copy.shareImageAlt).toBe(`Marcio Alves, ${HEADLINE}`);
-    expect(knowledge.welcome.description).toMatch(/^Senior frontend engineer with tech-lead/);
+    expect(knowledge.welcome.description).toMatch(/^Senior frontend engineer with 10\+ years/);
     expect(overview.intro).toContain(HEADLINE);
   });
 

@@ -12,8 +12,8 @@ export const profile: ProfileSource = {
   firstName: identity.firstName,
   initials: identity.initials,
   title: {
-    en: 'Senior Frontend Engineer with tech-lead responsibilities',
-    'pt-BR': 'Senior Frontend Engineer com responsabilidade de tech lead',
+    en: 'Senior Frontend Engineer',
+    'pt-BR': 'Senior Frontend Engineer',
   },
   yearsLabel: { en: '10+ years', 'pt-BR': '10+ anos' },
   careerStartYear: 2015,
@@ -30,9 +30,9 @@ export const profile: ProfileSource = {
     { en: 'Product Engineering', 'pt-BR': 'Engenharia de produto' },
   ],
   summary: {
-    en: 'Marcio is a senior frontend engineer with tech-lead responsibilities and deep expertise in React and Next.js, focused on scalable architecture, performance optimization and developer experience.',
+    en: 'Marcio is a senior frontend engineer with deep expertise in React and Next.js, focused on scalable architecture, performance optimization and developer experience.',
     'pt-BR':
-      'Marcio é um engenheiro frontend sênior com responsabilidade de tech lead e profundo conhecimento de React e Next.js, com foco em arquitetura escalável, otimização de performance e developer experience.',
+      'Marcio é um engenheiro frontend sênior com profundo conhecimento de React e Next.js, com foco em arquitetura escalável, otimização de performance e developer experience.',
   },
   context: {
     en: 'He designs, implements and maintains scalable applications end to end, while driving technical strategy, mentoring engineers and collaborating with product and design teams.',
@@ -58,9 +58,9 @@ export const profile: ProfileSource = {
 export const welcome: WelcomeSource = {
   heading: { en: "Hi, I'm Marcio", 'pt-BR': 'Olá, eu sou o Marcio' },
   description: {
-    en: 'Senior frontend engineer with tech-lead responsibilities and 10+ years in React, TypeScript and frontend architecture. Ask anything about my work.',
+    en: 'Senior frontend engineer with 10+ years in React, TypeScript and frontend architecture. Ask anything about my work.',
     'pt-BR':
-      'Engenheiro frontend sênior com responsabilidade de tech lead e 10+ anos de React, TypeScript e arquitetura frontend. Pergunte o que quiser sobre o meu trabalho.',
+      'Engenheiro frontend sênior com 10+ anos de React, TypeScript e arquitetura frontend. Pergunte o que quiser sobre o meu trabalho.',
   },
   placeholder: {
     en: 'Ask about my experience, skills or projects…',
