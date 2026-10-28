@@ -146,8 +146,9 @@ render differently on GitHub's runners, so visual fidelity stays with
 
 ## Knowledge base
 
-`src/core/knowledge` is the single source of truth for every fact the site and
-the assistant present. Two layers live side by side on each role: condensed
+`src/profile/knowledge` is the single source of truth for every fact the site and
+the assistant present. The core never imports it: the roots localize it and hand
+it to the core's factories as a value. Two layers live side by side on each role: condensed
 fields that shape the interface, and `highlights` — the resume's bullet points
 verbatim — which are the factual record retrieval searches. Where the design's
 copy and the resume disagree, the resume wins.
@@ -165,14 +166,14 @@ The knowledge base is also flattened into categorized passages — profile,
 experience, skills, education, languages, certifications, projects,
 principles — one per resume statement, each naming its company and role. They
 are embedded with `text-embedding-3-small` at 512 dimensions into
-`src/infrastructure/retrieval/knowledge-index.json`, which is committed.
+`src/profile/generated/knowledge-index.json`, which is committed.
 
 The index is built offline with `pnpm rag:build`, never during a build, because
 the build must not need a secret; at runtime only the question is embedded.
 The index records a hash of the corpus it came from, and a test fails the
 moment the knowledge base changes without the index being rebuilt.
 
-Marcio's knowledge-base document, `src/core/knowledge/data/knowledge-base.md`,
+Marcio's knowledge-base document, `src/profile/knowledge/knowledge-base.md`,
 adds a `notes` category: how he works, system design, AI-assisted engineering,
 studies, his own products, goals and interests. `pnpm notes:build` (run first
 by `pnpm rag:build`) splits it into `notes.json`, one passage per subsection
@@ -289,7 +290,7 @@ its own at `/<topic>` (`/experience`, `/skills`, `/projects`, `/achievements`,
 `/philosophy`, `/education`). Each opens without the current conversation, on
 its introduction and its part of the record — the timeline, the skill groups,
 the project cards, the metrics, the principles, the languages and courses —
-built locally from `src/core/knowledge`, never by the model, and prerendered
+built locally from `src/profile/knowledge`, never by the model, and prerendered
 at build. A question asked there is answered beneath it, in that page's own
 conversation.
 
@@ -356,7 +357,7 @@ The root layout sets the title, description and Open Graph and Twitter tags;
 `metadataBase` is `siteUrl()`, so every absolute URL follows the canonical
 origin. Each topic page sets its own title, description and canonical, and the
 sitemap lists them all. The home page adds its canonical and a JSON-LD `Person` built from
-`src/core/knowledge` — name, title, summary, LinkedIn and GitHub, and every
+`src/profile/knowledge` — name, title, summary, LinkedIn and GitHub, and every
 documented skill, never the coursework. `robots.ts` keeps crawlers out of
 `/workbench` and `/api` and points to `sitemap.ts`.
 
@@ -439,7 +440,7 @@ cannot handle.
 ### Evaluation
 
 `pnpm eval:assistant` runs a corpus of conversations
-(`scripts/evaluation/cases.ts`) — career facts, technologies, companies,
+(`src/profile/evaluation/cases.ts`) — career facts, technologies, companies,
 profiles, location, undocumented details, off-topic requests, injection
 attempts, follow-ups and other languages — through the production wiring. Each
 answer's prose goes to an independent judge, a stronger model than the one

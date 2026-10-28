@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createChatHandler } from '@/app/api/chat/chat-handler';
+import { localize } from '@/core/knowledge/localize';
+import { fixtureKnowledge } from '@/testing/fixture-profile/knowledge';
 import { buildContainer } from './composition-root';
 
 const VISITOR_IP = '203.0.113.42';
@@ -98,5 +100,38 @@ describe('limits set by the deployment', () => {
     expect((await ask(handle, 'hi')).status).toBe(200);
     expect((await ask(handle, 'hi')).status).toBe(200);
     expect((await ask(handle, 'hi')).status).toBe(429);
+  });
+});
+
+describe('the record the container answers from', () => {
+  async function answerText(container: ReturnType<typeof buildContainer>, message: string) {
+    const response = await createChatHandler(container)(
+      new Request('https://portfolio.example/api/chat', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-real-ip': VISITOR_IP },
+        body: JSON.stringify({ message }),
+      }),
+    );
+    return response.text();
+  }
+
+  it('answers from the knowledge it is given, not from a record of its own', async () => {
+    captureLogs();
+    const fixture = buildContainer({ knowledge: localize(fixtureKnowledge, 'en') });
+
+    const answer = await answerText(fixture, 'Tell me more about Pipewright.');
+
+    expect(answer).toContain('"intent":"project:pipewright"');
+    expect(answer).toContain('A small CI runner for monorepos.');
+    expect(answer).toContain('Incremental builds over a dependency graph.');
+  });
+
+  it("binds the profile's record when given none", async () => {
+    captureLogs();
+
+    const answer = await answerText(buildContainer(), 'Tell me more about Pipewright.');
+
+    expect(answer).not.toContain('project:pipewright');
+    expect(answer).toContain('"intent":"unknown"');
   });
 });

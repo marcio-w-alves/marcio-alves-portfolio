@@ -1,6 +1,6 @@
 import type { AssistantEvent } from '@/core/assistant/assistant-event';
 import { toEvents } from '@/core/assistant/response';
-import { fastPath } from '@/core/assistant/system1/fast-path';
+import { createFastPath } from '@/core/assistant/system1/fast-path';
 import {
   addExchange,
   applyEvent,
@@ -8,6 +8,7 @@ import {
   createConversation,
 } from '@/core/conversation/conversation';
 import type { Conversation } from '@/core/conversation/messages';
+import { knowledge, topicIntro } from '../../../site-knowledge';
 
 /**
  * The design's state boards, rebuilt the way its prototype builds them:
@@ -22,8 +23,10 @@ interface Partial {
   readonly ratio: number;
 }
 
+const fastPath = createFastPath(knowledge);
+
 function eventsFor(question: string, conversation: Conversation): AssistantEvent[] {
-  const result = fastPath(question, contextOf(conversation));
+  const result = fastPath.answer(question, contextOf(conversation));
   if (result.kind !== 'answered') throw new Error(`"${question}" is not a fast-path question`);
   return toEvents(result.response);
 }
@@ -82,7 +85,7 @@ const fresh = (conversation = createConversation(), drawerOpen = false): Scenari
 export const SCENARIOS: Readonly<Record<string, () => Scenario>> = {
   main: () => fresh(),
   mobile: () => fresh(),
-  'state-topic': () => fresh(createConversation('experience')),
+  'state-topic': () => fresh(createConversation('experience', topicIntro('experience'))),
   'state-streaming': () =>
     fresh(
       ask(createConversation(), 'What has he built at Deel?', {

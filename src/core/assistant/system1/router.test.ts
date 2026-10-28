@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { knowledgeBase } from '@/core/knowledge/knowledge-base';
+import { localize } from '@/core/knowledge/localize';
+import { profile } from '@/profile';
 import type { ConversationContext } from '../response';
-import { route } from './router';
+import { createRouter } from './router';
+
+const knowledge = localize(profile.knowledge, 'en');
+const route = createRouter(knowledge);
 
 const FRESH: ConversationContext = { topic: 'overview', lastIntent: null, ctaShown: false };
 
@@ -66,7 +70,7 @@ describe('router — the questions the interface itself suggests', () => {
 });
 
 describe('router — the companies of the record', () => {
-  const roles = knowledgeBase.experience.map((role) => [role.company, role.id] as const);
+  const roles = knowledge.experience.map((role) => [role.company, role.id] as const);
 
   it.each(roles)('recognises %s by its name', (company, id) => {
     expect(intentOf(`What did he do at ${company}?`)).toBe(`company:${id}`);

@@ -66,7 +66,8 @@ gate is fixed, never bypassed.
 
 ## Changing the record
 
-1. Edit `src/core/knowledge/data/*`; every entry keeps its `source`.
+1. Edit `src/profile/knowledge/*`; every entry keeps its `source`. `src/profile/README.md`
+   lists every file of the profile.
 2. `pnpm rag:build`. CI fails while the index is stale
    ([ADR 0004](docs/adr/0004-committed-retrieval-index.md)).
 3. `pnpm eval:assistant`.

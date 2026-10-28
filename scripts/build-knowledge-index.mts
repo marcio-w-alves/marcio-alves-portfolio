@@ -10,6 +10,7 @@
  */
 import { writeFile } from 'node:fs/promises';
 import { buildCorpus } from '../src/core/knowledge/corpus';
+import { localize } from '../src/core/knowledge/localize';
 import { createOpenAIClient } from '../src/infrastructure/openai/openai-client';
 import { createOpenAIEmbeddings } from '../src/infrastructure/openai/openai-embeddings';
 import {
@@ -18,8 +19,9 @@ import {
   EMBEDDING_MODEL,
   type KnowledgeIndex,
 } from '../src/infrastructure/retrieval/index-spec';
+import { profile } from '../src/profile';
 
-const OUTPUT = new URL('../src/infrastructure/retrieval/knowledge-index.json', import.meta.url);
+const OUTPUT = new URL('../src/profile/generated/knowledge-index.json', import.meta.url);
 
 // Five decimals keep cosine similarity accurate to well below any ranking
 // difference while cutting the committed file roughly in half.
@@ -28,7 +30,7 @@ const PRECISION = 1e5;
 const apiKey = process.env.OPENAI_API_KEY;
 if (!apiKey) throw new Error('OPENAI_API_KEY is not set. Put it in .env.local.');
 
-const chunks = buildCorpus();
+const chunks = buildCorpus(localize(profile.knowledge, 'en'));
 const embeddings = createOpenAIEmbeddings({
   client: createOpenAIClient(apiKey),
   model: EMBEDDING_MODEL,

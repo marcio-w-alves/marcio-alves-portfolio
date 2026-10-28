@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { createDisplayTools } from './display-tools';
+import type { ResponseKit } from '../response-kit';
 import { createKnowledgeTools } from './knowledge-tools';
 import { defineTool, type Tool, type ToolFailure, type ToolOutcome } from './tool';
 
@@ -26,6 +27,8 @@ export interface ToolRegistry {
 }
 
 interface RegistryOptions {
+  /** The record the built-in actions read. */
+  readonly kit: ResponseKit;
   /** Actions beyond the built-in ones, such as those that reach the network. */
   readonly extra?: readonly Tool[];
   /** Told of every action that throws, with what it threw; the model is never shown that. */
@@ -44,8 +47,17 @@ function failed(name: string): ToolOutcome {
  * model, never executed. An action that throws becomes an error the model can
  * answer around, so one broken action never costs the visitor the answer.
  */
-export function createToolRegistry({ extra = [], reportError }: RegistryOptions): ToolRegistry {
-  const tools = [...createKnowledgeTools(), ...createDisplayTools(), declineToAnswer, ...extra];
+export function createToolRegistry({
+  kit,
+  extra = [],
+  reportError,
+}: RegistryOptions): ToolRegistry {
+  const tools = [
+    ...createKnowledgeTools(kit),
+    ...createDisplayTools(kit),
+    declineToAnswer,
+    ...extra,
+  ];
   const byName = new Map(tools.map((tool) => [tool.name, tool]));
   if (byName.size !== tools.length) throw new Error('Two tools share a name.');
   return {

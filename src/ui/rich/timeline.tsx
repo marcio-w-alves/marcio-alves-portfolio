@@ -1,4 +1,3 @@
-import type { RoleId } from '@/core/knowledge/ids';
 import type { MetricItem, RoleSection, RoleView } from '@/core/assistant/components';
 import { BulletList } from './bullet-list';
 import { SectionTitle } from './section-title';
@@ -8,7 +7,7 @@ import { TimelineRole } from './timeline-role';
 interface TimelineProps {
   readonly roles: readonly RoleView[];
   /** The roles open on first render; the visitor opens and closes the rest. */
-  readonly expanded: readonly RoleId[];
+  readonly expanded: readonly string[];
 }
 
 export function Timeline({ roles, expanded }: TimelineProps) {

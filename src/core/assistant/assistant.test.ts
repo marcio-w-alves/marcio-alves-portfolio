@@ -1,9 +1,14 @@
 import { describe, expect, it } from 'vitest';
+import { localize } from '@/core/knowledge/localize';
+import { profile } from '@/profile';
 import { createAssistant, type AnswerReport, type AssistantRequest } from './assistant';
 import type { AssistantEvent } from './assistant-event';
 import type { AnswerCachePort } from './ports/answer-cache.port';
 import type { ModelBudgetPort } from './ports/model-budget.port';
+import { createFastPath } from './system1/fast-path';
 import type { ModelAssistant, ModelAssistantRequest } from './system2/model-assistant';
+
+const fastPath = createFastPath(localize(profile.knowledge, 'en'));
 
 const FRESH = { topic: 'overview', lastIntent: null, ctaShown: false };
 
@@ -63,6 +68,7 @@ function assistantWith(
   reported.length = 0;
   answered.length = 0;
   return createAssistant({
+    fastPath,
     modelAssistant: model,
     budget,
     answerCache,

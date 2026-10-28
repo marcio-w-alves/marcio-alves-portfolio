@@ -16,8 +16,8 @@ afterAll(() => {
   server.close();
 });
 
-const PROFILE_URL = 'https://api.github.com/users/marcio-w-alves';
-const REPOS_URL = 'https://api.github.com/users/marcio-w-alves/repos';
+const PROFILE_URL = 'https://api.github.com/users/ada-rivera-example';
+const REPOS_URL = 'https://api.github.com/users/ada-rivera-example/repos';
 
 /** The adapter, with what it logs kept as parsed lines. */
 function github(options: { token?: string; timeoutMs?: number } = {}) {
@@ -25,16 +25,24 @@ function github(options: { token?: string; timeoutMs?: number } = {}) {
   const logger = createLogger({
     write: (level, line) => logged.push({ ...(JSON.parse(line) as object), level }),
   });
-  return { api: createGithubApi({ username: 'marcio-w-alves', logger, ...options }), logged };
+  return {
+    api: createGithubApi({
+      username: 'ada-rivera-example',
+      userAgent: 'AdaRiveraPortfolio',
+      logger,
+      ...options,
+    }),
+    logged,
+  };
 }
 
 const USER = {
-  login: 'marcio-w-alves',
-  name: 'Marcio Montenegro',
+  login: 'ada-rivera-example',
+  name: 'Ada Rivera',
   bio: 'Frontend engineer',
   public_repos: 12,
   followers: 3,
-  html_url: 'https://github.com/marcio-w-alves',
+  html_url: 'https://github.com/ada-rivera-example',
   created_at: '2017-08-15T00:00:00Z',
 };
 
@@ -46,7 +54,7 @@ function repository(name: string) {
     stargazers_count: 2,
     fork: false,
     topics: ['nextjs'],
-    html_url: `https://github.com/marcio-w-alves/${name}`,
+    html_url: `https://github.com/ada-rivera-example/${name}`,
     pushed_at: '2026-10-28T00:00:00Z',
   };
 }
@@ -54,15 +62,15 @@ function repository(name: string) {
 describe('GitHub API adapter', () => {
   it('reads the public profile of the configured account', async () => {
     server.use(
-      http.get('https://api.github.com/users/marcio-w-alves', () => HttpResponse.json(USER)),
+      http.get('https://api.github.com/users/ada-rivera-example', () => HttpResponse.json(USER)),
     );
     expect(await github().api.profile()).toEqual({
-      login: 'marcio-w-alves',
-      name: 'Marcio Montenegro',
+      login: 'ada-rivera-example',
+      name: 'Ada Rivera',
       bio: 'Frontend engineer',
       publicRepositories: 12,
       followers: 3,
-      url: 'https://github.com/marcio-w-alves',
+      url: 'https://github.com/ada-rivera-example',
       createdAt: '2017-08-15T00:00:00Z',
     });
   });
@@ -70,7 +78,7 @@ describe('GitHub API adapter', () => {
   it('lists repositories most recently pushed first, trimmed to the limit', async () => {
     let query = '';
     server.use(
-      http.get('https://api.github.com/users/marcio-w-alves/repos', ({ request }) => {
+      http.get('https://api.github.com/users/ada-rivera-example/repos', ({ request }) => {
         query = new URL(request.url).search;
         return HttpResponse.json([repository('a'), repository('b'), repository('c')]);
       }),
@@ -80,10 +88,22 @@ describe('GitHub API adapter', () => {
     expect(query).toContain('sort=pushed');
   });
 
+  it('names the site in the User-Agent, as GitHub requires of every client', async () => {
+    let userAgent: string | null = null;
+    server.use(
+      http.get(PROFILE_URL, ({ request }) => {
+        userAgent = request.headers.get('user-agent');
+        return HttpResponse.json(USER);
+      }),
+    );
+    await github().api.profile();
+    expect(userAgent).toBe('AdaRiveraPortfolio');
+  });
+
   it('authenticates only when a token is configured', async () => {
     const seen: (string | null)[] = [];
     server.use(
-      http.get('https://api.github.com/users/marcio-w-alves', ({ request }) => {
+      http.get('https://api.github.com/users/ada-rivera-example', ({ request }) => {
         seen.push(request.headers.get('authorization'));
         return HttpResponse.json(USER);
       }),
@@ -95,7 +115,7 @@ describe('GitHub API adapter', () => {
 
   it('reports GitHub as unavailable when it rate-limits or fails', async () => {
     server.use(
-      http.get('https://api.github.com/users/marcio-w-alves', () =>
+      http.get('https://api.github.com/users/ada-rivera-example', () =>
         HttpResponse.json({ message: 'API rate limit exceeded' }, { status: 403 }),
       ),
     );
@@ -109,7 +129,7 @@ describe('GitHub API adapter', () => {
       ),
     );
     const { api, logged } = github();
-    expect(await api.profile()).toMatchObject({ login: 'marcio-w-alves', followers: 3 });
+    expect(await api.profile()).toMatchObject({ login: 'ada-rivera-example', followers: 3 });
     expect(logged).toEqual([]);
   });
 

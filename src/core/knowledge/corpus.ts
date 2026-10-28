@@ -1,17 +1,15 @@
-import type { SourceId } from './ids';
-import notes from './data/notes.json';
-import { knowledgeBase } from './knowledge-base';
-import type { Project } from './types';
+import type { Knowledge, Project } from './schema';
 
 /**
  * The knowledge base flattened into categorized passages for retrieval.
  *
  * Each resume statement is its own passage, carrying its company, role and
  * period in the text, so a match is precise and still says where the fact
- * comes from. Marcio's knowledge-base document follows as its own passages
- * (see notes.ts): the résumé records what he did, the notes add how he works,
- * what he studies and builds, and what he is interested in. Contact details are deliberately absent: they are served by an
- * action, never retrieved by similarity.
+ * comes from. The owner's knowledge-base document follows as its own passages
+ * (see notes.ts): the résumé records what they did, the notes add how they
+ * work, what they study and build, and what they are interested in. Contact
+ * details are deliberately absent: they are served by an action, never
+ * retrieved by similarity.
  */
 
 export const CHUNK_CATEGORIES = [
@@ -32,33 +30,46 @@ export interface KnowledgeChunk {
   readonly id: string;
   readonly category: ChunkCategory;
   readonly text: string;
-  readonly source: SourceId;
+  readonly source: string;
 }
 
 function list(items: readonly string[]): string {
   return items.join(', ');
 }
 
-function liveProductText(project: Project): string {
+function liveProductText(project: Project, owner: string): string {
   const site = project.links.map((link) => link.url).join(', ');
-  return `${project.name}, one of Marcio's own products with a public site (${project.category}), status: ${project.status}. ${project.description} ${project.scopeLabel}: ${list(project.scope)}. Platforms: ${list(project.platforms)}. Public site: ${site}. Only what the public site states is documented — no users, revenue or release dates.`;
+  return `${project.name}, one of ${owner}'s own products with a public site (${project.category}), status: ${project.status}. ${project.description} ${project.scopeLabel}: ${list(project.scope)}. Platforms: ${list(project.platforms)}. Public site: ${site}. Only what the public site states is documented — no users, revenue or release dates.`;
 }
 
-function conceptText(project: Project): string {
-  return `${project.name}, one of Marcio's product concepts (${project.category}): ${project.description} ${project.scopeLabel}: ${list(project.scope)}. Only planned scope is documented — no implementation, users, revenue or release dates.`;
+function conceptText(project: Project, owner: string): string {
+  return `${project.name}, one of ${owner}'s product concepts (${project.category}): ${project.description} ${project.scopeLabel}: ${list(project.scope)}. Only planned scope is documented — no implementation, users, revenue or release dates.`;
 }
 
-export function buildCorpus(): KnowledgeChunk[] {
-  const {
-    profile,
-    experience,
-    skills,
-    certifications,
-    education,
-    languages,
-    projects,
-    principles,
-  } = knowledgeBase;
+/**
+ * One passage for a whole section of the record, credited to the section: its
+ * entries share one source. A section with no entries has nothing to say.
+ */
+function sectionPassage(
+  category: 'certifications' | 'languages',
+  entries: readonly { readonly source: string }[],
+  text: string,
+): KnowledgeChunk[] {
+  const [first] = entries;
+  return first ? [{ id: category, category, text, source: first.source }] : [];
+}
+
+export function buildCorpus({
+  profile,
+  experience,
+  skills,
+  certifications,
+  education,
+  languages,
+  projects,
+  principles,
+  notes,
+}: Knowledge): KnowledgeChunk[] {
   return [
     {
       id: 'profile',
@@ -84,43 +95,43 @@ export function buildCorpus(): KnowledgeChunk[] {
       id: `skills:${group.id}`,
       category: 'skills',
       text: `Skills — ${group.title}: ${list(group.items)}.`,
-      source: 'resume.skills',
+      source: group.source,
     })),
-    {
-      id: 'certifications',
-      category: 'certifications',
-      text: `Certifications, which are courses and not professional experience: ${list(certifications.map((item) => `${item.name} (${item.issuer})`))}.`,
-      source: 'resume.certifications',
-    },
+    ...sectionPassage(
+      'certifications',
+      certifications,
+      `Certifications, which are courses and not professional experience: ${list(certifications.map((item) => `${item.name} (${item.issuer})`))}.`,
+    ),
     {
       id: 'education',
       category: 'education',
       text: `Education: ${education.degree} from ${education.school} (${education.schoolShort}), ${education.location}, completed in ${String(education.year)}.`,
       source: education.source,
     },
-    {
-      id: 'languages',
-      category: 'languages',
-      text: `Languages: ${list(languages.map((language) => `${language.name} (${language.level})`))}.`,
-      source: 'resume.languages',
-    },
+    ...sectionPassage(
+      'languages',
+      languages,
+      `Languages: ${list(languages.map((language) => `${language.name} (${language.level})`))}.`,
+    ),
     ...projects.map((project): KnowledgeChunk => ({
       id: `project:${project.id}`,
       category: 'projects',
-      text: project.live ? liveProductText(project) : conceptText(project),
+      text: project.live
+        ? liveProductText(project, profile.firstName)
+        : conceptText(project, profile.firstName),
       source: project.source,
     })),
     ...principles.map((principle, index): KnowledgeChunk => ({
       id: `principle:${String(index)}`,
       category: 'principles',
       text: `Engineering principle — ${principle.title}: ${principle.text}`,
-      source: 'principles',
+      source: principle.source,
     })),
-    ...notes.map((note): KnowledgeChunk => ({
+    ...notes.passages.map((note): KnowledgeChunk => ({
       id: `notes:${note.id}`,
       category: 'notes',
       text: note.text,
-      source: 'notes',
+      source: notes.source,
     })),
   ];
 }

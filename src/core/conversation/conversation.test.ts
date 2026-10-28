@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import { localize } from '@/core/knowledge/localize';
+import { profile } from '@/profile';
 import type { AssistantEvent } from '../assistant/assistant-event';
 import { toEvents } from '../assistant/response';
-import { fastPath } from '../assistant/system1/fast-path';
-import { topicById } from '../assistant/topics';
+import { createResponseKit } from '../assistant/response-kit';
+import { createFastPath } from '../assistant/system1/fast-path';
+import { createTopicIntro } from '../assistant/topic-pages';
+import { createTopicCatalog } from '../assistant/topics';
 import {
   activeAnswer,
   addExchange,
@@ -16,6 +20,12 @@ import {
   stopAnswer,
 } from './conversation';
 import type { AssistantMessage, Conversation } from './messages';
+
+const knowledge = localize(profile.knowledge, 'en');
+const kit = createResponseKit(knowledge);
+const catalog = createTopicCatalog(kit);
+const topicIntro = createTopicIntro(kit, catalog);
+const fastPath = createFastPath(knowledge).answer;
 
 /** The events the server would stream for this question, from the real fast path. */
 function eventsFor(question: string, conversation: Conversation): AssistantEvent[] {
@@ -123,23 +133,32 @@ describe('stopping an answer', () => {
 
 describe('topic pages', () => {
   it('opens a topic on its introduction, its part of the record and its suggestions', () => {
-    const conversation = createConversation('experience');
+    const conversation = createConversation('experience', topicIntro('experience'));
     const [intro] = conversation.messages;
     expect(conversation.topic).toBe('experience');
     expect(conversation.messages).toHaveLength(1);
     expect(intro).toMatchObject({ role: 'assistant', kind: 'intro', status: 'done' });
     if (intro?.role !== 'assistant') throw new Error('no introduction');
-    expect(intro.parts[0]).toMatchObject({ text: topicById('experience').intro });
+    expect(intro.parts[0]).toMatchObject({ text: catalog.topicById('experience').intro });
     expect(intro.parts[1]).toMatchObject({ type: 'component', component: 'timeline' });
     expect(intro.followUps.length).toBeGreaterThan(0);
   });
 
   it('builds the same page every time, so the server and the browser agree', () => {
-    expect(createConversation('skills')).toEqual(createConversation('skills'));
+    expect(createConversation('skills', topicIntro('skills'))).toEqual(
+      createConversation('skills', topicIntro('skills')),
+    );
+  });
+
+  it('cannot open a topic page without its introduction', () => {
+    // @ts-expect-error A topic page is its introduction; there is no empty one to fall back to.
+    expect(() => createConversation('experience')).toThrow(
+      '"experience" opens on its introduction',
+    );
   });
 
   it('opens the overview empty, as the welcome screen', () => {
-    expect(createConversation('overview').messages).toHaveLength(0);
+    expect(createConversation('overview', topicIntro('overview')).messages).toHaveLength(0);
   });
 });
 
@@ -170,7 +189,7 @@ describe('feedback', () => {
 
 describe('history sent to the server', () => {
   it('carries questions and finished answers as plain text, without introductions or failures', () => {
-    let conversation = createConversation('experience');
+    let conversation = createConversation('experience', topicIntro('experience'));
     conversation = ask(conversation, 'What did he do at Roots?').conversation;
     conversation = ask(conversation, 'Broken', [
       { type: 'error', error: { code: 'network', message: 'x', retryable: true } },

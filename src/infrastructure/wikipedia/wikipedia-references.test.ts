@@ -25,7 +25,15 @@ function wikipedia(options: { timeoutMs?: number } = {}) {
   const logger = createLogger({
     write: (level, line) => logged.push({ ...(JSON.parse(line) as object), level }),
   });
-  return { references: createWikipediaReferences({ siteUrl: SITE, logger, ...options }), logged };
+  return {
+    references: createWikipediaReferences({
+      product: 'AdaRiveraPortfolio',
+      siteUrl: SITE,
+      logger,
+      ...options,
+    }),
+    logged,
+  };
 }
 
 function article(title: string, type = 'standard') {
@@ -53,7 +61,7 @@ describe('Wikipedia references', () => {
       extract: 'TypeScript is described here.',
       url: 'https://en.wikipedia.org/wiki/TypeScript',
     });
-    expect(userAgent).toBe('MarcioAlvesPortfolio/1.0 (https://portfolio.example)');
+    expect(userAgent).toBe('AdaRiveraPortfolio/1.0 (https://portfolio.example)');
     expect(requested).toBe('TypeScript');
   });
 
@@ -70,8 +78,8 @@ describe('Wikipedia references', () => {
   });
 
   it('treats a disambiguation page as no article, since it describes nothing', async () => {
-    server.use(http.get(SUMMARY, () => HttpResponse.json(article('Deel', 'disambiguation'))));
-    expect(await wikipedia().references.summary('Deel')).toBeNull();
+    server.use(http.get(SUMMARY, () => HttpResponse.json(article('Mercury', 'disambiguation'))));
+    expect(await wikipedia().references.summary('Mercury')).toBeNull();
   });
 
   it('reports a missing article as unavailable', async () => {
@@ -162,9 +170,9 @@ describe('Wikipedia references', () => {
   });
 
   it('logs nothing for a disambiguation page, which is an answer and not a failure', async () => {
-    server.use(http.get(SUMMARY, () => HttpResponse.json(article('Deel', 'disambiguation'))));
+    server.use(http.get(SUMMARY, () => HttpResponse.json(article('Mercury', 'disambiguation'))));
     const { references, logged } = wikipedia();
-    await references.summary('Deel');
+    await references.summary('Mercury');
     expect(logged).toEqual([]);
   });
 });

@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { suggestedQuestions, suggestions, topicById } from './topics';
+import { localize } from '@/core/knowledge/localize';
+import { profile } from '@/profile';
+import { createResponseKit } from './response-kit';
+import { createTopicCatalog } from './topics';
+
+const { suggestedQuestions, suggestions, topicById } = createTopicCatalog(
+  createResponseKit(localize(profile.knowledge, 'en')),
+);
 
 describe('topics — suggested questions', () => {
   it('carries each question with its tag and the short chip label written for it', () => {

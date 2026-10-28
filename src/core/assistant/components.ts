@@ -1,5 +1,3 @@
-import type { ProjectId, RoleId } from '@/core/knowledge/ids';
-
 /**
  * The rich blocks an answer may contain. This is an allow-list: the interface
  * renders these and nothing else, and every prop is resolved data — never a
@@ -18,7 +16,7 @@ export type RoleSection =
   | { readonly title: string; readonly kind: 'tags'; readonly items: readonly string[] };
 
 export interface RoleView {
-  readonly id: RoleId;
+  readonly id: string;
   readonly company: string;
   readonly role: string;
   readonly period: string;
@@ -34,7 +32,7 @@ export interface ProjectLinkView {
 }
 
 export interface ProjectView {
-  readonly id: ProjectId;
+  readonly id: string;
   readonly name: string;
   readonly category: string;
   readonly status: string;
@@ -57,7 +55,7 @@ export type RichComponent =
   | { readonly component: 'metrics'; readonly props: { readonly items: readonly MetricItem[] } }
   | {
       readonly component: 'timeline';
-      readonly props: { readonly roles: readonly RoleView[]; readonly expanded: readonly RoleId[] };
+      readonly props: { readonly roles: readonly RoleView[]; readonly expanded: readonly string[] };
     }
   | {
       readonly component: 'skills';

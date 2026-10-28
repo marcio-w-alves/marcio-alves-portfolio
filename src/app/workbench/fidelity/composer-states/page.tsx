@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { MAX_QUESTION_LENGTH } from '@/core/assistant/system1/router';
-import { knowledgeBase } from '@/core/knowledge/knowledge-base';
 import type { ComposerStatus, ComposerVariant } from '@/ui/composer';
 import { Eyebrow } from '@/ui/primitives';
 import { ComposerSpecimen } from '../../composer/composer-specimen';
+import { knowledge } from '../../../site-knowledge';
 
 // The design's ComposerStates artboard: six composers side by side. Two of
 // them show the focused look at once, which real focus cannot do, so they draw
@@ -55,7 +55,7 @@ const STATES: readonly State[] = [
 export default function ComposerStatesFidelityPage() {
   if (process.env.NODE_ENV === 'production') notFound();
 
-  const { welcome } = knowledgeBase;
+  const { welcome } = knowledge;
   return (
     <div className="grid min-h-screen grid-cols-2 content-start gap-x-8 gap-y-10 p-10">
       {STATES.map((state) => (

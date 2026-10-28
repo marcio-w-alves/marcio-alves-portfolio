@@ -1,82 +1,96 @@
-import { METRIC_IDS } from '@/core/knowledge/ids';
-import { knowledgeBase } from '@/core/knowledge/knowledge-base';
 import type { ResponsePart } from './response';
-import {
-  bullets,
-  details,
-  metrics,
-  numbered,
-  projects,
-  skills,
-  table,
-  text,
-  timeline,
-} from './response-kit';
-import type { TopicId } from './topics';
+import { bullets, details, numbered, table, text, type ResponseKit } from './response-kit';
+import type { TopicCatalog, TopicId } from './topics';
 
-const { practice } = knowledgeBase;
+const INTRO_FOLLOW_UPS = 3;
+
+/** How a topic's page opens: its introduction, its part of the record, and what to ask next. */
+export interface TopicIntro {
+  readonly parts: readonly ResponsePart[];
+  readonly followUps: readonly string[];
+}
+
+export function createTopicIntro(kit: ResponseKit, catalog: TopicCatalog) {
+  const topicData = createTopicData(kit);
+  return (topic: TopicId): TopicIntro => ({
+    parts: [text(catalog.topicById(topic).intro), ...topicData(topic)],
+    followUps: catalog.suggestions(topic, 0, INTRO_FOLLOW_UPS),
+  });
+}
 
 /**
  * What each topic's page shows beneath its introduction: the record itself,
  * built locally from the knowledge base, never by the model. The overview has
  * none, because its page is the welcome screen.
  */
-export function topicData(topic: TopicId): readonly ResponsePart[] {
-  switch (topic) {
-    case 'overview':
-      return [];
-    case 'experience':
-      return [timeline(), text(`### How his scope grew\n${bullets(practice.careerArc)}`)];
-    case 'skills':
-      return [
-        skills(),
-        text(
-          `### How deep the evidence goes\n${bullets(practice.skillDepth.map(({ area, items }) => `**${area}** — ${items}`))}`,
-        ),
-        details(
-          'Toolset by area',
-          bullets(practice.toolset.map(({ area, items }) => `**${area}** — ${items}`)),
-        ),
-      ];
-    case 'projects':
-      return [
-        projects(),
-        text(
-          `### The engineering behind them\n${bullets(knowledgeBase.projects.map((project) => `**${project.name}** — ${practice.productDepth[project.id]}`))}`,
-        ),
-      ];
-    case 'achievements':
-      return [
-        metrics(METRIC_IDS),
-        text(
-          '### Other recognition\n' +
-            '- Contributed to a web and mobile application that received the **Golden Award in 2019** at Shall And Partners.\n' +
-            '- Built a frontend team from one developer to four at Roots.',
-        ),
-      ];
-    case 'philosophy':
-      return [
-        text(
-          knowledgeBase.principles
-            .map((principle) => `- **${principle.title}** — ${principle.text}`)
-            .join('\n'),
-        ),
-        text(`### How he takes a problem to delivery\n${numbered(practice.designProcess)}`),
-      ];
-    case 'education':
-      return [
-        table(
-          ['Language', 'Level'],
-          knowledgeBase.languages.map((language) => [language.name, language.level]),
-          'Languages',
-        ),
-        details(
-          'Courses and certifications',
-          knowledgeBase.certifications
-            .map((certification) => `- ${certification.name} (${certification.issuer})`)
-            .join('\n'),
-        ),
-        text(`### Continuous learning\n${practice.learningStyle}\n\n${bullets(practice.studies)}`),
-      ];
-  }
+function createTopicData({
+  knowledge,
+  metrics,
+  projects,
+  skills,
+  timeline,
+  productDepth,
+}: ResponseKit) {
+  const { practice } = knowledge;
+  return (topic: TopicId): readonly ResponsePart[] => {
+    switch (topic) {
+      case 'overview':
+        return [];
+      case 'experience':
+        return [timeline(), text(`### How his scope grew\n${bullets(practice.careerArc)}`)];
+      case 'skills':
+        return [
+          skills(),
+          text(
+            `### How deep the evidence goes\n${bullets(practice.skillDepth.map(({ area, items }) => `**${area}** — ${items}`))}`,
+          ),
+          details(
+            'Toolset by area',
+            bullets(practice.toolset.map(({ area, items }) => `**${area}** — ${items}`)),
+          ),
+        ];
+      case 'projects':
+        return [
+          projects(),
+          text(
+            `### The engineering behind them\n${bullets(knowledge.projects.map((project) => `**${project.name}** — ${productDepth(project.id)}`))}`,
+          ),
+        ];
+      case 'achievements':
+        return [
+          metrics(Object.keys(knowledge.metrics)),
+          text(
+            '### Other recognition\n' +
+              '- Contributed to a web and mobile application that received the **Golden Award in 2019** at Shall And Partners.\n' +
+              '- Built a frontend team from one developer to four at Roots.',
+          ),
+        ];
+      case 'philosophy':
+        return [
+          text(
+            knowledge.principles
+              .map((principle) => `- **${principle.title}** — ${principle.text}`)
+              .join('\n'),
+          ),
+          text(`### How he takes a problem to delivery\n${numbered(practice.designProcess)}`),
+        ];
+      case 'education':
+        return [
+          table(
+            ['Language', 'Level'],
+            knowledge.languages.map((language) => [language.name, language.level]),
+            'Languages',
+          ),
+          details(
+            'Courses and certifications',
+            knowledge.certifications
+              .map((certification) => `- ${certification.name} (${certification.issuer})`)
+              .join('\n'),
+          ),
+          text(
+            `### Continuous learning\n${practice.learningStyle}\n\n${bullets(practice.studies)}`,
+          ),
+        ];
+    }
+  };
 }

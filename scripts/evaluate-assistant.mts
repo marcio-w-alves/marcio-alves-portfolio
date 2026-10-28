@@ -22,10 +22,12 @@ import { join } from 'node:path';
 import { buildContainer } from '../src/composition-root';
 import type { AssistantEvent } from '../src/core/assistant/assistant-event';
 import type { ToolTrace } from '../src/core/assistant/system2/model-assistant';
+import { createResponseKit } from '../src/core/assistant/response-kit';
 import { createToolRegistry } from '../src/core/assistant/tools/registry';
-import { knowledgeBase } from '../src/core/knowledge/knowledge-base';
+import { localize } from '../src/core/knowledge/localize';
 import { createOpenAIClient } from '../src/infrastructure/openai/openai-client';
-import { CASES, type EvaluationCase } from './evaluation/cases';
+import { profile } from '../src/profile';
+import type { EvaluationCase } from '../src/profile/evaluation/cases';
 import { sourcesOutsideTrace } from './evaluation/citations';
 import { runsFor } from './evaluation/grading';
 import { parseOptions, selectCases } from './evaluation/options';
@@ -45,7 +47,10 @@ const JUDGE_MODEL =
   judgeOverride === undefined || judgeOverride === '' ? 'gpt-4o-mini' : judgeOverride;
 const CONCURRENCY = 4;
 const options = parseOptions(process.argv.slice(2), process.env);
-const cases = selectCases(CASES, options.only);
+const cases = selectCases(profile.evaluation, options.only);
+const knowledge = localize(profile.knowledge, 'en');
+// The fast path's evidence is the record it answers from, as the judge has always seen it.
+const { notes: _notes, sourceLabels: _sourceLabels, ...knowledgeBase } = knowledge;
 
 const apiKey = process.env.OPENAI_API_KEY;
 if (!apiKey) throw new Error('OPENAI_API_KEY is not set. Put it in .env.local.');
@@ -345,6 +350,7 @@ const CALIBRATION: readonly CalibrationItem[] = [
 /** Runs the actions for real, so the trace is exactly what the model would have received. */
 async function traceOf(actions: NonNullable<CalibrationItem['actions']>): Promise<ToolTrace[]> {
   const registry = createToolRegistry({
+    kit: createResponseKit(knowledge),
     reportError: (error) => {
       console.error(error);
     },

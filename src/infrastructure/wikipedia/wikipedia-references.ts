@@ -9,8 +9,8 @@ const TIMEOUT_MS = 4000;
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 // Wikimedia asks clients to identify themselves; a URL is enough contact.
-export function userAgent(siteUrl: URL): string {
-  return `MarcioAlvesPortfolio/1.0 (${siteUrl.origin})`;
+export function userAgent(product: string, siteUrl: URL): string {
+  return `${product}/1.0 (${siteUrl.origin})`;
 }
 
 const summarySchema = z.object({
@@ -48,6 +48,8 @@ async function fetchSummary(
 }
 
 interface WikipediaOptions {
+  /** The name the site goes by in the User-Agent. */
+  readonly product: string;
   /** The site making the requests, named in the User-Agent as its contact. */
   readonly siteUrl: URL;
   readonly timeoutMs?: number;
@@ -55,11 +57,12 @@ interface WikipediaOptions {
 }
 
 export function createWikipediaReferences({
+  product,
   siteUrl,
   timeoutMs = TIMEOUT_MS,
   logger,
 }: WikipediaOptions): ReferencePort {
-  const agent = userAgent(siteUrl);
+  const agent = userAgent(product, siteUrl);
   return {
     summary: cacheSuccesses(CACHE_TTL_MS, (title) =>
       fetchSummary(title, agent, { timeoutMs, logger }),

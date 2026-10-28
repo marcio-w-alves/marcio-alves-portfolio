@@ -1,10 +1,10 @@
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { knowledgeBase } from '@/core/knowledge/knowledge-base';
+import { knowledge } from '@/app/site-knowledge';
 import { WelcomeLayout } from './welcome-layout';
 import { WelcomeScreen } from './welcome-screen';
 
-const { welcome } = knowledgeBase;
+const { welcome } = knowledge;
 
 describe('WelcomeScreen', () => {
   it('makes the greeting the page heading', () => {

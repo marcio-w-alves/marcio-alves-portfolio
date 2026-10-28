@@ -1,6 +1,8 @@
 import 'server-only';
 import type { ModelBudgetPort } from '@/core/assistant/ports/model-budget.port';
 import { createAssistant, type AnswerReport, type Assistant } from '@/core/assistant/assistant';
+import { createResponseKit } from '@/core/assistant/response-kit';
+import { createFastPath } from '@/core/assistant/system1/fast-path';
 import { urlsIn } from '@/core/assistant/system2/link-filter';
 import {
   createModelAssistant,
@@ -12,7 +14,8 @@ import { createToolRegistry } from '@/core/assistant/tools/registry';
 import { createSearchTools } from '@/core/assistant/tools/search-tools';
 import type { ToolFailure } from '@/core/assistant/tools/tool';
 import { buildCorpus } from '@/core/knowledge/corpus';
-import { knowledgeBase } from '@/core/knowledge/knowledge-base';
+import { localize } from '@/core/knowledge/localize';
+import type { Knowledge } from '@/core/knowledge/schema';
 import {
   assistantSettings,
   serverEnv,
@@ -35,7 +38,6 @@ import {
   type CircuitState,
 } from '@/infrastructure/resilience/circuit-breaker';
 import { EMBEDDING_DIMENSIONS, EMBEDDING_MODEL } from '@/infrastructure/retrieval/index-spec';
-import knowledgeIndex from '@/infrastructure/retrieval/knowledge-index.json';
 import { createVectorKnowledgeSearch } from '@/infrastructure/retrieval/vector-knowledge-search';
 import {
   createSlidingWindowLimiter,
@@ -43,6 +45,8 @@ import {
 } from '@/infrastructure/rate-limit/sliding-window';
 import { systemClock } from '@/infrastructure/system-clock';
 import { createWikipediaReferences } from '@/infrastructure/wikipedia/wikipedia-references';
+import { profile } from '@/profile';
+import knowledgeIndex from '@/profile/generated/knowledge-index.json';
 
 /**
  * The only place where concrete adapters are bound to the ports the core
@@ -54,6 +58,8 @@ import { createWikipediaReferences } from '@/infrastructure/wikipedia/wikipedia-
 const TEMPERATURE = 0;
 
 const TEN_MINUTES = 10 * 60 * 1000;
+
+const { identity } = profile;
 
 /**
  * What the health check may say about the model: whether it is configured,
@@ -130,6 +136,8 @@ interface GuardedModelAssistant {
 }
 
 export interface ContainerOptions extends Observers {
+  /** Defaults to the profile's record, in English. */
+  readonly knowledge?: Knowledge;
   /** Defaults to the validated process environment. */
   readonly env?: ServerEnv;
   /** Defaults to the settings in the process environment. */
@@ -139,6 +147,7 @@ export interface ContainerOptions extends Observers {
 }
 
 interface ModelWiring {
+  readonly knowledge: Knowledge;
   readonly apiKey: string;
   readonly githubToken: string | undefined;
   readonly chatModel: string;
@@ -147,10 +156,11 @@ interface ModelWiring {
 }
 
 function buildModelAssistant(
-  { apiKey, githubToken, chatModel, openAITimeoutMs, budget }: ModelWiring,
+  { knowledge, apiKey, githubToken, chatModel, openAITimeoutMs, budget }: ModelWiring,
   observers: Observers,
 ): GuardedModelAssistant {
   const client = createOpenAIClient(apiKey, { timeoutMs: openAITimeoutMs });
+  const kit = createResponseKit(knowledge);
   const retrievalBreaker = createCircuitBreakerFor('retrieval');
   const search = createVectorKnowledgeSearch({
     embeddings: createOpenAIEmbeddings({
@@ -159,19 +169,27 @@ function buildModelAssistant(
       dimensions: EMBEDDING_DIMENSIONS,
     }),
     index: knowledgeIndex,
-    corpus: buildCorpus(),
+    corpus: buildCorpus(knowledge),
+    citation: kit.citation,
     breaker: retrievalBreaker,
   });
   const github = createGithubApi({
-    username: new URL(knowledgeBase.contact.github).pathname.slice(1),
+    username: new URL(identity.contact.github).pathname.slice(1),
+    userAgent: identity.userAgentProduct,
     ...(githubToken ? { token: githubToken } : {}),
     logger,
   });
   const tools = createToolRegistry({
+    kit,
     extra: [
       ...createSearchTools(search, reportToolError),
       ...createExternalTools({
-        references: createWikipediaReferences({ siteUrl: siteUrl(), logger }),
+        kit,
+        references: createWikipediaReferences({
+          product: identity.userAgentProduct,
+          siteUrl: siteUrl(),
+          logger,
+        }),
         github,
       }),
     ],
@@ -191,7 +209,7 @@ function buildModelAssistant(
     model,
     tools,
     clock: systemClock,
-    knownUrls: [...urlsIn(knowledgeBase), `mailto:${knowledgeBase.contact.email}`, siteUrl().href],
+    knownUrls: [...urlsIn(knowledge), `mailto:${knowledge.contact.email}`, siteUrl().href],
     onUsage: (usage) => {
       budget.record(usage);
       if (usage.estimated) {
@@ -212,6 +230,7 @@ function buildModelAssistant(
  * with a test environment and a short timeout.
  */
 export function buildContainer({
+  knowledge = localize(profile.knowledge, 'en'),
   env = serverEnv(),
   settings = assistantSettings(),
   openAITimeoutMs = settings.openAITimeoutMs,
@@ -223,6 +242,7 @@ export function buildContainer({
   const model = env.OPENAI_API_KEY
     ? buildModelAssistant(
         {
+          knowledge,
           apiKey: env.OPENAI_API_KEY,
           githubToken: env.GITHUB_TOKEN,
           chatModel: settings.chatModel,
@@ -234,6 +254,7 @@ export function buildContainer({
     : null;
   return {
     assistant: createAssistant({
+      fastPath: createFastPath(knowledge),
       modelAssistant: model?.assistant ?? null,
       budget,
       answerCache: createAnswerCache({ ttlMs: 60 * 60 * 1000, maxEntries: 500 }),

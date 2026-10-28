@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
-import { knowledgeBase } from '@/core/knowledge/knowledge-base';
 import { siteUrl } from '@/env';
 import { ConversationsProvider } from '@/ui/chat/conversation-store';
 import { fontVariables } from './fonts';
+import { knowledge } from './site-knowledge';
 import './globals.css';
 
 const title = 'Marcio Alves — Frontend Engineer';
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   description,
   openGraph: {
     type: 'website',
-    siteName: knowledgeBase.profile.name,
+    siteName: knowledge.profile.name,
     locale: 'en_US',
     title,
     description,

@@ -1,6 +1,4 @@
-import type { RoleId } from '@/core/knowledge/ids';
-import notes from '@/core/knowledge/data/notes.json';
-import { knowledgeBase } from '@/core/knowledge/knowledge-base';
+import type { Knowledge } from '@/core/knowledge/schema';
 
 /**
  * Technologies visitors ask about. Whether Marcio has used one is decided by
@@ -64,7 +62,7 @@ const PRACTICES: readonly Technology[] = [
 export const TECHNOLOGIES: readonly Technology[] = [...ROUTED_TECHNOLOGIES, ...PRACTICES];
 
 export interface WorkEvidence {
-  readonly role: RoleId;
+  readonly role: string;
   readonly company: string;
   readonly statement: string;
 }
@@ -80,6 +78,17 @@ export interface TechnologyEvidence {
    * his studies, each carrying its evidence tag, never résumé evidence.
    */
   readonly notes: readonly string[];
+  /** Where each kind of evidence is credited from, as the record's own source ids. */
+  readonly sources: {
+    readonly work: readonly string[];
+    readonly skills: readonly string[];
+    readonly coursework: readonly string[];
+    readonly notes: readonly string[];
+  };
+}
+
+function unique(ids: readonly string[]): string[] {
+  return [...new Set(ids)];
 }
 
 function paragraphsOf(text: string): string[] {
@@ -87,21 +96,37 @@ function paragraphsOf(text: string): string[] {
   return body.split('\n\n');
 }
 
-const NOTE_PARAGRAPHS = [...new Set(notes.flatMap((note) => paragraphsOf(note.text)))];
+export type EvidenceFinder = (technology: Technology) => TechnologyEvidence;
 
-export function findEvidence(technology: Technology): TechnologyEvidence {
-  const matches = (value: string) => technology.evidence.test(value);
-  return {
-    technology,
-    work: knowledgeBase.experience.flatMap((role) =>
-      role.highlights
-        .filter(matches)
-        .map((statement) => ({ role: role.id, company: role.company, statement })),
-    ),
-    skills: knowledgeBase.skills.flatMap((group) => group.items.filter(matches)),
-    coursework: knowledgeBase.certifications
-      .filter((certification) => matches(certification.name))
-      .map((certification) => `${certification.name} (${certification.issuer})`),
-    notes: NOTE_PARAGRAPHS.filter(matches),
+export function createEvidenceFinder({
+  experience,
+  skills,
+  certifications,
+  notes,
+}: Knowledge): EvidenceFinder {
+  const noteParagraphs = unique(notes.passages.flatMap((note) => paragraphsOf(note.text)));
+  return (technology) => {
+    const matches = (value: string) => technology.evidence.test(value);
+    const roles = experience.filter((role) => role.highlights.some(matches));
+    const groups = skills.filter((group) => group.items.some(matches));
+    const courses = certifications.filter((certification) => matches(certification.name));
+    const notesMentioning = noteParagraphs.filter(matches);
+    return {
+      technology,
+      work: roles.flatMap((role) =>
+        role.highlights
+          .filter(matches)
+          .map((statement) => ({ role: role.id, company: role.company, statement })),
+      ),
+      skills: groups.flatMap((group) => group.items.filter(matches)),
+      coursework: courses.map((course) => `${course.name} (${course.issuer})`),
+      notes: notesMentioning,
+      sources: {
+        work: unique(roles.map((role) => role.source)),
+        skills: unique(groups.map((group) => group.source)),
+        coursework: unique(courses.map((course) => course.source)),
+        notes: notesMentioning.length > 0 ? [notes.source] : [],
+      },
+    };
   };
 }

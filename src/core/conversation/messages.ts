@@ -1,4 +1,3 @@
-import type { RoleId } from '@/core/knowledge/ids';
 import type { AnswerSource, AssistantError } from '../assistant/assistant-event';
 import type { RichComponent } from '../assistant/components';
 import type { TopicId } from '../assistant/topics';
@@ -25,7 +24,7 @@ export interface AssistantMessage {
   readonly parts: readonly MessagePart[];
   readonly followUps: readonly string[];
   readonly sources: readonly AnswerSource[];
-  readonly related: RoleId | null;
+  readonly related: string | null;
   readonly intent: string | null;
   readonly feedback: Feedback | null;
   readonly error: AssistantError | null;

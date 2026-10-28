@@ -1,15 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { buildCorpus } from '@/core/knowledge/corpus';
+import { localize } from '@/core/knowledge/localize';
 import {
   corpusHash,
   EMBEDDING_DIMENSIONS,
   EMBEDDING_MODEL,
   type KnowledgeIndex,
-} from './index-spec';
+} from '@/infrastructure/retrieval/index-spec';
+import { profile } from '..';
 import committed from './knowledge-index.json';
 
 const index: KnowledgeIndex = committed;
-const corpus = buildCorpus();
+const corpus = buildCorpus(localize(profile.knowledge, 'en'));
 
 describe('committed knowledge index', () => {
   it('was built from the knowledge base as it is now (run `pnpm rag:build` after editing it)', () => {

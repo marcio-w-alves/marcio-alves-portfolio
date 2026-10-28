@@ -1,4 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import { localize } from '@/core/knowledge/localize';
+import { profile } from '@/profile';
+import { fixtureKnowledge } from '@/testing/fixture-profile/knowledge';
+import { createResponseKit } from '../response-kit';
+import type { GithubPort } from '../ports/github.port';
+import { createExternalTools } from './external-tools';
 import { createToolRegistry } from './registry';
 import { defineTool, type ToolOutcome, type ToolResult } from './tool';
 
@@ -6,7 +12,8 @@ function rethrow(error: unknown): never {
   throw error;
 }
 
-const registry = createToolRegistry({ reportError: rethrow });
+const kit = createResponseKit(localize(profile.knowledge, 'en'));
+const registry = createToolRegistry({ kit, reportError: rethrow });
 
 function succeeded(outcome: ToolOutcome): ToolResult {
   if (!outcome.ok) throw new Error(`Tool failed: ${outcome.error}`);
@@ -80,7 +87,7 @@ describe('tool registry — the allow-list', () => {
       input: {},
       execute: () => ({ data: null, sources: [] }),
     });
-    expect(() => createToolRegistry({ extra: [impostor], reportError: rethrow })).toThrow(
+    expect(() => createToolRegistry({ kit, extra: [impostor], reportError: rethrow })).toThrow(
       'Two tools share a name.',
     );
   });
@@ -94,6 +101,7 @@ describe('tool registry — the allow-list', () => {
     });
     const reported: unknown[] = [];
     const withExploding = createToolRegistry({
+      kit,
       extra: [exploding],
       reportError: (error) => reported.push(error),
     });
@@ -121,6 +129,7 @@ describe('tool registry — the allow-list', () => {
     });
     const reported: unknown[] = [];
     const withWaiting = createToolRegistry({
+      kit,
       extra: [waiting],
       reportError: (error) => reported.push(error),
     });
@@ -296,5 +305,75 @@ describe('declineToAnswer', () => {
     ['a reason outside the list', { reason: 'too_hard' }],
   ])('refuses to record a decline with %s', async (_label, args) => {
     expect((await registry.run('declineToAnswer', args)).ok).toBe(false);
+  });
+});
+
+describe('the record the actions read', () => {
+  it('accepts exactly the ids of the record it was given, and answers from it', async () => {
+    const fixture = createToolRegistry({
+      kit: createResponseKit(localize(fixtureKnowledge, 'en')),
+      reportError: rethrow,
+    });
+    const getExperience = fixture.tools.find((tool) => tool.name === 'getExperience');
+    expect(getExperience?.parameters).toMatchObject({
+      properties: { company: { enum: ['acme', 'globex', 'initech'] } },
+    });
+
+    const roles = succeeded(await fixture.run('getExperience', { company: 'globex' })).data;
+    expect(roles).toMatchObject([{ company: 'Globex', role: 'Senior Platform Engineer' }]);
+    expect((await fixture.run('getExperience', { company: 'umbrella' })).ok).toBe(false);
+  });
+
+  const fixtureKit = createResponseKit(localize(fixtureKnowledge, 'en'));
+  const unreachableGithub: GithubPort = {
+    profile: () => Promise.resolve(null),
+    repositories: () => Promise.resolve(null),
+  };
+  const fixtureRegistry = createToolRegistry({
+    kit: fixtureKit,
+    extra: createExternalTools({
+      kit: fixtureKit,
+      references: { summary: () => Promise.resolve(null) },
+      github: unreachableGithub,
+    }),
+    reportError: rethrow,
+  });
+
+  it('runs every action that needs no argument, citing only what the record labels', async () => {
+    const labelled = new Set(Object.keys(fixtureKnowledge.sourceLabels));
+    const argumentFree = fixtureRegistry.tools.filter(
+      (tool) => ((tool.parameters.required ?? []) as unknown[]).length === 0,
+    );
+    expect(argumentFree.length).toBeGreaterThan(10);
+
+    for (const tool of argumentFree) {
+      const outcome = await fixtureRegistry.run(tool.name, {});
+      expect(outcome, tool.name).toMatchObject({ ok: true });
+      if (!outcome.ok) continue;
+      for (const source of outcome.result.sources) {
+        expect(
+          source.url !== undefined || labelled.has(source.id),
+          `${tool.name}: ${source.id}`,
+        ).toBe(true);
+      }
+    }
+  });
+
+  it("cites each fact family by the record's own source ids", async () => {
+    const sourcesOf = async (name: string, args: unknown = {}) =>
+      succeeded(await fixtureRegistry.run(name, args)).sources.map((source) => source.id);
+
+    expect(await sourcesOf('getProfileSummary')).toEqual(['cv']);
+    expect(await sourcesOf('getSkills')).toEqual(['cv.skills']);
+    expect(await sourcesOf('getEducationAndLanguages')).toEqual([
+      'cv.education',
+      'cv.languages',
+      'cv.courses',
+    ]);
+    expect(await sourcesOf('getEngineeringPrinciples')).toEqual(['principles', 'cv']);
+    expect(await sourcesOf('getTechnologyEvidence', { technology: 'Bazel' })).toEqual([
+      'cv.skills',
+      'notes',
+    ]);
   });
 });

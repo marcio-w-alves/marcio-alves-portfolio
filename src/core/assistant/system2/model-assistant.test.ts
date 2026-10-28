@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { localize } from '@/core/knowledge/localize';
+import { profile } from '@/profile';
 import type { AssistantEvent } from '../assistant-event';
 import type {
   LanguageModelPort,
@@ -7,6 +9,7 @@ import type {
   ToolCall,
 } from '../ports/language-model.port';
 import type { ReferencePort } from '../ports/reference.port';
+import { createResponseKit } from '../response-kit';
 import { createExternalTools } from '../tools/external-tools';
 import { createToolRegistry } from '../tools/registry';
 import { createSearchTools } from '../tools/search-tools';
@@ -52,12 +55,14 @@ function rethrow(error: unknown): never {
   throw error;
 }
 
+const kit = createResponseKit(localize(profile.knowledge, 'en'));
+
 /** The real allow-list; an action that throws unexpectedly fails the test. */
 function registry(
   extra: readonly Tool[] = [],
   reportError: (failure: ToolFailure) => void = rethrow,
 ) {
-  return createToolRegistry({ extra, reportError });
+  return createToolRegistry({ kit, extra, reportError });
 }
 
 async function collect(model: LanguageModelPort, question = 'question', history = []) {
@@ -627,7 +632,7 @@ describe('model assistant — what reaches the visitor', () => {
     ]);
     const assistant = createModelAssistant({
       model: port,
-      tools: registry(createExternalTools({ references, github: unreachableGithub })),
+      tools: registry(createExternalTools({ kit, references, github: unreachableGithub })),
       clock,
       knownUrls: ['https://www.linkedin.com/in/marcio-montenegro'],
     });

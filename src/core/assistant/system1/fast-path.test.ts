@@ -1,8 +1,15 @@
 import { describe, expect, it } from 'vitest';
+import { localize } from '@/core/knowledge/localize';
+import { profile } from '@/profile';
 import type { AssistantResponse, ConversationContext } from '../response';
 import { toEvents } from '../response';
-import { topics } from '../topics';
-import { fastPath } from './fast-path';
+import { createResponseKit } from '../response-kit';
+import { createTopicCatalog } from '../topics';
+import { createFastPath } from './fast-path';
+
+const knowledge = localize(profile.knowledge, 'en');
+const { topics } = createTopicCatalog(createResponseKit(knowledge));
+const fastPath = createFastPath(knowledge).answer;
 
 const FRESH: ConversationContext = { topic: 'overview', lastIntent: null, ctaShown: false };
 

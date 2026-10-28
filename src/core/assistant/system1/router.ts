@@ -1,5 +1,4 @@
-import { ROLE_IDS, type ProjectId, type RoleId } from '@/core/knowledge/ids';
-import { knowledgeBase } from '@/core/knowledge/knowledge-base';
+import type { Knowledge } from '@/core/knowledge/schema';
 import type { ConversationContext } from '../response';
 import { isTopicId, type TopicId } from '../topics';
 import { ROUTED_TECHNOLOGIES, type Technology } from './technologies';
@@ -61,8 +60,8 @@ export type Route =
   | { readonly intent: ScoredIntent }
   | { readonly intent: Guard }
   | { readonly intent: 'greeting' }
-  | { readonly intent: 'company'; readonly role: RoleId }
-  | { readonly intent: 'project'; readonly project: ProjectId }
+  | { readonly intent: 'company'; readonly role: string }
+  | { readonly intent: 'project'; readonly project: string }
   | { readonly intent: 'technology'; readonly technologies: readonly Technology[] }
   | { readonly intent: 'escalate'; readonly nearest: ScoredIntent | null };
 
@@ -322,7 +321,7 @@ const INTENT_RULES: Readonly<Record<ScoredIntent, readonly Rule[]>> = {
 };
 
 /** How the questions name each employer, as regular-expression source. */
-const COMPANY_NAMES: Readonly<Record<RoleId, string>> = {
+const COMPANY_NAMES: Readonly<Record<string, string>> = {
   toptal: 'toptal',
   deel: 'deel',
   roots: 'roots',
@@ -331,7 +330,6 @@ const COMPANY_NAMES: Readonly<Record<RoleId, string>> = {
   webfi: 'webfi',
   freelance: 'freelanc\\w*',
 };
-const COMPANIES = ROLE_IDS.map((id) => [id, new RegExp(`\\b${COMPANY_NAMES[id]}\\b`)] as const);
 const COMPANY_WEIGHT = 2.5;
 
 /** Below this score the router is guessing, and a guess is worse than escalating. */
@@ -428,21 +426,11 @@ function scoreIntents(text: string): Scored {
   return best;
 }
 
-function mentionedCompanies(text: string): RoleId[] {
-  return COMPANIES.filter(([, pattern]) => pattern.test(text)).map(([id]) => id);
-}
-
-function matchProject(text: string): ProjectId | null {
-  return (
-    knowledgeBase.projects.find((project) => text.includes(project.name.toLowerCase()))?.id ?? null
-  );
-}
-
 function matchTechnologies(text: string): Technology[] {
   return ROUTED_TECHNOLOGIES.filter((technology) => technology.detect.test(text));
 }
 
-function isCompound(text: string, companies: readonly RoleId[]): boolean {
+function isCompound(text: string, companies: readonly string[]): boolean {
   return (
     COMPARISON.test(text) || companies.length > 1 || text.split(' ').length > MAX_FAST_PATH_WORDS
   );
@@ -456,8 +444,31 @@ function fromContext({ lastIntent, topic }: ConversationContext): ScoredIntent {
   return next ?? (isTopicId(topic) ? TOPIC_DEFAULT[topic] : 'career');
 }
 
-export function route(question: string, context: ConversationContext): Route {
-  const text = normalize(question);
+export type Router = (question: string, context: ConversationContext) => Route;
+
+export function createRouter({ experience, projects }: Knowledge): Router {
+  const companies = experience.flatMap((role) => {
+    const name = COMPANY_NAMES[role.id];
+    return name ? [{ id: role.id, pattern: new RegExp(`\\b${name}\\b`) }] : [];
+  });
+  const mentionedCompanies = (text: string) =>
+    companies.filter(({ pattern }) => pattern.test(text)).map(({ id }) => id);
+  const matchProject = (text: string) =>
+    projects.find((project) => text.includes(project.name.toLowerCase()))?.id ?? null;
+  return (question, context) =>
+    routeWith(normalize(question), context, { mentionedCompanies, matchProject });
+}
+
+interface RecordMatchers {
+  readonly mentionedCompanies: (text: string) => string[];
+  readonly matchProject: (text: string) => string | null;
+}
+
+function routeWith(
+  text: string,
+  context: ConversationContext,
+  { mentionedCompanies, matchProject }: RecordMatchers,
+): Route {
   if (!text || NON_ENGLISH.test(text)) return { intent: 'escalate', nearest: null };
   if (GUARDS.offPurpose.test(text)) return { intent: 'offPurpose' };
   if (GUARDS.privateInfo.test(text)) return { intent: 'privateInfo' };

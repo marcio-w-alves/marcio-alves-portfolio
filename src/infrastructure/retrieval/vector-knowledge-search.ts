@@ -1,4 +1,4 @@
-import { citation } from '@/core/assistant/citations';
+import type { AnswerSource } from '@/core/assistant/assistant-event';
 import type { EmbeddingPort } from '@/core/assistant/ports/embedding.port';
 import type { KnowledgeSearchPort, Passage } from '@/core/assistant/ports/knowledge-search.port';
 import type { KnowledgeChunk } from '@/core/knowledge/corpus';
@@ -14,7 +14,7 @@ import type { KnowledgeIndex } from './index-spec';
  * recipes, sport, physics, poetry) peaked at 0.18, while the best on-topic
  * passage scored 0.30–0.55 in English and Portuguese, and relevant secondary
  * passages went down to about 0.25. A first guess of 0.3 would have dropped
- * the Roots leadership passages from "tell me about his leadership".
+ * a startup role's leadership passages from "tell me about his leadership".
  */
 export const RELEVANCE_FLOOR = 0.22;
 
@@ -22,7 +22,7 @@ export const RELEVANCE_FLOOR = 0.22;
  * The knowledge-base notes are long Portuguese passages; on a terse or
  * Portuguese query they outscore the résumé's short English statements and
  * would crowd them out ("acessibilidade" once returned five notes on access
- * control and no Toptal accessibility work). So, unless a category is asked
+ * control and none of the résumé's accessibility work). So, unless a category is asked
  * for, the résumé keeps the whole limit and the notes add at most this many.
  */
 export const NOTES_SHARE = 3;
@@ -45,6 +45,8 @@ interface Options {
   readonly embeddings: EmbeddingPort;
   readonly index: KnowledgeIndex;
   readonly corpus: readonly KnowledgeChunk[];
+  /** How a passage credits the record it comes from. */
+  readonly citation: (source: string) => AnswerSource;
   /** Its own, so an embeddings outage never opens the chat model's circuit. */
   readonly breaker: CircuitBreaker;
 }
@@ -57,6 +59,7 @@ export function createVectorKnowledgeSearch({
   embeddings,
   index,
   corpus,
+  citation,
   breaker,
 }: Options): KnowledgeSearchPort {
   return {

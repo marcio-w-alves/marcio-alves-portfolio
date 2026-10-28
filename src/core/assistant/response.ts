@@ -1,4 +1,3 @@
-import type { RoleId } from '@/core/knowledge/ids';
 import type { AnswerSource, AssistantEvent } from './assistant-event';
 import type { RichComponent } from './components';
 
@@ -16,7 +15,7 @@ export interface AssistantResponse {
   readonly parts: readonly ResponsePart[];
   readonly followUps: readonly string[];
   readonly sources: readonly AnswerSource[];
-  readonly related: RoleId | null;
+  readonly related: string | null;
   /** False when the answer is a refusal or a gap rather than documented fact. */
   readonly grounded: boolean;
 }

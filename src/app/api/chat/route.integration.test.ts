@@ -7,8 +7,8 @@ import type { AnswerSource, AssistantEvent } from '@/core/assistant/assistant-ev
 import { assistantSettings } from '@/env';
 import { MAX_OUTPUT_TOKENS } from '@/core/assistant/system2/model-assistant';
 import { SEARCH_UNAVAILABLE } from '@/core/assistant/tools/search-tools';
-import knowledgeIndex from '@/infrastructure/retrieval/knowledge-index.json';
-import { knowledgeBase } from '@/core/knowledge/knowledge-base';
+import { profile } from '@/profile';
+import knowledgeIndex from '@/profile/generated/knowledge-index.json';
 import { createHealthHandler } from '../health/health-handler';
 import { createChatHandler } from './chat-handler';
 
@@ -364,14 +364,14 @@ describe('POST /api/chat — a model answer', () => {
     scriptedCompletions(
       textRound(
         'See [his GitHub](https://github.com/marcio-w-alves), [email him](mailto:',
-        `${knowledgeBase.contact.email}) or [log in](https://evil.example/login).`,
+        `${profile.knowledge.contact.email}) or [log in](https://evil.example/login).`,
       ),
     );
 
     const events = await allEventsOf(await postChat()(question(MODEL_QUESTION)));
 
     expect(textOf(events)).toBe(
-      `See [his GitHub](https://github.com/marcio-w-alves), [email him](mailto:${knowledgeBase.contact.email}) or log in.`,
+      `See [his GitHub](https://github.com/marcio-w-alves), [email him](mailto:${profile.knowledge.contact.email}) or log in.`,
     );
   });
 });

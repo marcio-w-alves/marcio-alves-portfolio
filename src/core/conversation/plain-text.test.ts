@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { details, note, projects, timeline } from '../assistant/response-kit';
+import { localize } from '@/core/knowledge/localize';
+import { fixtureKnowledge } from '@/testing/fixture-profile/knowledge';
+import { createResponseKit, details, note } from '../assistant/response-kit';
 import { toPlainText } from './plain-text';
+
+const { projects, timeline } = createResponseKit(localize(fixtureKnowledge, 'en'));
 
 describe('an answer as plain text', () => {
   it('drops inline markup but keeps a link target readable', () => {
@@ -16,8 +20,8 @@ describe('an answer as plain text', () => {
   });
 
   it.each([
-    ['a timeline as one line per role', timeline(['deel']), /^• 2022 — 2026 · Deel · Senior/],
-    ['project cards as one line per product', projects(['evcopilot']), /^• EvCopilot — \S/],
+    ['a timeline as one line per role', timeline(['globex']), /^• 2018 — 2022 · Globex · Senior/],
+    ['project cards as one line per product', projects(['pipewright']), /^• Pipewright — \S/],
     ['a note without its markup', note('info', 'Not **documented**.'), /^Not documented\.$/],
     [
       'details as their summary, then their text',

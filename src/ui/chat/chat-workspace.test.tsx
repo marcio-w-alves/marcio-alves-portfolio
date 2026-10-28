@@ -6,11 +6,12 @@ import { Fragment } from 'react';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createChatHandler } from '@/app/api/chat/chat-handler';
 import { EVENT_STREAM_HEADERS, eventStream } from '@/app/api/chat/event-stream';
+import { knowledge, topicCatalog } from '@/app/site-knowledge';
+import { workspaceProps } from '@/app/workspace-props';
 import type { AssistantEvent } from '@/core/assistant/assistant-event';
 import { createAssistant } from '@/core/assistant/assistant';
-import { MAX_QUESTION_LENGTH } from '@/core/assistant/system1/router';
-import { topicById, topics, type TopicId } from '@/core/assistant/topics';
-import { knowledgeBase } from '@/core/knowledge/knowledge-base';
+import { createFastPath } from '@/core/assistant/system1/fast-path';
+import type { TopicId } from '@/core/assistant/topics';
 import { createAnswerCache } from '@/infrastructure/budget/answer-cache';
 import { createModelBudget } from '@/infrastructure/budget/model-budget';
 import { ChatWorkspace } from './chat-workspace';
@@ -21,6 +22,7 @@ const CHAT_URL = `${window.location.origin}/api/chat`;
 /** The real endpoint, answering from the fast path: what production does without a model key. */
 const chatHandler = createChatHandler({
   assistant: createAssistant({
+    fastPath: createFastPath(knowledge),
     modelAssistant: null,
     clock: { now: () => new Date() },
     reportError: () => undefined,
@@ -63,23 +65,9 @@ afterAll(() => {
   server.close();
 });
 
+/** The page as the server renders it: the workspace with the view built for its topic. */
 function workspace(topic: TopicId = 'overview') {
-  const { profile, contact, welcome } = knowledgeBase;
-  return (
-    <ChatWorkspace
-      profile={{ name: profile.name, title: profile.title }}
-      links={contact}
-      topics={topics.map(({ id, label, icon }) => ({
-        id,
-        label,
-        icon,
-        href: id === 'overview' ? '/' : `/${id}`,
-      }))}
-      welcome={welcome}
-      maxQuestionLength={MAX_QUESTION_LENGTH}
-      topic={topic}
-    />
-  );
+  return <ChatWorkspace {...workspaceProps(topic)} />;
 }
 
 /** One page of the site, inside the store every page shares. */
@@ -111,9 +99,7 @@ function latestAnswer(): HTMLElement {
 describe('the welcome screen', () => {
   it('greets the visitor with one main heading and the composer', () => {
     renderWorkspace();
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      knowledgeBase.welcome.heading,
-    );
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(knowledge.welcome.heading);
     expect(composer()).toBeInTheDocument();
     expect(screen.getByRole('list', { name: 'Suggested questions' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'His career' })).toBeInTheDocument();
@@ -472,6 +458,18 @@ describe('when an answer fails', () => {
 });
 
 describe('topic pages', () => {
+  it('names a topic page from the navigation the server built, and refuses one it lacks', () => {
+    const props = workspaceProps('skills');
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    expect(() =>
+      render(
+        <ChatWorkspace {...props} topics={props.topics.filter((item) => item.id !== 'skills')} />,
+        { wrapper: ConversationsProvider },
+      ),
+    ).toThrow('The navigation has no "skills" page.');
+  });
+
   const topicLink = (name: string) => within(topicsNav()).getByRole('link', { name });
 
   it('marks the overview as the current page on the home page', () => {
@@ -485,7 +483,7 @@ describe('topic pages', () => {
     renderWorkspace('experience');
     expect(topicLink('Experience')).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Experience');
-    expect(latestAnswer()).toHaveTextContent(topicById('experience').intro);
+    expect(latestAnswer()).toHaveTextContent(topicCatalog.topicById('experience').intro);
     expect(within(latestAnswer()).getByText('Toptal')).toBeInTheDocument();
     expect(
       within(latestAnswer()).getByRole('list', { name: 'Suggested questions' }),
@@ -499,7 +497,7 @@ describe('topic pages', () => {
 
     user.navigate('projects');
     expect(screen.queryByText('What did he do at Roots?')).not.toBeInTheDocument();
-    expect(introduction()).toHaveTextContent(topicById('projects').intro);
+    expect(introduction()).toHaveTextContent(topicCatalog.topicById('projects').intro);
 
     user.navigate('overview');
     expect(within(conversation()).getByText('What did he do at Roots?')).toBeInTheDocument();
@@ -509,7 +507,7 @@ describe('topic pages', () => {
     const user = renderWorkspace('skills');
     await user.type(composer(), 'How did he grow the team at Roots?{Enter}');
     await within(conversation()).findByText(/grew the frontend team/);
-    expect(introduction()).toHaveTextContent(topicById('skills').intro);
+    expect(introduction()).toHaveTextContent(topicCatalog.topicById('skills').intro);
   });
 
   it('starts a topic page over on its introduction, not on the welcome screen', async () => {
@@ -520,7 +518,7 @@ describe('topic pages', () => {
     if (!sidebarButton) throw new Error('no new conversation button');
     await user.click(sidebarButton);
     expect(screen.queryByText('What did he do at Roots?')).not.toBeInTheDocument();
-    expect(introduction()).toHaveTextContent(topicById('projects').intro);
+    expect(introduction()).toHaveTextContent(topicCatalog.topicById('projects').intro);
     expect(screen.getByRole('status')).toHaveTextContent('New conversation started');
   });
 });

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { suggestedQuestions } from '@/core/assistant/topics';
+import { topicCatalog } from '../../../site-knowledge';
 import { SuggestionsSpecimen } from './suggestions-specimen';
 
 // The design's SuggestedQuestions artboard: the overview's first four
@@ -14,7 +14,7 @@ export default function SuggestedQuestionsFidelityPage() {
   return (
     <div className="min-h-screen p-10">
       <SuggestionsSpecimen
-        questions={suggestedQuestions('overview', 0, 4).map(({ question, short }) => ({
+        questions={topicCatalog.suggestedQuestions('overview', 0, 4).map(({ question, short }) => ({
           question,
           label: short,
         }))}

@@ -1,5 +1,7 @@
+import type { Note } from './schema';
+
 /**
- * Turns Marcio's knowledge-base document into passages for retrieval.
+ * Turns the owner's knowledge-base document into passages for retrieval.
  *
  * The document is written for people and for an assistant alike: one passage
  * per subsection, one per question in its FAQ, and long subsections split at
@@ -8,12 +10,6 @@
  * notes about the document itself (search layout, answer policy, pending
  * checks) and are left out: they describe the record, they are not part of it.
  */
-
-export interface Note {
-  /** Stable while the document's numbering is. */
-  readonly id: string;
-  readonly text: string;
-}
 
 const LAST_SECTION = 15;
 const FAQ_SECTION = 14;

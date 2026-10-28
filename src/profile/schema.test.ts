@@ -1,0 +1,89 @@
+import { describe, expect, it } from 'vitest';
+import { ZodError } from 'zod';
+import { fixtureKnowledge } from '@/testing/fixture-profile/knowledge';
+import { validateProfile, type Identity, type Profile } from './schema';
+
+const identity: Identity = {
+  name: 'Ada Rivera',
+  firstName: 'Ada',
+  lastName: 'Rivera',
+  initials: 'AR',
+  contact: {
+    email: 'ada@rivera.example',
+    linkedin: 'https://www.linkedin.com/in/ada-rivera-example',
+    github: 'https://github.com/ada-rivera-example',
+  },
+  siteHost: 'ada.example',
+  userAgentProduct: 'AdaRiveraPortfolio',
+  nonIdentifyingTerms: [],
+};
+
+const valid: Profile = { identity, locales: ['en'], knowledge: fixtureKnowledge, evaluation: [] };
+
+function issuePaths(profile: Profile): PropertyKey[][] {
+  try {
+    validateProfile(profile);
+  } catch (error) {
+    if (error instanceof ZodError) return error.issues.map((issue) => [...issue.path]);
+    throw error;
+  }
+  return [];
+}
+
+describe('validating a profile', () => {
+  it('accepts a complete profile and hands it back unchanged', () => {
+    expect(validateProfile(valid)).toBe(valid);
+  });
+
+  it.each<[string, Partial<Identity>, (string | number)[]]>([
+    ['a blank name', { name: ' ' }, ['identity', 'name']],
+    ['a blank first name', { firstName: '' }, ['identity', 'firstName']],
+    ['a blank last name', { lastName: '' }, ['identity', 'lastName']],
+    ['blank initials', { initials: '' }, ['identity', 'initials']],
+    [
+      'an email that is not one',
+      { contact: { ...identity.contact, email: 'ada-at-example' } },
+      ['identity', 'contact', 'email'],
+    ],
+    [
+      'a LinkedIn link over http',
+      { contact: { ...identity.contact, linkedin: 'http://www.linkedin.com/in/ada' } },
+      ['identity', 'contact', 'linkedin'],
+    ],
+    [
+      'a GitHub link that is not a URL',
+      { contact: { ...identity.contact, github: 'ada-rivera-example' } },
+      ['identity', 'contact', 'github'],
+    ],
+    [
+      'a domain that is not a host name',
+      { siteHost: 'https://ada.example/' },
+      ['identity', 'siteHost'],
+    ],
+    [
+      'a User-Agent product with a space',
+      { userAgentProduct: 'Ada Rivera' },
+      ['identity', 'userAgentProduct'],
+    ],
+  ])('rejects %s, naming where it is', (_case, change, path) => {
+    expect(issuePaths({ ...valid, identity: { ...identity, ...change } })).toContainEqual(path);
+  });
+
+  it('rejects a profile published in no language', () => {
+    expect(issuePaths({ ...valid, locales: [] })).toContainEqual(['locales']);
+  });
+
+  it('reports every problem at once, wherever it is', () => {
+    const paths = issuePaths({
+      ...valid,
+      identity: { ...identity, name: '' },
+      knowledge: { ...fixtureKnowledge, contact: { ...fixtureKnowledge.contact, email: 'nope' } },
+    });
+    expect(paths).toEqual(
+      expect.arrayContaining([
+        ['identity', 'name'],
+        ['knowledge', 'contact', 'email'],
+      ]),
+    );
+  });
+});

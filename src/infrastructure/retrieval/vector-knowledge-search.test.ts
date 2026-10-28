@@ -2,13 +2,16 @@ import { delay, http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { Agent, getGlobalDispatcher, setGlobalDispatcher } from 'undici';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { createCitation } from '@/core/assistant/citations';
 import type { EmbeddingPort } from '@/core/assistant/ports/embedding.port';
 import { buildCorpus, type KnowledgeChunk } from '@/core/knowledge/corpus';
+import { localize } from '@/core/knowledge/localize';
+import { profile } from '@/profile';
+import committed from '@/profile/generated/knowledge-index.json';
 import { createOpenAIClient } from '../openai/openai-client';
 import { createOpenAIEmbeddings, EmbeddingsTimeoutError } from '../openai/openai-embeddings';
 import { CircuitOpenError, createCircuitBreaker } from '../resilience/circuit-breaker';
 import { EMBEDDING_DIMENSIONS, type KnowledgeIndex } from './index-spec';
-import committed from './knowledge-index.json';
 import {
   cosine,
   createVectorKnowledgeSearch,
@@ -16,8 +19,10 @@ import {
   RELEVANCE_FLOOR,
 } from './vector-knowledge-search';
 
+const knowledge = localize(profile.knowledge, 'en');
 const index: KnowledgeIndex = committed;
-const corpus = buildCorpus();
+const corpus = buildCorpus(knowledge);
+const citation = createCitation(knowledge.sourceLabels);
 
 function newBreaker(now: () => number = Date.now) {
   return createCircuitBreaker({ failureThreshold: 3, cooldownMs: 30_000, now });
@@ -56,6 +61,7 @@ describe('cosine', () => {
 describe('vector knowledge search', () => {
   it('ranks the passage the query points at first', async () => {
     const search = createVectorKnowledgeSearch({
+      citation,
       breaker: newBreaker(),
       embeddings: embeddingsReturning(vectorOf('role:shall:4')),
       index,
@@ -72,6 +78,7 @@ describe('vector knowledge search', () => {
 
   it('returns best matches first, no more than asked from the résumé plus a few notes', async () => {
     const search = createVectorKnowledgeSearch({
+      citation,
       breaker: newBreaker(),
       embeddings: embeddingsReturning(vectorOf('languages')),
       index,
@@ -87,6 +94,7 @@ describe('vector knowledge search', () => {
 
   it('searches only the category asked for', async () => {
     const search = createVectorKnowledgeSearch({
+      citation,
       breaker: newBreaker(),
       embeddings: embeddingsReturning(vectorOf('role:deel:7')),
       index,
@@ -99,6 +107,7 @@ describe('vector knowledge search', () => {
   it('returns nothing for a question unrelated to the record, rather than the least bad passages', async () => {
     for (const seed of [1, 2, 3]) {
       const search = createVectorKnowledgeSearch({
+        citation,
         breaker: newBreaker(),
         embeddings: embeddingsReturning(unrelatedVector(seed)),
         index,
@@ -115,6 +124,7 @@ describe('vector knowledge search — résumé and notes together', () => {
     const at = (similarity: number) => [100 * similarity, 100 * Math.sqrt(1 - similarity ** 2)];
     const ids = { 'note-a': 0.9, 'note-b': 0.85, 'note-c': 0.8, 'note-d': 0.75, resume: 0.4 };
     const search = createVectorKnowledgeSearch({
+      citation,
       breaker: newBreaker(),
       embeddings: embeddingsReturning(query),
       index: {
@@ -155,6 +165,7 @@ describe('vector knowledge search — the relevance floor', () => {
   function searchOver(similarities: Record<string, number>) {
     const ids = Object.keys(similarities);
     return createVectorKnowledgeSearch({
+      citation,
       breaker: newBreaker(),
       embeddings: embeddingsReturning(QUERY),
       index: {
@@ -181,6 +192,7 @@ describe('vector knowledge search — the relevance floor', () => {
 
   it('never returns a passage the index has no vector for, as after an unrebuilt change', async () => {
     const search = createVectorKnowledgeSearch({
+      citation,
       breaker: newBreaker(),
       embeddings: embeddingsReturning(QUERY),
       index: { ...index, vectors: { indexed: vectorAt(0.5) } },
@@ -191,6 +203,7 @@ describe('vector knowledge search — the relevance floor', () => {
 
   it('returns nothing when the query could not be embedded', async () => {
     const search = createVectorKnowledgeSearch({
+      citation,
       breaker: newBreaker(),
       embeddings: { embed: () => Promise.resolve([]) },
       index: { ...index, vectors: { indexed: vectorAt(0.9) } },
@@ -248,6 +261,7 @@ describe('vector knowledge search — when embeddings fail', () => {
     let clock = 0;
     const breaker = newBreaker(() => clock);
     const search = createVectorKnowledgeSearch({
+      citation,
       embeddings: createOpenAIEmbeddings({
         client: createOpenAIClient('test-key'),
         model: 'text-embedding-3-small',

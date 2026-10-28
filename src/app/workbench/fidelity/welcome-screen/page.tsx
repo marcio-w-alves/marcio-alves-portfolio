@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { knowledgeBase } from '@/core/knowledge/knowledge-base';
 import { WelcomeScreen } from '@/ui/welcome';
+import { knowledge } from '../../../site-knowledge';
 
 // The design's WelcomeScreen artboard: the greeting on its own.
 // A development tool, so production answers 404.
@@ -12,7 +12,7 @@ export default function WelcomeScreenFidelityPage() {
 
   return (
     <div className="min-h-screen p-10">
-      <WelcomeScreen welcome={knowledgeBase.welcome} />
+      <WelcomeScreen welcome={knowledge.welcome} />
     </div>
   );
 }
