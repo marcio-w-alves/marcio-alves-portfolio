@@ -206,8 +206,8 @@ describe('fast path — golden answers', () => {
       - Decisions, conventions and onboarding written down, so knowledge does not stay in one head.",
         "How does he use AI in engineering?": "He uses AI as a productivity layer for engineering, not a snippet generator: he prepares context, rules, tasks and checks so agents produce code and documentation worth keeping, and keeps architectural decisions and final acceptance with a person.
       ### Tools
+      - **Claude Code** — his main tool today: he documents what to build, splits it into small deliverables and runs Claude Code loops on several of them at once, following each through its summaries and status, with automated tests — browser tests included — before his own review and manual testing.
       - **OpenAI Codex** — goal-driven implementation and validation loops.
-      - **Claude Code** — planning, UI analysis, implementation and specifications.
       - **Cursor** — exploring and editing code.
       ### How he works with agents
       - **Context engineering** — documentation and decisions kept next to the code, project-specific rules and hooks, instead of one long rules file the agent may ignore.
@@ -216,7 +216,7 @@ describe('fast path — golden answers', () => {
       - **Verification** — typecheck, lint, tests, real API integration, UI states, accessibility and a human review of the diff.
       - **Safety** — least-privilege tools, retrieved content treated as data, secrets kept out of the context.
       ### AI inside products
-      He also studies AI inside products — retrieval-augmented generation over documents, tool calling with permissions and schemas, and keeping deterministic calculations apart from model-written recommendations.",
+      In production, this portfolio is his own LLM application: its assistant retrieves facts by embeddings from his résumé and knowledge base, acts only through an allow-list of validated actions, and has every answer checked by an automated evaluation. He also studies AI inside other products — retrieval over documents, tool calling with permissions and schemas, and keeping deterministic calculations apart from model-written recommendations.",
         "How does he work with product teams?": "Close collaboration with product, design and leadership runs through his roles:
 
       - At **Toptal**, he works with the Director and CEO to coordinate product decisions and implement new features.

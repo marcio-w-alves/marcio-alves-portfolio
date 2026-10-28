@@ -425,6 +425,78 @@ describe('model assistant — what reaches the visitor', () => {
     });
   });
 
+  it('searches in place of a "private" decline too, for what he chose to share', async () => {
+    const { port, requests } = scriptedModel([
+      { calls: [call('declineToAnswer', { reason: 'private' })] },
+      { text: 'His dogs are Sky and Oreo.' },
+    ]);
+    const search = createSearchTools({
+      search: () =>
+        Promise.resolve([
+          {
+            id: 'notes:14.q70',
+            category: 'notes',
+            text: 'Os cachorros dele se chamam Sky e Oreo.',
+            source: { id: 'notes', label: 'Knowledge base' },
+            score: 0.6,
+          },
+        ]),
+    });
+    const assistant = createModelAssistant({
+      model: port,
+      tools: createToolRegistry(search),
+      clock,
+    });
+    const events: AssistantEvent[] = [];
+    for await (const event of assistant.answer({
+      question: 'What are his dogs called?',
+      history: [],
+      followUps: [],
+    })) {
+      events.push(event);
+    }
+
+    expect(JSON.stringify(toolReplies(requests[1]))).toContain('Sky e Oreo');
+    expect(events.at(-1)).toMatchObject({
+      type: 'finish',
+      sources: [{ id: 'notes', label: 'Knowledge base' }],
+    });
+  });
+
+  it('lets a decline made before any search stand when the record only loosely relates', async () => {
+    const { port, requests } = scriptedModel([
+      { calls: [call('declineToAnswer', { reason: 'not_documented' })] },
+      { text: "His GPA isn't documented." },
+    ]);
+    const search = createSearchTools({
+      search: () =>
+        Promise.resolve([
+          {
+            id: 'education',
+            category: 'education',
+            text: 'Education: Computer Engineering at UFPB, completed in 2019.',
+            source: { id: 'resume.education', label: 'Resume' },
+            score: 0.35,
+          },
+        ]),
+    });
+    const assistant = createModelAssistant({
+      model: port,
+      tools: createToolRegistry(search),
+      clock,
+    });
+    const events: AssistantEvent[] = [];
+    for await (const event of assistant.answer({
+      question: 'What was his GPA at university?',
+      history: [],
+      followUps: [],
+    })) {
+      events.push(event);
+    }
+    expect(JSON.stringify(toolReplies(requests[1]))).toContain('not_documented');
+    expect(events.at(-1)).toMatchObject({ type: 'finish', sources: [] });
+  });
+
   it('accepts the decline once the search found nothing that answers', async () => {
     const { port } = scriptedModel([
       {

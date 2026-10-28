@@ -144,8 +144,8 @@ export const aiEngineering = {
   summary:
     'He uses AI as a productivity layer for engineering, not a snippet generator: he prepares context, rules, tasks and checks so agents produce code and documentation worth keeping, and keeps architectural decisions and final acceptance with a person.',
   tools: [
+    '**Claude Code** — his main tool today: he documents what to build, splits it into small deliverables and runs Claude Code loops on several of them at once, following each through its summaries and status, with automated tests — browser tests included — before his own review and manual testing.',
     '**OpenAI Codex** — goal-driven implementation and validation loops.',
-    '**Claude Code** — planning, UI analysis, implementation and specifications.',
     '**Cursor** — exploring and editing code.',
   ],
   practices: [
@@ -156,7 +156,7 @@ export const aiEngineering = {
     '**Safety** — least-privilege tools, retrieved content treated as data, secrets kept out of the context.',
   ],
   inProducts:
-    'He also studies AI inside products — retrieval-augmented generation over documents, tool calling with permissions and schemas, and keeping deterministic calculations apart from model-written recommendations.',
+    'In production, this portfolio is his own LLM application: its assistant retrieves facts by embeddings from his résumé and knowledge base, acts only through an allow-list of validated actions, and has every answer checked by an automated evaluation. He also studies AI inside other products — retrieval over documents, tool calling with permissions and schemas, and keeping deterministic calculations apart from model-written recommendations.',
 } as const;
 
 /** How he leads, beyond the titles he held. */
