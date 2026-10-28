@@ -1,8 +1,8 @@
-import { http, HttpResponse } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { createOpenAIClient } from './openai-client';
-import { createOpenAIEmbeddings } from './openai-embeddings';
+import { createOpenAIEmbeddings, EmbeddingsTimeoutError } from './openai-embeddings';
 
 const EMBEDDINGS_URL = 'https://api.openai.com/v1/embeddings';
 const server = setupServer();
@@ -69,5 +69,52 @@ describe('OpenAI embeddings adapter', () => {
     });
     // The stub's own message: a real 401 from the live API cannot satisfy this.
     await expect(embeddings.embed(['x'])).rejects.toThrow('stubbed: key rejected');
+  });
+
+  it('gives up on an embeddings call that hangs, at its own short timeout and without retrying', async () => {
+    let attempts = 0;
+    server.use(
+      http.post(EMBEDDINGS_URL, async () => {
+        attempts += 1;
+        await delay('infinite');
+        return HttpResponse.json({});
+      }),
+    );
+    const embeddings = createOpenAIEmbeddings({
+      client,
+      model: 'text-embedding-3-small',
+      dimensions: 2,
+      timeoutMs: 50,
+    });
+
+    await expect(embeddings.embed(['x'])).rejects.toBeInstanceOf(EmbeddingsTimeoutError);
+    expect(attempts).toBe(1);
+  });
+
+  it('aborts the embeddings call when the request is aborted', async () => {
+    const arrived = Promise.withResolvers<Request>();
+    server.use(
+      http.post(EMBEDDINGS_URL, ({ request }) => {
+        arrived.resolve(request);
+        return new Promise<Response>((resolve) => {
+          request.signal.addEventListener('abort', () => {
+            resolve(HttpResponse.error());
+          });
+        });
+      }),
+    );
+    const embeddings = createOpenAIEmbeddings({
+      client,
+      model: 'text-embedding-3-small',
+      dimensions: 2,
+    });
+    const visitor = new AbortController();
+
+    const embedding = embeddings.embed(['x'], visitor.signal);
+    const outbound = await arrived.promise;
+    visitor.abort();
+
+    await expect(embedding).rejects.toMatchObject({ name: 'AbortError' });
+    expect(outbound.signal.aborted).toBe(true);
   });
 });

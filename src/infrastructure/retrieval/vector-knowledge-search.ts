@@ -2,6 +2,7 @@ import { citation } from '@/core/assistant/citations';
 import type { EmbeddingPort } from '@/core/assistant/ports/embedding.port';
 import type { KnowledgeSearchPort, Passage } from '@/core/assistant/ports/knowledge-search.port';
 import type { KnowledgeChunk } from '@/core/knowledge/corpus';
+import { guard, type CircuitBreaker } from '../resilience/circuit-breaker';
 import type { KnowledgeIndex } from './index-spec';
 
 /**
@@ -44,6 +45,8 @@ interface Options {
   readonly embeddings: EmbeddingPort;
   readonly index: KnowledgeIndex;
   readonly corpus: readonly KnowledgeChunk[];
+  /** Its own, so an embeddings outage never opens the chat model's circuit. */
+  readonly breaker: CircuitBreaker;
 }
 
 /**
@@ -54,10 +57,11 @@ export function createVectorKnowledgeSearch({
   embeddings,
   index,
   corpus,
+  breaker,
 }: Options): KnowledgeSearchPort {
   return {
-    async search({ query, limit, category }) {
-      const [vector] = await embeddings.embed([query]);
+    async search({ query, limit, category, signal }) {
+      const [vector] = await guard(breaker, () => embeddings.embed([query], signal));
       if (!vector) return [];
       const ranked = corpus
         .filter((chunk) => !category || chunk.category === category)

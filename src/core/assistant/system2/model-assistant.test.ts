@@ -8,6 +8,7 @@ import type {
 } from '../ports/language-model.port';
 import { createToolRegistry } from '../tools/registry';
 import { createSearchTools } from '../tools/search-tools';
+import { defineTool, type Tool } from '../tools/tool';
 import {
   createModelAssistant,
   EMPTY_REPLY,
@@ -45,8 +46,17 @@ function call(name: string, args: unknown, id = `call-${name}`): ToolCall {
 
 const clock = { now: () => new Date('2026-10-28T12:00:00Z') };
 
+function rethrow(error: unknown): never {
+  throw error;
+}
+
+/** The real allow-list; an action that throws unexpectedly fails the test. */
+function registry(extra: readonly Tool[] = [], reportError: (error: unknown) => void = rethrow) {
+  return createToolRegistry({ extra, reportError });
+}
+
 async function collect(model: LanguageModelPort, question = 'question', history = []) {
-  const assistant = createModelAssistant({ model, tools: createToolRegistry(), clock });
+  const assistant = createModelAssistant({ model, tools: registry(), clock });
   const events: AssistantEvent[] = [];
   for await (const event of assistant.answer({ question, history, followUps: ['Next?'] })) {
     events.push(event);
@@ -125,7 +135,7 @@ describe('model assistant — answering through actions', () => {
 
   it('starts the conversation with the standing instructions, then history, then the question', async () => {
     const { port, requests } = scriptedModel([{ text: 'ok' }]);
-    const assistant = createModelAssistant({ model: port, tools: createToolRegistry(), clock });
+    const assistant = createModelAssistant({ model: port, tools: registry(), clock });
     const history = [
       { role: 'user' as const, text: 'Who is he?' },
       { role: 'assistant' as const, text: 'A frontend engineer.' },
@@ -144,7 +154,7 @@ describe('model assistant — answering through actions', () => {
 describe('model assistant — conversation memory is bounded', () => {
   it('sends only the latest twelve turns, each cut to a thousand characters', async () => {
     const { port, requests } = scriptedModel([{ text: 'ok' }]);
-    const assistant = createModelAssistant({ model: port, tools: createToolRegistry(), clock });
+    const assistant = createModelAssistant({ model: port, tools: registry(), clock });
     const history = Array.from({ length: 20 }, (_, i) => ({
       role: i % 2 === 0 ? ('user' as const) : ('assistant' as const),
       text: `${String(i)}:${'z'.repeat(5000)}`,
@@ -247,7 +257,7 @@ describe('model assistant — spending', () => {
     const usage: { inputTokens: number; outputTokens: number }[] = [];
     const assistant = createModelAssistant({
       model: port,
-      tools: createToolRegistry(),
+      tools: registry(),
       clock,
       onUsage: (spent) => usage.push(spent),
     });
@@ -262,7 +272,7 @@ describe('model assistant — spending', () => {
     const usage: ModelUsage[] = [];
     const assistant = createModelAssistant({
       model: port,
-      tools: createToolRegistry(),
+      tools: registry(),
       clock,
       onUsage: (spent) => usage.push(spent),
     });
@@ -392,21 +402,24 @@ describe('model assistant — what reaches the visitor', () => {
       { calls: [call('searchKnowledge', { query: 'Roots backend' })] },
       { text: 'The Roots backend was in Python, owned by another team.' },
     ]);
-    const search = createSearchTools({
-      search: () =>
-        Promise.resolve([
-          {
-            id: 'notes:3.3',
-            category: 'notes',
-            text: 'O backend da Roots era em Python, e Marcio não trabalhou nele.',
-            source: { id: 'notes', label: 'Knowledge base' },
-            score: 0.6,
-          },
-        ]),
-    });
+    const search = createSearchTools(
+      {
+        search: () =>
+          Promise.resolve([
+            {
+              id: 'notes:3.3',
+              category: 'notes',
+              text: 'O backend da Roots era em Python, e Marcio não trabalhou nele.',
+              source: { id: 'notes', label: 'Knowledge base' },
+              score: 0.6,
+            },
+          ]),
+      },
+      rethrow,
+    );
     const assistant = createModelAssistant({
       model: port,
-      tools: createToolRegistry(search),
+      tools: registry(search),
       clock,
     });
     const events: AssistantEvent[] = [];
@@ -437,7 +450,7 @@ describe('model assistant — what reaches the visitor', () => {
     ]);
     const assistant = createModelAssistant({
       model: port,
-      tools: createToolRegistry(createSearchTools({ search: () => Promise.resolve([]) })),
+      tools: registry(createSearchTools({ search: () => Promise.resolve([]) }, rethrow)),
       clock,
     });
     const events: AssistantEvent[] = [];
@@ -448,6 +461,63 @@ describe('model assistant — what reaches the visitor', () => {
     expect(text(events)).toBe("That isn't documented.");
   });
 
+  it('completes the answer after an action throws, telling the model the action failed', async () => {
+    const exploding = defineTool({
+      name: 'getPortfolioStats',
+      description: 'A stand-in action whose dependency throws when it runs.',
+      input: {},
+      execute: () => {
+        throw new Error('db exploded');
+      },
+    });
+    const reported: unknown[] = [];
+    const { port, requests } = scriptedModel([
+      { calls: [call('getPortfolioStats', {})] },
+      { text: 'That is not available right now.' },
+    ]);
+    const assistant = createModelAssistant({
+      model: port,
+      tools: registry([exploding], (error) => reported.push(error)),
+      clock,
+    });
+
+    const events = await Array.fromAsync(
+      assistant.answer({ question: 'q', history: [], followUps: [] }),
+    );
+
+    const reply = JSON.stringify(toolReplies(requests[1]));
+    expect(reply).toContain('The action failed');
+    expect(reply).not.toContain('db exploded');
+    expect(text(events)).toBe('That is not available right now.');
+    expect(events.at(-1)).toMatchObject({ type: 'finish' });
+    expect(reported).toEqual([new Error('db exploded')]);
+  });
+
+  it("hands the visitor's request signal to the actions it runs", async () => {
+    const signals: (AbortSignal | undefined)[] = [];
+    const { port } = scriptedModel([
+      { calls: [call('searchKnowledge', { query: 'Roots backend' })] },
+      { text: 'Done.' },
+    ]);
+    const search = createSearchTools(
+      {
+        search: ({ signal }) => {
+          signals.push(signal);
+          return Promise.resolve([]);
+        },
+      },
+      rethrow,
+    );
+    const request = new AbortController();
+    const assistant = createModelAssistant({ model: port, tools: registry(search), clock });
+
+    await Array.fromAsync(
+      assistant.answer({ question: 'q', history: [], followUps: [] }, request.signal),
+    );
+
+    expect(signals).toEqual([request.signal]);
+  });
+
   it('never leaves a blank reply', async () => {
     const { port } = scriptedModel([{ text: '' }]);
     expect(text(await collect(port))).toBe(EMPTY_REPLY);
@@ -455,7 +525,7 @@ describe('model assistant — what reaches the visitor', () => {
 
   it('announces nothing when the model fails before saying anything, so the caller can fall back', async () => {
     const { port } = scriptedModel([{ throws: new Error('provider down') }]);
-    const assistant = createModelAssistant({ model: port, tools: createToolRegistry(), clock });
+    const assistant = createModelAssistant({ model: port, tools: registry(), clock });
     const seen: AssistantEvent[] = [];
     await expect(async () => {
       for await (const event of assistant.answer({ question: 'q', history: [], followUps: [] })) {

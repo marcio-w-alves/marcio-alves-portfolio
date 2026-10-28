@@ -7,9 +7,9 @@ interface Dependencies {
 
 /**
  * Which build is live and whether the model is usable — never a secret, only
- * whether one is configured. `status` stays `ok` while the circuit is open:
+ * whether one is configured. `status` stays `ok` while a circuit is open:
  * the site still answers from the fast path, and `circuit` says why the model
- * does not.
+ * does not; with `retrieval` open, the model answers without search.
  */
 export function createHealthHandler({ modelStatus }: Dependencies) {
   return function handle(): Response {

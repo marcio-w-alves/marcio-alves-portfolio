@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { createToolRegistry } from './registry';
 import { defineTool, type ToolOutcome, type ToolResult } from './tool';
 
-const registry = createToolRegistry();
+function rethrow(error: unknown): never {
+  throw error;
+}
+
+const registry = createToolRegistry({ reportError: rethrow });
 
 function succeeded(outcome: ToolOutcome): ToolResult {
   if (!outcome.ok) throw new Error(`Tool failed: ${outcome.error}`);
@@ -76,7 +80,56 @@ describe('tool registry — the allow-list', () => {
       input: {},
       execute: () => ({ data: null, sources: [] }),
     });
-    expect(() => createToolRegistry([impostor])).toThrow('Two tools share a name.');
+    expect(() => createToolRegistry({ extra: [impostor], reportError: rethrow })).toThrow(
+      'Two tools share a name.',
+    );
+  });
+
+  it('turns an action that throws into an error the model sees, reporting what it threw', async () => {
+    const exploding = defineTool({
+      name: 'getPortfolioStats',
+      description: 'A stand-in action whose dependency throws when it runs.',
+      input: {},
+      execute: () => Promise.reject(new Error('db exploded')),
+    });
+    const reported: unknown[] = [];
+    const withExploding = createToolRegistry({
+      extra: [exploding],
+      reportError: (error) => reported.push(error),
+    });
+
+    const outcome = await withExploding.run('getPortfolioStats', {});
+
+    expect(outcome.ok).toBe(false);
+    if (!outcome.ok) expect(outcome.error).toMatch(/^The action failed/);
+    expect(JSON.stringify(outcome)).not.toContain('db exploded');
+    expect(reported).toEqual([new Error('db exploded')]);
+  });
+
+  it('lets an action stopped by the visitor leaving end the answer, reporting nothing', async () => {
+    const request = new AbortController();
+    const waiting = defineTool({
+      name: 'getPortfolioStats',
+      description: 'A stand-in action that waits on the network until the request ends.',
+      input: {},
+      execute: (_input, signal) =>
+        new Promise((_resolve, reject) => {
+          signal?.addEventListener('abort', () => {
+            reject(signal.reason as Error);
+          });
+        }),
+    });
+    const reported: unknown[] = [];
+    const withWaiting = createToolRegistry({
+      extra: [waiting],
+      reportError: (error) => reported.push(error),
+    });
+
+    const running = withWaiting.run('getPortfolioStats', {}, request.signal);
+    request.abort();
+
+    await expect(running).rejects.toMatchObject({ name: 'AbortError' });
+    expect(reported).toEqual([]);
   });
 
   it('hands the model only JSON', async () => {

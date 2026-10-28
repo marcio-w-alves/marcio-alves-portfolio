@@ -22,21 +22,46 @@ const declineToAnswer = defineTool({
 
 export interface ToolRegistry {
   readonly tools: readonly Tool[];
-  run(name: string, rawArguments: unknown): Promise<ToolOutcome>;
+  run(name: string, rawArguments: unknown, signal?: AbortSignal): Promise<ToolOutcome>;
 }
 
-/** The complete allow-list. A name outside it is an error returned to the model, never executed. */
-export function createToolRegistry(extra: readonly Tool[] = []): ToolRegistry {
+interface RegistryOptions {
+  /** Actions beyond the built-in ones, such as those that reach the network. */
+  readonly extra?: readonly Tool[];
+  /** Told of every action that throws, with what it threw; the model is never shown that. */
+  readonly reportError: (error: unknown) => void;
+}
+
+function failed(name: string): ToolOutcome {
+  return {
+    ok: false,
+    error: `The action failed: "${name}" could not run right now. Answer from the other actions, or decline.`,
+  };
+}
+
+/**
+ * The complete allow-list. A name outside it is an error returned to the
+ * model, never executed. An action that throws becomes an error the model can
+ * answer around, so one broken action never costs the visitor the answer.
+ */
+export function createToolRegistry({ extra = [], reportError }: RegistryOptions): ToolRegistry {
   const tools = [...createKnowledgeTools(), ...createDisplayTools(), declineToAnswer, ...extra];
   const byName = new Map(tools.map((tool) => [tool.name, tool]));
   if (byName.size !== tools.length) throw new Error('Two tools share a name.');
   return {
     tools,
-    async run(name, rawArguments) {
+    async run(name, rawArguments, signal) {
       const tool = byName.get(name);
       if (!tool)
         return { ok: false, error: `Unknown action "${name}". Use only the listed actions.` };
-      return tool.run(rawArguments);
+      try {
+        return await tool.run(rawArguments, signal);
+      } catch (error) {
+        // The visitor left: there is no answer left to save, and nothing failed.
+        if (signal?.aborted) throw error;
+        reportError(error);
+        return failed(name);
+      }
     },
   };
 }

@@ -95,7 +95,7 @@ describe('POST /api/chat — answering', () => {
           { id: 'c1', name: 'getExperience', arguments: '{"company":"roots"}' },
           'He led the Roots frontend.',
         ),
-        tools: createToolRegistry(),
+        tools: createToolRegistry({ reportError }),
         clock,
       }),
       clock,

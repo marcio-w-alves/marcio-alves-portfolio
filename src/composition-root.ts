@@ -53,11 +53,16 @@ const TEMPERATURE = 0;
 
 const TEN_MINUTES = 10 * 60 * 1000;
 
-/** What the health check may say about the model: whether it is configured, and whether it is reachable. */
+/**
+ * What the health check may say about the model: whether it is configured,
+ * and whether it and retrieval are reachable.
+ */
 export interface ModelStatus {
   readonly model: 'enabled' | 'disabled';
-  /** Null when there is no model to guard. */
+  /** The chat model's circuit. Null when there is no model to guard. */
   readonly circuit: CircuitState | null;
+  /** The embeddings circuit behind search. Null when there is no model to guard. */
+  readonly retrieval: CircuitState | null;
 }
 
 export interface Container {
@@ -78,6 +83,10 @@ function reportAnswered({ clientId, ...handling }: AnswerReport): void {
   logger.info('chat.answered', { ...handling, client: tagClient(clientId) });
 }
 
+function reportToolError(error: unknown): void {
+  logger.warn('tool.failed', errorFields(error));
+}
+
 function reportRateLimited(clientId: string): void {
   logger.warn('chat.rate_limited', { client: tagClient(clientId) });
 }
@@ -96,13 +105,13 @@ function createBudget(settings: AssistantSettings): ModelBudgetPort {
   });
 }
 
-function createModelCircuitBreaker(): CircuitBreaker {
+function createCircuitBreakerFor(dependency: 'model' | 'retrieval'): CircuitBreaker {
   return createCircuitBreaker({
     failureThreshold: 3,
     cooldownMs: 30_000,
     onTransition: (to) => {
-      if (to === 'open') logger.warn('model.circuit_opened');
-      else logger.info('model.circuit_closed');
+      if (to === 'open') logger.warn(`${dependency}.circuit_opened`);
+      else logger.info(`${dependency}.circuit_closed`);
     },
   });
 }
@@ -115,6 +124,7 @@ export interface Observers {
 interface GuardedModelAssistant {
   readonly assistant: ModelAssistant;
   readonly breaker: CircuitBreaker;
+  readonly retrievalBreaker: CircuitBreaker;
 }
 
 export interface ContainerOptions extends Observers {
@@ -139,6 +149,7 @@ function buildModelAssistant(
   observers: Observers,
 ): GuardedModelAssistant {
   const client = createOpenAIClient(apiKey, { timeoutMs: openAITimeoutMs });
+  const retrievalBreaker = createCircuitBreakerFor('retrieval');
   const search = createVectorKnowledgeSearch({
     embeddings: createOpenAIEmbeddings({
       client,
@@ -147,19 +158,24 @@ function buildModelAssistant(
     }),
     index: knowledgeIndex,
     corpus: buildCorpus(),
+    breaker: retrievalBreaker,
   });
   const github = createGithubApi({
     username: new URL(knowledgeBase.contact.github).pathname.slice(1),
     ...(githubToken ? { token: githubToken } : {}),
+    logger,
   });
-  const tools = createToolRegistry([
-    ...createSearchTools(search),
-    ...createExternalTools({
-      references: createWikipediaReferences({ siteUrl: siteUrl() }),
-      github,
-    }),
-  ]);
-  const breaker = createModelCircuitBreaker();
+  const tools = createToolRegistry({
+    extra: [
+      ...createSearchTools(search, reportToolError),
+      ...createExternalTools({
+        references: createWikipediaReferences({ siteUrl: siteUrl(), logger }),
+        github,
+      }),
+    ],
+    reportError: reportToolError,
+  });
+  const breaker = createCircuitBreakerFor('model');
   const model = withCircuitBreaker(
     createOpenAILanguageModel({
       client,
@@ -184,7 +200,7 @@ function buildModelAssistant(
     },
     ...(observers.onToolResult ? { onToolResult: observers.onToolResult } : {}),
   });
-  return { assistant, breaker };
+  return { assistant, breaker, retrievalBreaker };
 }
 
 /**
@@ -227,6 +243,7 @@ export function buildContainer({
     modelStatus: () => ({
       model: model ? 'enabled' : 'disabled',
       circuit: model?.breaker.state() ?? null,
+      retrieval: model?.retrievalBreaker.state() ?? null,
     }),
     requestLimiter: createSlidingWindowLimiter({
       limit: settings.requestsPerTenMinutes,

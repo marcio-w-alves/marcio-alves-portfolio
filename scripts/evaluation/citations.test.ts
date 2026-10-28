@@ -3,12 +3,16 @@ import type { ToolTrace } from '../../src/core/assistant/system2/model-assistant
 import { createToolRegistry } from '../../src/core/assistant/tools/registry';
 import { sourcesOutsideTrace } from './citations';
 
+function rethrow(error: unknown): never {
+  throw error;
+}
+
 /** Runs a real action, so the trace holds the sources it really returns. */
 async function traced(name: string, input: object): Promise<ToolTrace> {
   return {
     name,
     arguments: JSON.stringify(input),
-    outcome: await createToolRegistry().run(name, input),
+    outcome: await createToolRegistry({ reportError: rethrow }).run(name, input),
   };
 }
 

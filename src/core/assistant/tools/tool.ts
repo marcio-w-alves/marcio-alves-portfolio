@@ -31,7 +31,8 @@ export interface Tool {
   readonly description: string;
   /** JSON Schema of the arguments, generated from the same Zod schema that validates them. */
   readonly parameters: Readonly<Record<string, unknown>>;
-  run(rawArguments: unknown): Promise<ToolOutcome>;
+  /** `signal` is the visitor's request: an action that waits on the network stops with it. */
+  run(rawArguments: unknown, signal?: AbortSignal): Promise<ToolOutcome>;
 }
 
 type Shape = z.core.$ZodLooseShape;
@@ -42,7 +43,7 @@ interface ToolSpec<S extends Shape> {
   readonly description: string;
   /** The argument shape. It is always wrapped in a strict object — see below. */
   readonly input: S;
-  execute(input: StrictInput<S>): ToolResult | Promise<ToolResult>;
+  execute(input: StrictInput<S>, signal?: AbortSignal): ToolResult | Promise<ToolResult>;
 }
 
 /**
@@ -62,10 +63,10 @@ export function defineTool<S extends Shape>(spec: ToolSpec<S>): Tool {
     name: spec.name,
     description: spec.description,
     parameters,
-    async run(rawArguments) {
+    async run(rawArguments, signal) {
       const parsed = schema.safeParse(rawArguments);
       if (!parsed.success) return { ok: false, error: z.prettifyError(parsed.error) };
-      return { ok: true, result: await spec.execute(parsed.data) };
+      return { ok: true, result: await spec.execute(parsed.data, signal) };
     },
   };
 }

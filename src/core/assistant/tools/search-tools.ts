@@ -1,8 +1,12 @@
 import { z } from 'zod';
 import { CHUNK_CATEGORIES } from '@/core/knowledge/corpus';
 import type { AnswerSource } from '../assistant-event';
-import type { KnowledgeSearchPort } from '../ports/knowledge-search.port';
-import { defineTool, type Tool } from './tool';
+import type {
+  KnowledgeSearchPort,
+  KnowledgeSearchQuery,
+  Passage,
+} from '../ports/knowledge-search.port';
+import { defineTool, type Tool, type ToolResult } from './tool';
 
 const DEFAULT_LIMIT = 5;
 
@@ -10,7 +14,29 @@ function distinct(sources: readonly AnswerSource[]): AnswerSource[] {
   return [...new Map(sources.map((source) => [source.id, source])).values()];
 }
 
-export function createSearchTools(search: KnowledgeSearchPort): Tool[] {
+export const SEARCH_UNAVAILABLE =
+  'Search is unavailable right now; answer only from other actions or decline.';
+
+const UNAVAILABLE: ToolResult = { data: { passages: [], note: SEARCH_UNAVAILABLE }, sources: [] };
+
+/**
+ * Retrieval failing — an outage, a timeout, its circuit open — leaves the
+ * model without search, not the visitor without an answer.
+ */
+export function createSearchTools(
+  search: KnowledgeSearchPort,
+  reportError: (error: unknown) => void,
+): Tool[] {
+  async function find(query: KnowledgeSearchQuery): Promise<Passage[] | null> {
+    try {
+      return await search.search(query);
+    } catch (error) {
+      if (query.signal?.aborted) throw error;
+      reportError(error);
+      return null;
+    }
+  }
+
   const searchKnowledge = defineTool({
     name: 'searchKnowledge',
     description:
@@ -20,13 +46,15 @@ export function createSearchTools(search: KnowledgeSearchPort): Tool[] {
       category: z.enum(CHUNK_CATEGORIES).optional(),
       limit: z.number().int().min(1).max(8).optional(),
     },
-    execute: async ({ query, category, limit }) => {
-      const asked = { query, limit: limit ?? DEFAULT_LIMIT };
-      const inCategory = category ? await search.search({ ...asked, category }) : [];
+    execute: async ({ query, category, limit }, signal) => {
+      const asked = { query, limit: limit ?? DEFAULT_LIMIT, ...(signal ? { signal } : {}) };
+      const inCategory = category ? await find({ ...asked, category }) : [];
+      if (!inCategory) return UNAVAILABLE;
       // A category the model guessed is only a preference: "his pets" filed
       // under profile found nothing, while his notes had them.
       const widened = Boolean(category) && inCategory.length === 0;
-      const passages = category && !widened ? inCategory : await search.search(asked);
+      const passages = category && !widened ? inCategory : await find(asked);
+      if (!passages) return UNAVAILABLE;
       return {
         data:
           passages.length > 0
