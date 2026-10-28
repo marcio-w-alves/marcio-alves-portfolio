@@ -3,7 +3,13 @@ import { TOPIC_IDS } from '@/core/chat/topic-id';
 import { DEFAULT_LOCALE, LOCALE_SEGMENT, type Locale } from '@/core/i18n/locale';
 import { pagePath } from '@/site/routes';
 import { holdNextAnswer } from './support/assistant';
-import { pagesIn, published, unpublished } from './support/profile';
+import {
+  englishOnlyMessages,
+  pagePathsIn,
+  pagesIn,
+  published,
+  unpublished,
+} from './support/profile';
 
 /**
  * A language the site can speak but the profile has not switched on (D30) is
@@ -34,6 +40,23 @@ for (const locale of unpublished) {
 }
 
 const english = pagesIn(DEFAULT_LOCALE);
+
+/** What a reader sees on the page and what assistive technology reads out of it. */
+function readableText(page: Page): Promise<string> {
+  return page.evaluate(() => {
+    const attributes = ['aria-label', 'aria-description', 'title', 'placeholder', 'alt'];
+    const described = [...document.querySelectorAll('*')].flatMap((element) =>
+      attributes.map((name) => element.getAttribute(name) ?? ''),
+    );
+    return [document.title, document.body.innerText, ...described].join('\n');
+  });
+}
+
+/** The message as a whole word: "text" is not the start of "texto" or of "text-embedding". */
+function asWord(message: string): RegExp {
+  const escaped = message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(?<![\\p{L}-])${escaped}(?![\\p{L}-])`, 'u');
+}
 
 /** Every address the page requests that starts with /en, which the site must never write. */
 function englishPrefixRequests(page: Page): string[] {
@@ -152,6 +175,25 @@ for (const locale of published.filter((candidate) => candidate !== DEFAULT_LOCAL
       'aria-current',
       'page',
     );
+  });
+
+  test(`every ${locale} page reads in ${locale}, with no English interface left`, async ({
+    page,
+  }) => {
+    const english = englishOnlyMessages(locale).filter((message) => message.length >= 4);
+    expect(english.length).toBeGreaterThan(50);
+
+    for (const path of pagePathsIn(locale)) {
+      await page.goto(path);
+      await expect(page.locator('html')).toHaveAttribute('lang', locale);
+      const shown = await readableText(page);
+
+      expect(
+        english.filter((message) => asWord(message).test(shown)),
+        path,
+      ).toEqual([]);
+      expect(shown, path).not.toMatch(/\{[a-zA-Z]+\}/);
+    }
   });
 
   test(`an unknown ${locale} address is not found, in ${locale}`, async ({ page }) => {
