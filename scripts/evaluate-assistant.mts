@@ -22,7 +22,8 @@ import { knowledgeBase } from '../src/core/knowledge/knowledge-base';
 import { createOpenAIClient } from '../src/infrastructure/openai/openai-client';
 import { CASES, type EvaluationCase } from './evaluation/cases';
 
-const JUDGE_MODEL = 'gpt-5.4';
+const judgeOverride = process.env.EVAL_JUDGE_MODEL;
+const JUDGE_MODEL = judgeOverride === undefined || judgeOverride === '' ? 'gpt-5.4' : judgeOverride;
 const CONCURRENCY = 4;
 
 const apiKey = process.env.OPENAI_API_KEY;
