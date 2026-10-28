@@ -84,14 +84,21 @@ interface Dependencies {
   readonly assistant: Assistant;
   readonly reportError: (error: unknown) => void;
   readonly requestLimiter: { admit(key: string): Admission };
+  readonly reportRateLimited: (clientId: string) => void;
 }
 
-export function createChatHandler({ assistant, reportError, requestLimiter }: Dependencies) {
+export function createChatHandler({
+  assistant,
+  reportError,
+  requestLimiter,
+  reportRateLimited,
+}: Dependencies) {
   return async function handle(request: Request): Promise<Response> {
     const clientId = clientIdOf(request);
     // Checked before the body is read, so a flood costs as little as possible.
     const admission = requestLimiter.admit(clientId);
     if (!admission.allowed) {
+      reportRateLimited(clientId);
       return Response.json(
         { error: { code: 'rate_limited', message: 'Too many questions in a short time.' } },
         {
