@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { knowledgeBase } from '@/core/knowledge/knowledge-base';
 import type { ConversationContext } from '../response';
 import { route } from './router';
 
@@ -61,6 +62,26 @@ describe('router — the questions the interface itself suggests', () => {
     ["What's his LinkedIn?", 'contact'],
   ])('routes %j to %s', (question, expected) => {
     expect(intentOf(question)).toBe(expected);
+  });
+});
+
+describe('router — the companies of the record', () => {
+  const roles = knowledgeBase.experience.map((role) => [role.company, role.id] as const);
+
+  it.each(roles)('recognises %s by its name', (company, id) => {
+    expect(intentOf(`What did he do at ${company}?`)).toBe(`company:${id}`);
+  });
+
+  it.each([
+    ['Maison', 'maison'],
+    ['Shall & Partners', 'shall'],
+    ['freelancing', 'freelance'],
+  ])('recognises %s by its alias', (alias, id) => {
+    expect(intentOf(`What did he do at ${alias}?`)).toBe(`company:${id}`);
+  });
+
+  it.each(roles)('escalates a question about what %s does as a business', (company) => {
+    expect(intentOf(`What does ${company} do?`)).toBe('escalate');
   });
 });
 
