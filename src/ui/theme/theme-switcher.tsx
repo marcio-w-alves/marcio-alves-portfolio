@@ -4,43 +4,35 @@ import { useSyncExternalStore } from 'react';
 import { cn } from '../cn';
 import { useMessages } from '../i18n/i18n-provider';
 import { Icon, type IconName } from '../primitives';
-import {
-  chooseTheme,
-  storedChoice,
-  subscribeToTheme,
-  THEME_CHOICES,
-  type ThemeChoice,
-} from './theme';
+import { chooseTheme, currentTheme, subscribeToTheme, THEMES, type Theme } from './theme';
 
-const ICONS: Readonly<Record<ThemeChoice, IconName>> = {
+const ICONS: Readonly<Record<Theme, IconName>> = {
   light: 'sun',
   dark: 'moon',
-  system: 'monitor',
 };
 
-// The highlight reads the choice the pre-paint script wrote on <html>, so it
-// is right on the first frame, before React knows the stored choice.
-const SELECTED: Readonly<Record<ThemeChoice, string>> = {
+// The highlight reads the theme the pre-paint script wrote on <html>, so it is
+// right on the first frame, before React knows which one is in effect.
+const SELECTED: Readonly<Record<Theme, string>> = {
   light:
-    '[[data-theme-choice=light]_&]:bg-surface [[data-theme-choice=light]_&]:text-ink [[data-theme-choice=light]_&]:shadow-ring',
-  dark: '[[data-theme-choice=dark]_&]:bg-surface [[data-theme-choice=dark]_&]:text-ink [[data-theme-choice=dark]_&]:shadow-ring',
-  system:
-    '[[data-theme-choice=system]_&]:bg-surface [[data-theme-choice=system]_&]:text-ink [[data-theme-choice=system]_&]:shadow-ring',
+    '[[data-theme=light]_&]:bg-surface [[data-theme=light]_&]:text-ink [[data-theme=light]_&]:shadow-ring',
+  dark: '[[data-theme=dark]_&]:bg-surface [[data-theme=dark]_&]:text-ink [[data-theme=dark]_&]:shadow-ring',
 };
 
 /**
- * Light, dark or the system's choice, as a native radio group: one Tab stop,
- * arrows to move, and the choice read back by every screen reader. The server
- * renders "system" checked; the stored choice takes over once it hydrates.
+ * Light or dark, as a native radio group: one Tab stop, arrows to move, and
+ * the choice read back by every screen reader. Until the visitor picks one the
+ * site follows their system, and the theme in effect is the one checked. The
+ * server cannot know it, so it renders none checked.
  */
 export function ThemeSwitcher() {
   const { shell } = useMessages();
-  const choice = useSyncExternalStore(subscribeToTheme, storedChoice, () => 'system' as const);
+  const theme = useSyncExternalStore(subscribeToTheme, currentTheme, () => null);
   return (
     <fieldset className="m-0 min-w-0 border-0 p-0">
       <legend className="sr-only">{shell.theme.label}</legend>
       <div className="inline-flex gap-0.5 rounded-control bg-fill p-0.5">
-        {THEME_CHOICES.map((option) => (
+        {THEMES.map((option) => (
           // Icons only: the name stays for screen readers and as the pointer's tooltip.
           <label
             key={option}
@@ -57,7 +49,7 @@ export function ThemeSwitcher() {
               type="radio"
               name="theme"
               value={option}
-              checked={choice === option}
+              checked={theme === option}
               onChange={() => {
                 chooseTheme(option);
               }}

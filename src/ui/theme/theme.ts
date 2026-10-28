@@ -1,54 +1,54 @@
-/** What the visitor picked: a theme, or whatever their system prefers. */
-export type ThemeChoice = 'light' | 'dark' | 'system';
 export type Theme = 'light' | 'dark';
 
-// Auto first: it is the default, and the one most visitors should keep.
-export const THEME_CHOICES: readonly ThemeChoice[] = ['system', 'light', 'dark'];
+/** What the switcher offers. Until the visitor picks one, the system's preference decides. */
+export const THEMES: readonly Theme[] = ['light', 'dark'];
 
 const STORAGE_KEY = 'theme';
 const DARK_QUERY = '(prefers-color-scheme: dark)';
 const CHANGE_EVENT = 'themechange';
 
-function isChoice(value: unknown): value is ThemeChoice {
-  return value === 'light' || value === 'dark' || value === 'system';
+function isTheme(value: unknown): value is Theme {
+  return value === 'light' || value === 'dark';
 }
 
-/** The stored choice; private browsing or a blocked storage reads as "system". */
-export function storedChoice(): ThemeChoice {
+/**
+ * The theme the visitor picked, or null while the system decides. Private
+ * browsing or a blocked storage reads as null, and so does the "system" an
+ * earlier version of the switcher stored.
+ */
+export function storedTheme(): Theme | null {
   try {
     const value = window.localStorage.getItem(STORAGE_KEY);
-    return isChoice(value) ? value : 'system';
+    return isTheme(value) ? value : null;
   } catch {
-    return 'system';
+    return null;
   }
 }
 
-export function resolveTheme(choice: ThemeChoice, systemPrefersDark: boolean): Theme {
-  if (choice === 'system') return systemPrefersDark ? 'dark' : 'light';
-  return choice;
+/** The theme in effect: the visitor's pick, else what their system prefers. */
+export function currentTheme(): Theme {
+  return storedTheme() ?? (window.matchMedia(DARK_QUERY).matches ? 'dark' : 'light');
 }
 
-export function applyTheme(choice: ThemeChoice): void {
-  const root = document.documentElement;
-  root.dataset.theme = resolveTheme(choice, window.matchMedia(DARK_QUERY).matches);
-  root.dataset.themeChoice = choice;
+function applyTheme(): void {
+  document.documentElement.dataset.theme = currentTheme();
 }
 
-export function chooseTheme(choice: ThemeChoice): void {
+export function chooseTheme(theme: Theme): void {
   try {
-    window.localStorage.setItem(STORAGE_KEY, choice);
+    window.localStorage.setItem(STORAGE_KEY, theme);
   } catch {
     // Without storage the choice still applies to this page.
   }
-  applyTheme(choice);
+  applyTheme();
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
 
-/** Re-applies the theme when the choice or, under "system", the system preference changes. */
+/** Re-applies the theme when the pick or, while nothing is picked, the system preference changes. */
 export function subscribeToTheme(onChange: () => void): () => void {
   const media = window.matchMedia(DARK_QUERY);
   const sync = () => {
-    applyTheme(storedChoice());
+    applyTheme();
     onChange();
   };
   media.addEventListener('change', sync);
@@ -74,7 +74,6 @@ export function applyStoredTheme(storageKey: string, darkQuery: string): void {
   } catch {
     // Blocked storage leaves the system's preference in charge.
   }
-  root.dataset.themeChoice = choice;
   const dark = choice === 'dark' || (choice === 'system' && window.matchMedia(darkQuery).matches);
   root.dataset.theme = dark ? 'dark' : 'light';
 }

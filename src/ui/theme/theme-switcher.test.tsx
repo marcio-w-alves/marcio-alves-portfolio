@@ -23,7 +23,8 @@ afterEach(() => {
 });
 
 describe('ThemeSwitcher', () => {
-  it('offers light, dark and automatic as one labelled group, automatic by default', () => {
+  it('offers light and dark only, as one labelled group', () => {
+    prefersDark(false);
     renderWithMessages(<ThemeSwitcher />);
 
     const group = screen.getByRole('group', { name: 'Theme' });
@@ -31,11 +32,22 @@ describe('ThemeSwitcher', () => {
       within(group)
         .getAllByRole('radio')
         .map((radio) => radio.getAttribute('value')),
-    ).toEqual(['system', 'light', 'dark']);
-    expect(within(group).getByRole('radio', { name: 'Auto' })).toBeChecked();
+    ).toEqual(['light', 'dark']);
+  });
+
+  it.each([
+    [false, 'Light'],
+    [true, 'Dark'],
+  ])('checks the system theme until the visitor picks one (dark system: %s)', (dark, name) => {
+    prefersDark(dark);
+    renderWithMessages(<ThemeSwitcher />);
+
+    expect(screen.getByRole('radio', { name })).toBeChecked();
+    expect(window.localStorage.getItem('theme')).toBeNull();
   });
 
   it('switches the page to dark and remembers it', async () => {
+    prefersDark(false);
     renderWithMessages(<ThemeSwitcher />);
 
     await userEvent.setup().click(screen.getByRole('radio', { name: 'Dark' }));
@@ -45,21 +57,17 @@ describe('ThemeSwitcher', () => {
     expect(screen.getByRole('radio', { name: 'Dark' })).toBeChecked();
   });
 
-  it('follows the system again on Auto', async () => {
+  it('shows the remembered choice over the system', () => {
     prefersDark(true);
+    window.localStorage.setItem('theme', 'light');
     renderWithMessages(<ThemeSwitcher />);
-    const user = userEvent.setup();
 
-    await user.click(screen.getByRole('radio', { name: 'Light' }));
-    expect(document.documentElement.dataset.theme).toBe('light');
-
-    await user.click(screen.getByRole('radio', { name: 'Auto' }));
-    expect(document.documentElement.dataset.theme).toBe('dark');
-    expect(window.localStorage.getItem('theme')).toBe('system');
+    expect(screen.getByRole('radio', { name: 'Light' })).toBeChecked();
   });
 
-  it('shows the remembered choice', () => {
-    window.localStorage.setItem('theme', 'dark');
+  it('treats the "system" an earlier switcher stored as no pick', () => {
+    prefersDark(true);
+    window.localStorage.setItem('theme', 'system');
     renderWithMessages(<ThemeSwitcher />);
 
     expect(screen.getByRole('radio', { name: 'Dark' })).toBeChecked();
