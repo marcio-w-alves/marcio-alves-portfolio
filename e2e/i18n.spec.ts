@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { TOPIC_IDS } from '@/core/chat/topic-id';
 import { DEFAULT_LOCALE, LOCALE_SEGMENT, type Locale } from '@/core/i18n/locale';
 import { pagePath } from '@/site/routes';
 import { holdNextAnswer } from './support/assistant';
@@ -193,7 +194,11 @@ for (const locale of published.filter((candidate) => candidate !== DEFAULT_LOCAL
     expect(graph[2]).toMatchObject({ jobTitle: theirs.knowledge.profile.title });
 
     const sitemap = await (await request.get('/sitemap.xml')).text();
-    expect([...sitemap.matchAll(/<loc>/g)]).toHaveLength(published.length * 6);
+    for (const language of published) {
+      for (const topic of TOPIC_IDS) {
+        expect(sitemap).toContain(`${pagePath(language, topic).replace(/\/$/, '')}</loc>`);
+      }
+    }
     expect(sitemap).toContain(`hreflang="${locale}"`);
   });
 

@@ -1,3 +1,4 @@
+import { PAGE_FAILED } from './page-failed';
 import type { UiMessages } from './ui-messages';
 
 /** The interface in Brazilian Portuguese, for anyone's portfolio. A profile overrides what it words differently. */
@@ -125,13 +126,5 @@ export const portugueseUiMessages: UiMessages = {
       github: 'GitHub',
     },
   },
-  pageFailed: {
-    failure: 'Erro',
-    title: 'Esta página não carregou',
-    description:
-      'Algo quebrou do nosso lado ao exibi-la. Tente de novo; se continuar falhando, volte em alguns minutos.',
-    retry: 'Tentar de novo',
-    reference: 'Referência {digest}',
-    documentTitle: 'Algo deu errado — {name}',
-  },
+  pageFailed: PAGE_FAILED['pt-BR'],
 };

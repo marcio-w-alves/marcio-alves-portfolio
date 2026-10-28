@@ -1,6 +1,6 @@
 import { interpolate } from '@/core/i18n/format';
 import { localeOfPath } from '@/core/i18n/locale';
-import { DEFAULT_UI_MESSAGES } from '../i18n/defaults';
+import { PAGE_FAILED } from '../i18n/page-failed';
 import { PageFailed } from './page-failed';
 
 interface LayoutFailedProps {
@@ -20,7 +20,7 @@ interface LayoutFailedProps {
  */
 export function LayoutFailed({ error, retry, name, pathname, fontClassName }: LayoutFailedProps) {
   const locale = localeOfPath(pathname);
-  const { pageFailed } = DEFAULT_UI_MESSAGES[locale];
+  const pageFailed = PAGE_FAILED[locale];
   return (
     <html lang={locale} className={fontClassName}>
       <body className="bg-bg font-sans text-ink antialiased selection:bg-selection selection:text-ink">

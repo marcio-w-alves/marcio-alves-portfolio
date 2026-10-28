@@ -1,8 +1,14 @@
 import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { fixtureSiteProfile } from '@/testing/fixture-profile';
 import { fixtureSite } from '@/testing/fixture-site';
+
+// Rendered outside Next, the page about the site has no app router to start a conversation with.
+vi.mock('next/navigation', async (actual) => ({
+  ...(await actual<typeof import('next/navigation')>()),
+  useRouter: () => ({ push: vi.fn() }),
+}));
 
 type Site = ReturnType<typeof fixtureSite>;
 
