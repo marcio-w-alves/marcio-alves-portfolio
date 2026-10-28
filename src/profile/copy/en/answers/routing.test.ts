@@ -92,7 +92,7 @@ describe('router — his own vocabulary', () => {
     expect(intentOf(question)).toBe(expected);
   });
 
-  it('declines a private question that names him with the accent his name carries in Portuguese', () => {
-    expect(intentOf("What is Márcio's salary?")).toBe('privateInfo');
+  it('declines a private question that ends on his name, written with its Portuguese accent', () => {
+    expect(intentOf('How old is Márcio?')).toBe('privateInfo');
   });
 });

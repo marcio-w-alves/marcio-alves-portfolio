@@ -74,11 +74,13 @@ export type Route =
 function guards({ first, full }: Subject): Readonly<Record<Guard, RegExp>> {
   return {
     offPurpose: new RegExp(
-      `\\b(ignore (all |any )?(the )?(previous|prior|above|earlier)|system prompt|you are now|pretend (to be|you)|jailbreak|developer mode|disregard (your|the|all)|reveal (your|the) (instructions|prompt|rules))\\b|(^|[.!?;:] )((please|hey|ok|okay|alright|now|so|just|then|from now on),? )*act as\\b|\\byou ((?!he\\b|${first}\\b)\\w+ ){0,2}act as\\b`,
+      `\\b(ignore (all |any )?(the )?(previous|prior|above|earlier)|system prompt|you are now|pretend (to be|you)|jailbreak|developer mode|disregard (your|the|all)|reveal (your|the) (instructions|prompt|rules))\\b|(^|[.!?;:] )((please|hey|ok|okay|alright|now|so|just|then|from now on),? )*act as\\b|\\byou ((?!he\\b|${first})\\w+ ){0,2}act as\\b`,
+      'u',
     ),
     // City-level location is shareable; a home address is not.
     privateInfo: new RegExp(
-      `\\b(salary|salaries|hourly rate|day rate|(his|${full}'s) (age|birthday|kids|children|wife|husband|girlfriend|boyfriend|religio\\w*|politic\\w*|(mental |physical )?health|(\\w+ )?compensation|(\\w+ )?password(?! (reset|hashing|policy|flow|manager))|(mobile|cell)( phone)?)|compensation (is he|does he|expectations?|package|range)|what compensation|(any|has|have|had) health (problems|issues|conditions?)|how many (kids|children)|(is|was) (he|${first}) (married|single|divorced|religious)|he's (married|single|divorced|religious)|(does|did|has) (he|${first}) (have|got) (any )?(kids|children|a wife|a husband|a girlfriend|a boyfriend)|how old is (he|${first})|how much (does|do|did) (he|${first}) (charge|make|earn)|home address|street address|(phone|mobile|cell) number)\\b`,
+      `\\b(salary|salaries|hourly rate|day rate|(his|${full}'s) (age|birthday|kids|children|wife|husband|girlfriend|boyfriend|religio\\w*|politic\\w*|(mental |physical )?health|(\\w+ )?compensation|(\\w+ )?password(?! (reset|hashing|policy|flow|manager))|(mobile|cell)( phone)?)|compensation (is he|does he|expectations?|package|range)|what compensation|(any|has|have|had) health (problems|issues|conditions?)|how many (kids|children)|(is|was) (he|${first}) (married|single|divorced|religious)|he's (married|single|divorced|religious)|(does|did|has) (he|${first}) (have|got) (any )?(kids|children|a wife|a husband|a girlfriend|a boyfriend)|how old is (he|${first})|how much (does|do|did) (he|${first}) (charge|make|earn)|home address|street address|(phone|mobile|cell) number)${WORD_END}`,
+      'u',
     ),
   };
 }
@@ -104,7 +106,7 @@ const TASK_REQUEST =
 // "Why did he leave <an employer>?" asks for a reason the record rarely
 // documents; a keyword match would answer about the company instead of saying so.
 function whyDecision({ first }: Subject): RegExp {
-  return new RegExp(`^why (did|does|do|is|was|has|would) (he|${first})\\b`);
+  return new RegExp(`^why (did|does|do|is|was|has|would) (he\\b|${first})`, 'u');
 }
 
 // A grade or an exact figure is a detail the fast path's fixed answers do not
@@ -125,7 +127,7 @@ type IntentRules = Readonly<Record<ScoredIntent, readonly Rule[]>>;
 /** Ordered by specificity: on equal scores the earlier intent wins. */
 const intentRules = ({ first }: Subject): IntentRules => ({
   identity: [
-    [new RegExp(`\\bare you (${first}|him|a bot|an ai|real|human)\\b`), 5],
+    [new RegExp(`\\bare you (${first}|(him|a bot|an ai|real|human)\\b)`, 'u'), 5],
     [/\bwho are you\b/, 5],
     [/\bwhat are you\b/, 4],
     [/\bam i (talking|speaking) to\b/, 4],
@@ -138,15 +140,18 @@ const intentRules = ({ first }: Subject): IntentRules => ({
   contact: [
     [/\bcontact\b/, 4],
     [/\bget in touch\b/, 4],
-    [new RegExp(`\\breach (him|${first}|out)\\b`), 4],
+    [new RegExp(`\\breach (${first}|(him|out)\\b)`, 'u'), 4],
     [/\b(e-?mail)\b/, 3],
     [/\blinkedin\b/, 3],
-    [new RegExp(`\\btalk to (him|${first})\\b`), 3],
+    [new RegExp(`\\btalk to (him\\b|${first})`, 'u'), 3],
     [/\bavailab\w*\b/, 2],
   ],
   location: [
     [
-      new RegExp(`\\bwhere (is he|does he|is ${first}|does ${first}) (based|live|located|from)\\b`),
+      new RegExp(
+        `\\bwhere (is he|does he|is ${first}|does ${first}) (based|live|located|from)\\b`,
+        'u',
+      ),
       5,
     ],
     [/\bwhich city\b/, 5],
@@ -325,13 +330,13 @@ const intentRules = ({ first }: Subject): IntentRules => ({
   ],
   career: [
     [/\bcareer\b/, 3],
-    [new RegExp(`\\bwho is (${first}|he)\\b`), 3],
+    [new RegExp(`\\bwho is (${first}|he\\b)`, 'u'), 3],
     [/\bbackground\b/, 2],
     [/\bhistory\b/, 2],
     [/\btimeline\b/, 2],
     [/\bjourney\b/, 2],
     [/\b(overview|summary|summari[sz]e)\b/, 2],
-    [new RegExp(`\\btell me about (${first}|him)\\b`), 2],
+    [new RegExp(`\\btell me about (${first}|him\\b)`, 'u'), 2],
     [/\bexperience\b/, 0.5],
   ],
 });
@@ -365,7 +370,8 @@ const MAX_FAST_PATH_WORDS = 25;
 // ("what is he working on", "what are his skills") are not definitions.
 function definition({ first }: Subject): RegExp {
   return new RegExp(
-    `^(what is|what's|what are|o que é|define|explain what) (?!(he|his|${first})\\b)`,
+    `^(what is|what's|what are|o que é|define|explain what) (?!(he|his)\\b|${first})`,
+    'u',
   );
 }
 
@@ -499,8 +505,11 @@ function spelled(name: string): string {
   });
 }
 
+// \b is ASCII-only, so it never closes after an accented last letter ("Adá").
+const WORD_END = '(?![\\p{L}\\p{N}_])';
+
 function subjectOf({ name, firstName }: Knowledge['profile']): Subject {
-  const first = spelled(firstName);
+  const first = `${spelled(firstName)}${WORD_END}`;
   const rest = name.slice(firstName.length).trim();
   return { first, full: rest ? `${first}( ${spelled(rest)})?` : first };
 }

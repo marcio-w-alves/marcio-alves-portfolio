@@ -109,6 +109,8 @@ describe('router — guards', () => {
   it('recognizes the owner by the first name the record gives, with or without accents', () => {
     expect(intentOf('Who is Ada?')).toBe('career');
     expect(intentOf('Is Adá married?')).toBe('privateInfo');
+    expect(intentOf('Who is Adá?')).toBe('career');
+    expect(intentOf('How old is Adá?')).toBe('privateInfo');
     expect(intentOf('Who is Marta?')).toBe('escalate');
   });
 
