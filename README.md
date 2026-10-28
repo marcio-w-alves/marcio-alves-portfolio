@@ -32,6 +32,8 @@ pnpm dev
 | `pnpm test:motion`         | Motion and reduced-motion checks in Chromium         |
 | `pnpm test:coverage`       | The tests, with a coverage report in `coverage/`     |
 | `pnpm test:e2e`            | Critical journeys in Chromium (Playwright)           |
+| `pnpm test:a11y`           | Axe, security headers and SEO (part of `test:e2e`)   |
+| `pnpm lighthouse`          | Lighthouse budgets on a production build             |
 | `pnpm rag:build`           | Re-embed the knowledge corpus (needs the key)        |
 | `pnpm eval:assistant`      | Grade the assistant end to end (needs the key)       |
 | `pnpm fidelity`            | Compare every artboard with its page, pixel by pixel |
@@ -83,6 +85,10 @@ job is added.
 Setup is a composite action in `.github/actions/setup`: pnpm, Node from
 `.nvmrc`, and a cached, frozen-lockfile install. Third-party actions are pinned
 to commit SHAs, not tags — a tag can be moved to point at different code.
+
+`a11y` and `lhci` run the browser checks described under
+[Accessibility, performance and search](#accessibility-performance-and-search),
+each against its own production build.
 
 The build job is given no secrets, which is the check that environment
 variables stay lazily validated: a build that needs a runtime credential fails
@@ -224,6 +230,72 @@ notice, they run its logic with the production contact data (GitHub linked,
 the résumé not yet published), and they undo two of its timing artefacts — a
 composer sized before its font loaded, and a conversation scrolled while
 still rendering in.
+
+## Accessibility, performance and search
+
+`pnpm test:a11y` builds the site, starts it and checks it in Chromium with
+Playwright (`playwright.a11y.config.ts`, specs in `e2e/`):
+
+- **Accessibility** — axe scans the home page against WCAG 2.1 A and AA in
+  its key states: the welcome screen, a fast-path answer with a timeline and
+  metrics, a failed answer, and the navigation drawer open on a 390px phone.
+  Each state is reached by clicking, as a visitor would; only the failure is
+  forced, at the network. Reduced motion is on, so contrast is never measured
+  halfway through a fade. Zero violations are allowed.
+- **Security** — the headers every route is served with, and the content
+  policy as a browser enforces it: asking a question, streaming the answer and
+  fetching the social image raise no violation and no console error, while a
+  script from another origin is refused and another site cannot frame the page
+  (with a control showing the same frame renders once the headers are gone).
+- **Search** — title, description, canonical, Open Graph and Twitter tags, the
+  JSON-LD `Person`, the 1200×630 social image, the tab icon, `robots.txt` and
+  the sitemap, as a crawler receives them.
+
+`pnpm lighthouse` (after `pnpm build`) runs Lighthouse CI three times on the
+home page with its default mobile emulation and fails on any budget in
+`lighthouserc.json`: performance ≥ 0.9, accessibility and SEO 1,
+best practices ≥ 0.95, LCP ≤ 3.5 s, TBT ≤ 300 ms, CLS ≤ 0.02. Each assertion
+takes the best of the three runs, Lighthouse CI's default, so runner noise
+does not fail a pull request. Measured locally the page scores 0.95 / 1 / 1 /
+1, with LCP 2.9 s, TBT 10–35 ms and no layout shift; with the CPU slowed a
+further 3×, as on a slow runner, TBT reaches 205 ms and performance drops to
+0.90–0.95, which is where the budgets leave their headroom. LCP is Lighthouse's
+simulation of a slow phone, not a measurement: the paint it was observed at,
+0.9 s, came after every script had loaded, so the simulation charges all of
+them to it.
+
+### Security headers
+
+`next.config.ts` sends, on every route, a Content-Security-Policy,
+`Strict-Transport-Security` (two years, subdomains included, not preloaded),
+`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` with
+`frame-ancestors 'none'`, `Referrer-Policy: strict-origin-when-cross-origin`
+and a `Permissions-Policy` that turns off camera, microphone, geolocation,
+payment, USB and the Topics API. `X-Powered-By` is off.
+
+The policy is static, not a per-request nonce, because the home page is a
+prerendered shell and a nonce cannot reach one. Every source is this origin
+only. Two allowances remain: inline scripts, because the App Router streams
+its payload through them, and inline style _attributes_, because a
+server-rendered `style={{ '--var': value }}` is how a dynamic value reaches a
+utility here; style elements are not allowed. Development additionally allows
+`eval` and inline style elements, which React and the dev server need.
+
+### Search and sharing
+
+The root layout sets the title, description and Open Graph and Twitter tags;
+`metadataBase` is `siteUrl()`, so every absolute URL follows the canonical
+origin. The home page adds its canonical and a JSON-LD `Person` built from
+`src/core/knowledge` — name, title, summary, LinkedIn and GitHub, and every
+documented skill, never the coursework. `robots.ts` keeps crawlers out of
+`/workbench` and `/api` and points to `sitemap.ts`.
+
+`opengraph-image.tsx` and `icon.tsx` are generated once at build with
+`next/og`, in the design's ink on white and Inter Tight, read as WOFF from
+`@fontsource/inter-tight` because the image renderer cannot read the WOFF2
+next/font serves the page. The renderer cannot read the stylesheet either, so
+`brand-colors.ts` carries the few colours it uses and a test keeps them equal
+to the tokens.
 
 ## Architecture
 
