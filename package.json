@@ -26,7 +26,8 @@
     "rag:build": "tsx --env-file=.env.local scripts/build-knowledge-index.mts",
     "eval:assistant": "tsx --env-file=.env.local scripts/evaluate-assistant.mts",
     "fidelity": "tsx scripts/fidelity/check.mts",
-    "fidelity:references": "tsx scripts/fidelity/capture-references.mts"
+    "fidelity:references": "tsx scripts/fidelity/capture-references.mts",
+    "fidelity:live": "tsx scripts/fidelity/check.mts --live"
   },
   "dependencies": {
     "clsx": "2.1.1",

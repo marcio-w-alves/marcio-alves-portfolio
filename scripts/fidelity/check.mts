@@ -8,6 +8,10 @@
  *
  *   pnpm dev   # in another terminal
  *   pnpm fidelity [BoardName …]
+ *
+ * With --live, the boards production renders as they are (the welcome
+ * screen, desktop and phone) are checked against the live site instead:
+ *   pnpm fidelity:live
  */
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -17,7 +21,10 @@ import pixelmatch from 'pixelmatch';
 import { PNG } from 'pngjs';
 import { BOARDS, FREEZE_CSS } from './boards';
 
-const APP_URL = process.env.APP_URL ?? 'http://localhost:3000';
+const live = process.argv.includes('--live');
+const APP_URL = live
+  ? (process.env.LIVE_URL ?? 'https://marciomariani.dev')
+  : (process.env.APP_URL ?? 'http://localhost:3000');
 const THRESHOLD = 0.999;
 const REFERENCES = new URL('../../fidelity/reference/', import.meta.url);
 const OUT = join(tmpdir(), 'fidelity');
@@ -26,15 +33,19 @@ const HIDE_DEV_UI = 'nextjs-portal{display:none!important}';
 
 await mkdir(OUT, { recursive: true });
 const browser = await chromium.launch();
-const only = new Set(process.argv.slice(2));
+const only = new Set(process.argv.slice(2).filter((arg) => !arg.startsWith('--')));
+const boards = BOARDS.filter(
+  ({ name, liveRoute }) => (live ? liveRoute : true) && (only.size === 0 || only.has(name)),
+);
 const results: { name: string; ratio: number; note: string }[] = [];
 
-for (const board of BOARDS.filter(({ name }) => only.size === 0 || only.has(name))) {
+for (const board of boards) {
   const reference = PNG.sync.read(await readFile(new URL(`${board.name}.png`, REFERENCES)));
   const page = await browser.newPage({ viewport: { width: board.width, height: board.height } });
-  const response = await page.goto(`${APP_URL}${board.route}`, { waitUntil: 'networkidle' });
+  const route = live ? (board.liveRoute ?? board.route) : board.route;
+  const response = await page.goto(`${APP_URL}${route}`, { waitUntil: 'networkidle' });
   if (!response?.ok()) {
-    results.push({ name: board.name, ratio: 0, note: `no candidate at ${board.route}` });
+    results.push({ name: board.name, ratio: 0, note: `no candidate at ${route}` });
     await page.close();
     continue;
   }
