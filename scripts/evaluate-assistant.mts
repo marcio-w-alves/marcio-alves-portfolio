@@ -39,7 +39,10 @@ import {
 } from './evaluation/report';
 
 const judgeOverride = process.env.EVAL_JUDGE_MODEL;
-const JUDGE_MODEL = judgeOverride === undefined || judgeOverride === '' ? 'gpt-5.4' : judgeOverride;
+// Same model as the assistant: a gpt-5.4 judge, run three times per case,
+// drained the API credits in a day of evaluation runs (POR-74).
+const JUDGE_MODEL =
+  judgeOverride === undefined || judgeOverride === '' ? 'gpt-4o-mini' : judgeOverride;
 const CONCURRENCY = 4;
 const options = parseOptions(process.argv.slice(2), process.env);
 const cases = selectCases(CASES, options.only);
