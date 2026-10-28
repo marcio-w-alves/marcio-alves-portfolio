@@ -9,11 +9,11 @@ import { createToolRegistry } from '@/core/assistant/tools/registry';
 import { createSearchTools } from '@/core/assistant/tools/search-tools';
 import { buildCorpus } from '@/core/knowledge/corpus';
 import { knowledgeBase } from '@/core/knowledge/knowledge-base';
-import { serverEnv } from '@/env';
+import { serverEnv, type ServerEnv } from '@/env';
 import { createAnswerCache } from '@/infrastructure/budget/answer-cache';
 import { createModelBudget } from '@/infrastructure/budget/model-budget';
 import { createGithubApi } from '@/infrastructure/github/github-api';
-import { createOpenAIClient } from '@/infrastructure/openai/openai-client';
+import { createOpenAIClient, OPENAI_TIMEOUT_MS } from '@/infrastructure/openai/openai-client';
 import { createOpenAIEmbeddings } from '@/infrastructure/openai/openai-embeddings';
 import { createOpenAILanguageModel } from '@/infrastructure/openai/openai-language-model';
 import {
@@ -73,12 +73,26 @@ export interface Observers {
   readonly onToolResult?: (result: ToolTrace) => void;
 }
 
-function buildModelAssistant(
-  apiKey: string,
-  githubToken: string | undefined,
-  observers: Observers,
-): ModelAssistant {
-  const client = createOpenAIClient(apiKey);
+export interface ContainerOptions extends Observers {
+  /** Defaults to the validated process environment. */
+  readonly env?: ServerEnv;
+  /** How long an OpenAI call may wait for a response, or go quiet in the middle of one. */
+  readonly openAITimeoutMs?: number;
+}
+
+interface ModelAssistantOptions extends Observers {
+  readonly apiKey: string;
+  readonly githubToken: string | undefined;
+  readonly openAITimeoutMs: number;
+}
+
+function buildModelAssistant({
+  apiKey,
+  githubToken,
+  openAITimeoutMs,
+  onToolResult,
+}: ModelAssistantOptions): ModelAssistant {
+  const client = createOpenAIClient(apiKey, { timeoutMs: openAITimeoutMs });
   const search = createVectorKnowledgeSearch({
     embeddings: createOpenAIEmbeddings({
       client,
@@ -97,7 +111,12 @@ function buildModelAssistant(
     ...createExternalTools({ references: createWikipediaReferences(), github }),
   ]);
   const model = withCircuitBreaker(
-    createOpenAILanguageModel({ client, model: CHAT_MODEL, temperature: TEMPERATURE }),
+    createOpenAILanguageModel({
+      client,
+      model: CHAT_MODEL,
+      temperature: TEMPERATURE,
+      idleTimeoutMs: openAITimeoutMs,
+    }),
     createCircuitBreaker({ failureThreshold: 3, cooldownMs: 30_000 }),
   );
   return createModelAssistant({
@@ -107,19 +126,31 @@ function buildModelAssistant(
     onUsage: (usage) => {
       budget.record(usage);
     },
-    ...(observers.onToolResult ? { onToolResult: observers.onToolResult } : {}),
+    ...(onToolResult ? { onToolResult } : {}),
   });
 }
 
-/** Builds the wiring. The site uses the shared instance below; the evaluation builds its own, observed. */
-export function buildContainer(observers: Observers = {}): Container {
-  const env = serverEnv();
+/**
+ * Builds the wiring. The site uses the shared instance below; the evaluation
+ * builds its own, observed, and the route's integration tests their own,
+ * with a test environment and a short timeout.
+ */
+export function buildContainer({
+  env = serverEnv(),
+  openAITimeoutMs = OPENAI_TIMEOUT_MS,
+  ...observers
+}: ContainerOptions = {}): Container {
   return {
     assistant: createAssistant({
       // Without a credential the site still answers everything the fast
       // path recognizes, and says plainly what it cannot.
       modelAssistant: env.OPENAI_API_KEY
-        ? buildModelAssistant(env.OPENAI_API_KEY, env.GITHUB_TOKEN, observers)
+        ? buildModelAssistant({
+            apiKey: env.OPENAI_API_KEY,
+            githubToken: env.GITHUB_TOKEN,
+            openAITimeoutMs,
+            ...observers,
+          })
         : null,
       budget,
       answerCache: createAnswerCache({ ttlMs: 60 * 60 * 1000, maxEntries: 500 }),

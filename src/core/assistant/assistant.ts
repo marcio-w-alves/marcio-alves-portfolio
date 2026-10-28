@@ -80,6 +80,8 @@ export function createAssistant({
           answerCache.set(cacheKey, emitted);
         }
       } catch (error) {
+        // A visitor who left is not a failure, and there is no one to answer.
+        if (signal?.aborted) return;
         reportError(error);
         if (emitted.length === 0) {
           yield* toEvents(unknown());
