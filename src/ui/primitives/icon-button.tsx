@@ -29,7 +29,7 @@ export function IconButton({
       aria-label={label}
       className={cn(
         'inline-grid shrink-0 cursor-pointer place-items-center bg-transparent p-0 text-ink-muted',
-        'transition-[background-color,color,transform] duration-fast ease-standard hover:bg-hover hover:text-ink active:scale-94',
+        'transition-[background-color,color,scale] duration-fast ease-standard hover:bg-hover hover:text-ink active:scale-94',
         'disabled:cursor-not-allowed disabled:opacity-50',
         SIZES[size],
         className,
