@@ -22,7 +22,7 @@ pnpm dev
 | ------------------- | ----------------------------------------- |
 | `pnpm dev`          | Development server                        |
 | `pnpm build`        | Production build                          |
-| `pnpm typecheck`    | TypeScript, no emit                       |
+| `pnpm typecheck`    | Route types, then TypeScript, no emit     |
 | `pnpm lint`         | ESLint, warnings treated as failures      |
 | `pnpm lint:fix`     | ESLint with autofix                       |
 | `pnpm format`       | Prettier, write                           |
