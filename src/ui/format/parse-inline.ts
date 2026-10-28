@@ -9,7 +9,8 @@ import { scanLink } from '@/core/markdown/markdown-link';
 
 export type InlineNode =
   | { readonly kind: 'text'; readonly text: string }
-  | { readonly kind: 'strong'; readonly text: string }
+  /** Bold holds code and links too, as in `**[repository](https://…)**`; never more bold. */
+  | { readonly kind: 'strong'; readonly children: readonly InlineNode[] }
   | { readonly kind: 'code'; readonly text: string }
   | {
       readonly kind: 'link';
@@ -61,7 +62,10 @@ export function parseInline(source: string): InlineNode[] {
 
 function tokenAt(source: string, index: number): { node: InlineNode; end: number } | null {
   const strong = matchAt(STRONG, source, index);
-  if (strong) return { node: { kind: 'strong', text: strong.slice(2, -2) }, end: STRONG.lastIndex };
+  if (strong) {
+    const end = STRONG.lastIndex;
+    return { node: { kind: 'strong', children: parseInline(strong.slice(2, -2)) }, end };
+  }
   const code = matchAt(CODE, source, index);
   if (code) return { node: { kind: 'code', text: code.slice(1, -1) }, end: CODE.lastIndex };
   if (source[index] !== '[') return null;

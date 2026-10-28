@@ -20,6 +20,10 @@ function filtered(answer: string, chunk: number): string {
   return shown + filter.flush();
 }
 
+function withNested(node: InlineNode): readonly InlineNode[] {
+  return node.kind === 'strong' ? [node, ...node.children] : [node];
+}
+
 function inlineNodes(block: Block): readonly InlineNode[] {
   switch (block.kind) {
     case 'paragraph':
@@ -35,6 +39,7 @@ function inlineNodes(block: Block): readonly InlineNode[] {
 function renderedHrefs(markdown: string): string[] {
   return parseBlocks(markdown)
     .flatMap(inlineNodes)
+    .flatMap(withNested)
     .flatMap((node) => (node.kind === 'link' ? [node.href] : []));
 }
 
@@ -59,6 +64,13 @@ describe('links the page renders from a filtered answer', () => {
     ['a link inside an address', '[a](https://evil.example/u[x](https://e.example))'],
     ['a list item continued on the next line', '- [item\n  more](https://evil.example)'],
     ['a link in bold', '**[x](https://evil.example)**'],
+    [
+      'an allowed and an unlisted link in one bold',
+      `**[a](${ALLOWED}) and [b](https://evil.example)**`,
+    ],
+    ['an unlisted link around a bold one', `[**[x](${ALLOWED})**](https://evil.example)`],
+    ['bold that closes inside an address', '**[x](https://evil.example/**)**'],
+    ['a bold list item', `1. **[x](https://evil.example)** — [y](${ALLOWED})`],
     [
       'bold that swallows a backtick',
       '**a [x](https://e.example/*)` b** [y](https://evil.example) `',
@@ -110,6 +122,15 @@ describe('links the page renders from a filtered answer', () => {
   it('keeps an allowed link a link, however it streams', () => {
     for (const chunk of CHUNK_SIZES) {
       expect(renderedHrefs(filtered(`See [his GitHub](${ALLOWED}).`, chunk))).toEqual([ALLOWED]);
+    }
+  });
+
+  it('keeps an allowed link in bold a link, and turns an unlisted one into its label', () => {
+    const answer = `1. **[his GitHub](${ALLOWED})**\n2. **[elsewhere](https://evil.example)**`;
+    for (const chunk of CHUNK_SIZES) {
+      const shown = filtered(answer, chunk);
+      expect(renderedHrefs(shown)).toEqual([ALLOWED]);
+      expect(shown).toContain('**elsewhere**');
     }
   });
 });
