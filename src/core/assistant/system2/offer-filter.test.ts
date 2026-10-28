@@ -51,6 +51,9 @@ describe('offers of help in a streamed answer', () => {
     'Se quiser saber de desempenho, ele reduziu o tempo de carregamento em 50%.',
     'Feel free to check his GitHub, he has 40 repos.',
     'Let me know which project; he worked on 3.',
+    'If you need more details, he led 3 teams; feel free to ask.',
+    'If you are curious, he led 3 teams, so feel free to ask.',
+    'Se quiser mais detalhes, ele liderou 3 equipes, é só perguntar.',
   ])('keeps a factual sentence that starts like an offer: %j', (answer) => {
     expect(filtered(answer).shown).toBe(answer);
   });
@@ -69,6 +72,7 @@ describe('offers of help in a streamed answer', () => {
     ],
     ['He led HRIS. If you need more details, feel free to ask about his work.', 'He led HRIS.'],
     ['He led HRIS. Let me know if you need more details about his 2022 projects.', 'He led HRIS.'],
+    ['He led HRIS. If you need more details, I can tell you about his projects.', 'He led HRIS.'],
   ])('removes a closing offer that carries no fact: %j', (answer, expected) => {
     expect(filtered(answer).shown).toBe(expected);
   });
@@ -91,6 +95,14 @@ describe('offers of help in a streamed answer', () => {
     ['Trabajó en Deel. Si tienes otras preguntas, estoy a tu disposición.', 'Trabajó en Deel.'],
     ['Ela trabalhou na Deel. Se quiser saber mais, pergunte!', 'Ela trabalhou na Deel.'],
     ['Trabajó en Deel. Si quieres saber más, pregúntame.', 'Trabajó en Deel.'],
+    [
+      'Ela trabalhou na Deel. Se tiver outras perguntas, posso falar mais sobre o trabalho dele.',
+      'Ela trabalhou na Deel.',
+    ],
+    [
+      'Trabajó en Deel. Si quieres más detalles, puedo contarte sobre sus proyectos con él.',
+      'Trabajó en Deel.',
+    ],
   ])('still removes offers in Portuguese and Spanish: %j', (answer, expected) => {
     expect(filtered(answer).shown).toBe(expected);
   });
