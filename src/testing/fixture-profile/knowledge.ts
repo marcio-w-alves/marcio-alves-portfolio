@@ -29,6 +29,7 @@ export const fixtureKnowledge: KnowledgeSource = {
     description: en('Platform engineer. Ask about my work.'),
     placeholder: en('Ask about my platform work…'),
     helper: en('Answers grounded in my record'),
+    evidence: { roles: ['acme', 'globex'], metrics: ['acme-build-time', 'globex-team'] },
   },
   assistant: { name: en("Ada's assistant"), initials: 'AR' },
   contact: {

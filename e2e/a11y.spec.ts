@@ -70,6 +70,17 @@ test.describe('on a desktop', () => {
 test.describe('on a phone', () => {
   test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
 
+  test('the welcome screen, with its contact and résumé links, has no WCAG 2.1 AA violations', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await expect(
+      page.getByRole('list', { name: ui.welcome.contact }).getByRole('link').first(),
+    ).toBeVisible();
+
+    expect(await violations(page)).toEqual([]);
+  });
+
   test('the open navigation drawer has no WCAG 2.1 AA violations', async ({ page }) => {
     await page.goto('/');
     await page.getByRole('button', { name: ui.shell.openNavigation }).click();

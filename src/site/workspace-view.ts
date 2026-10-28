@@ -1,6 +1,7 @@
 import { MAX_QUESTION_LENGTH } from '@/core/chat/request';
 import type { TopicId } from '@/core/chat/topic-id';
 import { createConversation } from '@/core/conversation/conversation';
+import type { Knowledge } from '@/core/knowledge/schema';
 import { topicPath } from './routes';
 import type { SiteContent } from './site-content';
 
@@ -12,6 +13,7 @@ export function workspaceView(
   topic: TopicId = 'overview',
 ) {
   const { profile, contact, welcome, assistant } = knowledge;
+  const { heading, description, placeholder, helper } = welcome;
   return {
     profile: { name: profile.name, title: profile.title },
     links: contact,
@@ -21,7 +23,7 @@ export function workspaceView(
       icon,
       href: topicPath(id),
     })),
-    welcome,
+    welcome: { heading, description, placeholder, helper, evidence: evidenceLine(knowledge) },
     assistant: { name: assistant.name, initials: assistant.initials },
     suggestions: topicCatalog
       .suggestedQuestions(topic, 0, SUGGESTION_COUNT)
@@ -30,4 +32,26 @@ export function workspaceView(
     maxQuestionLength: MAX_QUESTION_LENGTH,
     topic,
   };
+}
+
+/** The companies and the two headline metrics the welcome screen backs its greeting with. */
+export function evidenceLine(knowledge: Knowledge) {
+  const { roles, metrics } = knowledge.welcome.evidence;
+  return {
+    companies: roles.map((id) => companyOf(knowledge, id)),
+    metrics: metrics.map((id) => headlineMetric(knowledge, id)),
+  };
+}
+
+// The record's validation resolves every id the evidence line names.
+function companyOf({ experience }: Knowledge, roleId: string) {
+  const role = experience.find(({ id }) => id === roleId);
+  if (!role) throw new Error(`The evidence line names no role "${roleId}".`);
+  return role.company;
+}
+
+function headlineMetric({ metrics }: Knowledge, metricId: string) {
+  const metric = metrics[metricId];
+  if (!metric) throw new Error(`The evidence line names no metric "${metricId}".`);
+  return { value: metric.value, label: metric.label };
 }

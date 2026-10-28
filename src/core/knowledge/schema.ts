@@ -151,11 +151,20 @@ export interface ProfileSource {
   readonly source: string;
 }
 
+/** What the evidence line under the welcome heading names, by id, so the record stays its source. */
+export interface EvidenceSource {
+  /** The roles whose companies it names, in order. */
+  readonly roles: readonly string[];
+  /** The two headline metrics. */
+  readonly metrics: readonly [string, string];
+}
+
 export interface WelcomeSource {
   readonly heading: Localized;
   readonly description: Localized;
   readonly placeholder: Localized;
   readonly helper: Localized;
+  readonly evidence: EvidenceSource;
 }
 
 /** How the assistant presents itself beside its answers. */

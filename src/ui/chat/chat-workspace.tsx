@@ -238,7 +238,7 @@ export function ChatWorkspace({
           </ol>
         ) : (
           <WelcomeLayout>
-            <WelcomeScreen welcome={welcome} />
+            <WelcomeScreen welcome={welcome} links={links} />
             {composer('hero')}
             <SuggestedQuestions
               title={messages.welcome.suggestedQuestions}

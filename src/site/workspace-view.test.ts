@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { MAX_QUESTION_LENGTH } from '@/core/chat/request';
 import { TOPIC_IDS } from '@/core/chat/topic-id';
 import { fixtureAnswers, fixtureKnowledge } from '@/testing/fixture-profile';
+import { withMetric, withRole } from '@/testing/fixture-profile/variants';
 import { createSiteContent } from './site-content';
 import { workspaceView } from './workspace-view';
 
@@ -39,5 +40,31 @@ describe('workspaceView', () => {
 
   it('caps a question at the length the API accepts', () => {
     expect(workspaceView(content).maxQuestionLength).toBe(MAX_QUESTION_LENGTH);
+  });
+
+  it('greets with the companies and the two metrics the record flags', () => {
+    expect(workspaceView(content).welcome.evidence).toEqual({
+      companies: ['Acme', 'Globex'],
+      metrics: [
+        { value: '40%', label: 'Faster builds' },
+        { value: '2 → 6', label: 'Platform team grown' },
+      ],
+    });
+  });
+
+  it('follows the record when a flagged metric or a company changes', () => {
+    const changed = withRole(
+      withMetric(fixtureKnowledge, 'globex-team', {
+        value: '2 → 9',
+        label: { en: 'Team tripled' },
+      }),
+      'acme',
+      { company: 'Acme Labs' },
+    );
+
+    const { evidence } = workspaceView(createSiteContent(changed, fixtureAnswers)).welcome;
+
+    expect(evidence.companies).toEqual(['Acme Labs', 'Globex']);
+    expect(evidence.metrics).toContainEqual({ value: '2 → 9', label: 'Team tripled' });
   });
 });

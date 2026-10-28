@@ -122,6 +122,7 @@ const knowledgeSchema = z.strictObject({
     description: localized,
     placeholder: localized,
     helper: localized,
+    evidence: z.strictObject({ roles: z.array(text).min(1), metrics: z.tuple([text, text]) }),
   }),
   assistant: z.strictObject({ name: localized, initials: text }),
   contact: z.strictObject({
@@ -211,6 +212,20 @@ function checkMetrics(source: KnowledgeSource, report: Report) {
         ]);
       }
     });
+  });
+}
+
+/** The evidence line names roles and metrics the record holds. */
+function checkEvidence(source: KnowledgeSource, report: Report) {
+  const { roles, metrics } = source.welcome.evidence;
+  const known = new Set(source.experience.map((role) => role.id));
+  roles.forEach((id, position) => {
+    if (!known.has(id)) report(`Unknown role "${id}"`, ['welcome', 'evidence', 'roles', position]);
+  });
+  metrics.forEach((id, position) => {
+    if (!(id in source.metrics)) {
+      report(`Unknown metric "${id}"`, ['welcome', 'evidence', 'metrics', position]);
+    }
   });
 }
 
@@ -320,6 +335,7 @@ export const knowledgeRecordSchema = knowledgeSchema.superRefine((parsed, contex
   checkUniqueIds(source.skills, 'skills', report);
   checkRoleDates(source, report);
   checkMetrics(source, report);
+  checkEvidence(source, report);
   checkSources(source, report);
   checkSharedSource('certifications', source.certifications, report);
   checkSharedSource('languages', source.languages, report);
