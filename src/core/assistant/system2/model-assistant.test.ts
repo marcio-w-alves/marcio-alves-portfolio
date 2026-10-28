@@ -367,6 +367,54 @@ describe('model assistant — spending', () => {
   });
 });
 
+describe('model assistant — on a topic page', () => {
+  it('tells the model what the page shows, right after its rules', async () => {
+    const { port, requests } = scriptedModel([{ text: 'ok' }]);
+    const assistant = createModelAssistant({ model: port, tools: registry(), clock });
+    await Array.fromAsync(
+      assistant.answer({
+        question: 'q',
+        history: [],
+        followUps: [],
+        page: { label: 'Skills', summary: 'Skills by area: Frontend: React', cards: ['skills'] },
+      }),
+    );
+    const [rules, page] = requests[0]?.messages ?? [];
+    expect(rules?.role).toBe('system');
+    expect(page).toMatchObject({ role: 'system' });
+    expect(page?.content).toContain('"Skills" page');
+    expect(page?.content).toContain('Do not repeat it');
+    expect(page?.content).toContain('Skills by area: Frontend: React');
+  });
+
+  it('leaves out a card the page already shows, still citing what it holds', async () => {
+    const { port } = scriptedModel([
+      { calls: [call('showSkills', {})] },
+      { text: 'Beyond the list above, his depth is in React.' },
+    ]);
+    const assistant = createModelAssistant({ model: port, tools: registry(), clock });
+    const events = await Array.fromAsync(
+      assistant.answer({
+        question: 'q',
+        history: [],
+        followUps: [],
+        page: { label: 'Skills', summary: 'Skills by area', cards: ['skills'] },
+      }),
+    );
+    expect(events.some((event) => event.type === 'component')).toBe(false);
+    expect(events.at(-1)).toMatchObject({ type: 'finish', sources: [{ label: 'Resume' }] });
+  });
+
+  it('sends no page message when the visitor is on the overview', async () => {
+    const { port, requests } = scriptedModel([{ text: 'ok' }]);
+    const assistant = createModelAssistant({ model: port, tools: registry(), clock });
+    await Array.fromAsync(
+      assistant.answer({ question: 'q', history: [], followUps: [], page: null }),
+    );
+    expect(requests[0]?.messages.filter((message) => message.role === 'system')).toHaveLength(1);
+  });
+});
+
 describe('model assistant — what reaches the visitor', () => {
   it('renders the blocks the model asked for after the text, with data resolved on the server', async () => {
     const { port } = scriptedModel([

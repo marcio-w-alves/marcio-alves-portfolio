@@ -1,6 +1,7 @@
 import type { Knowledge } from '@/core/knowledge/schema';
 import type { AssistantResponse, ConversationContext, ResponsePart } from '../response';
 import { createResponseKit } from '../response-kit';
+import { summarizePage } from '../page-summary';
 import { createTopicIntro } from '../topic-pages';
 import { createTopicCatalog, isTopicId } from '../topics';
 import { createBoundaryAnswers } from './responses/boundaries';
@@ -20,6 +21,13 @@ export type FastPathResult =
   | { readonly kind: 'answered'; readonly response: AssistantResponse }
   | { readonly kind: 'escalate'; readonly nearest: ScoredIntent | null };
 
+export interface PageShown {
+  readonly label: string;
+  readonly summary: string;
+  /** The cards the page already shows, which an answer there leaves out. */
+  readonly cards: readonly string[];
+}
+
 export interface FastPath {
   readonly answer: (question: string, context: ConversationContext) => FastPathResult;
   /**
@@ -31,6 +39,8 @@ export interface FastPath {
     intent: ScoredIntent | null,
     context: ConversationContext,
   ) => readonly string[];
+  /** What the visitor's topic page already shows, for the model to build on; null on the overview. */
+  readonly pageShown: (context: ConversationContext) => PageShown | null;
   /** The answer of last resort, used only when the model-backed path is unavailable. */
   readonly unknown: () => AssistantResponse;
   /** For a visitor who has used up their share of model answers. */
@@ -215,6 +225,16 @@ export function createFastPath(knowledge: Knowledge): FastPath {
     answer,
     followUpsFor: (intent, context) =>
       intent ? scoredAnswers[intent](context, '').followUps : boundaries.greeting().followUps,
+    pageShown: (context) =>
+      context.topic === 'overview' || !isTopicId(context.topic)
+        ? null
+        : {
+            label: catalog.topicById(context.topic).label,
+            summary: summarizePage(topicIntro(context.topic).parts),
+            cards: topicIntro(context.topic).parts.flatMap((part) =>
+              part.type === 'component' ? [part.component] : [],
+            ),
+          },
     unknown: boundaries.unknown,
     slowDown: boundaries.slowDown,
   };

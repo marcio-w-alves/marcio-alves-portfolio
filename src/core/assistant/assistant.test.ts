@@ -120,6 +120,40 @@ describe('assistant — choosing a path', () => {
   });
 });
 
+describe('assistant — on a topic page', () => {
+  const onPage = (topic: string, question: string): AssistantRequest => ({
+    question,
+    history: [],
+    context: { ...FRESH, topic },
+    clientId: 'visitor-1',
+  });
+
+  it('tells the model what the page already shows, so it can go beyond it', async () => {
+    const { model, received } = sentenceModel();
+    const assistant = assistantWith(model);
+    await Array.fromAsync(assistant.answer(onPage('experience', 'Compare Deel and Roots.')));
+    expect(received[0]?.page?.label).toBe('Experience');
+    expect(received[0]?.page?.summary).toContain('Timeline of every role');
+    expect(received[0]?.page?.summary).toContain('Deel — Senior Frontend Engineer');
+    expect(received[0]?.page?.cards).toEqual(['timeline']);
+  });
+
+  it('tells it nothing on the overview, whose page shows none of the record', async () => {
+    const { model, received } = sentenceModel();
+    await collect(assistantWith(model), 'Compare Deel and Roots.');
+    expect(received[0]?.page).toBeNull();
+  });
+
+  it('does not reuse an answer given on another page, which knew what that page showed', async () => {
+    const { model, received } = sentenceModel();
+    const assistant = assistantWith(model);
+    await Array.fromAsync(assistant.answer(onPage('experience', 'Compare Deel and Roots.')));
+    await Array.fromAsync(assistant.answer(onPage('skills', 'Compare Deel and Roots.')));
+    await Array.fromAsync(assistant.answer(onPage('skills', 'Compare Deel and Roots.')));
+    expect(received).toHaveLength(2);
+  });
+});
+
 describe('assistant — when the model is unavailable', () => {
   it('answers honestly without one, instead of failing', async () => {
     const events = await collect(assistantWith(null), 'What is TypeScript?');
