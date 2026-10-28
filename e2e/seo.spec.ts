@@ -15,7 +15,7 @@ test('the home page describes itself to search engines and link previews', async
     'Marcio Alves — Senior Frontend Engineer with tech-lead responsibilities',
   );
   expect(await meta('meta[name="description"]')).toMatch(
-    /^Portfolio of Marcio Alves, Senior Frontend Engineer with tech-lead responsibilities/,
+    /^Portfolio of Marcio Alves, Senior Frontend Engineer with tech-lead responsibilities\. Ask its AI assistant/,
   );
   expect(canonical).toMatch(/^https?:\/\/[^/]+\/?$/);
   expect(await meta('meta[property="og:title"]')).toBe(

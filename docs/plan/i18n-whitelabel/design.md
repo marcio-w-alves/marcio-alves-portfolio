@@ -935,6 +935,12 @@ Ids, dependencies and sets follow the PRD's task table. **Deps** lists both beha
   - `ui/rich/{timeline-role,contact-card,projects}.tsx`.
 - `data-fidelity-mask` attributes; board masks and departures per §11.2; `check.mts` gains mask support (§11.1), which POR-69 reuses in CI.
 - AC-17.2: the `roleFit` answer argues scope from facts, and the suggestion "What makes Marcio a strong Staff Engineer?" becomes "What scope has he worked at?".
+- **As built:**
+  - Roles carry `engagement: 'employment' | 'contract'`; the view is a `RoleView.contract` boolean, not `badges`/`labels`, and the timeline shows "Contract" for Roots, Maison Moderne and Freelance. `isConcurrent` is deleted. `engagement` is kept out of the model's `getExperience` payload, since "employment" is not stated in the record; the role passage in the corpus says "(contract)".
+  - `ProfileSource.availability` (D16) feeds the contact card, the contact and location answers, `getProfileSummary` and the profile passage. The city stays: the owner documented João Pessoa himself in POR-40, after D16.
+  - The page title, description, OG/Twitter text, share image, JSON-LD and sidebar subtitle read the D17 headline from `profile.title`. Projects gain `outcomes`; the portfolio is the project `marciomariani-dev` (stack from `package.json`, outcomes the CI proves); FictionDraft's status is "Concept". "Staff-level" positioning is reworded out of the owner's notes (`knowledge-base.md` §1, §1.2, §8.7, FAQ "Ele é Staff Engineer?" and "Ele é a pessoa certa para minha vaga?") as title-plus-scope evidence.
+  - Root-relative site paths (one leading `/`, never `//` or `/\`) are links in the shared grammar (`isSitePath`), for both the renderer and the link filter, so the fast path's résumé link renders.
+  - Deferred: `start/end` → `YearMonth` and locale date formatting (`core/i18n/format.ts`) move to POR-64 with FR-16; the owner-written period labels stay. Dropped: masks, departures and `check.mts` mask support, since the owner removed the fidelity tooling.
 
 **POR-56 — Product-site ingestion (FR-25…27, AC-26.x) · Deps: 55, 51 · S10 · IDX**
 
