@@ -1,11 +1,13 @@
 import type { Brand } from '@/site/site-profile';
 
 /**
- * The design's colours and the face of the generated images. The share image
- * and the tab icon read them here; until the stylesheet's tokens are generated
- * from this file, a test keeps the two equal.
+ * The design's colours, font families and the face of the generated images.
+ * `pnpm brand:css` writes the stylesheet's tokens from this file; the share
+ * image and the tab icon read it directly.
  */
 export const brand: Brand = {
+  // "White & Ice": white surfaces, cool ice neutrals, and ink as the only
+  // accent. `ink-muted` holds 5.5:1 or better on every surface.
   colors: {
     bg: '#ffffff',
     ice: '#f9fafb',
@@ -25,6 +27,31 @@ export const brand: Brand = {
     danger: '#b42318',
     'danger-soft': '#fef5f4',
     'danger-ring': '#f9dcd8',
+  },
+  // After the faces in fonts.ts: Inter for text, Inter Tight for display,
+  // Geist Mono for code. Inter's character variants come with the stack.
+  fonts: {
+    sans: {
+      fallbacks: [
+        'ui-sans-serif',
+        'system-ui',
+        '-apple-system',
+        "'Segoe UI'",
+        'Roboto',
+        'sans-serif',
+      ],
+      featureSettings: "'cv11', 'ss01', 'ss03'",
+    },
+    display: {
+      fallbacks: [
+        'var(--font-face-text)',
+        'ui-sans-serif',
+        'system-ui',
+        '-apple-system',
+        'sans-serif',
+      ],
+    },
+    mono: { fallbacks: ['ui-monospace', "'SF Mono'", 'Menlo', 'Consolas', 'monospace'] },
   },
   imageFont: {
     family: 'Inter Tight',

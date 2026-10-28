@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, type ReactNode } from 'react';
 import { cn } from '../cn';
+import { useMessages } from '../i18n/i18n-provider';
 import { IconButton } from '../primitives';
 
 interface AppShellProps {
@@ -36,6 +37,7 @@ export function AppShell({
   onNewConversation,
   children,
 }: AppShellProps) {
+  const { shell } = useMessages();
   const rootRef = useRef<HTMLDivElement>(null);
   const navigationRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -124,7 +126,7 @@ export function AppShell({
             <IconButton
               ref={menuButtonRef}
               icon="menu"
-              label="Open navigation"
+              label={shell.openNavigation}
               size="touch"
               aria-controls={NAVIGATION_ID}
               aria-expanded={drawerOpen}
@@ -137,7 +139,7 @@ export function AppShell({
             </p>
             <IconButton
               icon="compose"
-              label="New conversation"
+              label={shell.newConversation}
               size="touch"
               onClick={onNewConversation}
             />

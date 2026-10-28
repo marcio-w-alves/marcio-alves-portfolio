@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import type { TopicId } from '@/core/chat/topic-id';
 import { cn } from '../cn';
+import { useMessages } from '../i18n/i18n-provider';
 import { Icon, IconButton, VisuallyHidden, type IconName } from '../primitives';
 
 export interface SidebarProfile {
@@ -34,8 +35,6 @@ interface SidebarProps {
   readonly onClose: () => void;
 }
 
-const CONTACT_SUBJECT = 'Engineering opportunity';
-
 const FOOT_LINK =
   'inline-flex h-7 items-center gap-1.5 text-12.5 text-ink-muted no-underline @max-compact/ma:h-10 @max-compact/ma:text-14';
 
@@ -47,9 +46,10 @@ export function Sidebar({
   onNewConversation,
   onClose,
 }: SidebarProps) {
+  const { shell } = useMessages();
   return (
     <aside
-      aria-label="Portfolio navigation"
+      aria-label={shell.navigation}
       className="flex h-full flex-col gap-7 overflow-y-auto px-3 pt-5.5 pb-4.5"
     >
       <div className="flex items-start gap-2 pr-1 pl-2.5">
@@ -62,21 +62,21 @@ export function Sidebar({
         <IconButton
           icon="compose"
           iconSize="sm"
-          label="New conversation"
-          title="New conversation"
+          label={shell.newConversation}
+          title={shell.newConversation}
           onClick={onNewConversation}
           className="@max-compact/ma:hidden"
         />
         <IconButton
           icon="close"
-          label="Close navigation"
+          label={shell.closeNavigation}
           size="touch"
           onClick={onClose}
           className="hidden @max-compact/ma:inline-grid"
         />
       </div>
 
-      <nav aria-label="Topics">
+      <nav aria-label={shell.topics}>
         <ul className="flex flex-col gap-0.5">
           {topics.map((topic) => (
             <li key={topic.id}>
@@ -127,14 +127,16 @@ function TopicLink({
 }
 
 function SidebarFooter({ links }: { links: SidebarLinks }) {
-  const mailto = `mailto:${links.email}?subject=${encodeURIComponent(CONTACT_SUBJECT)}`;
+  const messages = useMessages();
+  const { shell } = messages;
+  const mailto = `mailto:${links.email}?subject=${encodeURIComponent(messages.emailSubject)}`;
   return (
     <div className="mt-auto flex flex-col gap-1 px-2.5">
       <a
         href={mailto}
         className="group -mt-3 inline-flex min-h-11 w-fit items-center gap-1.5 py-3 text-13.5 leading-label font-medium text-ink no-underline"
       >
-        Get in touch
+        {shell.getInTouch}
         <Icon
           name="arrowUpRight"
           size="sm"
@@ -143,10 +145,10 @@ function SidebarFooter({ links }: { links: SidebarLinks }) {
       </a>
       <ul className="flex flex-wrap gap-x-4 gap-y-1 pt-3 inset-shadow-rule-top">
         <li>
-          <ExternalLink href={links.linkedin}>LinkedIn</ExternalLink>
+          <ExternalLink href={links.linkedin}>{shell.linkedin}</ExternalLink>
         </li>
         <li>
-          <ExternalLink href={links.github}>GitHub</ExternalLink>
+          <ExternalLink href={links.github}>{shell.github}</ExternalLink>
         </li>
         <li>
           {links.resumeUrl ? (
@@ -159,14 +161,14 @@ function SidebarFooter({ links }: { links: SidebarLinks }) {
                 'transition-colors duration-fast ease-standard hover:text-ink',
               )}
             >
-              Resume
-              <VisuallyHidden> (PDF, opens in a new tab)</VisuallyHidden>
+              {shell.resume}
+              <VisuallyHidden> {messages.links.pdfOpensInNewTab}</VisuallyHidden>
             </a>
           ) : (
             <span className={cn(FOOT_LINK, 'cursor-default')}>
-              Resume
+              {shell.resume}
               <span className="rounded-pill bg-fill px-1.5 py-0.5 text-11 text-ink-muted">
-                Soon
+                {shell.resumeSoon}
               </span>
             </span>
           )}
@@ -177,6 +179,7 @@ function SidebarFooter({ links }: { links: SidebarLinks }) {
 }
 
 function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
+  const { links } = useMessages();
   return (
     <a
       href={href}
@@ -185,7 +188,7 @@ function ExternalLink({ href, children }: { href: string; children: ReactNode })
       className={cn(FOOT_LINK, 'transition-colors duration-fast ease-standard hover:text-ink')}
     >
       {children}
-      <VisuallyHidden> (opens in a new tab)</VisuallyHidden>
+      <VisuallyHidden> {links.opensInNewTab}</VisuallyHidden>
     </a>
   );
 }

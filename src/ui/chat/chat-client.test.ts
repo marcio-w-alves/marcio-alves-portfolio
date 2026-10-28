@@ -19,18 +19,18 @@ afterAll(() => {
 });
 
 const REQUEST: ChatRequest = {
-  message: 'What did he do at Roots?',
+  message: 'What did she do at Globex?',
   history: [],
   context: { topic: 'overview', lastIntent: null, ctaShown: false },
 };
 
 const ANSWER: AssistantEvent[] = [
-  { type: 'start', intent: 'company:roots', related: { id: 'roots', company: 'Roots' } },
+  { type: 'start', intent: 'company:globex', related: { id: 'globex', company: 'Globex' } },
   { type: 'text-start', id: 'p0' },
-  { type: 'text-delta', id: 'p0', delta: 'At Roots he led ' },
+  { type: 'text-delta', id: 'p0', delta: 'At Globex she led ' },
   { type: 'text-delta', id: 'p0', delta: 'the frontend.' },
   { type: 'text-end', id: 'p0' },
-  { type: 'finish', followUps: ['How did he grow the team at Roots?'], sources: [] },
+  { type: 'finish', followUps: ['How did she grow the team at Globex?'], sources: [] },
 ];
 
 /** Encodes events as the server does, split into arbitrary chunks like a real network. */

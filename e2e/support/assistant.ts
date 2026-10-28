@@ -1,19 +1,20 @@
 import type { Page } from '@playwright/test';
+import { ui } from './profile';
 
 export function answers(page: Page) {
-  return page.getByRole('article', { name: "Answer from Marcio's portfolio assistant" });
+  return page.getByRole('article', { name: ui.conversation.answer });
 }
 
 export function composer(page: Page) {
-  return page.getByRole('textbox', { name: 'Ask the portfolio assistant a question' });
+  return page.getByRole('textbox', { name: ui.composer.label });
 }
 
 export function stopButton(page: Page) {
-  return page.getByRole('button', { name: 'Stop generating' });
+  return page.getByRole('button', { name: ui.composer.stop });
 }
 
 export function sendButton(page: Page) {
-  return page.getByRole('button', { name: 'Send question' });
+  return page.getByRole('button', { name: ui.composer.send });
 }
 
 /**

@@ -161,6 +161,7 @@ export function createResponseKit(knowledge: Knowledge): ResponseKit {
       type: 'component',
       component: 'contact',
       props: {
+        initials: knowledge.profile.initials,
         heading: 'Interested in working together?',
         text: `Get in touch with ${knowledge.profile.firstName} to discuss engineering, architecture, and product opportunities.`,
         availability: knowledge.profile.availability,

@@ -11,11 +11,6 @@ interface ShareImageInput {
   readonly size: { readonly width: number; readonly height: number };
 }
 
-/** What a share card shows of the page, in words, for readers who cannot see it. */
-export function shareImageAlt({ profile }: Knowledge): string {
-  return `${profile.name}, ${profile.title}`;
-}
-
 // Inline styles are the renderer's only input: it lays out JSX itself, with
 // no stylesheet and no Tailwind.
 export function shareImage({ knowledge, brand, fonts, host, size }: ShareImageInput) {

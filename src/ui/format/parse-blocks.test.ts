@@ -5,16 +5,16 @@ const text = (value: string) => [{ kind: 'text', text: value }];
 
 describe('answer blocks', () => {
   it('joins wrapped lines into one paragraph and splits paragraphs on blank lines', () => {
-    expect(parseBlocks('He led the\nHRIS team.\n\nThen Toptal.')).toEqual([
-      { kind: 'paragraph', content: text('He led the HRIS team.') },
-      { kind: 'paragraph', content: text('Then Toptal.') },
+    expect(parseBlocks('She led the\npayroll team.\n\nThen Initech.')).toEqual([
+      { kind: 'paragraph', content: text('She led the payroll team.') },
+      { kind: 'paragraph', content: text('Then Initech.') },
     ]);
   });
 
   it('reads ### headings', () => {
-    expect(parseBlocks('### Deel\nHRIS.')).toEqual([
-      { kind: 'heading', content: text('Deel') },
-      { kind: 'paragraph', content: text('HRIS.') },
+    expect(parseBlocks('### Acme\npayroll.')).toEqual([
+      { kind: 'heading', content: text('Acme') },
+      { kind: 'paragraph', content: text('payroll.') },
     ]);
   });
 
@@ -65,9 +65,9 @@ describe('answer blocks', () => {
   });
 
   it('lets a heading end the paragraph before it', () => {
-    expect(parseBlocks('Intro\n### Deel')).toEqual([
+    expect(parseBlocks('Intro\n### Acme')).toEqual([
       { kind: 'paragraph', content: text('Intro') },
-      { kind: 'heading', content: text('Deel') },
+      { kind: 'heading', content: text('Acme') },
     ]);
   });
 
@@ -107,9 +107,9 @@ describe('answer blocks', () => {
   });
 
   it('reads text with Windows line endings like any other', () => {
-    expect(parseBlocks('### Deel\r\n- HRIS\r\n\r\nDone.\r\n')).toEqual([
-      { kind: 'heading', content: text('Deel') },
-      { kind: 'list', ordered: false, items: [text('HRIS')] },
+    expect(parseBlocks('### Acme\r\n- payroll\r\n\r\nDone.\r\n')).toEqual([
+      { kind: 'heading', content: text('Acme') },
+      { kind: 'list', ordered: false, items: [text('payroll')] },
       { kind: 'paragraph', content: text('Done.') },
     ]);
   });

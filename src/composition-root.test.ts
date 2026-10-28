@@ -21,7 +21,7 @@ function captureLogs() {
 
 async function ask(handle: (request: Request) => Promise<Response>, message: string) {
   const response = await handle(
-    new Request('https://marciomariani.dev/api/chat', {
+    new Request('https://portfolio.example/api/chat', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-real-ip': VISITOR_IP },
       body: JSON.stringify({ message }),
@@ -43,9 +43,11 @@ afterEach(() => {
 describe('production logs of a chat request', () => {
   it('records how each question was answered, as one JSON object per line', async () => {
     const logs = captureLogs();
-    const handle = createChatHandler(buildContainer());
+    const handle = createChatHandler(
+      buildContainer({ knowledge: localize(fixtureKnowledge, 'en'), answers: fixtureAnswers }),
+    );
 
-    await ask(handle, "Tell me about Marcio's career.");
+    await ask(handle, "Tell me about Ada's career.");
     await ask(handle, UNRECOGNIZED);
 
     expect(logs.records()).toEqual([

@@ -1,7 +1,9 @@
 import type { TopicId } from '@/core/chat/topic-id';
 import type { AssistantMessage as Answer, Feedback, Message } from '@/core/conversation/messages';
 import { toPlainText } from '@/core/conversation/plain-text';
-import { AssistantMessage } from './assistant-message';
+import { interpolate } from '@/core/i18n/format';
+import { useMessages } from '../i18n/i18n-provider';
+import { AssistantMessage, type AssistantIdentity } from './assistant-message';
 import { copyText } from './copy-text';
 
 interface ConversationTurnProps {
@@ -11,8 +13,7 @@ interface ConversationTurnProps {
   /** Follow-ups are only offered under the newest answer. */
   readonly isLatest: boolean;
   readonly topicLabel: (topic: TopicId) => string;
-  readonly assistantName: string;
-  readonly ownerFirstName: string;
+  readonly assistant: AssistantIdentity;
   /** An answer is on its way, here or on another page, so nothing may ask another question. */
   readonly busy: boolean;
   readonly onAsk: (question: string) => void;
@@ -28,8 +29,7 @@ export function ConversationTurn({
   view,
   isLatest,
   topicLabel,
-  assistantName,
-  ownerFirstName,
+  assistant,
   busy,
   onAsk,
   onRetry,
@@ -37,11 +37,12 @@ export function ConversationTurn({
   onRate,
   onAskFollowUp,
 }: ConversationTurnProps) {
+  const messages = useMessages();
   if (message.role === 'user') {
     return (
       <li className="flex animate-turn justify-end">
         <p className="m-0 max-w-bubble rounded-bubble bg-fill px-4 py-2.5 text-15 leading-reading wrap-anywhere whitespace-pre-wrap text-ink @max-phone/ma:max-w-bubble-phone">
-          <span className="sr-only">You asked: </span>
+          <span className="sr-only">{messages.conversation.youAsked} </span>
           {message.text}
         </p>
       </li>
@@ -53,8 +54,7 @@ export function ConversationTurn({
     <li className="animate-turn">
       <AssistantMessage
         message={view(message)}
-        assistantName={assistantName}
-        ownerFirstName={ownerFirstName}
+        assistant={assistant}
         busy={busy}
         isLatest={isLatest}
         topicLabel={
@@ -63,9 +63,9 @@ export function ConversationTurn({
         related={
           company
             ? {
-                label: `View ${company} experience`,
+                label: interpolate(messages.actions.viewRole, { company }),
                 onView: () => {
-                  onAsk(`Tell me about his time at ${company}.`);
+                  onAsk(interpolate(messages.actions.roleQuestion, { company }));
                 },
               }
             : undefined

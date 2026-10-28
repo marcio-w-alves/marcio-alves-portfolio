@@ -104,6 +104,7 @@ describe('an answer as plain text', () => {
             linkedin: 'https://www.linkedin.com/in/ada-rivera-example',
             github: 'https://github.com/ada-rivera-example',
             resumeUrl: null,
+            initials: 'AR',
           },
         },
       ]),

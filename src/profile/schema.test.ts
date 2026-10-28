@@ -1,22 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { ZodError } from 'zod';
-import { fixtureAnswers, fixtureBrand, fixtureKnowledge } from '@/testing/fixture-profile';
+import {
+  fixtureAnswers,
+  fixtureBrand,
+  fixtureIdentity,
+  fixtureKnowledge,
+  fixtureSiteCopy,
+  fixtureUiCopy,
+} from '@/testing/fixture-profile';
 import { validateProfile, type Identity, type Profile, type SiteEntry } from './schema';
-
-const identity: Identity = {
-  name: 'Ada Rivera',
-  firstName: 'Ada',
-  lastName: 'Rivera',
-  initials: 'AR',
-  contact: {
-    email: 'ada@rivera.example',
-    linkedin: 'https://www.linkedin.com/in/ada-rivera-example',
-    github: 'https://github.com/ada-rivera-example',
-  },
-  siteHost: 'ada.example',
-  userAgentProduct: 'AdaRiveraPortfolio',
-  nonIdentifyingTerms: [],
-};
 
 const pipewrightEntry: SiteEntry = {
   subject: { kind: 'project', id: 'pipewright' },
@@ -30,12 +22,12 @@ const acmeEntry: SiteEntry = {
 };
 
 const valid: Profile = {
-  identity,
+  identity: fixtureIdentity,
   locales: ['en'],
   knowledge: fixtureKnowledge,
   siteAllowList: [pipewrightEntry, acmeEntry],
   brand: fixtureBrand,
-  copy: { en: { answers: fixtureAnswers } },
+  copy: { en: { answers: fixtureAnswers, ui: fixtureUiCopy, site: fixtureSiteCopy } },
   evaluation: [],
 };
 
@@ -61,17 +53,17 @@ describe('validating a profile', () => {
     ['blank initials', { initials: '' }, ['identity', 'initials']],
     [
       'an email that is not one',
-      { contact: { ...identity.contact, email: 'ada-at-example' } },
+      { contact: { ...fixtureIdentity.contact, email: 'ada-at-example' } },
       ['identity', 'contact', 'email'],
     ],
     [
       'a LinkedIn link over http',
-      { contact: { ...identity.contact, linkedin: 'http://www.linkedin.com/in/ada' } },
+      { contact: { ...fixtureIdentity.contact, linkedin: 'http://www.linkedin.com/in/ada' } },
       ['identity', 'contact', 'linkedin'],
     ],
     [
       'a GitHub link that is not a URL',
-      { contact: { ...identity.contact, github: 'ada-rivera-example' } },
+      { contact: { ...fixtureIdentity.contact, github: 'ada-rivera-example' } },
       ['identity', 'contact', 'github'],
     ],
     [
@@ -85,7 +77,9 @@ describe('validating a profile', () => {
       ['identity', 'userAgentProduct'],
     ],
   ])('rejects %s, naming where it is', (_case, change, path) => {
-    expect(issuePaths({ ...valid, identity: { ...identity, ...change } })).toContainEqual(path);
+    expect(issuePaths({ ...valid, identity: { ...fixtureIdentity, ...change } })).toContainEqual(
+      path,
+    );
   });
 
   it('rejects a profile published in no language', () => {
@@ -140,7 +134,7 @@ describe('validating a profile', () => {
   it('reports every problem at once, wherever it is', () => {
     const paths = issuePaths({
       ...valid,
-      identity: { ...identity, name: '' },
+      identity: { ...fixtureIdentity, name: '' },
       knowledge: { ...fixtureKnowledge, contact: { ...fixtureKnowledge.contact, email: 'nope' } },
     });
     expect(paths).toEqual(

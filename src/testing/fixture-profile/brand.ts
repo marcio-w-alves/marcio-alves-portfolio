@@ -22,6 +22,11 @@ export const fixtureBrand: Brand = {
     'danger-soft': '#fbefed',
     'danger-ring': '#f2d3cf',
   },
+  fonts: {
+    sans: { fallbacks: ['Georgia', 'serif'] },
+    display: { fallbacks: ['Georgia', 'serif'] },
+    mono: { fallbacks: ['monospace'] },
+  },
   imageFont: {
     family: 'Inter Tight',
     files: {

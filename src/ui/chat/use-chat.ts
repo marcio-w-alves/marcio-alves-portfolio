@@ -13,6 +13,7 @@ import {
   stopAnswer,
 } from '@/core/conversation/conversation';
 import type { Conversation, Feedback } from '@/core/conversation/messages';
+import { useMessages } from '../i18n/i18n-provider';
 import { streamAnswer } from './chat-client';
 import { useConversationStore } from './conversation-store';
 
@@ -23,6 +24,7 @@ import { useConversationStore } from './conversation-store';
  * The conversation itself lives in the store, so it outlasts the page.
  */
 export function useChat(topic: TopicId, opening: Conversation, initial?: Conversation) {
+  const { announcements } = useMessages();
   const store = useConversationStore();
   const [seed] = useState(() => initial ?? opening);
   const conversation = store.conversations.get(topic) ?? seed;
@@ -39,21 +41,19 @@ export function useChat(topic: TopicId, opening: Conversation, initial?: Convers
     inFlight.controller.abort();
     store.inFlight.delete(topic);
     setConversation((current) => stopAnswer(current, inFlight.answerId));
-    setAnnouncement('Response stopped');
+    setAnnouncement(announcements.stopped);
   }
 
   async function stream(answerId: string, question: string, from: Conversation) {
     cancel();
     const controller = new AbortController();
     store.inFlight.set(topic, { answerId, controller });
-    setAnnouncement('Generating an answer');
+    setAnnouncement(announcements.generating);
     const request = { message: question, history: historyOf(from), context: contextOf(from) };
     for await (const event of streamAnswer(request, { signal: controller.signal })) {
       setConversation((current) => applyEvent(current, answerId, event));
-      if (event.type === 'finish') setAnnouncement('Answer ready');
-      if (event.type === 'error') {
-        setAnnouncement("The answer couldn't be loaded. Retry is available.");
-      }
+      if (event.type === 'finish') setAnnouncement(announcements.ready);
+      if (event.type === 'error') setAnnouncement(announcements.failed);
     }
     if (store.inFlight.get(topic)?.controller === controller) store.inFlight.delete(topic);
   }
@@ -92,7 +92,7 @@ export function useChat(topic: TopicId, opening: Conversation, initial?: Convers
   function startOver() {
     cancel();
     setConversation(opening);
-    setAnnouncement('New conversation started');
+    setAnnouncement(announcements.newConversation);
   }
 
   return {

@@ -1,17 +1,18 @@
-import { render, screen, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { profile as owner } from '@/profile';
 import { createSiteContent } from '@/site/site-content';
+import { fixtureAnswers, fixtureKnowledge } from '@/testing/fixture-profile';
+import { renderWithMessages } from '@/testing/ui-messages';
 import { Sidebar, type SidebarLinks } from './sidebar';
 
-const { knowledge, topicCatalog } = createSiteContent(owner.knowledge, owner.copy.en.answers);
+const { knowledge, topicCatalog } = createSiteContent(fixtureKnowledge, fixtureAnswers);
 
 const { profile, contact } = knowledge;
 
 function renderSidebar(links: SidebarLinks = contact) {
   const handlers = { onNewConversation: vi.fn(), onClose: vi.fn() };
-  render(
+  renderWithMessages(
     <Sidebar
       profile={{ name: profile.name, title: profile.title }}
       topics={topicCatalog.topics.map(({ id, label, icon }) => ({
@@ -29,7 +30,7 @@ function renderSidebar(links: SidebarLinks = contact) {
 }
 
 describe('Sidebar', () => {
-  it('introduces Marcio by name and title', () => {
+  it('introduces the person by name and title', () => {
     renderSidebar();
     const sidebar = screen.getByRole('complementary', { name: 'Portfolio navigation' });
     expect(within(sidebar).getByText(profile.name)).toBeInTheDocument();
@@ -59,7 +60,7 @@ describe('Sidebar', () => {
     renderSidebar();
     expect(screen.getByRole('link', { name: 'Get in touch' })).toHaveAttribute(
       'href',
-      `mailto:${contact.email}?subject=Engineering%20opportunity`,
+      'mailto:ada@rivera.example?subject=Platform%20role',
     );
     expect(screen.queryByText(contact.email)).not.toBeInTheDocument();
   });
@@ -83,11 +84,11 @@ describe('Sidebar', () => {
   });
 
   it('links to the published résumé PDF in a new tab', () => {
-    renderSidebar({ ...contact, resumeUrl: '/marcio-alves-resume.pdf' });
+    renderSidebar({ ...contact, resumeUrl: '/ada-rivera-cv.pdf' });
     const resume = screen.getByRole('link', {
       name: /^Resume ?\(PDF, opens in a new tab\)$/,
     });
-    expect(resume).toHaveAttribute('href', '/marcio-alves-resume.pdf');
+    expect(resume).toHaveAttribute('href', '/ada-rivera-cv.pdf');
     expect(resume).toHaveAttribute('target', '_blank');
     expect(screen.queryByText('Soon')).not.toBeInTheDocument();
   });

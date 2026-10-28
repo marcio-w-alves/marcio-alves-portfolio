@@ -1,54 +1,61 @@
 import { expect, test } from '@playwright/test';
 import { answers, composer } from './support/assistant';
+import {
+  fill,
+  firstSuggestion,
+  record,
+  site,
+  topicIntro,
+  topicLabel,
+  topicQuestions,
+  ui,
+  youAsked,
+} from './support/profile';
 
 test('a topic is a page of its own: its record, its questions, and the home conversation left intact', async ({
   page,
 }) => {
   await page.goto('/');
-  const topicsNav = page.getByRole('navigation', { name: 'Topics' });
-  await expect(topicsNav.getByRole('link', { name: 'Overview' })).toHaveAttribute(
+  const topicsNav = page.getByRole('navigation', { name: ui.shell.topics });
+  await expect(topicsNav.getByRole('link', { name: topicLabel('overview') })).toHaveAttribute(
     'aria-current',
     'page',
   );
-  await composer(page).fill('How did he grow the team at Roots?');
+  const { question } = firstSuggestion();
+  await composer(page).fill(question);
   await composer(page).press('Enter');
-  await expect(
-    answers(page)
-      .last()
-      .getByText(/grew the frontend team/),
-  ).toBeVisible();
+  await expect(answers(page).last().getByRole('group', { name: ui.actions.group })).toBeVisible();
 
-  await topicsNav.getByRole('link', { name: 'Experience' }).click();
+  await topicsNav.getByRole('link', { name: topicLabel('experience') }).click();
 
   await expect(page).toHaveURL(/\/experience$/);
-  await expect(page).toHaveTitle('Experience — Marcio Alves');
-  await expect(topicsNav.getByRole('link', { name: 'Experience' })).toHaveAttribute(
+  await expect(page).toHaveTitle(fill(site.topicTitle, { topic: topicLabel('experience') }));
+  await expect(topicsNav.getByRole('link', { name: topicLabel('experience') })).toHaveAttribute(
     'aria-current',
     'page',
   );
-  await expect(page.getByText('How did he grow the team at Roots?')).toBeHidden();
+  await expect(page.getByText(youAsked(question))).toBeHidden();
   const intro = answers(page).first();
-  await expect(
-    intro.getByText('from freelance web development to lead and senior frontend roles'),
-  ).toBeVisible();
-  await expect(intro.getByText('Senior Frontend Engineer').first()).toBeVisible();
-  const suggestions = intro.getByRole('list', { name: 'Suggested questions' });
-  await expect(suggestions.getByRole('button', { name: 'What did he do at Roots?' })).toBeVisible();
+  await expect(intro.getByText(topicIntro('experience'))).toBeVisible();
+  const [currentRole] = record.experience;
+  await expect(intro.getByText(currentRole?.role ?? '').first()).toBeVisible();
+  const suggestions = intro.getByRole('list', { name: ui.welcome.suggestedQuestions });
+  const offered = await suggestions.getByRole('button').first().innerText();
+  expect(topicQuestions('experience')).toContain(offered);
 
-  await topicsNav.getByRole('link', { name: 'Overview' }).click();
+  await topicsNav.getByRole('link', { name: topicLabel('overview') }).click();
 
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByText('How did he grow the team at Roots?')).toBeVisible();
+  await expect(page.getByText(youAsked(question))).toBeVisible();
 });
 
 test('a topic page opens directly from its address, and any other address is not found', async ({
   page,
 }) => {
   await page.goto('/projects');
-  await expect(
-    answers(page).first().getByText('Beyond his day job, Marcio builds his own products.'),
-  ).toBeVisible();
+  await expect(answers(page).first().getByText(topicIntro('projects'))).toBeVisible();
 
   const missing = await page.goto('/not-a-topic');
   expect(missing?.status()).toBe(404);
+  await expect(page.getByRole('heading', { name: site.notFound.title })).toBeVisible();
 });

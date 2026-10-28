@@ -1,35 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useMessages } from '../i18n/i18n-provider';
 import { ThinkingDots } from './thinking-dots';
+
+const PHASE_MS = 1600;
 
 /**
  * What the assistant is doing while an answer has not started, phrased the way
  * a person would say it. The first phase is the design's own line; the rest
  * rotate so a slower answer visibly keeps working instead of looking stuck.
  */
-function phasesFor(ownerFirstName: string): readonly string[] {
-  return [`Reading ${ownerFirstName}'s documented experience`, ...LATER_PHASES];
-}
-
-const LATER_PHASES = [
-  'Thinking',
-  'Checking the sources',
-  'Connecting the dots',
-  'Cross-referencing',
-  'Pondering',
-  'Mulling it over',
-  'Choosing the words',
-];
-
-const PHASE_MS = 1600;
-
-interface ThinkingStatusProps {
-  readonly ownerFirstName: string;
-}
-
-export function ThinkingStatus({ ownerFirstName }: ThinkingStatusProps) {
-  const phases = phasesFor(ownerFirstName);
+export function ThinkingStatus() {
+  const phases = useMessages().conversation.thinking;
   const [phase, setPhase] = useState(0);
 
   useEffect(() => {

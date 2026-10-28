@@ -11,9 +11,9 @@ const ENDPOINT = 'http://portfolio.test/api/chat';
 const SAMPLES: {
   readonly [Type in AssistantEvent['type']]: Extract<AssistantEvent, { type: Type }>;
 } = {
-  start: { type: 'start', intent: 'company:roots', related: { id: 'roots', company: 'Roots' } },
+  start: { type: 'start', intent: 'company:globex', related: { id: 'globex', company: 'Globex' } },
   'text-start': { type: 'text-start', id: 'p0' },
-  'text-delta': { type: 'text-delta', id: 'p0', delta: 'He led the “frontend” — in 2021.' },
+  'text-delta': { type: 'text-delta', id: 'p0', delta: 'She led the “platform” — in 2021.' },
   'text-end': { type: 'text-end', id: 'p0' },
   component: {
     type: 'component',
@@ -23,9 +23,9 @@ const SAMPLES: {
   },
   finish: {
     type: 'finish',
-    followUps: ['How did he grow the team?'],
+    followUps: ['How did she grow the team?'],
     sources: [
-      { id: 'roots', label: 'Roots' },
+      { id: 'globex', label: 'Globex' },
       { id: 'web', label: 'Article', url: 'https://example.com/a' },
     ],
   },
@@ -65,7 +65,7 @@ async function roundTrip(events: readonly AssistantEvent[]): Promise<AssistantEv
   return Array.fromAsync(
     streamAnswer(
       {
-        message: 'What did he do at Roots?',
+        message: 'What did she do at Globex?',
         history: [],
         context: { topic: 'overview', lastIntent: null, ctaShown: false },
       },

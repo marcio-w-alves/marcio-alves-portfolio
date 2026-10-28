@@ -1,16 +1,16 @@
 import { useId } from 'react';
 import type { RichComponent } from '@/core/chat/components';
+import { useMessages } from '../i18n/i18n-provider';
 import { ButtonLink, Icon, VisuallyHidden } from '../primitives';
 
 type ContactCardProps = Extract<RichComponent, { component: 'contact' }>['props'];
-
-const EMAIL_SUBJECT = 'Engineering opportunity';
 
 // Every action takes a full row once the card is too narrow to fit them side by side.
 const ACTION_CLASSES =
   '@max-contact-narrow/contact:h-11.5 @max-contact-narrow/contact:grow @max-contact-narrow/contact:basis-full';
 
 export function ContactCard({
+  initials,
   heading,
   text,
   availability,
@@ -19,6 +19,9 @@ export function ContactCard({
   github,
   resumeUrl,
 }: ContactCardProps) {
+  const messages = useMessages();
+  const { contact } = messages.rich;
+  const { opensInNewTab, pdfOpensInNewTab } = messages.links;
   const titleId = useId();
   return (
     <section
@@ -30,7 +33,7 @@ export function ContactCard({
           aria-hidden="true"
           className="grid size-11 shrink-0 place-items-center rounded-full bg-ink font-display text-14 leading-none font-semibold tracking-monogram text-white"
         >
-          MA
+          {initials}
         </span>
         <div>
           <h2
@@ -46,11 +49,11 @@ export function ContactCard({
       <div className="flex flex-wrap gap-2">
         <ButtonLink
           variant="primary"
-          href={`mailto:${email}?subject=${encodeURIComponent(EMAIL_SUBJECT)}`}
+          href={`mailto:${email}?subject=${encodeURIComponent(messages.emailSubject)}`}
           className={ACTION_CLASSES}
         >
           <Icon name="mail" size="sm" />
-          Contact Marcio
+          {contact.email}
         </ButtonLink>
         <ButtonLink
           href={linkedin}
@@ -59,8 +62,8 @@ export function ContactCard({
           className={ACTION_CLASSES}
         >
           <Icon name="link" size="sm" />
-          View LinkedIn
-          <VisuallyHidden> (opens in a new tab)</VisuallyHidden>
+          {contact.linkedin}
+          <VisuallyHidden> {opensInNewTab}</VisuallyHidden>
         </ButtonLink>
         {resumeUrl ? (
           <ButtonLink
@@ -71,8 +74,8 @@ export function ContactCard({
             className={ACTION_CLASSES}
           >
             <Icon name="file" size="sm" />
-            View resume
-            <VisuallyHidden> (PDF, opens in a new tab)</VisuallyHidden>
+            {contact.resume}
+            <VisuallyHidden> {pdfOpensInNewTab}</VisuallyHidden>
           </ButtonLink>
         ) : null}
         {github ? (
@@ -84,8 +87,8 @@ export function ContactCard({
             className={ACTION_CLASSES}
           >
             <Icon name="code" size="sm" />
-            GitHub
-            <VisuallyHidden> (opens in a new tab)</VisuallyHidden>
+            {contact.github}
+            <VisuallyHidden> {opensInNewTab}</VisuallyHidden>
           </ButtonLink>
         ) : null}
       </div>

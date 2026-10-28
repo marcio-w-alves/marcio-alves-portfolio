@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import { cn } from '../cn';
+import { useMessages } from '../i18n/i18n-provider';
 
 interface DataTableProps {
   readonly columns: readonly string[];
@@ -8,13 +9,14 @@ interface DataTableProps {
 }
 
 export function DataTable({ columns, rows, caption }: DataTableProps) {
+  const { rich } = useMessages();
   const captionId = useId();
   return (
     // Focusable and named, so a keyboard can scroll a table wider than the column.
     <div
       role="region"
       aria-labelledby={caption ? captionId : undefined}
-      aria-label={caption ? undefined : 'Table'}
+      aria-label={caption ? undefined : rich.table}
       tabIndex={0}
       className="animate-block-enter overflow-x-auto rounded-md bg-surface shadow-ring"
     >

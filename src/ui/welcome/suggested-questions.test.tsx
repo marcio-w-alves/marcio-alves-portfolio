@@ -1,11 +1,12 @@
-import { render, screen, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { profile } from '@/profile';
+import { renderWithMessages } from '@/testing/ui-messages';
 import { createSiteContent } from '@/site/site-content';
+import { fixtureAnswers, fixtureKnowledge } from '@/testing/fixture-profile';
 import { SuggestedQuestions } from './suggested-questions';
 
-const { topicCatalog } = createSiteContent(profile.knowledge, profile.copy.en.answers);
+const { topicCatalog } = createSiteContent(fixtureKnowledge, fixtureAnswers);
 
 const welcomeChoices = topicCatalog
   .suggestedQuestions('overview', 0, 4)
@@ -16,7 +17,7 @@ const welcomeChoices = topicCatalog
 
 describe('SuggestedQuestions', () => {
   it('shows each suggestion by its short label, under its title', () => {
-    render(
+    renderWithMessages(
       <SuggestedQuestions
         title="Suggested questions"
         questions={welcomeChoices}
@@ -26,33 +27,28 @@ describe('SuggestedQuestions', () => {
 
     const list = screen.getByRole('list', { name: 'Suggested questions' });
     const chips = within(list).getAllByRole('button');
-    expect(chips.map((chip) => chip.textContent)).toEqual([
-      'His career',
-      'Scope of his work',
-      'Work at Deel',
-      'React & TypeScript',
-    ]);
+    expect(chips.map((chip) => chip.textContent)).toEqual(['Her career', 'Payroll', 'Skills']);
   });
 
   it('asks the full question when its short label is picked', async () => {
     const onPick = vi.fn();
-    render(
+    renderWithMessages(
       <SuggestedQuestions title="Suggested questions" questions={welcomeChoices} onPick={onPick} />,
     );
 
-    await userEvent.click(screen.getByRole('button', { name: 'Work at Deel' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Payroll' }));
 
-    expect(onPick).toHaveBeenCalledExactlyOnceWith('What has he built at Deel?');
+    expect(onPick).toHaveBeenCalledExactlyOnceWith('Did she lead the payroll team?');
   });
 
   it('shows the question itself where no label is given', async () => {
     const onPick = vi.fn();
-    render(
+    renderWithMessages(
       <SuggestedQuestions
         title="Ask a follow-up"
         questions={[
-          { question: 'What did he do at Roots?' },
-          { question: 'Has he led engineering teams?' },
+          { question: 'What did she do at Globex?' },
+          { question: 'Has she led platform teams?' },
         ]}
         onPick={onPick}
       />,
@@ -60,14 +56,14 @@ describe('SuggestedQuestions', () => {
 
     const list = screen.getByRole('list', { name: 'Ask a follow-up' });
     await userEvent.click(
-      within(list).getByRole('button', { name: 'Has he led engineering teams?' }),
+      within(list).getByRole('button', { name: 'Has she led platform teams?' }),
     );
 
-    expect(onPick).toHaveBeenCalledExactlyOnceWith('Has he led engineering teams?');
+    expect(onPick).toHaveBeenCalledExactlyOnceWith('Has she led platform teams?');
   });
 
   it('still names the list for screen readers when the title is hidden', () => {
-    render(
+    renderWithMessages(
       <SuggestedQuestions
         title="Suggested questions"
         hideTitle
@@ -81,7 +77,7 @@ describe('SuggestedQuestions', () => {
   });
 
   it('keeps two lists on one page labelled by their own titles', () => {
-    render(
+    renderWithMessages(
       <>
         <SuggestedQuestions
           title="Suggested questions"
@@ -90,7 +86,7 @@ describe('SuggestedQuestions', () => {
         />
         <SuggestedQuestions
           title="Ask a follow-up"
-          questions={[{ question: 'Where did he study?' }]}
+          questions={[{ question: 'Where did she study?' }]}
           onPick={vi.fn()}
         />
       </>,

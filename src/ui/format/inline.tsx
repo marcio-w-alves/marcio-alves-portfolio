@@ -1,3 +1,4 @@
+import { useMessages } from '../i18n/i18n-provider';
 import { VisuallyHidden } from '../primitives';
 import { parseInline, type InlineNode } from './parse-inline';
 
@@ -33,6 +34,7 @@ function InlineElement({ node }: { readonly node: InlineNode }) {
 }
 
 function InlineLink({ node }: { readonly node: Extract<InlineNode, { kind: 'link' }> }) {
+  const { links } = useMessages();
   const className =
     'font-medium text-ink underline decoration-border-strong underline-offset-3 hover:decoration-current';
   if (!node.external) {
@@ -45,7 +47,7 @@ function InlineLink({ node }: { readonly node: Extract<InlineNode, { kind: 'link
   return (
     <a className={className} href={node.href} target="_blank" rel="noopener noreferrer">
       {node.text}
-      <VisuallyHidden> (opens in a new tab)</VisuallyHidden>
+      <VisuallyHidden> {links.opensInNewTab}</VisuallyHidden>
     </a>
   );
 }

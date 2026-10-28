@@ -1,8 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { createFastPath } from '@/core/assistant/system1/fast-path';
 import { localize } from '@/core/knowledge/localize';
-import { profile } from '@/profile';
+import { fixtureAnswers, fixtureKnowledge } from '@/testing/fixture-profile';
+import { renderWithMessages } from '@/testing/ui-messages';
 import { InlineText } from './inline';
 
 // jsdom's accessible-name computation trims the space a browser keeps before the hidden note.
@@ -12,19 +13,19 @@ function opensInNewTab(label: string): RegExp {
 
 describe('InlineText', () => {
   it('opens a web link in a new tab and says so to screen readers', () => {
-    render(
+    renderWithMessages(
       <p>
-        <InlineText text="See [his GitHub](https://github.com/marcio-w-alves)." />
+        <InlineText text="See [her GitHub](https://github.com/ada-rivera-example)." />
       </p>,
     );
-    const link = screen.getByRole('link', { name: opensInNewTab('his GitHub') });
-    expect(link).toHaveAttribute('href', 'https://github.com/marcio-w-alves');
+    const link = screen.getByRole('link', { name: opensInNewTab('her GitHub') });
+    expect(link).toHaveAttribute('href', 'https://github.com/ada-rivera-example');
     expect(link).toHaveAttribute('target', '_blank');
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
   it('links to the whole address when it contains parentheses', () => {
-    render(
+    renderWithMessages(
       <p>
         <InlineText text="[Angular](https://en.wikipedia.org/wiki/Angular_(web_framework))" />
       </p>,
@@ -36,8 +37,8 @@ describe('InlineText', () => {
   });
 
   it('links the résumé the fast path offers, on this site, in the same tab', () => {
-    const fastPath = createFastPath(localize(profile.knowledge, 'en'), profile.copy.en.answers);
-    const result = fastPath.answer('Can I see his resume?', {
+    const fastPath = createFastPath(localize(fixtureKnowledge, 'en'), fixtureAnswers);
+    const result = fastPath.answer('Can I see her resume?', {
       topic: 'overview',
       lastIntent: null,
       ctaShown: false,
@@ -45,30 +46,30 @@ describe('InlineText', () => {
     const [lead] = result.kind === 'answered' ? result.response.parts : [];
     const text = lead?.type === 'text' ? lead.text : '';
 
-    render(
+    renderWithMessages(
       <p>
         <InlineText text={text} />
       </p>,
     );
 
-    const link = screen.getByRole('link', { name: 'open his resume as a PDF' });
-    expect(link).toHaveAttribute('href', profile.knowledge.contact.resumeUrl);
+    const link = screen.getByRole('link', { name: 'Download her CV' });
+    expect(link).toHaveAttribute('href', '/ada-rivera-cv.pdf');
     expect(link).not.toHaveAttribute('target');
   });
 
   it('keeps a mailto link in the same tab', () => {
-    render(
+    renderWithMessages(
       <p>
-        <InlineText text="[Write to him](mailto:marcio@example.com)" />
+        <InlineText text="[Write to her](mailto:ada@example.com)" />
       </p>,
     );
-    const link = screen.getByRole('link', { name: 'Write to him' });
-    expect(link).toHaveAttribute('href', 'mailto:marcio@example.com');
+    const link = screen.getByRole('link', { name: 'Write to her' });
+    expect(link).toHaveAttribute('href', 'mailto:ada@example.com');
     expect(link).not.toHaveAttribute('target');
   });
 
   it('shows an unsafe link as the text it was, with nothing to click', () => {
-    render(
+    renderWithMessages(
       <p data-testid="text">
         <InlineText text="[click](javascript:alert(1))" />
       </p>,
@@ -78,7 +79,7 @@ describe('InlineText', () => {
   });
 
   it('renders markup in the text as visible text, not as elements', () => {
-    render(
+    renderWithMessages(
       <p data-testid="text">
         <InlineText text="<img src=x onerror=alert(1)><b>bold</b>" />
       </p>,
@@ -88,7 +89,7 @@ describe('InlineText', () => {
   });
 
   it('emphasises bold text and marks up code', () => {
-    render(
+    renderWithMessages(
       <p>
         <InlineText text="Built with **TypeScript** and `zod`." />
       </p>,
@@ -98,13 +99,13 @@ describe('InlineText', () => {
   });
 
   it('links a repository named in bold, keeping it bold', () => {
-    render(
+    renderWithMessages(
       <p>
-        <InlineText text="**[portfolio](https://github.com/marcio-w-alves/portfolio)**" />
+        <InlineText text="**[portfolio](https://github.com/ada-rivera-example/portfolio)**" />
       </p>,
     );
     const link = screen.getByRole('link', { name: opensInNewTab('portfolio') });
-    expect(link).toHaveAttribute('href', 'https://github.com/marcio-w-alves/portfolio');
+    expect(link).toHaveAttribute('href', 'https://github.com/ada-rivera-example/portfolio');
     expect(link.closest('strong')).not.toBeNull();
   });
 });

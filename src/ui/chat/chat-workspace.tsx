@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { TopicId } from '@/core/chat/topic-id';
 import { latestAnswerId } from '@/core/conversation/conversation';
 import type { Conversation } from '@/core/conversation/messages';
+import { interpolate } from '@/core/i18n/format';
 import { ChatComposer, ComposerDock, JumpToLatest, type ChatComposerHandle } from '../composer';
 import { AppShell } from '../shell/app-shell';
 import { ConversationTopBar } from '../shell/conversation-top-bar';
@@ -20,6 +21,8 @@ import {
   type QuestionChoice,
   type WelcomeGreeting,
 } from '../welcome';
+import { useMessages } from '../i18n/i18n-provider';
+import type { AssistantIdentity } from './assistant-message';
 import { ConversationTurn } from './conversation-turn';
 import { useChat } from './use-chat';
 import { useReveal } from './use-reveal';
@@ -32,13 +35,11 @@ interface WelcomeCopy extends WelcomeGreeting {
 
 interface ChatWorkspaceProps {
   readonly profile: SidebarProfile;
-  /** How the thinking status names the owner while an answer is on its way. */
-  readonly ownerFirstName: string;
   readonly links: SidebarLinks;
   readonly topics: readonly SidebarTopic[];
   readonly welcome: WelcomeCopy;
-  /** The name the assistant goes by beside its answers. */
-  readonly assistantName: string;
+  /** How the assistant appears beside its answers. */
+  readonly assistant: AssistantIdentity;
   /** The questions the welcome screen offers. */
   readonly suggestions: readonly QuestionChoice[];
   /** The conversation the page opens with, and starts over from. */
@@ -65,11 +66,10 @@ function topicIn(topics: readonly SidebarTopic[], id: string): SidebarTopic {
 /** Owns the conversation and hands plain data and callbacks to the presentational parts. */
 export function ChatWorkspace({
   profile,
-  ownerFirstName,
   links,
   topics,
   welcome,
-  assistantName,
+  assistant,
   suggestions,
   seed,
   maxQuestionLength,
@@ -77,6 +77,7 @@ export function ChatWorkspace({
   initialConversation,
   initialDrawerOpen,
 }: ChatWorkspaceProps) {
+  const messages = useMessages();
   const chat = useChat(topic, seed, initialConversation);
   const { conversation } = chat;
   const currentTopic = topicIn(topics, conversation.topic);
@@ -169,10 +170,8 @@ export function ChatWorkspace({
       onSubmit={submitDraft}
       onStop={stop}
       status={busy ? 'streaming' : chat.waiting ? 'waiting' : 'idle'}
-      placeholder={variant === 'hero' ? welcome.placeholder : 'Ask a follow-up question...'}
-      helper={
-        chat.waiting ? 'Another answer is on its way. Send this once it is done.' : welcome.helper
-      }
+      placeholder={variant === 'hero' ? welcome.placeholder : messages.composer.followUpPlaceholder}
+      helper={chat.waiting ? messages.composer.waiting : welcome.helper}
       maxLength={maxQuestionLength}
     />
   );
@@ -200,8 +199,10 @@ export function ChatWorkspace({
         <>
           <h1 className="sr-only">
             {topic === 'overview'
-              ? "Conversation with Marcio's portfolio assistant"
-              : `${topicIn(topics, topic).label} — ${profile.name}`}
+              ? messages.conversation.overviewHeading
+              : interpolate(messages.conversation.topicHeading, {
+                  topic: topicIn(topics, topic).label,
+                })}
           </h1>
           <ConversationTopBar topic={currentTopic} onNewConversation={startOver} />
         </>
@@ -214,7 +215,7 @@ export function ChatWorkspace({
       >
         {inConversation ? (
           <ol
-            aria-label="Conversation"
+            aria-label={messages.conversation.label}
             aria-busy={busy}
             className="mx-auto flex max-w-column list-none flex-col gap-10 px-8 pt-3 pb-8 @max-phone/ma:gap-7.5 @max-phone/ma:px-4 @max-phone/ma:pt-4 @max-phone/ma:pb-6"
           >
@@ -225,8 +226,7 @@ export function ChatWorkspace({
                 view={reveal.view}
                 isLatest={message.id === latestId}
                 topicLabel={(id) => topicIn(topics, id).label}
-                assistantName={assistantName}
-                ownerFirstName={ownerFirstName}
+                assistant={assistant}
                 busy={busy || chat.waiting}
                 onAsk={ask}
                 onRetry={chat.retry}
@@ -241,7 +241,7 @@ export function ChatWorkspace({
             <WelcomeScreen welcome={welcome} />
             {composer('hero')}
             <SuggestedQuestions
-              title="Suggested questions"
+              title={messages.welcome.suggestedQuestions}
               hideTitle
               align="center"
               questions={suggestions}

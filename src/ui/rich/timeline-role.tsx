@@ -3,6 +3,7 @@
 import { useId, useState, type ReactNode } from 'react';
 import type { RoleView } from '@/core/chat/components';
 import { cn } from '../cn';
+import { useMessages } from '../i18n/i18n-provider';
 import { Icon, Tag } from '../primitives';
 
 interface TimelineRoleProps {
@@ -21,6 +22,7 @@ export function TimelineRole({
   initiallyOpen,
   children,
 }: TimelineRoleProps) {
+  const { rich } = useMessages();
   const [isOpen, setIsOpen] = useState(initiallyOpen);
   const panelId = useId();
 
@@ -44,8 +46,8 @@ export function TimelineRole({
             {role.company}
           </span>
           <span className="text-14 text-ink-muted">{role.role}</span>
-          {role.current ? <Tag tone="accent">Current</Tag> : null}
-          {role.contract ? <Tag>Contract</Tag> : null}
+          {role.current ? <Tag tone="accent">{rich.current}</Tag> : null}
+          {role.contract ? <Tag>{rich.contract}</Tag> : null}
           <Icon
             name="chevronDown"
             size="sm"

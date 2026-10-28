@@ -1,5 +1,6 @@
 import { expect, test, type JSHandle, type Locator, type Page } from '@playwright/test';
 import { answers, holdNextAnswer } from './support/assistant';
+import { firstSuggestion, ui } from './support/profile';
 
 // A phone, where the navigation is a drawer that slides over the conversation.
 test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
@@ -24,15 +25,15 @@ async function slowDownAnimations(page: Page) {
 }
 
 function drawer(page: Page) {
-  return page.getByRole('complementary', { name: 'Portfolio navigation', includeHidden: true });
+  return page.getByRole('complementary', { name: ui.shell.navigation, includeHidden: true });
 }
 
 function menuButton(page: Page) {
-  return page.getByRole('button', { name: 'Open navigation' });
+  return page.getByRole('button', { name: ui.shell.openNavigation });
 }
 
 function conversation(page: Page) {
-  return page.getByRole('list', { name: 'Conversation' });
+  return page.getByRole('list', { name: ui.conversation.label });
 }
 
 /** A recording in progress; `settled` waits for its last frame and returns every reading. */
@@ -328,7 +329,7 @@ test.describe('with prefers-reduced-motion: reduce', () => {
   });
 
   test('"Jump to latest" lands on the newest message at once', async ({ page }) => {
-    await page.getByRole('button', { name: 'His career' }).click();
+    await page.getByRole('button', { name: firstSuggestion().label }).click();
     await expect(conversation(page)).toHaveAttribute('aria-busy', 'false');
     await ask(page, 'What are his strongest technical skills?');
     await expect(conversation(page)).toHaveAttribute('aria-busy', 'false');
@@ -338,7 +339,7 @@ test.describe('with prefers-reduced-motion: reduce', () => {
       node.scrollTop = 0;
     });
     const jump = await recordScrollTop(scroller);
-    await page.getByRole('button', { name: 'Jump to latest' }).click();
+    await page.getByRole('button', { name: ui.conversation.jumpToLatest }).click();
     const readings = await jump.settled();
 
     expect(readings.filter((scrollTop) => scrollTop !== 0)).toHaveLength(1);

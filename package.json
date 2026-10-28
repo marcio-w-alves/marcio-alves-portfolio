@@ -31,7 +31,8 @@
     "rag:build": "pnpm notes:build && tsx --env-file=.env.local scripts/build-knowledge-index.mts",
     "eval:assistant": "tsx --conditions=react-server --env-file=.env.local scripts/evaluate-assistant.mts",
     "notes:build": "tsx scripts/build-knowledge-notes.mts",
-    "sites:ingest": "tsx scripts/ingest-sites.mts"
+    "sites:ingest": "tsx scripts/ingest-sites.mts",
+    "brand:css": "tsx scripts/generate-brand-css.mts"
   },
   "dependencies": {
     "@fontsource/inter-tight": "5.3.0",

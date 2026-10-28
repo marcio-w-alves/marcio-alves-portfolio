@@ -1,5 +1,6 @@
 'use client';
 
+import { useMessages } from '../i18n/i18n-provider';
 import { Icon } from '../primitives';
 import { ACTION } from './answer-actions';
 import { copyText } from './copy-text';
@@ -12,6 +13,7 @@ export function CodeBlock({
   readonly language: string;
   readonly code: string;
 }) {
+  const { actions } = useMessages();
   const { copied, copy } = useCopyConfirmation(() => copyText(code));
 
   return (
@@ -20,10 +22,10 @@ export function CodeBlock({
         <span>{language}</span>
         <button type="button" className={ACTION} onClick={copy}>
           <Icon name={copied ? 'check' : 'copy'} size="xs" />
-          {copied ? 'Copied' : 'Copy code'}
+          {copied ? actions.copied : actions.copyCode}
         </button>
         <span role="status" className="sr-only">
-          {copied ? 'Copied' : ''}
+          {copied ? actions.copied : ''}
         </span>
       </figcaption>
       <pre className="m-0 overflow-x-auto px-4.5 py-4 font-mono text-13 leading-airy tab-2 text-ink">

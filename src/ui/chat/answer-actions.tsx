@@ -2,6 +2,7 @@
 
 import type { Feedback } from '@/core/conversation/messages';
 import { cn } from '../cn';
+import { useMessages } from '../i18n/i18n-provider';
 import { Icon } from '../primitives';
 import { useCopyConfirmation } from './use-copy-confirmation';
 
@@ -39,24 +40,25 @@ export function AnswerActions({
   onRate,
   busy = false,
 }: AnswerActionsProps) {
+  const { actions } = useMessages();
   const { copied, copy } = useCopyConfirmation(onCopy);
 
   return (
     <div
       role="group"
-      aria-label="Answer actions"
+      aria-label={actions.group}
       className="-ml-2 flex flex-wrap items-center gap-0.5"
     >
       <button type="button" className={ACTION} onClick={copy}>
         <Icon name={copied ? 'check' : 'copy'} size="sm" />
-        {copied ? 'Copied' : 'Copy'}
+        {copied ? actions.copied : actions.copy}
       </button>
       <span role="status" className="sr-only">
-        {copied ? 'Copied' : ''}
+        {copied ? actions.copied : ''}
       </span>
       <button type="button" className={ACTION} onClick={onAskFollowUp}>
         <Icon name="message" size="sm" />
-        Ask follow-up
+        {actions.askFollowUp}
       </button>
       {related && (
         <button type="button" className={ACTION} disabled={busy} onClick={related.onView}>
@@ -68,7 +70,7 @@ export function AnswerActions({
       <button
         type="button"
         className={ACTION}
-        aria-label="Helpful"
+        aria-label={actions.helpful}
         aria-pressed={feedback === 'up'}
         onClick={() => {
           onRate('up');
@@ -79,7 +81,7 @@ export function AnswerActions({
       <button
         type="button"
         className={ACTION}
-        aria-label="Not helpful"
+        aria-label={actions.notHelpful}
         aria-pressed={feedback === 'down'}
         onClick={() => {
           onRate('down');
@@ -89,7 +91,7 @@ export function AnswerActions({
       </button>
       {feedback && (
         <span role="status" className="pl-1.5 text-12.5 text-ink-muted">
-          Thanks for the feedback
+          {actions.thanks}
         </span>
       )}
     </div>

@@ -1,21 +1,29 @@
-import { render, screen, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import type { RichComponent } from '@/core/chat/components';
-import { profile } from '@/profile';
-import { createSiteContent } from '@/site/site-content';
+import type { ComponentPart, RichComponent, RichComponentName } from '@/core/chat/components';
 import { createResponseKit, details, note, table } from '@/core/assistant/response-kit';
 import { localize } from '@/core/knowledge/localize';
 import { fixtureKnowledge } from '@/testing/fixture-profile/knowledge';
-import { createFastPath } from '@/core/assistant/system1/fast-path';
-import { exampleBlocks } from '@/testing/rich-examples';
+import { renderWithMessages } from '@/testing/ui-messages';
 import { RichBlock } from './rich-block';
 
-const { knowledge } = createSiteContent(profile.knowledge, profile.copy.en.answers);
+const knowledge = localize(fixtureKnowledge, 'en');
+const fixtureKit = createResponseKit(knowledge);
 
-const exampleBlock = exampleBlocks(createFastPath(knowledge, profile.copy.en.answers));
+type BlockOf<Name extends RichComponentName> = Extract<RichComponent, { component: Name }>;
 
-const fixtureKit = createResponseKit(localize(fixtureKnowledge, 'en'));
+/** The block as the kit builds it, narrowed to its kind so a test can read its props. */
+function blockOf<Name extends RichComponentName>(part: ComponentPart, name: Name): BlockOf<Name> {
+  const isNamed = (block: ComponentPart): block is ComponentPart & BlockOf<Name> =>
+    block.component === name;
+  if (!isNamed(part)) throw new Error(`Expected a ${name} block, got ${part.component}`);
+  return part;
+}
+
+const timelineBlock = () => blockOf(fixtureKit.timeline(), 'timeline');
+const projectsBlock = () => blockOf(fixtureKit.projects(), 'projects');
+const contactBlock = () => blockOf(fixtureKit.contactCard(), 'contact');
 
 // jsdom's accessible-name computation trims the space a browser keeps before the hidden note.
 function opensInNewTab(label: string): RegExp {
@@ -28,12 +36,12 @@ function present<T>(value: T | null | undefined): T {
 }
 
 function renderBlock(block: RichComponent) {
-  return render(<RichBlock block={block} />);
+  return renderWithMessages(<RichBlock block={block} />);
 }
 
 describe('metrics', () => {
   it('shows every figure with its label and where it was achieved', () => {
-    const block = exampleBlock('metrics');
+    const block = blockOf(fixtureKit.metrics(Object.keys(knowledge.metrics)), 'metrics');
     renderBlock(block);
     const items = within(screen.getByRole('region', { name: 'Key metrics' })).getAllByRole(
       'listitem',
@@ -45,14 +53,14 @@ describe('metrics', () => {
       expect(item).toHaveTextContent(metric.label);
       if (metric.context) expect(item).toHaveTextContent(metric.context);
     });
-    expect(screen.getByText('50%')).toBeInTheDocument();
-    expect(screen.getByText('Reduction in loading time on critical pages')).toBeInTheDocument();
+    expect(screen.getByText('40%')).toBeInTheDocument();
+    expect(screen.getByText('Faster builds')).toBeInTheDocument();
   });
 });
 
 describe('timeline', () => {
   it('lists every role with its company, title and period', () => {
-    const block = exampleBlock('timeline');
+    const block = timelineBlock();
     renderBlock(block);
     const timelineRegion = screen.getByRole('region', { name: 'Career timeline' });
     for (const role of block.props.roles) {
@@ -61,73 +69,74 @@ describe('timeline', () => {
       });
       expect(toggle).toHaveTextContent(role.role);
       expect(within(timelineRegion).getByText(role.summary)).toBeInTheDocument();
+      expect(within(timelineRegion).getByText(role.period)).toBeInTheDocument();
     }
-    expect(
-      within(timelineRegion).getAllByText(block.props.roles[0]?.period ?? ''),
-    ).not.toHaveLength(0);
   });
 
   it('marks the current role and the contract roles, and calls none concurrent', () => {
-    renderBlock(exampleBlock('timeline'));
-    expect(screen.getByRole('button', { name: /^Way2b1/ })).toHaveTextContent('Current');
-    for (const company of [/^Roots/, /^Maison Moderne/, /^Freelance/]) {
-      expect(screen.getByRole('button', { name: company })).toHaveTextContent('Contract');
-    }
-    expect(screen.getByRole('button', { name: /^Deel/ })).not.toHaveTextContent(/Current|Contract/);
-    expect(screen.queryByText(/concurrent/i)).not.toBeInTheDocument();
-  });
-
-  it('labels a role from the record as a contract only when it was held as one', () => {
-    renderBlock(fixtureKit.timeline());
+    renderBlock(timelineBlock());
+    expect(screen.getByRole('button', { name: /^Acme/ })).toHaveTextContent('Current');
     expect(screen.getByRole('button', { name: /^Initech/ })).toHaveTextContent('Contract');
-    expect(screen.getByRole('button', { name: /^Globex/ })).not.toHaveTextContent('Contract');
+    expect(screen.getByRole('button', { name: /^Globex/ })).not.toHaveTextContent(
+      /Current|Contract/,
+    );
+    expect(screen.queryByText(/concurrent/i)).not.toBeInTheDocument();
   });
 
   it('opens a role to show its sections and closes it again', async () => {
     const user = userEvent.setup();
-    renderBlock(exampleBlock('timeline'));
-    const deel = screen.getByRole('button', { name: /^Deel/ });
-    expect(deel).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByText('Engineering impact')).not.toBeInTheDocument();
+    const block = timelineBlock();
+    const role = present(block.props.roles.find(({ id }) => id === 'globex'));
+    renderBlock(block);
+    const globex = screen.getByRole('button', { name: /^Globex/ });
+    const [firstSection] = role.sections;
+    expect(globex).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText(present(firstSection).title)).not.toBeInTheDocument();
 
-    await user.click(deel);
+    await user.click(globex);
 
-    expect(deel).toHaveAttribute('aria-expanded', 'true');
-    const panel = document.getElementById(deel.getAttribute('aria-controls') ?? '');
-    expect(panel).not.toBeNull();
+    expect(globex).toHaveAttribute('aria-expanded', 'true');
+    const panel = document.getElementById(globex.getAttribute('aria-controls') ?? '');
     const sections = within(present(panel));
-    expect(sections.getByText('Engineering impact')).toBeInTheDocument();
-    expect(sections.getByText('Reduction in loading time on critical pages')).toBeInTheDocument();
-    expect(sections.getByText('Focus areas')).toBeInTheDocument();
+    for (const section of role.sections) {
+      expect(sections.getByText(section.title)).toBeInTheDocument();
+    }
+    expect(sections.getByText('More deploys a day')).toBeInTheDocument();
 
-    await user.click(deel);
+    await user.click(globex);
 
-    expect(deel).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByText('Engineering impact')).not.toBeInTheDocument();
+    expect(globex).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText(present(firstSection).title)).not.toBeInTheDocument();
   });
 
   it('opens the roles the answer asks for, and only those', () => {
-    const { props } = exampleBlock('timeline');
-    renderBlock({ component: 'timeline', props: { ...props, expanded: ['deel'] } });
-    expect(screen.getByRole('button', { name: /^Deel/ })).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('button', { name: /^Way2b1/ })).toHaveAttribute(
+    const { props } = timelineBlock();
+    renderBlock({ component: 'timeline', props: { ...props, expanded: ['globex'] } });
+    expect(screen.getByRole('button', { name: /^Globex/ })).toHaveAttribute(
       'aria-expanded',
-      'false',
+      'true',
     );
+    expect(screen.getByRole('button', { name: /^Acme/ })).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('opens one role without touching the others', async () => {
     const user = userEvent.setup();
-    renderBlock(exampleBlock('timeline'));
-    await user.click(screen.getByRole('button', { name: /^Roots/ }));
-    expect(screen.getByRole('button', { name: /^Roots/ })).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('button', { name: /^Deel/ })).toHaveAttribute('aria-expanded', 'false');
+    renderBlock(timelineBlock());
+    await user.click(screen.getByRole('button', { name: /^Initech/ }));
+    expect(screen.getByRole('button', { name: /^Initech/ })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+    expect(screen.getByRole('button', { name: /^Globex/ })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
   });
 });
 
 describe('skills', () => {
   it('shows each group with its skills and how many there are', () => {
-    const block = exampleBlock('skills');
+    const block = blockOf(fixtureKit.skills(), 'skills');
     renderBlock(block);
     const region = screen.getByRole('region', { name: 'Technical skills' });
     for (const group of block.props.groups) {
@@ -142,8 +151,8 @@ describe('skills', () => {
 });
 
 describe('projects', () => {
-  it('shows each project with its name, category, status and planned scope', () => {
-    const block = exampleBlock('projects');
+  it('shows each project with its name, category, status and scope', () => {
+    const block = projectsBlock();
     renderBlock(block);
     for (const project of block.props.projects) {
       const card = screen.getByRole('article', { name: `Project: ${project.name}` });
@@ -156,32 +165,32 @@ describe('projects', () => {
   });
 
   it("labels a concept's scope as planned and a live product's as its features", () => {
-    renderBlock(exampleBlock('projects'));
-    const concept = screen.getByRole('article', { name: 'Project: FictionDraft' });
-    const live = screen.getByRole('article', { name: 'Project: TargUp' });
+    renderBlock(projectsBlock());
+    const concept = screen.getByRole('article', { name: 'Project: Loomstack' });
+    const live = screen.getByRole('article', { name: 'Project: Pipewright' });
     expect(within(concept).getByText('Planned scope')).toBeInTheDocument();
     expect(within(live).getByText('Key features')).toBeInTheDocument();
     expect(within(live).queryByText('Planned scope')).not.toBeInTheDocument();
   });
 
   it('lists the platforms a product runs on, and nothing for one that names none', () => {
-    renderBlock(exampleBlock('projects'));
-    const evcopilot = screen.getByRole('article', { name: 'Project: EvCopilot' });
-    expect(within(evcopilot).getByText('Platforms')).toBeInTheDocument();
-    expect(within(evcopilot).getByText('iPhone (beta)')).toBeInTheDocument();
-    const concept = screen.getByRole('article', { name: 'Project: FictionDraft' });
+    renderBlock(projectsBlock());
+    const live = screen.getByRole('article', { name: 'Project: Pipewright' });
+    expect(within(live).getByText('Platforms')).toBeInTheDocument();
+    expect(within(live).getByText('Web')).toBeInTheDocument();
+    const concept = screen.getByRole('article', { name: 'Project: Loomstack' });
     expect(within(concept).queryByText('Platforms')).not.toBeInTheDocument();
   });
 
   it("shows a concept's status and no link to a site it does not have", () => {
-    renderBlock(fixtureKit.projects());
+    renderBlock(projectsBlock());
     const concept = screen.getByRole('article', { name: 'Project: Loomstack' });
     expect(within(concept).getByText('Concept')).toBeInTheDocument();
     expect(within(concept).queryByRole('link')).not.toBeInTheDocument();
   });
 
   it('lists the outcomes a project documents, and no such section for one without', () => {
-    renderBlock(fixtureKit.projects());
+    renderBlock(projectsBlock());
     const live = screen.getByRole('article', { name: 'Project: Pipewright' });
     expect(within(live).getByText('Outcomes')).toBeInTheDocument();
     expect(
@@ -191,41 +200,39 @@ describe('projects', () => {
     expect(within(concept).queryByText('Outcomes')).not.toBeInTheDocument();
   });
 
-  it('presents this portfolio with its stack, outcomes, live site and repository', () => {
-    renderBlock(exampleBlock('projects'));
-    const card = screen.getByRole('article', { name: 'Project: marciomariani.dev' });
+  it('shows the stack a project documents, and leaves the section out where none is', () => {
+    const [live, concept] = projectsBlock().props.projects;
+    renderBlock({
+      component: 'projects',
+      props: { projects: [{ ...present(live), technologies: ['Bazel', 'Go'] }, present(concept)] },
+    });
+    const card = screen.getByRole('article', { name: 'Project: Pipewright' });
     expect(within(card).getByText('Main technologies')).toBeInTheDocument();
-    expect(within(card).getByText('Next.js')).toBeInTheDocument();
-    expect(within(card).getByText('Outcomes')).toBeInTheDocument();
-    expect(
-      within(card).getByRole('link', { name: opensInNewTab('Visit marciomariani.dev') }),
-    ).toHaveAttribute('href', 'https://marciomariani.dev');
-    expect(
-      within(card).getByRole('link', { name: opensInNewTab('View the code on GitHub') }),
-    ).toHaveAttribute('href', 'https://github.com/marcio-w-alves/marcio-alves-portfolio');
+    expect(within(card).getByText('Bazel')).toBeInTheDocument();
+    const planned = screen.getByRole('article', { name: 'Project: Loomstack' });
+    expect(within(planned).queryByText('Main technologies')).not.toBeInTheDocument();
   });
 
-  it('leaves out sections the record does not document', () => {
-    const block = exampleBlock('projects');
-    const concept = block.props.projects.find((project) => project.id === 'fictiondraft');
-    expect(concept?.technologies).toEqual([]);
-    renderBlock(block);
-    const card = screen.getByRole('article', { name: 'Project: FictionDraft' });
-    expect(within(card).queryByText('Main technologies')).not.toBeInTheDocument();
-    expect(within(card).queryByRole('link')).not.toBeInTheDocument();
+  it("links to a project's site in a new tab", () => {
+    renderBlock(projectsBlock());
+    const card = screen.getByRole('article', { name: 'Project: Pipewright' });
+    const link = within(card).getByRole('link', {
+      name: opensInNewTab('Visit pipewright.example'),
+    });
+    expect(link).toHaveAttribute('href', 'https://pipewright.example');
+    expect(link).toHaveAttribute('target', '_blank');
   });
 
   it('links only to web addresses, in a new tab', () => {
-    const [project] = exampleBlock('projects').props.projects;
-    if (!project) throw new Error('No project to render');
+    const [project] = projectsBlock().props.projects;
     renderBlock({
       component: 'projects',
       props: {
         projects: [
           {
-            ...project,
+            ...present(project),
             links: [
-              { label: 'Visit TargUp', url: 'https://dev.targup.com/' },
+              { label: 'Visit Pipewright', url: 'https://pipewright.example/' },
               { label: 'Run it', url: 'javascript:alert(1)' },
             ],
           },
@@ -234,15 +241,25 @@ describe('projects', () => {
     });
     const links = screen.getAllByRole('link');
     expect(links).toHaveLength(1);
-    expect(links[0]).toHaveAccessibleName(opensInNewTab('Visit TargUp'));
-    expect(links[0]).toHaveAttribute('href', 'https://dev.targup.com/');
+    expect(links[0]).toHaveAccessibleName(opensInNewTab('Visit Pipewright'));
+    expect(links[0]).toHaveAttribute('href', 'https://pipewright.example/');
     expect(links[0]).toHaveAttribute('target', '_blank');
   });
 });
 
 describe('table', () => {
   it('shows its caption, column headers and every cell', () => {
-    const block = exampleBlock('table');
+    const block = blockOf(
+      table(
+        ['Company', 'Role', 'Period'],
+        [
+          ['Acme', 'Principal Platform Engineer', '2022 — Present'],
+          ['Globex', 'Senior Platform Engineer', '2018 — 2022'],
+        ],
+        'Roles',
+      ),
+      'table',
+    );
     renderBlock(block);
     const tableElement = screen.getByRole('table');
     expect(tableElement).toHaveAccessibleName(block.props.caption);
@@ -254,6 +271,11 @@ describe('table', () => {
       const rendered = within(present(rows[index])).getAllByRole('cell');
       expect(rendered.map((cell) => cell.textContent)).toEqual(cells);
     });
+  });
+
+  it('is named "Table" for a screen reader when it has no caption', () => {
+    renderBlock(table(['Language'], [['Portuguese']], ''));
+    expect(screen.getByRole('region', { name: 'Table' })).toBeInTheDocument();
   });
 
   it('can be scrolled by keyboard when it is wider than the answer', () => {
@@ -268,18 +290,18 @@ describe('note', () => {
     ['example', 'Illustrative example'],
     ['info', 'Note'],
   ] as const)('labels a %s note "%s" and shows its text', (tone, label) => {
-    renderBlock(note(tone, "The HRIS team's size isn't documented."));
+    renderBlock(note(tone, "The payroll team's size isn't documented."));
     const aside = screen.getByRole('complementary');
     expect(aside).toHaveTextContent(label);
-    expect(aside).toHaveTextContent("The HRIS team's size isn't documented.");
+    expect(aside).toHaveTextContent("The payroll team's size isn't documented.");
   });
 
   it('renders inline formatting and keeps unsafe links as text', () => {
     renderBlock(
-      note('info', 'Read **the resume** or [his profile](https://example.com) [x](javascript:1)'),
+      note('info', 'Read **the resume** or [her profile](https://example.com) [x](javascript:1)'),
     );
     expect(screen.getByText('the resume').tagName).toBe('STRONG');
-    expect(screen.getByRole('link', { name: opensInNewTab('his profile') })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: opensInNewTab('her profile') })).toHaveAttribute(
       'href',
       'https://example.com',
     );
@@ -291,11 +313,11 @@ describe('note', () => {
 describe('details', () => {
   it('shows only its summary until opened, then its text, and hides it again', async () => {
     const user = userEvent.setup();
-    const block = exampleBlock('details');
+    const block = blockOf(details('How?', 'Remote caching across every build.'), 'details');
     renderBlock(block);
     const toggle = screen.getByRole('button', { name: block.props.summary });
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByText(/targeted refactoring/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Remote caching/)).not.toBeInTheDocument();
 
     await user.click(toggle);
 
@@ -306,7 +328,7 @@ describe('details', () => {
     await user.click(toggle);
 
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByText(/targeted refactoring/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Remote caching/)).not.toBeInTheDocument();
   });
 
   it('splits its text into paragraphs at blank lines', async () => {
@@ -332,15 +354,15 @@ describe('details', () => {
 });
 
 describe('contact', () => {
-  it('offers email with a subject, LinkedIn and GitHub', () => {
-    const block = exampleBlock('contact');
+  it("offers email with the profile's subject, LinkedIn and GitHub, under the person's monogram", () => {
+    const block = contactBlock();
     renderBlock(block);
-    expect(
-      screen.getByRole('region', { name: 'Interested in working together?' }),
-    ).toHaveTextContent(block.props.text);
-    expect(screen.getByRole('link', { name: 'Contact Marcio' })).toHaveAttribute(
+    const card = screen.getByRole('region', { name: 'Interested in working together?' });
+    expect(card).toHaveTextContent(block.props.text);
+    expect(within(card).getByText('AR')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Contact Ada' })).toHaveAttribute(
       'href',
-      'mailto:marcio.welben@gmail.com?subject=Engineering%20opportunity',
+      'mailto:ada@rivera.example?subject=Platform%20role',
     );
     const linkedin = screen.getByRole('link', { name: opensInNewTab('View LinkedIn') });
     expect(linkedin).toHaveAttribute('href', block.props.linkedin);
@@ -354,25 +376,24 @@ describe('contact', () => {
   });
 
   it("states the person's availability from the record", () => {
-    renderBlock(fixtureKit.contactCard());
+    renderBlock(contactBlock());
     expect(
       screen.getByRole('region', { name: 'Interested in working together?' }),
     ).toHaveTextContent('Portugal · hybrid · UTC+0 · open to platform roles');
   });
 
   it('offers no résumé download while there is no résumé to download', () => {
-    const { props } = exampleBlock('contact');
+    const { props } = contactBlock();
     renderBlock({ component: 'contact', props: { ...props, resumeUrl: null } });
     expect(screen.queryByRole('link', { name: /resume/i })).not.toBeInTheDocument();
   });
 
   it('opens the résumé in a new tab once there is one, saying it is a PDF', () => {
-    const { props } = exampleBlock('contact');
-    renderBlock({ component: 'contact', props: { ...props, resumeUrl: '/marcio-alves.pdf' } });
+    renderBlock(contactBlock());
     const resume = screen.getByRole('link', {
       name: /^View resume ?\(PDF, opens in a new tab\)$/,
     });
-    expect(resume).toHaveAttribute('href', '/marcio-alves.pdf');
+    expect(resume).toHaveAttribute('href', '/ada-rivera-cv.pdf');
     expect(resume).toHaveAttribute('target', '_blank');
     expect(resume).not.toHaveAttribute('download');
   });

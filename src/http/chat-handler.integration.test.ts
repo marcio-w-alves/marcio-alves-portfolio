@@ -7,6 +7,7 @@ import type { AnswerSource, AssistantEvent } from '@/core/chat/events';
 import { assistantSettings } from '@/env';
 import { MAX_OUTPUT_TOKENS } from '@/core/assistant/system2/model-assistant';
 import { SEARCH_UNAVAILABLE } from '@/core/assistant/tools/search-tools';
+import { localize } from '@/core/knowledge/localize';
 import { profile } from '@/profile';
 import knowledgeIndex from '@/profile/generated/knowledge-index.json';
 import { createHealthHandler } from './health-handler';
@@ -17,6 +18,9 @@ import { createChatHandler } from './chat-handler';
  * SDK, the real actions and the real event stream — with only the network
  * replaced. Every request that leaves the process is answered here, or fails
  * the test.
+ *
+ * It binds the real profile, as production does, so every name and question
+ * it uses is read from the profile: it holds for anyone's.
  */
 
 const COMPLETIONS = 'https://api.openai.com/v1/chat/completions';
@@ -121,7 +125,7 @@ function question(
   message: string,
   { ip = newVisitor(), signal }: { ip?: string; signal?: AbortSignal } = {},
 ): Request {
-  return new Request('https://marciomariani.dev/api/chat', {
+  return new Request('https://portfolio.test/api/chat', {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-real-ip': ip },
     body: JSON.stringify({ message }),
@@ -274,7 +278,18 @@ function scriptedCompletions(...rounds: readonly object[][]): CompletionRequest[
   return received;
 }
 
-const WAY2B1_VECTOR = knowledgeIndex.vectors['role:way2b1'];
+const record = localize(profile.knowledge, 'en');
+const companies = [...new Set(record.experience.map((role) => role.company))];
+const [askedRole, searchedRole] = record.experience;
+if (!askedRole || !searchedRole) throw new Error('The profile documents fewer than two roles.');
+const indexed: Readonly<Record<string, readonly number[] | undefined>> = knowledgeIndex.vectors;
+const SEARCHED_VECTOR = indexed[`role:${searchedRole.id}`];
+if (!SEARCHED_VECTOR) throw new Error(`The index has no vector for the role ${searchedRole.id}.`);
+
+/** Questions about two of the record's companies, one per pair: only the model answers them. */
+const comparisons = companies.flatMap((first) =>
+  companies.filter((second) => second !== first).map((second) => `Compare ${first} and ${second}.`),
+);
 
 function base64Floats(vector: readonly number[]): string {
   return Buffer.from(new Float32Array(vector).buffer).toString('base64');
@@ -282,20 +297,18 @@ function base64Floats(vector: readonly number[]): string {
 
 const FALLBACK_START = { type: 'start', intent: 'unknown', related: null };
 const INTERRUPTED_EVENT = { type: 'error', error: { code: 'interrupted', retryable: true } };
-const MODEL_QUESTION = 'Compare Roots and Deel.';
+const [MODEL_QUESTION = ''] = comparisons;
 
 describe('POST /api/chat — the fast path', () => {
   it('answers a question it recognizes without calling OpenAI', async () => {
-    const response = await postChat()(question("Tell me about Marcio's career."));
+    const response = await postChat()(
+      question(`Tell me about ${profile.identity.firstName}'s career.`),
+    );
 
     expect(response.status).toBe(200);
     expect(response.headers.get('content-type')).toBe('text/event-stream; charset=utf-8');
     const events = await allEventsOf(response);
-    expect(events[0]).toEqual({
-      type: 'start',
-      intent: 'career',
-      related: { id: 'deel', company: 'Deel' },
-    });
+    expect(events[0]).toMatchObject({ type: 'start', intent: 'career' });
     expect(events.at(-1)?.type).toBe('finish');
     expect(outbound).toEqual([]);
   });
@@ -304,8 +317,8 @@ describe('POST /api/chat — the fast path', () => {
 describe('POST /api/chat — a model answer', () => {
   it('runs the action OpenAI asks for, returns its result, and streams the answer built on it', async () => {
     const sent = scriptedCompletions(
-      toolCallRound('getExperience', '{"company":"roots"}'),
-      textRound('He led ', 'the Roots frontend.'),
+      toolCallRound('getExperience', JSON.stringify({ company: askedRole.id })),
+      textRound('He led ', 'the platform team.'),
     );
 
     const events = await allEventsOf(await postChat()(question(MODEL_QUESTION)));
@@ -320,10 +333,10 @@ describe('POST /api/chat — a model answer', () => {
     ]);
     expect(types.filter((type) => type === 'text-delta').length).toBeGreaterThan(1);
     expect(events[0]).toEqual({ type: 'start', intent: 'model', related: null });
-    expect(textOf(events)).toBe('He led the Roots frontend.');
+    expect(textOf(events)).toBe('He led the platform team.');
     expect(events.at(-1)).toMatchObject({
       type: 'finish',
-      sources: [{ id: 'resume.roots', label: 'Resume' }],
+      sources: [{ id: askedRole.source, label: record.sourceLabels[askedRole.source] }],
     });
 
     const [first, second] = sent;
@@ -338,7 +351,7 @@ describe('POST /api/chat — a model answer', () => {
     });
     expect(toolResult).toMatchObject({ role: 'tool', tool_call_id: 'call_1' });
     expect(JSON.parse(toolResult?.content ?? 'null')).toEqual([
-      expect.objectContaining({ id: 'roots', company: 'Roots' }),
+      expect.objectContaining({ id: askedRole.id, company: askedRole.company }),
     ]);
   });
 
@@ -350,16 +363,16 @@ describe('POST /api/chat — a model answer', () => {
         return HttpResponse.json({
           object: 'list',
           model: 'text-embedding-3-small',
-          // The query lands exactly on the indexed Way2b1 role, sent as the
-          // base64 floats the SDK asks for.
-          data: [{ object: 'embedding', index: 0, embedding: base64Floats(WAY2B1_VECTOR) }],
+          // The query lands exactly on one indexed role, sent as the base64
+          // floats the SDK asks for.
+          data: [{ object: 'embedding', index: 0, embedding: base64Floats(SEARCHED_VECTOR) }],
           usage: { prompt_tokens: 5, total_tokens: 5 },
         });
       }),
     );
     scriptedCompletions(
       toolCallRound('searchKnowledge', '{"query":"talent marketplace work"}'),
-      textRound('He worked at Way2b1.'),
+      textRound('He worked there.'),
     );
 
     const events = await allEventsOf(await postChat()(question(MODEL_QUESTION)));
@@ -369,25 +382,25 @@ describe('POST /api/chat — a model answer', () => {
       input: ['talent marketplace work'],
       dimensions: 512,
     });
-    expect(textOf(events)).toBe('He worked at Way2b1.');
+    expect(textOf(events)).toBe('He worked there.');
     expect(sourcesOf(events)).toContainEqual({
-      id: 'resume.way2b1',
-      label: 'Resume',
+      id: searchedRole.source,
+      label: record.sourceLabels[searchedRole.source],
     });
   });
 
   it("links to the record's own addresses with no action, and to nothing else", async () => {
     scriptedCompletions(
       textRound(
-        'See [his GitHub](https://github.com/marcio-w-alves), [email him](mailto:',
-        `${profile.knowledge.contact.email}) or [log in](https://evil.example/login).`,
+        `See [his GitHub](${record.contact.github}), [email him](mailto:`,
+        `${record.contact.email}) or [log in](https://evil.example/login).`,
       ),
     );
 
     const events = await allEventsOf(await postChat()(question(MODEL_QUESTION)));
 
     expect(textOf(events)).toBe(
-      `See [his GitHub](https://github.com/marcio-w-alves), [email him](mailto:${profile.knowledge.contact.email}) or log in.`,
+      `See [his GitHub](${record.contact.github}), [email him](mailto:${record.contact.email}) or log in.`,
     );
   });
 });
@@ -475,7 +488,7 @@ describe('POST /api/chat — when retrieval is down', () => {
         sent.push((await request.json()) as CompletionRequest);
         return completion(
           sent.length % 2 === 1
-            ? toolCallRound('searchKnowledge', '{"query":"Roots backend"}')
+            ? toolCallRound('searchKnowledge', '{"query":"the backend work"}')
             : textRound('That is not something I can look up right now.'),
         );
       }),
@@ -487,8 +500,8 @@ describe('POST /api/chat — when retrieval is down', () => {
     const ask = createChatHandler(container);
 
     const answers: AssistantEvent[][] = [];
-    for (const company of ['Roots', 'Deel', 'Way2b1', 'Shall']) {
-      answers.push(await allEventsOf(await ask(question(`Compare ${company} and Deel.`))));
+    for (const comparison of comparisons.slice(0, 4)) {
+      answers.push(await allEventsOf(await ask(question(comparison))));
     }
 
     for (const events of answers) {
@@ -547,9 +560,9 @@ describe('POST /api/chat — a visitor who leaves mid-answer', () => {
     expect(signals.map((signal) => signal.aborted)).toEqual([true]);
     expect(reported).toEqual([]);
 
-    scriptedCompletions(textRound('He led the Roots frontend.'));
+    scriptedCompletions(textRound('He led the platform team.'));
     const asked = await allEventsOf(await handle(question(MODEL_QUESTION, { ip: visitor })));
-    expect(textOf(asked)).toBe('He led the Roots frontend.');
+    expect(textOf(asked)).toBe('He led the platform team.');
   });
 });
 
@@ -617,16 +630,15 @@ describe('POST /api/chat — an answer past its time limit', () => {
         rounds += 1;
         return rounds <= 3
           ? noResponseUntilAborted(request)
-          : completion(toolCallRound('searchKnowledge', '{"query":"Roots backend"}'));
+          : completion(toolCallRound('searchKnowledge', '{"query":"the backend work"}'));
       }),
       http.post(EMBEDDINGS, ({ request }) => noResponseUntilAborted(request)),
     );
     const container = outOfTime();
     const ask = createChatHandler(container);
 
-    const companies = ['Roots', 'Deel', 'Way2b1', 'Shall', 'Toptal', 'Acme'];
-    for (const [index, company] of companies.entries()) {
-      const events = await allEventsOf(await ask(question(`Compare ${company} and Deel.`)));
+    for (const [index, comparison] of comparisons.slice(0, 6).entries()) {
+      const events = await allEventsOf(await ask(question(comparison)));
       expect(events.at(-1)).toEqual(INTERRUPTED_EVENT);
       // The visitor is told at once; the abandoned calls finish unwinding after.
       await vi.waitFor(() => {
@@ -707,8 +719,8 @@ describe('POST /api/chat — pacing', () => {
 });
 
 describe('POST /api/chat — the spending budget', () => {
-  const DELTAS = ['He led ', 'the Roots ', 'frontend at the time'];
-  const SEARCH_ARGUMENTS = '{"query":"did he work on the Roots backend"}';
+  const DELTAS = ['He led ', 'the platform ', 'team at the time'];
+  const SEARCH_ARGUMENTS = '{"query":"did he work on the backend"}';
   /** What a round streams before it is cut short, and how many characters of it the visitor's answer used. */
   const ROUNDS = {
     'a written answer': {
@@ -800,7 +812,7 @@ describe('POST /api/chat — the spending budget', () => {
 
   async function nextModelAnswerIsPaced(handle: (request: Request) => Promise<Response>) {
     const calls = outbound.filter((request) => request.url === COMPLETIONS).length;
-    await allEventsOf(await handle(question('Compare Way2b1 and Deel.')));
+    await allEventsOf(await handle(question(comparisons.at(-1) ?? '')));
     const paced = loggedEvents('chat.answered').at(-1)?.outcome === 'paced';
     const calledOpenAI = outbound.filter((request) => request.url === COMPLETIONS).length > calls;
     expect(paced).toBe(!calledOpenAI);

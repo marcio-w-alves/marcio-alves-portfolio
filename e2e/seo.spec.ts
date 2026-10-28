@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { record, site } from './support/profile';
 
 /**
  * What a crawler and a link preview read from the production build. Absolute
@@ -11,16 +12,10 @@ test('the home page describes itself to search engines and link previews', async
   const meta = (selector: string) => page.locator(selector).getAttribute('content');
   const canonical = await page.locator('link[rel="canonical"]').getAttribute('href');
 
-  await expect(page).toHaveTitle(
-    'Marcio Alves — Senior Frontend Engineer with tech-lead responsibilities',
-  );
-  expect(await meta('meta[name="description"]')).toMatch(
-    /^Portfolio of Marcio Alves, Senior Frontend Engineer with tech-lead responsibilities\. Ask its AI assistant/,
-  );
+  await expect(page).toHaveTitle(site.title);
+  expect(await meta('meta[name="description"]')).toBe(site.description);
   expect(canonical).toMatch(/^https?:\/\/[^/]+\/?$/);
-  expect(await meta('meta[property="og:title"]')).toBe(
-    'Marcio Alves — Senior Frontend Engineer with tech-lead responsibilities',
-  );
+  expect(await meta('meta[property="og:title"]')).toBe(site.title);
   expect(await meta('meta[property="og:type"]')).toBe('website');
   expect(await meta('meta[name="twitter:card"]')).toBe('summary_large_image');
 
@@ -28,12 +23,10 @@ test('the home page describes itself to search engines and link previews', async
   expect(ogImage.origin).toBe(new URL(String(canonical)).origin);
   expect(ogImage.pathname).toBe('/opengraph-image');
   expect(await meta('meta[name="twitter:image"]')).toBe(ogImage.href);
-  expect(await meta('meta[property="og:image:alt"]')).toBe(
-    'Marcio Alves, Senior Frontend Engineer with tech-lead responsibilities',
-  );
+  expect(await meta('meta[property="og:image:alt"]')).toBe(site.shareImageAlt);
 });
 
-test('the home page is a schema.org ProfilePage about Marcio as a Person', async ({ page }) => {
+test('the home page is a schema.org ProfilePage about its owner as a Person', async ({ page }) => {
   await page.goto('/');
   const canonical = await page.locator('link[rel="canonical"]').getAttribute('href');
   const json = await page.locator('script[type="application/ld+json"]').textContent();
@@ -45,13 +38,14 @@ test('the home page is a schema.org ProfilePage about Marcio as a Person', async
 
   expect(person).toMatchObject({
     '@type': 'Person',
-    name: 'Marcio Alves',
-    jobTitle: 'Senior Frontend Engineer with tech-lead responsibilities',
-    sameAs: ['https://www.linkedin.com/in/marcio-montenegro', 'https://github.com/marcio-w-alves'],
+    name: record.profile.name,
+    jobTitle: record.profile.title,
+    sameAs: [record.contact.linkedin, record.contact.github],
   });
   expect(new URL(String(person.url)).href).toBe(new URL(String(canonical)).href);
-  expect(person.knowsAbout).toEqual(expect.arrayContaining(['React', 'TypeScript', 'Next.js']));
-  expect(person.worksFor).toMatchObject({ '@type': 'Organization', name: 'Way2b1' });
+  expect(person.knowsAbout).toEqual(record.skills.flatMap(({ items }) => items));
+  const current = record.experience.find((role) => role.current);
+  expect(person.worksFor).toMatchObject({ '@type': 'Organization', name: current?.company });
 });
 
 test('a topic page is shared with its own address, the large card and the site image', async ({

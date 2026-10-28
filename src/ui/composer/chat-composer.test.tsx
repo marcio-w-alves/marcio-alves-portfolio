@@ -1,7 +1,8 @@
 import { createRef, useState } from 'react';
-import { act, render, screen } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { renderWithMessages } from '@/testing/ui-messages';
 import { MAX_QUESTION_LENGTH } from '@/core/chat/request';
 import { profile } from '@/profile';
 import { createSiteContent } from '@/site/site-content';
@@ -42,7 +43,7 @@ const sendButton = () => screen.getByRole('button', { name: 'Send question' });
 describe('ChatComposer', () => {
   it('reports every keystroke to its parent', async () => {
     const onChange = vi.fn();
-    render(<Harness onChange={onChange} />);
+    renderWithMessages(<Harness onChange={onChange} />);
 
     await userEvent.type(input(), 'Hi');
 
@@ -52,17 +53,17 @@ describe('ChatComposer', () => {
 
   it('sends the question on Enter', async () => {
     const onSubmit = vi.fn();
-    render(<Harness onSubmit={onSubmit} />);
+    renderWithMessages(<Harness onSubmit={onSubmit} />);
 
-    await userEvent.type(input(), 'What did he build at Deel?{Enter}');
+    await userEvent.type(input(), 'What did she build at Acme?{Enter}');
 
     expect(onSubmit).toHaveBeenCalledOnce();
-    expect(input()).toHaveValue('What did he build at Deel?');
+    expect(input()).toHaveValue('What did she build at Acme?');
   });
 
   it('breaks the line on Shift+Enter instead of sending', async () => {
     const onSubmit = vi.fn();
-    render(<Harness onSubmit={onSubmit} />);
+    renderWithMessages(<Harness onSubmit={onSubmit} />);
 
     await userEvent.type(input(), 'First line{Shift>}{Enter}{/Shift}second line');
 
@@ -72,7 +73,7 @@ describe('ChatComposer', () => {
 
   it('sends with the send button', async () => {
     const onSubmit = vi.fn();
-    render(<Harness initialValue="Which projects used Next.js?" onSubmit={onSubmit} />);
+    renderWithMessages(<Harness initialValue="Which projects used Next.js?" onSubmit={onSubmit} />);
 
     await userEvent.click(sendButton());
 
@@ -81,7 +82,7 @@ describe('ChatComposer', () => {
 
   it('cannot send a blank question', async () => {
     const onSubmit = vi.fn();
-    render(<Harness onSubmit={onSubmit} />);
+    renderWithMessages(<Harness onSubmit={onSubmit} />);
     expect(sendButton()).toBeDisabled();
 
     await userEvent.type(input(), '   {Enter}');
@@ -94,7 +95,9 @@ describe('ChatComposer', () => {
   it('offers Stop instead of Send while an answer streams', async () => {
     const onStop = vi.fn();
     const onSubmit = vi.fn();
-    render(<Harness status="streaming" initialValue="Next" onStop={onStop} onSubmit={onSubmit} />);
+    renderWithMessages(
+      <Harness status="streaming" initialValue="Next" onStop={onStop} onSubmit={onSubmit} />,
+    );
     expect(screen.queryByRole('button', { name: 'Send question' })).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Stop generating' }));
@@ -105,14 +108,14 @@ describe('ChatComposer', () => {
   });
 
   it('takes no questions while the assistant is unavailable', () => {
-    render(<Harness status="unavailable" initialValue="Hello" />);
+    renderWithMessages(<Harness status="unavailable" initialValue="Hello" />);
 
     expect(input()).toBeDisabled();
     expect(sendButton()).toBeDisabled();
   });
 
   it('stops at the longest question the API accepts', async () => {
-    render(<Harness />);
+    renderWithMessages(<Harness />);
     await userEvent.click(input());
 
     await userEvent.paste('a'.repeat(MAX_QUESTION_LENGTH + 50));
@@ -121,14 +124,14 @@ describe('ChatComposer', () => {
   });
 
   it('describes the input with its helper line', () => {
-    render(<Harness helper={welcome.helper} />);
+    renderWithMessages(<Harness helper={welcome.helper} />);
 
     expect(input()).toHaveAccessibleDescription(welcome.helper);
   });
 
   it('lets the parent put the caret at the end of the draft', () => {
     const ref = createRef<ChatComposerHandle>();
-    render(<Harness ref={ref} initialValue="Tell me more" />);
+    renderWithMessages(<Harness ref={ref} initialValue="Tell me more" />);
     expect(input()).not.toHaveFocus();
 
     act(() => ref.current?.focus());
@@ -139,7 +142,7 @@ describe('ChatComposer', () => {
 
   it('leaves focus alone when the input is disabled', () => {
     const ref = createRef<ChatComposerHandle>();
-    render(<Harness ref={ref} status="unavailable" />);
+    renderWithMessages(<Harness ref={ref} status="unavailable" />);
 
     act(() => ref.current?.focus());
 
@@ -150,7 +153,7 @@ describe('ChatComposer', () => {
 describe('JumpToLatest', () => {
   it('runs its action from inside the dock', async () => {
     const onClick = vi.fn();
-    render(
+    renderWithMessages(
       <ComposerDock jumpToLatest={<JumpToLatest onClick={onClick} />}>
         <Harness variant="dock" />
       </ComposerDock>,

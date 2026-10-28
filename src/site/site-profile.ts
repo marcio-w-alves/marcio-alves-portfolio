@@ -1,7 +1,8 @@
 import type { AnswerSet } from '@/core/assistant/answer-set';
 import type { KnowledgeSource } from '@/core/knowledge/schema';
+import type { CopyOverrides } from './site-messages';
 
-/** Every colour of the design, each `--color-<token>` in the stylesheet. */
+/** Every colour of the design, each `--color-<token>` in the generated brand stylesheet. */
 export type ColorToken =
   | 'bg'
   | 'ice'
@@ -34,15 +35,33 @@ export interface ImageFont {
   readonly files: Readonly<Record<400 | 600, string>>;
 }
 
-/** How the site looks: its colours and the face its images are set in. */
+/** The stylesheet's font families: the body text, the headings, and code. */
+export type FontRole = 'sans' | 'display' | 'mono';
+
+/**
+ * What a family falls back to after its own face, which `fonts.ts` loads, and
+ * the OpenType features the face is set with, if any.
+ */
+export interface FontStack {
+  readonly fallbacks: readonly string[];
+  readonly featureSettings?: string;
+}
+
+/** How the site looks: its colours, its font families and the face its images are set in. */
 export interface Brand {
   readonly colors: Readonly<Record<ColorToken, Hex>>;
+  readonly fonts: Readonly<Record<FontRole, FontStack>>;
   readonly imageFont: ImageFont;
+}
+
+/** What the site writes in one language: the answers around the record, and its own wording. */
+export interface LocaleCopy extends CopyOverrides {
+  readonly answers: AnswerSet;
 }
 
 /** What the pages are built from. The site-root binds the owner's profile; tests bind a fixture. */
 export interface SiteProfile {
   readonly knowledge: KnowledgeSource;
   readonly brand: Brand;
-  readonly copy: { readonly en: { readonly answers: AnswerSet } };
+  readonly copy: { readonly en: LocaleCopy };
 }
