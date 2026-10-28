@@ -458,6 +458,18 @@ describe('when an answer fails', () => {
 });
 
 describe('topic pages', () => {
+  it('names a topic page from the navigation the server built, and refuses one it lacks', () => {
+    const props = workspaceProps('skills');
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    expect(() =>
+      render(
+        <ChatWorkspace {...props} topics={props.topics.filter((item) => item.id !== 'skills')} />,
+        { wrapper: ConversationsProvider },
+      ),
+    ).toThrow('The navigation has no "skills" page.');
+  });
+
   const topicLink = (name: string) => within(topicsNav()).getByRole('link', { name });
 
   it('marks the overview as the current page on the home page', () => {

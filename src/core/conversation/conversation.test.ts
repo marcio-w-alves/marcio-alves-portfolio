@@ -150,6 +150,13 @@ describe('topic pages', () => {
     );
   });
 
+  it('cannot open a topic page without its introduction', () => {
+    // @ts-expect-error A topic page is its introduction; there is no empty one to fall back to.
+    expect(() => createConversation('experience')).toThrow(
+      '"experience" opens on its introduction',
+    );
+  });
+
   it('opens the overview empty, as the welcome screen', () => {
     expect(createConversation('overview', topicIntro('overview')).messages).toHaveLength(0);
   });

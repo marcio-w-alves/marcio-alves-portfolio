@@ -46,6 +46,13 @@ interface ChatWorkspaceProps {
 // Within this distance of the bottom the visitor is reading the newest message.
 const PINNED_WITHIN_PX = 80;
 
+/** A page's own entry in the navigation the server built, which lists every topic. */
+function topicIn(topics: readonly SidebarTopic[], id: string): SidebarTopic {
+  const found = topics.find((item) => item.id === id);
+  if (!found) throw new Error(`The navigation has no "${id}" page.`);
+  return found;
+}
+
 /** Owns the conversation and hands plain data and callbacks to the presentational parts. */
 export function ChatWorkspace({
   profile,
@@ -63,8 +70,7 @@ export function ChatWorkspace({
 }: ChatWorkspaceProps) {
   const chat = useChat(topic, seed, initialConversation);
   const { conversation } = chat;
-  const labelOf = (id: string) => topics.find((item) => item.id === id)?.label;
-  const currentTopic = topics.find((item) => item.id === conversation.topic);
+  const currentTopic = topicIn(topics, conversation.topic);
   const reveal = useReveal(conversation);
   // The answer is still coming in, or still being typed out.
   const busy = chat.streaming || reveal.typing;
@@ -186,11 +192,9 @@ export function ChatWorkspace({
           <h1 className="sr-only">
             {topic === 'overview'
               ? "Conversation with Marcio's portfolio assistant"
-              : `${labelOf(topic) ?? ''} — ${profile.name}`}
+              : `${topicIn(topics, topic).label} — ${profile.name}`}
           </h1>
-          {currentTopic && (
-            <ConversationTopBar topic={currentTopic} onNewConversation={startOver} />
-          )}
+          <ConversationTopBar topic={currentTopic} onNewConversation={startOver} />
         </>
       )}
 
@@ -226,7 +230,7 @@ export function ChatWorkspace({
                     isLatest={message.id === latestId}
                     topicLabel={
                       message.kind === 'intro' && message.topicId
-                        ? labelOf(message.topicId)
+                        ? topicIn(topics, message.topicId).label
                         : undefined
                     }
                     relatedLabel={company ? `View ${company} experience` : undefined}

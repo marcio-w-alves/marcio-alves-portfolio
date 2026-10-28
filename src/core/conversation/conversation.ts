@@ -73,9 +73,12 @@ function findAnswer(conversation: Conversation, id: string): AssistantMessage | 
  * call. The introduction's ids are fixed, so the server and the browser
  * render the same page.
  */
+export function createConversation(topic?: 'overview'): Conversation;
+export function createConversation(topic: TopicId, intro: TopicIntro): Conversation;
 export function createConversation(topic: TopicId = 'overview', intro?: TopicIntro): Conversation {
   const empty = { messages: [], topic, lastIntent: null, ctaShown: false };
-  if (topic === 'overview' || !intro) return empty;
+  if (topic === 'overview') return empty;
+  if (!intro) throw new Error(`"${topic}" opens on its introduction, and none was given.`);
   const message = assistantMessage('intro', {
     id: `intro-${topic}`,
     status: 'done',

@@ -20,7 +20,7 @@ const identity: Identity = {
 
 const valid: Profile = { identity, locales: ['en'], knowledge: fixtureKnowledge, evaluation: [] };
 
-function issuePaths(profile: Profile): (string | number)[][] {
+function issuePaths(profile: Profile): PropertyKey[][] {
   try {
     validateProfile(profile);
   } catch (error) {
