@@ -25,6 +25,9 @@ describe('router — the questions the interface itself suggests', () => {
   it.each([
     ["Tell me about Marcio's career.", 'career'],
     ['What makes Marcio a strong Staff Engineer?', 'roleFit'],
+    ['What scope has he worked at?', 'roleFit'],
+    ['What is the planned scope of FictionDraft?', 'project:fictiondraft'],
+    ['Tell me more about marciomariani.dev.', 'project:marciomariani-dev'],
     ['What has he built at Deel?', 'company:deel'],
     ['How experienced is he with React and TypeScript?', 'react'],
     ['What are his biggest technical achievements?', 'achievements'],

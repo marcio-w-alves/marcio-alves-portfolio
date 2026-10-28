@@ -13,6 +13,7 @@ const ACTION_CLASSES =
 export function ContactCard({
   heading,
   text,
+  availability,
   email,
   linkedin,
   github,
@@ -39,6 +40,7 @@ export function ContactCard({
             {heading}
           </h4>
           <p className="mt-1 text-14.5 leading-reading text-ink-muted">{text}</p>
+          <p className="mt-2 text-12.5 leading-label font-medium text-ink">{availability}</p>
         </div>
       </div>
       <div className="flex flex-wrap gap-2">

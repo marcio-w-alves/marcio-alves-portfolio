@@ -66,6 +66,12 @@ function ProjectPreview({ project }: { readonly project: ProjectView }) {
           <BulletList items={project.considerations} marker="disc" />
         </div>
       ) : null}
+      {project.outcomes.length > 0 ? (
+        <div>
+          <SectionTitle>Outcomes</SectionTitle>
+          <BulletList items={project.outcomes} marker="disc" />
+        </div>
+      ) : null}
       {links.length > 0 ? (
         <div className="flex flex-wrap gap-2">
           {links.map(({ label, url }) => (

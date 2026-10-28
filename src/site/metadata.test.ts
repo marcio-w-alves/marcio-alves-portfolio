@@ -11,8 +11,8 @@ describe('rootMetadata', () => {
 
   it('names the site after the person in the record, at the canonical address', () => {
     expect(String(metadata.metadataBase)).toBe('https://ada.example/');
-    expect(metadata.title).toBe('Ada Rivera — Frontend Engineer');
-    expect(metadata.description).toContain('Ada Rivera');
+    expect(metadata.title).toBe('Ada Rivera — Principal Platform Engineer');
+    expect(metadata.description).toContain('Ada Rivera, Principal Platform Engineer');
     expect(metadata.openGraph).toMatchObject({
       type: 'website',
       siteName: 'Ada Rivera',

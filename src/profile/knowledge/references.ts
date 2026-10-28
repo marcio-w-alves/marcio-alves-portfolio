@@ -33,7 +33,7 @@ export const references: ReferencesSource = {
     'progressive web apps': 'Progressive web app',
     microservices: 'Microservices',
     accessibility: 'Web accessibility',
-    'SEO Optimization': 'Search engine optimization',
+    SEO: 'Search engine optimization',
     'Design Systems': 'Design system',
     'Responsive Design': 'Responsive web design',
     'Agile Methodologies': 'Agile software development',

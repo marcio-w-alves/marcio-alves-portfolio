@@ -4,7 +4,9 @@ import { describe, expect, it } from 'vitest';
 import type { RichComponent } from '@/core/chat/components';
 import { profile } from '@/profile';
 import { createSiteContent } from '@/site/site-content';
-import { details, note, table } from '@/core/assistant/response-kit';
+import { createResponseKit, details, note, table } from '@/core/assistant/response-kit';
+import { localize } from '@/core/knowledge/localize';
+import { fixtureKnowledge } from '@/testing/fixture-profile/knowledge';
 import { createFastPath } from '@/core/assistant/system1/fast-path';
 import { exampleBlocks } from '@/testing/rich-examples';
 import { RichBlock } from './rich-block';
@@ -12,6 +14,8 @@ import { RichBlock } from './rich-block';
 const { knowledge } = createSiteContent(profile.knowledge, profile.copy.en.answers);
 
 const exampleBlock = exampleBlocks(createFastPath(knowledge, profile.copy.en.answers));
+
+const fixtureKit = createResponseKit(localize(fixtureKnowledge, 'en'));
 
 // jsdom's accessible-name computation trims the space a browser keeps before the hidden note.
 function opensInNewTab(label: string): RegExp {
@@ -63,13 +67,20 @@ describe('timeline', () => {
     ).not.toHaveLength(0);
   });
 
-  it('marks the current role, and overlapping ones as concurrent', () => {
+  it('marks the current role and the contract roles, and calls none concurrent', () => {
     renderBlock(exampleBlock('timeline'));
     expect(screen.getByRole('button', { name: /^Way2b1/ })).toHaveTextContent('Current');
-    expect(screen.getByRole('button', { name: /^Roots/ })).toHaveTextContent('Concurrent');
-    expect(screen.getByRole('button', { name: /^Deel/ })).not.toHaveTextContent(
-      /Current|Concurrent/,
-    );
+    for (const company of [/^Roots/, /^Maison Moderne/, /^Freelance/]) {
+      expect(screen.getByRole('button', { name: company })).toHaveTextContent('Contract');
+    }
+    expect(screen.getByRole('button', { name: /^Deel/ })).not.toHaveTextContent(/Current|Contract/);
+    expect(screen.queryByText(/concurrent/i)).not.toBeInTheDocument();
+  });
+
+  it('labels a role from the record as a contract only when it was held as one', () => {
+    renderBlock(fixtureKit.timeline());
+    expect(screen.getByRole('button', { name: /^Initech/ })).toHaveTextContent('Contract');
+    expect(screen.getByRole('button', { name: /^Globex/ })).not.toHaveTextContent('Contract');
   });
 
   it('opens a role to show its sections and closes it again', async () => {
@@ -160,6 +171,38 @@ describe('projects', () => {
     expect(within(evcopilot).getByText('iPhone (beta)')).toBeInTheDocument();
     const concept = screen.getByRole('article', { name: 'Project: FictionDraft' });
     expect(within(concept).queryByText('Platforms')).not.toBeInTheDocument();
+  });
+
+  it("shows a concept's status and no link to a site it does not have", () => {
+    renderBlock(fixtureKit.projects());
+    const concept = screen.getByRole('article', { name: 'Project: Loomstack' });
+    expect(within(concept).getByText('Concept')).toBeInTheDocument();
+    expect(within(concept).queryByRole('link')).not.toBeInTheDocument();
+  });
+
+  it('lists the outcomes a project documents, and no such section for one without', () => {
+    renderBlock(fixtureKit.projects());
+    const live = screen.getByRole('article', { name: 'Project: Pipewright' });
+    expect(within(live).getByText('Outcomes')).toBeInTheDocument();
+    expect(
+      within(live).getByText('Builds its own monorepo in under a minute.'),
+    ).toBeInTheDocument();
+    const concept = screen.getByRole('article', { name: 'Project: Loomstack' });
+    expect(within(concept).queryByText('Outcomes')).not.toBeInTheDocument();
+  });
+
+  it('presents this portfolio with its stack, outcomes, live site and repository', () => {
+    renderBlock(exampleBlock('projects'));
+    const card = screen.getByRole('article', { name: 'Project: marciomariani.dev' });
+    expect(within(card).getByText('Main technologies')).toBeInTheDocument();
+    expect(within(card).getByText('Next.js')).toBeInTheDocument();
+    expect(within(card).getByText('Outcomes')).toBeInTheDocument();
+    expect(
+      within(card).getByRole('link', { name: opensInNewTab('Visit marciomariani.dev') }),
+    ).toHaveAttribute('href', 'https://marciomariani.dev');
+    expect(
+      within(card).getByRole('link', { name: opensInNewTab('View the code on GitHub') }),
+    ).toHaveAttribute('href', 'https://github.com/marcio-w-alves/marcio-alves-portfolio');
   });
 
   it('leaves out sections the record does not document', () => {
@@ -308,6 +351,13 @@ describe('contact', () => {
       block.props.github,
     );
     expect(screen.getByText(block.props.email)).toBeInTheDocument();
+  });
+
+  it("states the person's availability from the record", () => {
+    renderBlock(fixtureKit.contactCard());
+    expect(
+      screen.getByRole('region', { name: 'Interested in working together?' }),
+    ).toHaveTextContent('Portugal · hybrid · UTC+0 · open to platform roles');
   });
 
   it('offers no résumé download while there is no résumé to download', () => {

@@ -28,7 +28,7 @@ describe('SuggestedQuestions', () => {
     const chips = within(list).getAllByRole('button');
     expect(chips.map((chip) => chip.textContent)).toEqual([
       'His career',
-      'Why Staff-level',
+      'Scope of his work',
       'Work at Deel',
       'React & TypeScript',
     ]);

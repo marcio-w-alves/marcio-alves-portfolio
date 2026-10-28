@@ -22,7 +22,7 @@ export interface RoleView {
   readonly period: string;
   readonly summary: string;
   readonly current: boolean;
-  readonly concurrent: boolean;
+  readonly contract: boolean;
   readonly sections: readonly RoleSection[];
 }
 
@@ -42,6 +42,7 @@ export interface ProjectView {
   readonly platforms: readonly string[];
   readonly technologies: readonly string[];
   readonly considerations: readonly string[];
+  readonly outcomes: readonly string[];
   readonly links: readonly ProjectLinkView[];
 }
 
@@ -88,6 +89,7 @@ export type RichComponent =
       readonly props: {
         readonly heading: string;
         readonly text: string;
+        readonly availability: string;
         readonly email: string;
         readonly linkedin: string;
         readonly github: string;

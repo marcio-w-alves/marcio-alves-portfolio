@@ -11,6 +11,7 @@ export const experience: readonly RoleSource[] = [
     start: 2026.42,
     end: null,
     current: true,
+    engagement: 'employment',
     summary: {
       en: 'Full-stack work across the product suite of a small startup: performance, legacy migration and end-to-end features.',
     },
@@ -69,6 +70,7 @@ export const experience: readonly RoleSource[] = [
     start: 2022,
     end: 2026.17,
     current: false,
+    engagement: 'employment',
     summary: {
       en: 'Helped lead the HRIS team, led the Roots migration, architecture standards and performance work.',
     },
@@ -147,6 +149,7 @@ export const experience: readonly RoleSource[] = [
     start: 2020,
     end: 2022,
     current: false,
+    engagement: 'contract',
     summary: {
       en: 'Built the product frontend from the ground up and grew the frontend team from one to four.',
     },
@@ -205,6 +208,7 @@ export const experience: readonly RoleSource[] = [
     start: 2020,
     end: 2022,
     current: false,
+    engagement: 'contract',
     summary: {
       en: 'Responsive digital magazines and newsletters with Next.js, SSR and publishing integrations.',
     },
@@ -268,6 +272,7 @@ export const experience: readonly RoleSource[] = [
     start: 2018,
     end: 2020,
     current: false,
+    engagement: 'employment',
     summary: {
       en: 'Promoted from mid-level to Principal Frontend Developer on an HR platform; full-stack work with React and Node.js.',
     },
@@ -333,6 +338,7 @@ export const experience: readonly RoleSource[] = [
     start: 2016,
     end: 2018,
     current: false,
+    engagement: 'employment',
     summary: {
       en: 'End-to-end frontend delivery for mid-sized applications, from architecture to production.',
     },
@@ -362,6 +368,7 @@ export const experience: readonly RoleSource[] = [
     start: 2015,
     end: 2018,
     current: false,
+    engagement: 'contract',
     summary: { en: 'Independent web work, from small frontend tasks to complete applications.' },
     responsibilities: [
       {

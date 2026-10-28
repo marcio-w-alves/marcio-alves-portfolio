@@ -91,15 +91,6 @@ function lookup<Item extends { readonly id: string }>(items: readonly Item[], ki
   };
 }
 
-/** Whether a role overlapped in time with any other. An open end means "still running". */
-function isConcurrent(target: Role, experience: readonly Role[]): boolean {
-  const targetEnd = target.end ?? Infinity;
-  return experience.some(
-    (other) =>
-      other.id !== target.id && target.start < (other.end ?? Infinity) && other.start < targetEnd,
-  );
-}
-
 // A card shows what a product is, not whether it is live: the status says that in words.
 function projectView({ source: _source, live: _live, ...view }: Project): ProjectView {
   return view;
@@ -151,7 +142,7 @@ export function createResponseKit(knowledge: Knowledge): ResponseKit {
       period: role.period,
       summary: role.summary,
       current: role.current,
-      concurrent: isConcurrent(role, knowledge.experience),
+      contract: role.engagement === 'contract',
       sections,
     };
   }
@@ -164,6 +155,7 @@ export function createResponseKit(knowledge: Knowledge): ResponseKit {
       props: {
         heading: 'Interested in working together?',
         text: `Get in touch with ${knowledge.profile.firstName} to discuss engineering, architecture, and product opportunities.`,
+        availability: knowledge.profile.availability,
         email,
         linkedin,
         github,

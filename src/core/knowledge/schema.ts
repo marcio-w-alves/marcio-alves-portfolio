@@ -41,10 +41,12 @@ export interface RoleSource {
   readonly role: string;
   /** The label visitors see. */
   readonly period: string;
-  /** Fractional years, used only to detect overlapping roles. */
+  /** Fractional years, used to keep the roles in order. */
   readonly start: number;
   readonly end: number | null;
   readonly current: boolean;
+  /** How the role was held; a contract is labelled as one wherever the role is shown. */
+  readonly engagement: 'employment' | 'contract';
   readonly summary: Localized;
   readonly responsibilities: readonly Localized[];
   readonly leadership: readonly Localized[];
@@ -88,6 +90,8 @@ export interface ProjectSource {
   readonly platforms: readonly Localized[];
   readonly technologies: readonly string[];
   readonly considerations: readonly Localized[];
+  /** What the project demonstrably achieved, provable from its public code or site. */
+  readonly outcomes: readonly Localized[];
   readonly links: readonly ProjectLinkSource[];
   readonly source: string;
 }
@@ -137,6 +141,8 @@ export interface ProfileSource {
   readonly context: Localized;
   readonly focus: Localized;
   readonly location: LocationSource;
+  /** Where and how they work, and whether they are open to offers, in one line. */
+  readonly availability: Localized;
   readonly source: string;
 }
 

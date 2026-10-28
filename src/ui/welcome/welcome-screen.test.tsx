@@ -22,7 +22,7 @@ describe('WelcomeScreen', () => {
 
     expect(
       screen.getByText(
-        'Staff-level frontend engineer with 10+ years in React, TypeScript and frontend architecture. Ask anything about my work.',
+        'Senior frontend engineer with tech-lead responsibilities and 10+ years in React, TypeScript and frontend architecture. Ask anything about my work.',
       ),
     ).toBeInTheDocument();
   });

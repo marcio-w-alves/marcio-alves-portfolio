@@ -11,7 +11,7 @@ const QUESTION_FOR: Readonly<Record<RichComponentName, string>> = {
   timeline: "Tell me about Marcio's career.",
   skills: 'What are his strongest technical skills?',
   projects: 'What projects is he working on?',
-  table: 'What makes Marcio a strong Staff Engineer?',
+  table: 'What scope has he worked at?',
   note: 'How does he approach frontend architecture?',
   details: 'What has he built at Deel?',
   contact: 'How can I contact Marcio?',

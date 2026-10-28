@@ -11,10 +11,16 @@ test('the home page describes itself to search engines and link previews', async
   const meta = (selector: string) => page.locator(selector).getAttribute('content');
   const canonical = await page.locator('link[rel="canonical"]').getAttribute('href');
 
-  await expect(page).toHaveTitle('Marcio Alves — Frontend Engineer');
-  expect(await meta('meta[name="description"]')).toMatch(/^Portfolio of Marcio Alves/);
+  await expect(page).toHaveTitle(
+    'Marcio Alves — Senior Frontend Engineer with tech-lead responsibilities',
+  );
+  expect(await meta('meta[name="description"]')).toMatch(
+    /^Portfolio of Marcio Alves, Senior Frontend Engineer with tech-lead responsibilities/,
+  );
   expect(canonical).toMatch(/^https?:\/\/[^/]+\/?$/);
-  expect(await meta('meta[property="og:title"]')).toBe('Marcio Alves — Frontend Engineer');
+  expect(await meta('meta[property="og:title"]')).toBe(
+    'Marcio Alves — Senior Frontend Engineer with tech-lead responsibilities',
+  );
   expect(await meta('meta[property="og:type"]')).toBe('website');
   expect(await meta('meta[name="twitter:card"]')).toBe('summary_large_image');
 
@@ -23,7 +29,7 @@ test('the home page describes itself to search engines and link previews', async
   expect(ogImage.pathname).toBe('/opengraph-image');
   expect(await meta('meta[name="twitter:image"]')).toBe(ogImage.href);
   expect(await meta('meta[property="og:image:alt"]')).toBe(
-    'Marcio Alves, Staff-level Frontend Engineer',
+    'Marcio Alves, Senior Frontend Engineer with tech-lead responsibilities',
   );
 });
 
@@ -37,7 +43,7 @@ test('the home page identifies Marcio as a schema.org Person', async ({ page }) 
     '@context': 'https://schema.org',
     '@type': 'Person',
     name: 'Marcio Alves',
-    jobTitle: 'Staff-level Frontend Engineer',
+    jobTitle: 'Senior Frontend Engineer with tech-lead responsibilities',
     sameAs: ['https://www.linkedin.com/in/marcio-montenegro', 'https://github.com/marcio-w-alves'],
   });
   expect(new URL(String(person.url)).href).toBe(new URL(String(canonical)).href);

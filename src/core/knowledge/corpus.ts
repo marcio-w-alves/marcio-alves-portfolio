@@ -38,8 +38,13 @@ function list(items: readonly string[]): string {
 }
 
 function liveProductText(project: Project, owner: string): string {
-  const site = project.links.map((link) => link.url).join(', ');
-  return `${project.name}, one of ${owner}'s own products with a public site (${project.category}), status: ${project.status}. ${project.description} ${project.scopeLabel}: ${list(project.scope)}. Platforms: ${list(project.platforms)}. Public site: ${site}. Only what the public site states is documented — no users, revenue or release dates.`;
+  const links = project.links.map((link) => link.url).join(', ');
+  return `${project.name}, one of ${owner}'s own products with a public site (${project.category}), status: ${project.status}. ${project.description} ${project.scopeLabel}: ${list(project.scope)}. Platforms: ${list(project.platforms)}.${listed('Technologies', project.technologies)}${listed('Outcomes', project.outcomes)} Links: ${links}. Only what those links show is documented — no users, revenue or release dates.`;
+}
+
+/** A labelled list, or nothing when the record documents none. */
+function listed(label: string, items: readonly string[]): string {
+  return items.length > 0 ? ` ${label}: ${list(items)}.` : '';
 }
 
 function conceptText(project: Project, owner: string): string {
@@ -74,14 +79,14 @@ export function buildCorpus({
     {
       id: 'profile',
       category: 'profile',
-      text: `Professional profile of ${profile.name}, ${profile.title} with ${profile.yearsLabel} of experience since ${String(profile.careerStartYear)}. ${profile.summary} ${profile.context} ${profile.focus} Specializations: ${list(profile.specializations)}. Based in ${profile.location.country}.`,
+      text: `Professional profile of ${profile.name}, ${profile.title}, with ${profile.yearsLabel} of experience since ${String(profile.careerStartYear)}. ${profile.summary} ${profile.context} ${profile.focus} Specializations: ${list(profile.specializations)}. Based in ${profile.location.country}. Availability: ${profile.availability}.`,
       source: profile.source,
     },
     ...experience.flatMap((role): KnowledgeChunk[] => [
       {
         id: `role:${role.id}`,
         category: 'experience',
-        text: `${role.company} — ${role.role}, ${role.period}${role.current ? ' (current role)' : ''}. ${role.summary}`,
+        text: `${role.company} — ${role.role}, ${role.period}${role.current ? ' (current role)' : ''}${role.engagement === 'contract' ? ' (contract)' : ''}. ${role.summary}`,
         source: role.source,
       },
       ...role.highlights.map((statement, index): KnowledgeChunk => ({
