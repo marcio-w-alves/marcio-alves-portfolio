@@ -1,9 +1,11 @@
 import 'server-only';
 import type { ModelBudgetPort } from '@/core/assistant/ports/model-budget.port';
+import type { AnswerSet } from '@/core/assistant/answer-set';
 import { createAssistant, type AnswerReport, type Assistant } from '@/core/assistant/assistant';
 import { createResponseKit } from '@/core/assistant/response-kit';
 import { createFastPath } from '@/core/assistant/system1/fast-path';
 import { urlsIn } from '@/core/assistant/system2/link-filter';
+import { promptSubject } from '@/core/assistant/system2/system-prompt';
 import {
   createModelAssistant,
   type ModelAssistant,
@@ -126,6 +128,8 @@ interface GuardedModelAssistant {
 export interface ContainerOptions extends Observers {
   /** Defaults to the profile's record, in English. */
   readonly knowledge?: Knowledge;
+  /** Defaults to the profile's English copy; written for the record above. */
+  readonly answers?: AnswerSet;
   /** Defaults to the validated process environment. */
   readonly env?: ServerEnv;
   /** Defaults to the settings in the process environment. */
@@ -197,6 +201,7 @@ function buildModelAssistant(
     model,
     tools,
     clock: systemClock,
+    subject: promptSubject(knowledge),
     knownUrls: [...urlsIn(knowledge), `mailto:${knowledge.contact.email}`, siteUrl().href],
     onUsage: (usage) => {
       budget.record(usage);
@@ -219,6 +224,7 @@ function buildModelAssistant(
  */
 export function buildContainer({
   knowledge = localize(profile.knowledge, 'en'),
+  answers = profile.copy.en.answers,
   env = serverEnv(),
   settings = assistantSettings(),
   openAITimeoutMs = settings.openAITimeoutMs,
@@ -242,7 +248,7 @@ export function buildContainer({
     : null;
   return {
     assistant: createAssistant({
-      fastPath: createFastPath(knowledge),
+      fastPath: createFastPath(knowledge, answers),
       modelAssistant: model?.assistant ?? null,
       budget,
       answerCache: createAnswerCache({ ttlMs: 60 * 60 * 1000, maxEntries: 500 }),

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { localize } from '@/core/knowledge/localize';
-import { profile } from '@/profile';
+import { fixtureAnswers, fixtureKnowledge } from '@/testing/fixture-profile';
 import { createAssistant, type AnswerReport, type AssistantRequest } from './assistant';
 import type { AssistantEvent } from './assistant-event';
 import type { AnswerCachePort } from './ports/answer-cache.port';
@@ -8,7 +8,7 @@ import type { ModelBudgetPort } from './ports/model-budget.port';
 import { createFastPath } from './system1/fast-path';
 import type { ModelAssistant, ModelAssistantRequest } from './system2/model-assistant';
 
-const fastPath = createFastPath(localize(profile.knowledge, 'en'));
+const fastPath = createFastPath(localize(fixtureKnowledge, 'en'), fixtureAnswers);
 
 const FRESH = { topic: 'overview', lastIntent: null, ctaShown: false };
 
@@ -94,15 +94,15 @@ describe('assistant — choosing a path', () => {
     const { model, received } = fakeModel(async function* () {
       yield { type: 'start', intent: 'model', related: null };
     });
-    const events = await collect(assistantWith(model), "Tell me about Marcio's career.");
+    const events = await collect(assistantWith(model), "Tell me about Ada's career.");
     expect(received).toHaveLength(0);
-    expect(events[0]).toEqual({ type: 'start', intent: 'career', related: 'deel' });
+    expect(events[0]).toEqual({ type: 'start', intent: 'career', related: null });
   });
 
   it('keeps the links of a fast-path answer, which only the record writes', async () => {
     const events = await collect(assistantWith(sentenceModel().model), 'Can I see his resume?');
     const text = events.map((event) => (event.type === 'text-delta' ? event.delta : '')).join('');
-    expect(text).toContain('[open his resume as a PDF](/marcio-alves-resume.pdf)');
+    expect(text).toContain('[Download her CV](/ada-rivera-cv.pdf)');
   });
 
   it('hands everything else to the model, with follow-ups the fast path can answer', async () => {
@@ -110,12 +110,12 @@ describe('assistant — choosing a path', () => {
       yield { type: 'start', intent: 'model', related: null };
       yield { type: 'finish', followUps: modelRequest.followUps, sources: [] };
     });
-    await collect(assistantWith(model), 'Compare his leadership at Deel and Roots.');
-    expect(received[0]?.question).toBe('Compare his leadership at Deel and Roots.');
+    await collect(assistantWith(model), 'Compare her leadership at Acme and Globex.');
+    expect(received[0]?.question).toBe('Compare her leadership at Acme and Globex.');
     expect(received[0]?.followUps).toEqual([
-      'Show me examples of architectural decisions.',
-      'How did he grow the team at Roots?',
-      'Would he fit a technical leadership position?',
+      "Tell me about Ada's career.",
+      'Which skills does she have?',
+      'How can I contact Ada?',
     ]);
   });
 });
@@ -131,25 +131,25 @@ describe('assistant — on a topic page', () => {
   it('tells the model what the page already shows, so it can go beyond it', async () => {
     const { model, received } = sentenceModel();
     const assistant = assistantWith(model);
-    await Array.fromAsync(assistant.answer(onPage('experience', 'Compare Deel and Roots.')));
+    await Array.fromAsync(assistant.answer(onPage('experience', 'Compare Acme and Globex.')));
     expect(received[0]?.page?.label).toBe('Experience');
     expect(received[0]?.page?.summary).toContain('Timeline of every role');
-    expect(received[0]?.page?.summary).toContain('Deel — Senior Frontend Engineer');
+    expect(received[0]?.page?.summary).toContain('Acme — Principal Platform Engineer');
     expect(received[0]?.page?.cards).toEqual(['timeline']);
   });
 
   it('tells it nothing on the overview, whose page shows none of the record', async () => {
     const { model, received } = sentenceModel();
-    await collect(assistantWith(model), 'Compare Deel and Roots.');
+    await collect(assistantWith(model), 'Compare Acme and Globex.');
     expect(received[0]?.page).toBeNull();
   });
 
   it('does not reuse an answer given on another page, which knew what that page showed', async () => {
     const { model, received } = sentenceModel();
     const assistant = assistantWith(model);
-    await Array.fromAsync(assistant.answer(onPage('experience', 'Compare Deel and Roots.')));
-    await Array.fromAsync(assistant.answer(onPage('skills', 'Compare Deel and Roots.')));
-    await Array.fromAsync(assistant.answer(onPage('skills', 'Compare Deel and Roots.')));
+    await Array.fromAsync(assistant.answer(onPage('experience', 'Compare Acme and Globex.')));
+    await Array.fromAsync(assistant.answer(onPage('skills', 'Compare Acme and Globex.')));
+    await Array.fromAsync(assistant.answer(onPage('skills', 'Compare Acme and Globex.')));
     expect(received).toHaveLength(2);
   });
 });
@@ -229,7 +229,7 @@ describe('assistant — spending on the model', () => {
     const { model, received } = sentenceModel();
     const events = await collect(
       assistantWith(model, { budget: budgetThat(false) }),
-      'Compare his leadership at Deel and Roots.',
+      'Compare her leadership at Acme and Globex.',
     );
     expect(received).toHaveLength(0);
     expect(events[0]).toEqual({ type: 'start', intent: 'rateLimited', related: null });
@@ -237,9 +237,9 @@ describe('assistant — spending on the model', () => {
       type: 'finish',
       sources: [],
       followUps: [
-        'Show me examples of architectural decisions.',
-        'How did he grow the team at Roots?',
-        'Would he fit a technical leadership position?',
+        "Tell me about Ada's career.",
+        'Which skills does she have?',
+        'How can I contact Ada?',
       ],
     });
   });
@@ -253,7 +253,7 @@ describe('assistant — spending on the model', () => {
 
 describe('assistant — reporting how each question was handled', () => {
   it('reports a fast-path answer with its intent and who asked', async () => {
-    await collect(assistantWith(sentenceModel().model), "Tell me about Marcio's career.");
+    await collect(assistantWith(sentenceModel().model), "Tell me about Ada's career.");
     expect(answered).toEqual([
       { path: 'fast', outcome: 'answered', intent: 'career', clientId: 'visitor-1', durationMs: 0 },
     ]);
@@ -269,7 +269,7 @@ describe('assistant — reporting how each question was handled', () => {
         yield event;
       }
     });
-    await collect(assistantWith(model), 'Compare his leadership at Deel and Roots.');
+    await collect(assistantWith(model), 'Compare her leadership at Acme and Globex.');
     expect(answered).toEqual([
       {
         path: 'model',

@@ -100,6 +100,11 @@ describe('validating a record', () => {
       ['principles', 0, 'source'],
     ],
     [
+      'no technology the assistant may look up, which leaves its lookup with nothing to accept',
+      { ...fixtureKnowledge, references: { technologies: {} } },
+      ['references', 'technologies'],
+    ],
+    [
       'notes citing a source nobody labels',
       { ...fixtureKnowledge, notes: { ...fixtureKnowledge.notes, source: 'cv.nowhere' } },
       ['notes', 'source'],
@@ -113,7 +118,7 @@ describe('validating a record', () => {
           { name: 'Another course', issuer: 'Guild', source: 'cv.skills' },
         ],
       },
-      ['certifications', 1, 'source'],
+      ['certifications', fixtureKnowledge.certifications.length, 'source'],
     ],
     [
       'languages split across sources, though they are cited as one section',

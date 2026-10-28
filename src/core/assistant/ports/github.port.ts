@@ -19,7 +19,7 @@ export interface GithubRepository {
   readonly pushedAt: string;
 }
 
-/** Marcio's public GitHub account. Both calls return null when GitHub cannot be reached. */
+/** The owner's public GitHub account. Both calls return null when GitHub cannot be reached. */
 export interface GithubPort {
   profile(): Promise<GithubProfile | null>;
   /** Most recently pushed first. */

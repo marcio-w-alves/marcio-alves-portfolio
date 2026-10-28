@@ -3,9 +3,11 @@ import { education, languages } from './education';
 import { experience } from './experience';
 import { metrics } from './metrics';
 import notes from './notes.json';
+import { notesGuide } from './notes-guide';
 import { practice } from './practice';
 import { assistant, contact, principles, profile, welcome } from './profile';
 import { projects } from './projects';
+import { references } from './references';
 import { certifications, skills } from './skills';
 import { sourceLabels } from './sources';
 
@@ -25,5 +27,6 @@ export const knowledge: KnowledgeSource = {
   languages,
   practice,
   sourceLabels,
-  notes: { source: 'notes', passages: notes },
+  notes: { source: 'notes', guide: notesGuide, passages: notes },
+  references,
 };

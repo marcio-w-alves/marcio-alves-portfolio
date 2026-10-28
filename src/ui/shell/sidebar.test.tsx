@@ -5,7 +5,7 @@ import { profile as owner } from '@/profile';
 import { createSiteContent } from '@/site/site-content';
 import { Sidebar, type SidebarLinks } from './sidebar';
 
-const { knowledge, topicCatalog } = createSiteContent(owner.knowledge);
+const { knowledge, topicCatalog } = createSiteContent(owner.knowledge, owner.copy.en.answers);
 
 const { profile, contact } = knowledge;
 

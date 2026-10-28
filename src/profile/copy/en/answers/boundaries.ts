@@ -1,6 +1,6 @@
-import type { AssistantResponse } from '../../response';
-import type { TechnologyEvidence } from '../technologies';
-import { note, text, type ResponseKit } from '../../response-kit';
+import type { AssistantResponse } from '@/core/assistant/response';
+import { note, text, type ResponseKit } from '@/core/assistant/response-kit';
+import type { TechnologyEvidence } from '@/core/assistant/system1/technologies';
 
 /**
  * The answers that mark the edges of what this assistant does: greetings,
@@ -9,11 +9,12 @@ import { note, text, type ResponseKit } from '../../response-kit';
  */
 export function createBoundaryAnswers(kit: ResponseKit) {
   const { response, skills } = kit;
+  const first = kit.knowledge.profile.firstName;
 
   const CORE_FOLLOW_UPS = [
-    "Tell me about Marcio's career.",
+    `Tell me about ${first}'s career.`,
     'What are his biggest technical achievements?',
-    'How can I contact Marcio?',
+    `How can I contact ${first}?`,
   ];
 
   function greeting(): AssistantResponse {
@@ -21,7 +22,7 @@ export function createBoundaryAnswers(kit: ResponseKit) {
       'greeting',
       [
         text(
-          "Hi! I'm the assistant for Marcio's portfolio. I answer questions using his documented professional experience — career, skills, products and how he works.",
+          `Hi! I'm the assistant for ${first}'s portfolio. I answer questions using his documented professional experience — career, skills, products and how he works.`,
         ),
       ],
       { followUps: CORE_FOLLOW_UPS, sources: [] },
@@ -33,13 +34,13 @@ export function createBoundaryAnswers(kit: ResponseKit) {
       'identity',
       [
         text(
-          "I'm not Marcio — I'm an assistant that represents his professional portfolio. I answer from his documented experience, and when something isn't documented I'll say so rather than guess. To talk to Marcio directly, use the contact options.",
+          `I'm not ${first} — I'm an assistant that represents his professional portfolio. I answer from his documented experience, and when something isn't documented I'll say so rather than guess. To talk to ${first} directly, use the contact options.`,
         ),
       ],
       {
         followUps: [
-          'How can I contact Marcio?',
-          "Tell me about Marcio's career.",
+          `How can I contact ${first}?`,
+          `Tell me about ${first}'s career.`,
           'What projects is he working on?',
         ],
         sources: [],
@@ -52,13 +53,13 @@ export function createBoundaryAnswers(kit: ResponseKit) {
       'privateInfo',
       [
         text(
-          "That's outside what this portfolio covers. I only share professional information Marcio has chosen to document: his experience, skills, products, education and how to contact him.",
+          `That's outside what this portfolio covers. I only share professional information ${first} has chosen to document: his experience, skills, products, education and how to contact him.`,
         ),
       ],
       {
         followUps: [
-          "Tell me about Marcio's career.",
-          'How can I contact Marcio?',
+          `Tell me about ${first}'s career.`,
+          `How can I contact ${first}?`,
           'What are his strongest technical skills?',
         ],
         sources: [],
@@ -72,13 +73,13 @@ export function createBoundaryAnswers(kit: ResponseKit) {
       'offPurpose',
       [
         text(
-          "I can't change how I work or step outside this portfolio, but I'm happy to answer questions about Marcio's professional experience.",
+          `I can't change how I work or step outside this portfolio, but I'm happy to answer questions about ${first}'s professional experience.`,
         ),
       ],
       {
         followUps: [
-          "Tell me about Marcio's career.",
-          'What makes Marcio a strong Staff Engineer?',
+          `Tell me about ${first}'s career.`,
+          `What makes ${first} a strong Staff Engineer?`,
           'What projects is he working on?',
         ],
         sources: [],
@@ -100,7 +101,7 @@ export function createBoundaryAnswers(kit: ResponseKit) {
       coursework.length > 0
         ? ` He has completed coursework on it — ${coursework.join(' and ')} — but no professional use is documented.`
         : '';
-    return `I don't have documented information about Marcio working with **${technology.name}** in his roles, so I can't say how experienced he is with it.${study}`;
+    return `I don't have documented information about ${first} working with **${technology.name}** in his roles, so I can't say how experienced he is with it.${study}`;
   }
 
   const DOCUMENTED_STACK_GROUPS = ['frontend', 'backend'];
@@ -135,7 +136,7 @@ export function createBoundaryAnswers(kit: ResponseKit) {
         followUps: [
           'How experienced is he with React and TypeScript?',
           'Has he worked with backend systems?',
-          'How can I contact Marcio?',
+          `How can I contact ${first}?`,
         ],
         sources: [...sources],
         grounded: documented,

@@ -1,7 +1,9 @@
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import ts from 'typescript';
+import type { Vocabulary } from '@/core/assistant/system1/router';
 import type { KnowledgeSource } from '@/core/knowledge/schema';
 import type { Identity } from '@/profile/schema';
 
@@ -45,7 +47,9 @@ export function ownerTerms(identity: Identity, knowledge: KnowledgeSource): Term
   ];
   const terms: Term[] = [
     ...identifying.map((text): Term => ({ text, kind: 'identity' })),
-    ...knowledge.experience.map(({ company }): Term => ({ text: company, kind: 'company' })),
+    ...knowledge.experience.flatMap(({ company, aliases = [] }) =>
+      [company, ...aliases].map((text): Term => ({ text, kind: 'company' })),
+    ),
     ...knowledge.projects.map(({ name: product }): Term => ({ text: product, kind: 'product' })),
     ...[knowledge.education.school, knowledge.education.schoolShort].map((text): Term => ({
       text,
@@ -61,9 +65,16 @@ function escaped(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-/** Case-sensitive, and only as a whole word: "Roots" is a name, "uproots" is not. */
+/**
+ * Case-sensitive, and only as a whole word: "Roots" is a name, "uproots" is
+ * not. The line is source text, so an escape before the term — the "\\n" of
+ * 'a.\\nRoots' — ends the word before it like a space would.
+ */
 function matcher(term: Term): RegExp {
-  return new RegExp(`(?<![\\p{L}\\p{N}_])${escaped(term.text)}(?![\\p{L}\\p{N}_])`, 'u');
+  return new RegExp(
+    `(?:(?<=\\\\[nrt])|(?<![\\p{L}\\p{N}_]))${escaped(term.text)}(?![\\p{L}\\p{N}_])`,
+    'u',
+  );
 }
 
 /** Every line that names the owner, as `file:line: "term" (kind)`. */
@@ -89,7 +100,116 @@ export function repositoryFiles(paths: readonly string[]): SourceFile[] {
   );
   return listed
     .split('\n')
-    .filter(Boolean)
+    .filter((path) => path && existsSync(join(repositoryRoot, path)))
     .map((path) => ({ path, text: readFileSync(join(repositoryRoot, path), 'utf8') }))
     .filter(({ text }) => !text.includes('\0'));
+}
+
+/** The record's own figures — metric values and the years of its dates — that code must not repeat. */
+export function recordFigures(knowledge: KnowledgeSource): string[] {
+  const { profile, education, experience, metrics } = knowledge;
+  const years = [
+    profile.careerStartYear,
+    education.year,
+    ...experience.flatMap(({ start, end, period }) => [
+      Math.floor(start),
+      ...(end === null ? [] : [Math.floor(end)]),
+      ...(period.match(/\d{4}/g) ?? []).map(Number),
+    ]),
+  ].map(String);
+  return [...new Set([...Object.values(metrics).map((metric) => metric.value), ...years])];
+}
+
+function stringLiterals(source: ts.SourceFile): { text: string; line: number }[] {
+  const found: { text: string; line: number }[] = [];
+  const visit = (node: ts.Node) => {
+    if (
+      ts.isStringLiteral(node) ||
+      ts.isNoSubstitutionTemplateLiteral(node) ||
+      ts.isTemplateHead(node) ||
+      ts.isTemplateMiddle(node) ||
+      ts.isTemplateTail(node)
+    ) {
+      const { line } = source.getLineAndCharacterOfPosition(node.getStart(source));
+      found.push({ text: node.text, line: line + 1 });
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
+  return found;
+}
+
+/**
+ * Every string or template literal that repeats one of the record's figures,
+ * as `file:line: "figure" (figure)`. Comments and regular expressions are not
+ * literals, so a "50%" in a comment is no finding.
+ */
+export function findFigureLiterals(
+  files: readonly SourceFile[],
+  figures: readonly string[],
+): string[] {
+  const patterns = figures.map((figure) => ({
+    figure,
+    pattern: new RegExp(`(?<![\\d.])${escaped(figure)}(?!\\d)`),
+  }));
+  return files.flatMap(({ path, text }) =>
+    stringLiterals(ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true)).flatMap(
+      (literal) =>
+        patterns
+          .filter(({ pattern }) => pattern.test(literal.text))
+          .map(({ figure }) => `${path}:${String(literal.line)}: "${figure}" (figure)`),
+    ),
+  );
+}
+
+/**
+ * Words that are the owner's but not proper names a case-sensitive scan would
+ * catch: the profile's vocabulary, the owner's names and the record's role and
+ * project ids, in any case, as words of their own or as parts of an
+ * identifier ("hrisRole").
+ */
+export function ownerWords(
+  identity: Identity,
+  knowledge: KnowledgeSource,
+  vocabulary: Vocabulary,
+): string[] {
+  const vocabularyWords = Object.values(vocabulary)
+    .flat()
+    .flatMap(([pattern]) => pattern.source.replace(/\\[a-zA-Z]/g, ' ').match(/[a-z]{3,}/gi) ?? []);
+  const skipped = new Set(identity.nonIdentifyingTerms);
+  const recordIds = [
+    ...knowledge.experience.filter((role) => !skipped.has(role.company)),
+    ...knowledge.projects,
+  ].map((entry) => entry.id);
+  return [
+    ...new Set(
+      [identity.firstName, identity.lastName, ...vocabularyWords, ...recordIds].map((word) =>
+        word.toLowerCase(),
+      ),
+    ),
+  ];
+}
+
+// Any case, but a word ends where a lowercase letter cannot continue it, so the
+// "hris" of "hrisRole" counts and the "hris" of "hristo" does not.
+function wordPattern(word: string): RegExp {
+  const letters = word.replace(
+    /./gsu,
+    (letter) => `[${escaped(letter.toLowerCase())}${escaped(letter.toUpperCase())}]`,
+  );
+  return new RegExp(`(?<![a-zA-Z])${letters}(?![a-z])`);
+}
+
+/** Every line that uses one of the owner's words, as `file:line: "word" (vocabulary)`. */
+export function findOwnerWords(files: readonly SourceFile[], words: readonly string[]): string[] {
+  const patterns = words.map((word) => ({ word, pattern: wordPattern(word) }));
+  return files.flatMap(({ path, text }) =>
+    text
+      .split('\n')
+      .flatMap((line, index) =>
+        patterns
+          .filter(({ pattern }) => pattern.test(line))
+          .map(({ word }) => `${path}:${String(index + 1)}: "${word}" (vocabulary)`),
+      ),
+  );
 }

@@ -19,16 +19,16 @@ function filtered(
 describe('offers of help in a streamed answer', () => {
   it.each([
     [
-      'He led the HRIS team at Deel.\n\nIf you need more details about any specific repository, feel free to ask!',
-      'He led the HRIS team at Deel.',
+      'He led the payroll team at Acme.\n\nIf you need more details about any specific repository, feel free to ask!',
+      'He led the payroll team at Acme.',
     ],
     [
-      'Ele liderou a acessibilidade na Toptal.\n\nSe precisar de mais informações sobre suas experiências, estou à disposição.',
-      'Ele liderou a acessibilidade na Toptal.',
+      'Ele liderou a acessibilidade na Acme.\n\nSe precisar de mais informações sobre suas experiências, estou à disposição.',
+      'Ele liderou a acessibilidade na Acme.',
     ],
     [
-      'Trabajó con React en Deel. Si necesitas más información, no dudes en preguntar.',
-      'Trabajó con React en Deel.',
+      'Trabajó con React en Acme. Si necesitas más información, no dudes en preguntar.',
+      'Trabajó con React en Acme.',
     ],
     [
       'It is not documented. If you have other questions about his experience or skills, feel free to ask.',
@@ -40,14 +40,14 @@ describe('offers of help in a streamed answer', () => {
 
   it('drops an offer in the middle of an answer without merging the paragraphs around it', () => {
     expect(
-      filtered('He led HRIS.\n\nLet me know if you want more.\n\n### Roots\nHe grew the team.')
+      filtered('He led payroll.\n\nLet me know if you want more.\n\n### Globex\nHe grew the team.')
         .shown,
-    ).toBe('He led HRIS.\n\n### Roots\nHe grew the team.');
+    ).toBe('He led payroll.\n\n### Globex\nHe grew the team.');
   });
 
   it.each([
     'If you ask about performance, he cut load time by 50%.',
-    'If you need more details on Roots, he grew the team from one to four.',
+    'If you need more details on Globex, he grew the team from one to four.',
     'Se quiser saber de desempenho, ele reduziu o tempo de carregamento em 50%.',
     'Feel free to check his GitHub, he has 40 repos.',
     'Let me know which project; he worked on 3.',
@@ -63,22 +63,37 @@ describe('offers of help in a streamed answer', () => {
       'He led the Acme migration.\n\nFeel free to ask if you need more information.',
       'He led the Acme migration.',
     ],
-    ['He led HRIS. If you have more questions, I would be happy to answer them.', 'He led HRIS.'],
-    ['He led HRIS. Let me know if you want more details, and I will share them.', 'He led HRIS.'],
-    ['He led HRIS. If you want to know more, ask away!', 'He led HRIS.'],
     [
-      'He led HRIS. If you have any other questions about his 10 years of experience, feel free to ask.',
-      'He led HRIS.',
+      'He led payroll. If you have more questions, I would be happy to answer them.',
+      'He led payroll.',
     ],
-    ['He led HRIS. If you need more details, feel free to ask about his work.', 'He led HRIS.'],
-    ['He led HRIS. Let me know if you need more details about his 2022 projects.', 'He led HRIS.'],
-    ['He led HRIS. If you need more details, I can tell you about his projects.', 'He led HRIS.'],
+    [
+      'He led payroll. Let me know if you want more details, and I will share them.',
+      'He led payroll.',
+    ],
+    ['He led payroll. If you want to know more, ask away!', 'He led payroll.'],
+    [
+      'He led payroll. If you have any other questions about his 10 years of experience, feel free to ask.',
+      'He led payroll.',
+    ],
+    [
+      'He led payroll. If you need more details, feel free to ask about his work.',
+      'He led payroll.',
+    ],
+    [
+      'He led payroll. Let me know if you need more details about his 2022 projects.',
+      'He led payroll.',
+    ],
+    [
+      'He led payroll. If you need more details, I can tell you about his projects.',
+      'He led payroll.',
+    ],
   ])('removes a closing offer that carries no fact: %j', (answer, expected) => {
     expect(filtered(answer).shown).toBe(expected);
   });
 
   it.each([
-    'If you need more details, he led the HRIS team.',
+    'If you need more details, he led the payroll team.',
     'Se precisar de mais informações, ele liderou a equipe de acessibilidade.',
     'Se quiser mais detalhes, a experiência dela inclui React e Next.js.',
     'If you have any questions, Ada built the payments service.',
@@ -87,21 +102,26 @@ describe('offers of help in a streamed answer', () => {
     expect(filtered(answer, 3, ['Ada']).shown).toBe(answer);
   });
 
+  it('still removes an offer that merely mentions the person by name', () => {
+    const answer = 'He led payroll. If you have questions about Ada, feel free to ask.';
+    expect(filtered(answer, 3, ['Ada']).shown).toBe('He led payroll.');
+  });
+
   it.each([
     [
-      'Ela trabalhou na Deel. Se tiver outras perguntas, fique à vontade para perguntar.',
-      'Ela trabalhou na Deel.',
+      'Ela trabalhou na Acme. Se tiver outras perguntas, fique à vontade para perguntar.',
+      'Ela trabalhou na Acme.',
     ],
-    ['Trabajó en Deel. Si tienes otras preguntas, estoy a tu disposición.', 'Trabajó en Deel.'],
-    ['Ela trabalhou na Deel. Se quiser saber mais, pergunte!', 'Ela trabalhou na Deel.'],
-    ['Trabajó en Deel. Si quieres saber más, pregúntame.', 'Trabajó en Deel.'],
+    ['Trabajó en Acme. Si tienes otras preguntas, estoy a tu disposición.', 'Trabajó en Acme.'],
+    ['Ela trabalhou na Acme. Se quiser saber mais, pergunte!', 'Ela trabalhou na Acme.'],
+    ['Trabajó en Acme. Si quieres saber más, pregúntame.', 'Trabajó en Acme.'],
     [
-      'Ela trabalhou na Deel. Se tiver outras perguntas, posso falar mais sobre o trabalho dele.',
-      'Ela trabalhou na Deel.',
+      'Ela trabalhou na Acme. Se tiver outras perguntas, posso falar mais sobre o trabalho dele.',
+      'Ela trabalhou na Acme.',
     ],
     [
-      'Trabajó en Deel. Si quieres más detalles, puedo contarte sobre sus proyectos con él.',
-      'Trabajó en Deel.',
+      'Trabajó en Acme. Si quieres más detalles, puedo contarte sobre sus proyectos con él.',
+      'Trabajó en Acme.',
     ],
   ])('still removes offers in Portuguese and Spanish: %j', (answer, expected) => {
     expect(filtered(answer).shown).toBe(expected);
@@ -124,8 +144,8 @@ describe('offers of help in a streamed answer', () => {
   });
 
   it('removes an offer the stream ends on without final punctuation', () => {
-    expect(filtered('He led HRIS. Let me know if you want more details').shown).toBe(
-      'He led HRIS.',
+    expect(filtered('He led payroll. Let me know if you want more details').shown).toBe(
+      'He led payroll.',
     );
   });
 
@@ -138,18 +158,18 @@ describe('offers of help in a streamed answer', () => {
 
   it('keeps a sentence that only starts like an offer', () => {
     const answer =
-      'If you want to reach him, his email is marcio@example.com. If there is one theme, it is performance.';
+      'If you want to reach him, his email is ada@example.com. If there is one theme, it is performance.';
     expect(filtered(answer).shown).toBe(answer);
   });
 
   it('keeps an answer with no offer exactly as written, lists and headings included', () => {
     const answer =
-      '### Deel\n- Improved web vitals by 30%.\n- Cut load time from 6s to 3s.\n\nHe asks questions early, e.g. in planning.';
+      '### Acme\n- Improved web vitals by 30%.\n- Cut load time from 6s to 3s.\n\nHe asks questions early, e.g. in planning.';
     expect(filtered(answer, 1).shown).toBe(answer);
   });
 
   it('shows ordinary text as it arrives instead of waiting for the sentence to end', () => {
-    const { asItArrived } = filtered('Marcio worked at Deel from 2022 to 2026.', 5);
-    expect(asItArrived[1]).toBe('o wor');
+    const { asItArrived } = filtered('Ada worked at Acme from 2022 to 2026.', 5);
+    expect(asItArrived[1]).toBe('orked');
   });
 });

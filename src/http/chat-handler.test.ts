@@ -6,6 +6,7 @@ import type { LanguageModelPort, ToolCall } from '@/core/assistant/ports/languag
 import { createResponseKit } from '@/core/assistant/response-kit';
 import { createFastPath } from '@/core/assistant/system1/fast-path';
 import { createModelAssistant } from '@/core/assistant/system2/model-assistant';
+import { promptSubject } from '@/core/assistant/system2/system-prompt';
 import { createAnswerCache } from '@/infrastructure/budget/answer-cache';
 import { createModelBudget } from '@/infrastructure/budget/model-budget';
 import { createSlidingWindowLimiter } from '@/infrastructure/rate-limit/sliding-window';
@@ -16,7 +17,7 @@ import { profile } from '@/profile';
 import { createChatHandler, MAX_BODY_BYTES } from './chat-handler';
 
 const knowledge = localize(profile.knowledge, 'en');
-const fastPath = createFastPath(knowledge);
+const fastPath = createFastPath(knowledge, profile.copy.en.answers);
 const reported: unknown[] = [];
 const reportError = (error: unknown) => reported.push(error);
 const rateLimited: string[] = [];
@@ -105,6 +106,7 @@ describe('POST /api/chat — answering', () => {
         ),
         tools: createToolRegistry({ kit: createResponseKit(knowledge), reportError }),
         clock,
+        subject: promptSubject(knowledge),
       }),
       clock,
       reportError,

@@ -7,7 +7,7 @@ import { workspaceView } from './workspace-view';
 
 // The topics' copy is still written for the owner's record, so these assert
 // how the view is built from it, never what it says.
-const content = createSiteContent(profile.knowledge);
+const content = createSiteContent(profile.knowledge, profile.copy.en.answers);
 const { knowledge } = content;
 
 describe('workspaceView', () => {

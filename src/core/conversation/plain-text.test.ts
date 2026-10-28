@@ -13,10 +13,10 @@ describe('an answer as plain text', () => {
         {
           type: 'text',
           id: 'p0',
-          text: 'He led **HRIS** in `React` — see [GitHub](https://github.com/marcio-w-alves).',
+          text: 'He led **payroll** in `React` — see [GitHub](https://github.com/ada-rivera-example).',
         },
       ]),
-    ).toBe('He led HRIS in React — see GitHub (https://github.com/marcio-w-alves).');
+    ).toBe('He led payroll in React — see GitHub (https://github.com/ada-rivera-example).');
   });
 
   it.each([
@@ -71,7 +71,7 @@ describe('an answer as plain text', () => {
           type: 'component',
           id: 'p1',
           component: 'metrics',
-          props: { items: [{ value: '50%', label: 'Faster critical pages', context: 'Deel' }] },
+          props: { items: [{ value: '50%', label: 'Faster critical pages', context: 'Acme' }] },
         },
         {
           type: 'component',
@@ -79,13 +79,13 @@ describe('an answer as plain text', () => {
           component: 'table',
           props: {
             columns: ['Signal', 'Where'],
-            rows: [['Team building', 'Roots']],
+            rows: [['Team building', 'Globex']],
             caption: 'Signals',
           },
         },
       ]),
     ).toBe(
-      'Results:\n\n• 50% — Faster critical pages (Deel)\n\nSignal | Where\nTeam building | Roots',
+      'Results:\n\n• 50% — Faster critical pages (Acme)\n\nSignal | Where\nTeam building | Globex',
     );
   });
 
@@ -99,16 +99,14 @@ describe('an answer as plain text', () => {
           props: {
             heading: 'Get in touch',
             text: 'Reach out',
-            email: 'marcio.welben@gmail.com',
-            linkedin: 'https://www.linkedin.com/in/marcio-montenegro',
-            github: 'https://github.com/marcio-w-alves',
+            email: 'ada@rivera.example',
+            linkedin: 'https://www.linkedin.com/in/ada-rivera-example',
+            github: 'https://github.com/ada-rivera-example',
             resumeUrl: null,
           },
         },
       ]),
-    ).toBe(
-      'Email: marcio.welben@gmail.com\nLinkedIn: https://www.linkedin.com/in/marcio-montenegro',
-    );
+    ).toBe('Email: ada@rivera.example\nLinkedIn: https://www.linkedin.com/in/ada-rivera-example');
   });
 
   it('leaves out empty text parts', () => {

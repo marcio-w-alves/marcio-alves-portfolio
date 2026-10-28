@@ -71,6 +71,12 @@ const FORBIDDEN_EDGES = [
     to: 'src/ui/panel.ts',
   },
   {
+    fixture: 'core-test-to-profile',
+    rule: 'core-tests-stay-inside',
+    from: 'src/core/policy.test.ts',
+    to: 'src/profile/index.ts',
+  },
+  {
     fixture: 'ui-to-profile',
     rule: 'only-roots-read-the-profile',
     from: 'src/ui/panel.ts',

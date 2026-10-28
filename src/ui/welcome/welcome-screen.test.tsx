@@ -5,7 +5,7 @@ import { createSiteContent } from '@/site/site-content';
 import { WelcomeLayout } from './welcome-layout';
 import { WelcomeScreen } from './welcome-screen';
 
-const { knowledge } = createSiteContent(profile.knowledge);
+const { knowledge } = createSiteContent(profile.knowledge, profile.copy.en.answers);
 
 const { welcome } = knowledge;
 

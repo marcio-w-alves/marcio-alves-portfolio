@@ -4,11 +4,6 @@ import type { GithubPort } from '../ports/github.port';
 import type { ReferencePort, ReferenceSummary } from '../ports/reference.port';
 import type { ResponseKit } from '../response-kit';
 import { createEvidenceReporter } from './evidence-report';
-import {
-  COMPANY_REFERENCES,
-  REFERENCED_TECHNOLOGIES,
-  TECHNOLOGY_REFERENCES,
-} from './reference-catalog';
 import { defineTool, oneOf, type Tool } from './tool';
 
 /**
@@ -42,6 +37,8 @@ interface Dependencies {
 
 export function createExternalTools({ kit, references, github }: Dependencies): Tool[] {
   const { knowledge, citation, roleById } = kit;
+  const { firstName } = knowledge.profile;
+  const technologyReferences = knowledge.references.technologies;
   const evidenceReport = createEvidenceReporter(kit);
 
   async function lookUp(title: string | null | undefined) {
@@ -50,11 +47,10 @@ export function createExternalTools({ kit, references, github }: Dependencies): 
 
   const getTechnologyBrief = defineTool({
     name: 'getTechnologyBrief',
-    description:
-      "What a technology from Marcio's record is, from a public encyclopedia, together with where he used it. Only technologies his record mentions can be looked up.",
-    input: { technology: z.enum(REFERENCED_TECHNOLOGIES) },
+    description: `What a technology from ${firstName}'s record is, from a public encyclopedia, together with where he used it. Only technologies his record mentions can be looked up.`,
+    input: { technology: oneOf(Object.keys(technologyReferences)) },
     execute: async ({ technology }) => {
-      const summary = await lookUp(TECHNOLOGY_REFERENCES[technology]);
+      const summary = await lookUp(technologyReferences[technology]);
       const evidence = evidenceReport(technology);
       return {
         data: {
@@ -62,7 +58,7 @@ export function createExternalTools({ kit, references, github }: Dependencies): 
           reference: summary
             ? { title: summary.title, summary: clip(summary.extract, MAX_EXTRACT) }
             : UNAVAILABLE,
-          marcio: evidence.data,
+          inHisRecord: evidence.data,
         },
         sources: [...(summary ? [referenceSource(summary)] : []), ...evidence.sources],
       };
@@ -71,19 +67,18 @@ export function createExternalTools({ kit, references, github }: Dependencies): 
 
   const getCompanyBrief = defineTool({
     name: 'getCompanyBrief',
-    description:
-      'What one of the companies Marcio worked for is, from a public encyclopedia, together with his role there.',
+    description: `What one of the companies ${firstName} worked for is, from a public encyclopedia, together with his role there.`,
     input: { company: oneOf(knowledge.experience.map((role) => role.id)) },
     execute: async ({ company }) => {
       const role = roleById(company);
-      const summary = await lookUp(COMPANY_REFERENCES[company]);
+      const summary = await lookUp(role.reference?.encyclopediaTitle);
       return {
         data: {
           company: role.company,
           reference: summary
             ? { title: summary.title, summary: clip(summary.extract, MAX_EXTRACT) }
             : UNAVAILABLE,
-          marcioRole: {
+          hisRole: {
             role: role.role,
             period: role.period,
             current: role.current,
@@ -97,8 +92,7 @@ export function createExternalTools({ kit, references, github }: Dependencies): 
 
   const getCityBrief = defineTool({
     name: 'getCityBrief',
-    description:
-      'The city Marcio is based in, from a public encyclopedia — or a statement that it is not documented.',
+    description: `The city ${firstName} is based in, from a public encyclopedia — or a statement that it is not documented.`,
     input: {},
     execute: async () => {
       const { city, country } = knowledge.profile.location;
@@ -131,7 +125,7 @@ export function createExternalTools({ kit, references, github }: Dependencies): 
 
   const getGithubProfile = defineTool({
     name: 'getGithubProfile',
-    description: "Marcio's public GitHub profile, read live from GitHub.",
+    description: `${firstName}'s public GitHub profile, read live from GitHub.`,
     input: {},
     execute: async () => {
       const profile = await github.profile();
@@ -146,8 +140,7 @@ export function createExternalTools({ kit, references, github }: Dependencies): 
 
   const getRepositories = defineTool({
     name: 'getRepositories',
-    description:
-      "Marcio's public GitHub repositories, most recently updated first. Private and employer code is never visible here.",
+    description: `${firstName}'s public GitHub repositories, most recently updated first. Private and employer code is never visible here.`,
     input: { limit: z.number().int().min(1).max(10).optional() },
     execute: async ({ limit }) => {
       const repositories = await github.repositories(limit ?? 6);
@@ -165,8 +158,7 @@ export function createExternalTools({ kit, references, github }: Dependencies): 
 
   const getLinkedinProfile = defineTool({
     name: 'getLinkedinProfile',
-    description:
-      "Marcio's LinkedIn profile link and headline. LinkedIn has no public API, so the profile itself is not read.",
+    description: `${firstName}'s LinkedIn profile link and headline. LinkedIn has no public API, so the profile itself is not read.`,
     input: {},
     execute: () => ({
       data: {

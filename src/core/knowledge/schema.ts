@@ -35,6 +35,8 @@ export interface MetricSource {
 export interface RoleSource {
   readonly id: string;
   readonly company: string;
+  /** Other names visitors call the company by, such as a short form. */
+  readonly aliases?: readonly string[];
   /** The job title, as the résumé writes it. */
   readonly role: string;
   /** The label visitors see. */
@@ -56,6 +58,8 @@ export interface RoleSource {
    */
   readonly highlights: readonly Localized[];
   readonly source: string;
+  /** The company's encyclopedia article, where it has one. */
+  readonly reference?: { readonly encyclopediaTitle: string };
 }
 
 export interface SkillGroupSource {
@@ -218,7 +222,21 @@ export interface Note {
 
 export interface NotesSource {
   readonly source: string;
+  /**
+   * How the model must read the document's evidence tags, written for the
+   * model in English: the document's conventions are the owner's own.
+   */
+  readonly guide: string;
   readonly passages: readonly Note[];
+}
+
+/** The public references the assistant may look subjects up in. */
+export interface ReferencesSource {
+  /**
+   * The technologies a visitor may ask the encyclopedia about — those the
+   * record mentions — each with its exact article, or null where none exists.
+   */
+  readonly technologies: Readonly<Record<string, string | null>>;
 }
 
 export interface KnowledgeSource {
@@ -241,6 +259,7 @@ export interface KnowledgeSource {
   /** How an answer credits each source, keyed by source id. Every `source` above is one. */
   readonly sourceLabels: Readonly<Record<string, Localized>>;
   readonly notes: NotesSource;
+  readonly references: ReferencesSource;
 }
 
 export type Knowledge = Monolingual<KnowledgeSource>;

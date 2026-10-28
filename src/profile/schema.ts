@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { AnswerSet } from '@/core/assistant/answer-set';
 import type { KnowledgeSource, Locale } from '@/core/knowledge/schema';
 import { knowledgeRecordSchema } from '@/core/knowledge/validate';
 import type { Brand } from '@/site/site-profile';
@@ -33,6 +34,8 @@ export interface Profile {
   readonly knowledge: KnowledgeSource;
   /** The colours and image face the pages, the share image and the tab icon are drawn in. */
   readonly brand: Brand;
+  /** What the site writes around the record's facts, per language. */
+  readonly copy: Readonly<Record<Locale, { readonly answers: AnswerSet }>>;
   /** The conversations `pnpm eval:assistant` holds the assistant to. */
   readonly evaluation: readonly EvaluationCase[];
 }
@@ -63,6 +66,8 @@ const profileSchema = z.strictObject({
   locales: z.array(z.enum(['en'])).min(1),
   knowledge: knowledgeRecordSchema,
   brand: brandSchema,
+  // Its shape is the type's to check: copy is code, written against the record.
+  copy: z.strictObject({ en: z.strictObject({ answers: z.looseObject({}) }) }),
   evaluation: z.array(z.looseObject({ id: z.string().regex(/\S/) })),
 });
 

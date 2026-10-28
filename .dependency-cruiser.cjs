@@ -43,11 +43,12 @@ module.exports = {
     {
       name: 'core-tests-stay-inside',
       comment:
-        "The core's tests exercise the core: they may read a profile or the fictional fixture " +
-        'to have a record to answer from, but not the app, the interface or the adapters.',
+        "The core's tests exercise the core: they answer from the fictional fixture, so they " +
+        "hold for anyone's profile, and never reach the real profile, the app, the interface " +
+        'or the adapters.',
       severity: 'error',
       from: { path: `^src/core/.*${TESTS}` },
-      to: { path: `^src/(app|http|site|ui|infrastructure|${ROOTS})${MODULE_END}` },
+      to: { path: `^src/(app|http|site|ui|infrastructure|profile|${ROOTS})${MODULE_END}` },
     },
     {
       name: 'knowledge-is-below-assistant',

@@ -7,7 +7,7 @@ import { profile } from '@/profile';
 import { createSiteContent } from '@/site/site-content';
 import { ChatComposer, ComposerDock, JumpToLatest, type ChatComposerHandle } from '.';
 
-const { knowledge } = createSiteContent(profile.knowledge);
+const { knowledge } = createSiteContent(profile.knowledge, profile.copy.en.answers);
 
 const { welcome } = knowledge;
 

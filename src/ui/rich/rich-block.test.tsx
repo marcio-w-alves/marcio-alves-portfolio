@@ -9,9 +9,9 @@ import { createFastPath } from '@/core/assistant/system1/fast-path';
 import { exampleBlocks } from './examples';
 import { RichBlock } from './rich-block';
 
-const { knowledge } = createSiteContent(profile.knowledge);
+const { knowledge } = createSiteContent(profile.knowledge, profile.copy.en.answers);
 
-const exampleBlock = exampleBlocks(createFastPath(knowledge));
+const exampleBlock = exampleBlocks(createFastPath(knowledge, profile.copy.en.answers));
 
 // jsdom's accessible-name computation trims the space a browser keeps before the hidden note.
 function opensInNewTab(label: string): RegExp {

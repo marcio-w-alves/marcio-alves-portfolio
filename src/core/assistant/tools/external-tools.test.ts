@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { localize } from '@/core/knowledge/localize';
-import { profile } from '@/profile';
+import { fixtureKnowledge } from '@/testing/fixture-profile';
 import type { GithubPort, GithubProfile, GithubRepository } from '../ports/github.port';
 import type { ReferencePort, ReferenceSummary } from '../ports/reference.port';
 import { createResponseKit } from '../response-kit';
 import { createExternalTools } from './external-tools';
 import type { ToolResult } from './tool';
 
-const kit = createResponseKit(localize(profile.knowledge, 'en'));
+const kit = createResponseKit(localize(fixtureKnowledge, 'en'));
 
 const UNREACHABLE_GITHUB: GithubPort = {
   profile: () => Promise.resolve(null),
@@ -43,18 +43,18 @@ async function call(
 }
 
 describe('getTechnologyBrief', () => {
-  it('explains the technology and where Marcio used it, citing the article with its link', async () => {
-    const { port } = referencesFrom({ TypeScript: article('TypeScript') });
-    const result = await call('getTechnologyBrief', { technology: 'TypeScript' }, port);
+  it('explains the technology and where the owner used it, citing the article with its link', async () => {
+    const { port } = referencesFrom({ 'Bazel (software)': article('Bazel (software)') });
+    const result = await call('getTechnologyBrief', { technology: 'Bazel' }, port);
     expect(result.data).toMatchObject({
-      technology: 'TypeScript',
-      reference: { title: 'TypeScript', summary: 'TypeScript explained.' },
-      marcio: { verdict: 'documented' },
+      technology: 'Bazel',
+      reference: { title: 'Bazel (software)', summary: 'Bazel (software) explained.' },
+      inHisRecord: { verdict: 'documented' },
     });
     expect(result.sources[0]).toEqual({
-      id: 'wikipedia:TypeScript',
-      label: 'Wikipedia · TypeScript',
-      url: 'https://en.wikipedia.org/wiki/TypeScript',
+      id: 'wikipedia:Bazel (software)',
+      label: 'Wikipedia · Bazel (software)',
+      url: 'https://en.wikipedia.org/wiki/Bazel (software)',
     });
   });
 
@@ -68,23 +68,23 @@ describe('getTechnologyBrief', () => {
   });
 
   it('keeps coursework labelled as coursework next to the explanation', async () => {
-    const { port } = referencesFrom({
-      'Angular (web framework)': article('Angular (web framework)'),
-    });
-    const result = await call('getTechnologyBrief', { technology: 'Angular' }, port);
-    expect(result.data).toMatchObject({ marcio: { verdict: 'coursework only' } });
+    const { port } = referencesFrom({ 'Terraform (software)': article('Terraform (software)') });
+    const result = await call('getTechnologyBrief', { technology: 'Terraform' }, port);
+    expect(result.data).toMatchObject({ inHisRecord: { verdict: 'coursework only' } });
   });
 
   it('does not look anything up for a subject that has no article', async () => {
     const { port, asked } = referencesFrom({});
-    const result = await call('getTechnologyBrief', { technology: 'Core Web Vitals' }, port);
+    const result = await call('getTechnologyBrief', { technology: 'Nix' }, port);
     expect(asked).toEqual([]);
     expect(result.data).toMatchObject({ reference: 'no public reference is available right now' });
   });
 
   it('bounds third-party text before it reaches the model', async () => {
-    const { port } = referencesFrom({ Redis: article('Redis', 'x'.repeat(5000)) });
-    const result = await call('getTechnologyBrief', { technology: 'Redis' }, port);
+    const { port } = referencesFrom({
+      'Go (programming language)': article('Go', 'x'.repeat(5000)),
+    });
+    const result = await call('getTechnologyBrief', { technology: 'Go' }, port);
     const { reference } = result.data as { reference: { summary: string } };
     expect(reference.summary.length).toBeLessThanOrEqual(1200);
   });
@@ -93,34 +93,33 @@ describe('getTechnologyBrief', () => {
     ['keeps an extract of exactly the limit whole', 1200, 'x'.repeat(1200)],
     ['cuts one character over the limit, marking the cut', 1201, `${'x'.repeat(1199)}…`],
   ])('%s', async (_label, length, expected) => {
-    const { port } = referencesFrom({ Redis: article('Redis', 'x'.repeat(length)) });
-    const result = await call('getTechnologyBrief', { technology: 'Redis' }, port);
+    const { port } = referencesFrom({
+      'Go (programming language)': article('Go', 'x'.repeat(length)),
+    });
+    const result = await call('getTechnologyBrief', { technology: 'Go' }, port);
     expect(result.data).toMatchObject({ reference: { summary: expected } });
   });
 });
 
 describe('getCompanyBrief', () => {
   it('looks up the company article by its unambiguous title', async () => {
-    const { port, asked } = referencesFrom({ 'Deel (company)': article('Deel, Inc.') });
-    const result = await call('getCompanyBrief', { company: 'deel' }, port);
-    expect(asked).toEqual(['Deel (company)']);
+    const { port, asked } = referencesFrom({ 'Acme Corporation': article('Acme Corp.') });
+    const result = await call('getCompanyBrief', { company: 'acme' }, port);
+    expect(asked).toEqual(['Acme Corporation']);
     expect(result.data).toMatchObject({
-      company: 'Deel',
-      marcioRole: { role: 'Senior Frontend Engineer', period: '2022 — 2026' },
+      company: 'Acme',
+      hisRole: { role: 'Principal Platform Engineer', period: '2022 — Present' },
     });
   });
 
   it('cites the article next to the resume, and bounds its text', async () => {
     const { port } = referencesFrom({
-      'Deel (company)': article('Deel, Inc.', 'y'.repeat(3000)),
+      'Acme Corporation': article('Acme Corp.', 'y'.repeat(3000)),
     });
-    const result = await call('getCompanyBrief', { company: 'deel' }, port);
+    const result = await call('getCompanyBrief', { company: 'acme' }, port);
     const { reference } = result.data as { reference: { summary: string } };
     expect(reference.summary).toHaveLength(1200);
-    expect(result.sources.map((source) => source.id)).toEqual([
-      'wikipedia:Deel, Inc.',
-      'resume.deel',
-    ]);
+    expect(result.sources.map((source) => source.id)).toEqual(['wikipedia:Acme Corp.', 'cv.acme']);
   });
 
   it('refuses a company that is not one of his roles', async () => {
@@ -134,11 +133,11 @@ describe('getCompanyBrief', () => {
 
   it('still describes his role at a company that has no article', async () => {
     const { port, asked } = referencesFrom({});
-    const result = await call('getCompanyBrief', { company: 'roots' }, port);
+    const result = await call('getCompanyBrief', { company: 'globex' }, port);
     expect(asked).toEqual([]);
     expect(result.data).toMatchObject({
       reference: 'no public reference is available right now',
-      marcioRole: { role: 'Lead Frontend Engineer' },
+      hisRole: { role: 'Senior Platform Engineer' },
     });
   });
 });
@@ -146,26 +145,26 @@ describe('getCompanyBrief', () => {
 describe('getCityBrief', () => {
   it('describes the city he says he lives in from its encyclopedia article', async () => {
     const { port, asked } = referencesFrom({
-      'João Pessoa, Paraíba': article('João Pessoa', 'João Pessoa is the capital of Paraíba.'),
+      Porto: article('Porto', 'Porto is a city in northern Portugal.'),
     });
     const result = await call('getCityBrief', {}, port);
-    expect(asked).toEqual(['João Pessoa, Paraíba']);
+    expect(asked).toEqual(['Porto']);
     expect(result.data).toEqual({
-      city: 'João Pessoa, Paraíba',
-      country: 'Brazil',
-      reference: 'João Pessoa is the capital of Paraíba.',
+      city: 'Porto',
+      country: 'Portugal',
+      reference: 'Porto is a city in northern Portugal.',
     });
   });
 });
 
 describe('GitHub and LinkedIn', () => {
   const PROFILE: GithubProfile = {
-    login: 'marcio-w-alves',
-    name: 'Marcio Alves',
+    login: 'ada-rivera-example',
+    name: 'Ada Rivera',
     bio: 'b'.repeat(500),
     publicRepositories: 12,
     followers: 3,
-    url: 'https://github.com/marcio-w-alves',
+    url: 'https://github.com/ada-rivera-example',
     createdAt: '2014-01-01T00:00:00Z',
   };
 
@@ -177,7 +176,7 @@ describe('GitHub and LinkedIn', () => {
       stars: 1,
       fork: false,
       topics: [],
-      url: `https://github.com/marcio-w-alves/${name}`,
+      url: `https://github.com/ada-rivera-example/${name}`,
       pushedAt: '2026-10-01T00:00:00Z',
     };
   }
@@ -192,13 +191,13 @@ describe('GitHub and LinkedIn', () => {
     const result = await call('getGithubProfile', {}, referencesFrom({}).port, LIVE_GITHUB);
     expect(result.data).toEqual({ ...PROFILE, bio: `${'b'.repeat(199)}…` });
     expect(result.sources).toEqual([
-      { id: 'github', label: 'GitHub profile', url: 'https://github.com/marcio-w-alves' },
+      { id: 'github', label: 'GitHub profile', url: 'https://github.com/ada-rivera-example' },
     ]);
   });
 
   it('reports the GitHub profile as unavailable instead of inventing one', async () => {
     const result = await call('getGithubProfile', {}, referencesFrom({}).port);
-    expect(result.data).toEqual({ available: false, url: 'https://github.com/marcio-w-alves' });
+    expect(result.data).toEqual({ available: false, url: 'https://github.com/ada-rivera-example' });
   });
 
   it('bounds repository descriptions and keeps a missing one missing', async () => {
@@ -223,7 +222,7 @@ describe('GitHub and LinkedIn', () => {
 
   it('reports GitHub as unavailable instead of inventing repositories', async () => {
     const result = await call('getRepositories', {}, referencesFrom({}).port);
-    expect(result.data).toEqual({ available: false, url: 'https://github.com/marcio-w-alves' });
+    expect(result.data).toEqual({ available: false, url: 'https://github.com/ada-rivera-example' });
   });
 
   it('passes the requested number of repositories through, defaulting to six', async () => {
@@ -243,7 +242,7 @@ describe('GitHub and LinkedIn', () => {
   it('is explicit that LinkedIn is linked, not read', async () => {
     const result = await call('getLinkedinProfile', {}, referencesFrom({}).port);
     expect(result.data).toMatchObject({
-      url: 'https://www.linkedin.com/in/marcio-montenegro',
+      url: 'https://www.linkedin.com/in/ada-rivera-example',
       note: expect.stringContaining('no public API') as unknown,
     });
   });

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { MAX_LABEL_LENGTH } from '@/core/markdown/markdown-link';
 import { createLinkAllowList, createLinkFilter, urlsIn } from './link-filter';
 
-const KNOWN = 'https://github.com/marcio-w-alves';
+const KNOWN = 'https://github.com/ada-rivera-example';
 
 /** Streams the text the way the model does, a few characters at a time. */
 function filtered(text: string, chunk = 3, known: readonly string[] = [KNOWN]): string {
@@ -18,15 +18,17 @@ function filtered(text: string, chunk = 3, known: readonly string[] = [KNOWN]): 
 describe('links in a streamed answer', () => {
   it('renders a link to an unknown URL as its label, and keeps a known one', () => {
     expect(
-      filtered('See [docs](https://evil.example) and [GitHub](https://github.com/marcio-w-alves).'),
-    ).toBe('See docs and [GitHub](https://github.com/marcio-w-alves).');
+      filtered(
+        'See [docs](https://evil.example) and [GitHub](https://github.com/ada-rivera-example).',
+      ),
+    ).toBe('See docs and [GitHub](https://github.com/ada-rivera-example).');
   });
 
   it.each([1, 2, 3, 5, 7, 10])('gives the same output whatever the chunk size: %i', (chunk) => {
     const answer =
-      'His [GitHub](https://github.com/marcio-w-alves) has it.\n- [login](https://evil.example/login?next=/) here\n';
+      'His [GitHub](https://github.com/ada-rivera-example) has it.\n- [login](https://evil.example/login?next=/) here\n';
     expect(filtered(answer, chunk)).toBe(
-      'His [GitHub](https://github.com/marcio-w-alves) has it.\n- login here\n',
+      'His [GitHub](https://github.com/ada-rivera-example) has it.\n- login here\n',
     );
   });
 
@@ -39,11 +41,11 @@ describe('links in a streamed answer', () => {
 
   it('reads a link inside another first, then the outer one with its label in place', () => {
     expect(filtered('[a [b](https://evil.one) c](https://evil.two)')).toBe('a b c');
-    expect(filtered('[[x](https://evil.example)](https://github.com/marcio-w-alves)')).toBe(
-      '[x](https://github.com/marcio-w-alves)',
+    expect(filtered('[[x](https://evil.example)](https://github.com/ada-rivera-example)')).toBe(
+      '[x](https://github.com/ada-rivera-example)',
     );
-    expect(filtered('[a [b](https://github.com/marcio-w-alves) c](https://evil.example)')).toBe(
-      '[a [b](https://github.com/marcio-w-alves) c](https://evil.example)',
+    expect(filtered('[a [b](https://github.com/ada-rivera-example) c](https://evil.example)')).toBe(
+      '[a [b](https://github.com/ada-rivera-example) c](https://evil.example)',
     );
   });
 
@@ -105,7 +107,7 @@ describe('links in a streamed answer', () => {
 
   it('refuses a link that merely looks like an allowed one', () => {
     expect(
-      filtered('[x](javascript:alert(1)) [y](https://github.com.evil.example/marcio-w-alves)'),
+      filtered('[x](javascript:alert(1)) [y](https://github.com.evil.example/ada-rivera-example)'),
     ).toBe('x y');
   });
 
@@ -118,11 +120,11 @@ describe('links in a streamed answer', () => {
 
 describe('the allowed addresses', () => {
   it('compares addresses regardless of host case, a trailing slash or a fragment', () => {
-    const allowList = createLinkAllowList(['https://GitHub.com/marcio-w-alves/']);
-    expect(allowList.allows('https://github.com/marcio-w-alves')).toBe(true);
-    expect(allowList.allows('HTTPS://GITHUB.COM/marcio-w-alves#readme')).toBe(true);
-    expect(allowList.allows('https://github.com/marcio-w-alves/other')).toBe(false);
-    expect(allowList.allows('https://github.com/MARCIO-W-ALVES')).toBe(false);
+    const allowList = createLinkAllowList(['https://GitHub.com/ada-rivera-example/']);
+    expect(allowList.allows('https://github.com/ada-rivera-example')).toBe(true);
+    expect(allowList.allows('HTTPS://GITHUB.COM/ada-rivera-example#readme')).toBe(true);
+    expect(allowList.allows('https://github.com/ada-rivera-example/other')).toBe(false);
+    expect(allowList.allows('https://github.com/ADA-RIVERA-EXAMPLE')).toBe(false);
   });
 
   it('allows an address once it is added, and never one that is not an address', () => {
@@ -136,16 +138,16 @@ describe('the allowed addresses', () => {
   it('finds the addresses in data, but not addresses written inside prose', () => {
     expect(
       urlsIn({
-        url: 'https://github.com/marcio-w-alves',
-        repositories: [{ url: 'https://github.com/marcio-w-alves/site', stars: 3 }],
+        url: 'https://github.com/ada-rivera-example',
+        repositories: [{ url: 'https://github.com/ada-rivera-example/site', stars: 3 }],
         contact: 'mailto:someone@example.com',
         extract: 'Phishing text: log in at https://evil.example/login now.',
         relative: '/resume.pdf',
         nothing: null,
       }),
     ).toEqual([
-      'https://github.com/marcio-w-alves',
-      'https://github.com/marcio-w-alves/site',
+      'https://github.com/ada-rivera-example',
+      'https://github.com/ada-rivera-example/site',
       'mailto:someone@example.com',
     ]);
   });

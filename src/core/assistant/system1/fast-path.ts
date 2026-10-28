@@ -1,12 +1,10 @@
 import type { Knowledge } from '@/core/knowledge/schema';
+import type { AnswerSet } from '../answer-set';
 import type { AssistantResponse, ConversationContext, ResponsePart } from '../response';
 import { createResponseKit } from '../response-kit';
 import { summarizePage } from '../page-summary';
 import { createTopicIntro } from '../topic-pages';
 import { createTopicCatalog, isTopicId } from '../topics';
-import { createBoundaryAnswers } from './responses/boundaries';
-import { createCareerAnswers } from './responses/career';
-import { createExpertiseAnswers } from './responses/expertise';
 import { createRouter, type ScoredIntent } from './router';
 import { createEvidenceFinder } from './technologies';
 
@@ -47,10 +45,6 @@ export interface FastPath {
   readonly slowDown: (followUps: readonly string[]) => AssistantResponse;
 }
 
-type ScoredAnswers = Readonly<
-  Record<ScoredIntent, (context: ConversationContext, question: string) => AssistantResponse>
->;
-
 function answered(response: AssistantResponse): FastPathResult {
   return { kind: 'answered', response };
 }
@@ -59,50 +53,13 @@ const FOLLOW_UPS = 3;
 
 const partKey = (part: ResponsePart): string => JSON.stringify(part);
 
-export function createFastPath(knowledge: Knowledge): FastPath {
+export function createFastPath(knowledge: Knowledge, answerSet: AnswerSet): FastPath {
   const kit = createResponseKit(knowledge);
-  const boundaries = createBoundaryAnswers(kit);
-  const career = createCareerAnswers(kit);
-  const expertise = createExpertiseAnswers(kit);
-  const route = createRouter(knowledge);
+  const answers = answerSet.answers(kit);
+  const route = createRouter(knowledge, answerSet.vocabulary);
   const findEvidence = createEvidenceFinder(knowledge);
-  const scoredAnswers: ScoredAnswers = {
-    identity: boundaries.identity,
-    resume: expertise.resume,
-    contact: expertise.contact,
-    location: expertise.location,
-    accessibility: expertise.accessibility,
-    testing: expertise.testing,
-    mobile: expertise.mobile,
-    designSystems: expertise.designSystems,
-    nextjs: expertise.nextjs,
-    codeQuality: expertise.codeQuality,
-    quality: career.quality,
-    awards: career.awards,
-    teamGrowth: career.teamGrowth,
-    hrisRole: career.hrisRole,
-    product: career.product,
-    scratch: career.scratch,
-    scaling: career.scaling,
-    enterprise: career.enterprise,
-    staffFit: career.staffFit,
-    aiEngineering: expertise.aiEngineering,
-    philosophy: expertise.philosophy,
-    architecture: expertise.architecture,
-    performance: expertise.performance,
-    backend: expertise.backend,
-    react: expertise.react,
-    skills: expertise.skills,
-    leadership: career.leadership,
-    achievements: career.achievements,
-    projects: expertise.projects,
-    languages: (_context, question) => expertise.languages(question),
-    education: expertise.education,
-    career: career.career,
-  };
-
-  const catalog = createTopicCatalog(kit);
-  const topicIntro = createTopicIntro(kit, catalog);
+  const catalog = createTopicCatalog(answerSet.topics(kit));
+  const topicIntro = createTopicIntro(catalog);
 
   // What the visitor already sees: a topic page opens on its part of the
   // record, so an answer there leaves that part out. The overview opens on
@@ -141,8 +98,8 @@ export function createFastPath(knowledge: Knowledge): FastPath {
     context: ConversationContext,
     shown: ReadonlySet<string>,
   ): boolean {
-    const result = tryRespond(question, { ...context, lastIntent: current.intent });
-    if (result?.kind !== 'answered') return true;
+    const result = respond(question, { ...context, lastIntent: current.intent });
+    if (result.kind !== 'answered') return true;
     return result.response.intent !== current.intent && newParts(result.response, shown).length > 0;
   }
 
@@ -160,18 +117,6 @@ export function createFastPath(knowledge: Knowledge): FastPath {
       .questions.map((item) => item.question)
       .filter((question) => leadsSomewhereNew(question, response, context, shown))
       .slice(0, FOLLOW_UPS);
-  }
-
-  // Some ready answers still name records of Marcio's own (POR-54 moves them
-  // into the profile), so with another profile they cannot be built. Judging a
-  // follow-up must not break the answer it follows: such a follow-up is kept,
-  // and fails, as before, only if the visitor asks it.
-  function tryRespond(question: string, context: ConversationContext): FastPathResult | null {
-    try {
-      return respond(question, context);
-    } catch {
-      return null;
-    }
   }
 
   function answer(question: string, context: ConversationContext): FastPathResult {
@@ -192,18 +137,18 @@ export function createFastPath(knowledge: Knowledge): FastPath {
       case 'escalate':
         return { kind: 'escalate', nearest: routed.nearest };
       case 'offPurpose':
-        return answered(boundaries.offPurpose());
+        return answered(answers.offPurpose());
       case 'privateInfo':
-        return answered(boundaries.privateInfo());
+        return answered(answers.privateInfo());
       case 'greeting':
-        return answered(boundaries.greeting());
+        return answered(answers.greeting());
       case 'company':
-        return answered(career.company(routed.role));
+        return answered(answers.company(routed.role));
       case 'project':
-        return answered(expertise.project(routed.project));
+        return answered(answers.project(routed.project));
       case 'technology': {
         const evidence = routed.technologies.map(findEvidence);
-        // Only the résumé is answered here; a technology his notes report needs
+        // Only the résumé is answered here; a technology the notes report needs
         // the model, which reads the note's evidence tag.
         const onlyInNotes = evidence.some(
           (item) =>
@@ -214,17 +159,17 @@ export function createFastPath(knowledge: Knowledge): FastPath {
         );
         return onlyInNotes
           ? { kind: 'escalate', nearest: null }
-          : answered(boundaries.technology(evidence));
+          : answered(answers.technology(evidence));
       }
       default:
-        return answered(scoredAnswers[routed.intent](context, question));
+        return answered(answers.scored[routed.intent](context, question));
     }
   }
 
   return {
     answer,
     followUpsFor: (intent, context) =>
-      intent ? scoredAnswers[intent](context, '').followUps : boundaries.greeting().followUps,
+      intent ? answers.scored[intent](context, '').followUps : answers.greeting().followUps,
     pageShown: (context) =>
       context.topic === 'overview' || !isTopicId(context.topic)
         ? null
@@ -235,7 +180,7 @@ export function createFastPath(knowledge: Knowledge): FastPath {
               part.type === 'component' ? [part.component] : [],
             ),
           },
-    unknown: boundaries.unknown,
-    slowDown: boundaries.slowDown,
+    unknown: answers.unknown,
+    slowDown: answers.slowDown,
   };
 }

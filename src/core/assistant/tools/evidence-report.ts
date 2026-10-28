@@ -35,7 +35,7 @@ const NOTES_SHOWN = 3;
 export type EvidenceReporter = (name: string) => EvidenceReport;
 
 /**
- * Where a technology appears in Marcio's record, never upgrading coursework
+ * Where a technology appears in the owner's record, never upgrading coursework
  * into experience, not even when his notes mention it too. What only his
  * notes mention is reported, not documented:
  * the passage's own tag says whether it is his account or a study.

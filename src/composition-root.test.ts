@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createChatHandler } from '@/http/chat-handler';
 import { localize } from '@/core/knowledge/localize';
-import { fixtureKnowledge } from '@/testing/fixture-profile/knowledge';
+import { fixtureAnswers, fixtureKnowledge } from '@/testing/fixture-profile';
 import { buildContainer } from './composition-root';
 
 const VISITOR_IP = '203.0.113.42';
@@ -115,9 +115,12 @@ describe('the record the container answers from', () => {
     return response.text();
   }
 
-  it('answers from the knowledge it is given, not from a record of its own', async () => {
+  it('answers from the knowledge and copy it is given, not from a record of its own', async () => {
     captureLogs();
-    const fixture = buildContainer({ knowledge: localize(fixtureKnowledge, 'en') });
+    const fixture = buildContainer({
+      knowledge: localize(fixtureKnowledge, 'en'),
+      answers: fixtureAnswers,
+    });
 
     const answer = await answerText(fixture, 'Tell me more about Pipewright.');
 

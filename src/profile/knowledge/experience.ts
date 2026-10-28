@@ -5,6 +5,7 @@ export const experience: readonly RoleSource[] = [
   {
     id: 'way2b1',
     company: 'Way2b1',
+    aliases: ['Way 2b1', 'Way2 b1', 'Way 2 b 1'],
     role: 'Senior Frontend Engineer',
     period: 'Jun 2026 — Present',
     start: 2026.42,
@@ -135,6 +136,8 @@ export const experience: readonly RoleSource[] = [
       },
     ],
     source: 'resume.deel',
+    // "Deel" alone is a disambiguation page; the company's article has its own title.
+    reference: { encyclopediaTitle: 'Deel (company)' },
   },
   {
     id: 'roots',
@@ -196,6 +199,7 @@ export const experience: readonly RoleSource[] = [
   {
     id: 'maison',
     company: 'Maison Moderne',
+    aliases: ['Maison'],
     role: 'Senior Frontend Developer',
     period: '2020 — 2022',
     start: 2020,
@@ -258,6 +262,7 @@ export const experience: readonly RoleSource[] = [
   {
     id: 'shall',
     company: 'Shall And Partners',
+    aliases: ['Shall & Partners'],
     role: 'Full Stack Developer',
     period: '2018 — 2020',
     start: 2018,
@@ -351,6 +356,7 @@ export const experience: readonly RoleSource[] = [
   {
     id: 'freelance',
     company: 'Freelance',
+    aliases: ['Freelancer', 'Freelancing'],
     role: 'Web Developer',
     period: '2015 — 2018',
     start: 2015,
