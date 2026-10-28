@@ -33,3 +33,6 @@ pre-push:
 
     - name: boundaries
       run: pnpm boundaries
+
+    - name: test
+      run: pnpm test

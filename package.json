@@ -18,9 +18,11 @@
     "format:check": "prettier --check .",
     "boundaries": "depcruise src",
     "boundaries:graph": "depcruise src --output-type dot",
-    "verify": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm boundaries",
+    "verify": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm boundaries && pnpm test",
     "prepare": "lefthook install",
-    "release": "semantic-release"
+    "release": "semantic-release",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "geist": "1.8.2",
@@ -49,6 +51,8 @@
     "semantic-release": "25.0.9",
     "tailwindcss": "4.3.3",
     "typescript": "6.0.3",
-    "typescript-eslint": "8.72.1"
+    "typescript-eslint": "8.72.1",
+    "vite": "8.3.5",
+    "vitest": "5.0.5"
   }
 }

@@ -13,9 +13,10 @@ module.exports = {
       comment:
         'src/core must stay portable: no Next, React, or vendor SDK. Zod is the one allowed ' +
         'dependency, because the assistant tool contracts are defined as Zod schemas and those ' +
-        'schemas are part of the policy, not of an adapter.',
+        'schemas are part of the policy, not of an adapter. Tests are exempt: they verify the ' +
+        'core but are not part of what it ships.',
       severity: 'error',
-      from: { path: '^src/core' },
+      from: { path: '^src/core', pathNot: '\\.test\\.tsx?$' },
       to: {
         dependencyTypes: ['npm', 'npm-dev', 'npm-optional', 'npm-peer', 'npm-no-pkg'],
         pathNot: 'node_modules/zod/',
