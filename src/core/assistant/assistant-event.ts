@@ -12,6 +12,8 @@ import type { RichComponent } from './components';
 export interface AnswerSource {
   readonly id: string;
   readonly label: string;
+  /** Present for external references, so the interface can link to them. */
+  readonly url?: string;
 }
 
 export type AssistantErrorCode = 'network' | 'rate_limited' | 'timeout' | 'internal';

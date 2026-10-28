@@ -8,7 +8,12 @@ import {
 } from '@/core/knowledge/knowledge-base';
 import type { Role } from '@/core/knowledge/types';
 import type { MetricItem, NoteTone, RoleSection, RoleView } from './components';
-import type { AssistantResponse, ConversationContext, ResponsePart } from './response';
+import type {
+  AssistantResponse,
+  ComponentPart,
+  ConversationContext,
+  ResponsePart,
+} from './response';
 
 /**
  * Builders for answer parts. Components always receive resolved data, so the
@@ -19,7 +24,7 @@ export function text(markdown: string): ResponsePart {
   return { type: 'text', text: markdown };
 }
 
-export function metrics(ids: readonly MetricId[]): ResponsePart {
+export function metrics(ids: readonly MetricId[]): ComponentPart {
   const items = ids.map((id): MetricItem => {
     const metric = knowledgeBase.metrics[id];
     return { value: metric.value, label: metric.label, context: metric.context };
@@ -63,7 +68,7 @@ function roleView(role: Role): RoleView {
   };
 }
 
-export function timeline(ids?: readonly RoleId[]): ResponsePart {
+export function timeline(ids?: readonly RoleId[]): ComponentPart {
   const roles = ids ? ids.map(roleById) : knowledgeBase.experience;
   return {
     type: 'component',
@@ -72,7 +77,7 @@ export function timeline(ids?: readonly RoleId[]): ResponsePart {
   };
 }
 
-export function skills(ids?: readonly SkillGroupId[]): ResponsePart {
+export function skills(ids?: readonly SkillGroupId[]): ComponentPart {
   const groups = ids
     ? knowledgeBase.skills.filter((group) => ids.includes(group.id))
     : knowledgeBase.skills;
@@ -83,7 +88,7 @@ export function skills(ids?: readonly SkillGroupId[]): ResponsePart {
   };
 }
 
-export function projects(ids?: readonly ProjectId[]): ResponsePart {
+export function projects(ids?: readonly ProjectId[]): ComponentPart {
   const list = ids ? ids.map(projectById) : knowledgeBase.projects;
   return {
     type: 'component',
@@ -98,19 +103,19 @@ export function table(
   columns: readonly string[],
   rows: readonly (readonly string[])[],
   caption = '',
-): ResponsePart {
+): ComponentPart {
   return { type: 'component', component: 'table', props: { columns, rows, caption } };
 }
 
-export function note(tone: NoteTone, markdown: string): ResponsePart {
+export function note(tone: NoteTone, markdown: string): ComponentPart {
   return { type: 'component', component: 'note', props: { tone, text: markdown } };
 }
 
-export function details(summary: string, markdown: string): ResponsePart {
+export function details(summary: string, markdown: string): ComponentPart {
   return { type: 'component', component: 'details', props: { summary, text: markdown } };
 }
 
-export function contactCard(): ResponsePart {
+export function contactCard(): ComponentPart {
   const { email, linkedin, github, resumeUrl } = knowledgeBase.contact;
   return {
     type: 'component',
@@ -130,7 +135,7 @@ export function contactCard(): ResponsePart {
  * Recruitment-flavoured answers may close with the contact call to action,
  * but only once per conversation, so it never turns into repeated promotion.
  */
-export function contactOnce(context: ConversationContext): ResponsePart | null {
+export function contactOnce(context: ConversationContext): ComponentPart | null {
   return context.ctaShown ? null : contactCard();
 }
 
