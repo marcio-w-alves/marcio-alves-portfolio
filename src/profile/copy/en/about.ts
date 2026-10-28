@@ -6,7 +6,7 @@ import {
 } from '@/core/assistant/system2/model-assistant';
 import type { AboutPageCopy } from '@/site/about-page';
 
-const REPOSITORY = 'https://github.com/marcio-w-alves/marcio-alves-portfolio';
+export const REPOSITORY = 'https://github.com/marcio-w-alves/marcio-alves-portfolio';
 
 /** The one page without a chat: how this site itself is built, in his words. */
 export const about: AboutPageCopy = {
