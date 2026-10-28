@@ -27,11 +27,12 @@ export interface Assistant {
  * `fast` answered from the knowledge base; anything else went to the model
  * path, where the outcome says what became of it: answered, replayed from the
  * cache, unavailable (no credential), paced by the budget, failed before
- * saying anything, or interrupted part-way.
+ * saying anything, interrupted part-way, or abandoned by a visitor who left.
  */
 export interface AnswerReport {
   readonly path: 'fast' | 'model';
-  readonly outcome: 'answered' | 'cached' | 'unavailable' | 'paced' | 'failed' | 'interrupted';
+  readonly outcome:
+    'answered' | 'cached' | 'unavailable' | 'paced' | 'failed' | 'interrupted' | 'abandoned';
   /** The fast path's intent, or the closest one it saw before escalating. */
   readonly intent: string | null;
   readonly clientId: string;
@@ -123,6 +124,8 @@ export function createAssistant({
       }
       return escalated('answered');
     } catch (error) {
+      // A visitor who left is not a failure, and there is no one to answer.
+      if (signal?.aborted) return escalated('abandoned');
       reportError(error);
       if (emitted.length === 0) {
         yield* toEvents(unknown());
