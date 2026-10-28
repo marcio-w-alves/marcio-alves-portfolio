@@ -38,7 +38,7 @@ gate is fixed, never bypassed.
 | --------------------------------------------------------- | ------------------------------------------------ | --------------------------------------------------- |
 | Lint (type-aware), format                                 | `pnpm lint`, `pnpm format:check`                 | commit, CI                                          |
 | Commit message                                            | commitlint                                       | commit, CI                                          |
-| Types, module boundaries, tests                           | `pnpm typecheck`, `pnpm boundaries`, `pnpm test` | push, CI                                            |
+| Types, module boundaries, tests                           | `pnpm typecheck`, `pnpm boundaries`, `pnpm test` | push, CI (tests via `pnpm test:coverage`)           |
 | Coverage floor on `src/core` and `src/infrastructure`     | `pnpm test:coverage`                             | CI                                                  |
 | Build                                                     | `pnpm build`                                     | CI                                                  |
 | Browser journeys, motion, accessibility, security, search | `pnpm test:e2e`                                  | CI                                                  |

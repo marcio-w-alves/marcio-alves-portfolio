@@ -79,7 +79,8 @@ or skipping tests there is caught, while the margin keeps the gate from
 rewarding tests written only to move the number. The rest of `src` stays a
 diagnostic: `pnpm test:coverage` still shows which code no test reaches.
 Lowering a threshold needs a stated reason in the pull request, with the new
-measurement.
+measurement. A change that moves or renames either folder updates the globs in
+`vitest.config.mts` too: a glob that matches nothing counts as fully covered.
 
 ## Continuous integration
 
