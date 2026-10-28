@@ -24,9 +24,10 @@ export function serverEnv(): ServerEnv {
  * metadata needs it at build time, and the build must never need a secret.
  *
  * An explicit SITE_URL wins. Otherwise Vercel's production domain is used: it
- * is injected into every build, previews included, and becomes the custom
- * domain once one is assigned — so a deployment can never advertise localhost
- * or a preview URL as its canonical address.
+ * is injected into every build, previews included, so a deployment can never
+ * advertise localhost or a preview URL as its canonical address. The value is
+ * read at build time and the home page is prerendered, so attaching a new
+ * custom domain only takes effect from the next deployment.
  */
 export function siteUrl(): URL {
   const explicit = process.env.SITE_URL;

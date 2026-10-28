@@ -133,7 +133,9 @@ the manual test steps in a pull request description point at.
 The canonical origin comes from `siteUrl()` in `src/env.ts`: an explicit
 `SITE_URL` wins, otherwise Vercel's production domain, otherwise localhost.
 Previews therefore declare the production domain as canonical, so search
-engines never index a preview URL as a second copy of the site. It is resolved
+engines never index a preview URL as a second copy of the site. The value is
+fixed when a deployment builds, so after attaching or changing a custom domain,
+redeploy production for the canonical to follow. It is resolved
 apart from the server secrets on purpose — page metadata needs it at build
 time, and the build must never need a secret.
 
