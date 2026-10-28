@@ -16,7 +16,7 @@ export const englishUiMessages: UiMessages = {
     github: 'GitHub',
     resume: 'Resume',
     resumeSoon: 'Soon',
-    theme: { label: 'Theme', light: 'Light', dark: 'Dark', system: 'Auto' },
+    theme: { label: 'Theme', light: 'Light', dark: 'Dark' },
     language: 'Language',
   },
   links: {

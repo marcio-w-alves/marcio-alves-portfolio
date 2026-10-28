@@ -35,7 +35,6 @@ export interface UiMessages {
       readonly label: string;
       readonly light: string;
       readonly dark: string;
-      readonly system: string;
     };
     /** The language switcher, as a whole. */
     readonly language: string;

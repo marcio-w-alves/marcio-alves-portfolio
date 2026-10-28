@@ -18,30 +18,32 @@ test('a visitor picks the dark theme and keeps it on the next visit, from the fi
   await page.route('**/_next/static/**/*.js', (route) => route.abort());
   await page.reload();
   await expect(html).toHaveAttribute('data-theme', 'dark');
-  await expect(html).toHaveAttribute('data-theme-choice', 'dark');
 });
 
-test('Auto follows the system, light or dark', async ({ page }) => {
+test('until the visitor picks a theme, the site follows the system and checks the one in effect', async ({
+  page,
+}) => {
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.goto('/experience');
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-  await expect(page.getByRole('radio', { name: 'Auto' })).toBeChecked();
+  await expect(page.getByRole('radio', { name: 'Dark' })).toBeChecked();
 
   await page.emulateMedia({ colorScheme: 'light' });
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await expect(page.getByRole('radio', { name: 'Light' })).toBeChecked();
 });
 
-test('the switcher shows three separate icon buttons, Auto first and checked, centred in the sidebar', async ({
+test('the switcher shows two separate icon buttons, light and dark, centred in the sidebar', async ({
   page,
 }) => {
   await page.goto('/');
   const group = page.getByRole('group', { name: 'Theme' });
   const radios = group.getByRole('radio');
-  await expect(radios).toHaveCount(3);
+  await expect(radios).toHaveCount(2);
   expect(
     await radios.evaluateAll((items) => items.map((item) => (item as HTMLInputElement).value)),
-  ).toEqual(['system', 'light', 'dark']);
-  await expect(group.getByRole('radio', { name: 'Auto' })).toBeChecked();
+  ).toEqual(['light', 'dark']);
+  await expect(group.getByRole('radio', { name: 'Auto' })).toHaveCount(0);
 
   // Icons only: no name painted beside them, and no option drawn over the next.
   const boxes = await group.locator('label').evaluateAll((labels) =>

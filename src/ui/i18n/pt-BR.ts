@@ -16,7 +16,7 @@ export const portugueseUiMessages: UiMessages = {
     github: 'GitHub',
     resume: 'Currículo',
     resumeSoon: 'Em breve',
-    theme: { label: 'Tema', light: 'Claro', dark: 'Escuro', system: 'Automático' },
+    theme: { label: 'Tema', light: 'Claro', dark: 'Escuro' },
     language: 'Idioma',
   },
   links: {
