@@ -75,7 +75,7 @@ const portuguese: PassagePhrases = {
   certifications: (courses) =>
     `Certificações, que são cursos e não experiência profissional: ${courses}.`,
   education: (education) =>
-    `Formação: ${education.degree} pela ${education.school} (${education.schoolShort}), ${education.location}, concluída em ${String(education.year)}.`,
+    `Formação: ${education.degree} — ${education.school} (${education.schoolShort}), ${education.location}, concluída em ${String(education.year)}.`,
   languages: (languages) => `Idiomas: ${spoken(languages, 'pt-BR')}.`,
   liveProduct: (project, owner) =>
     `${project.name}, um dos produtos próprios de ${owner} com site público (${project.category}), status: ${project.status}. ${project.description} ${project.scopeLabel}: ${list(project.scope)}. Plataformas: ${list(project.platforms)}.${listed('Tecnologias', project.technologies)}${listed('Resultados', project.outcomes)} Links: ${links(project)}. Só o que esses links mostram está documentado — não há usuários, receita nem datas de lançamento.`,
