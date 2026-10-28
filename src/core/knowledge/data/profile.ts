@@ -62,6 +62,26 @@ export const principles: readonly Principle[] = [
     text: 'Shared logic such as validators, formatters and domain helpers is centralized instead of duplicated across features.',
   },
   {
+    title: 'Architecture sized to the problem',
+    text: "Growth, integration and maintenance are planned for, but each decision is calibrated to the product's real stage: explicit contracts, clear responsibilities, predictable state and low coupling.",
+  },
+  {
+    title: 'Performance from the design',
+    text: 'Loading, rendering, data flow and the experience of use are quality criteria from the start, not late optimization work.',
+  },
+  {
+    title: 'UX and visual fidelity',
+    text: 'Hierarchy, responsiveness, loading, error and empty states, accessibility and complete flows — not just a match with the screenshot.',
+  },
+  {
+    title: 'Verifiable quality',
+    text: 'Tests proportional to risk, reviews, documentation where it is needed, observability and real validation before anything is called done.',
+  },
+  {
+    title: 'Explicit trade-offs',
+    text: 'Alternatives, maintenance cost, dependencies, scalability, delivery speed and risk are discussed openly; no technology choice is treated as absolute.',
+  },
+  {
     title: 'Security on the server',
     text: 'Access is never assumed from what the UI allows: authentication, authorization and input are validated server-side.',
   },

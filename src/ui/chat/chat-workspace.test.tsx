@@ -5,6 +5,8 @@ import { setupServer } from 'msw/node';
 import { Fragment } from 'react';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createChatHandler } from '@/app/api/chat/chat-handler';
+import { EVENT_STREAM_HEADERS, eventStream } from '@/app/api/chat/event-stream';
+import type { AssistantEvent } from '@/core/assistant/assistant-event';
 import { createAssistant } from '@/core/assistant/assistant';
 import { MAX_QUESTION_LENGTH } from '@/core/assistant/system1/router';
 import { topicById, topics, type TopicId } from '@/core/assistant/topics';
@@ -274,6 +276,161 @@ describe('stopping an answer', () => {
     expect(await screen.findByText(/Reading Marcio.s documented experience/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Stop generating' }));
     expect(within(latestAnswer()).getByText('Response stopped')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Send question' })).toBeInTheDocument();
+  });
+});
+
+describe('an answer in flight when another is retried, edited or dropped', () => {
+  const failedQuestion = 'What did he do at Roots?';
+  const streamingQuestion = 'How does he approach testing?';
+
+  /** Answers each request with the next responder, in the order the questions are sent. */
+  function respondInTurn(...responders: ((request: Request) => Response | Promise<Response>)[]) {
+    server.use(
+      http.post(CHAT_URL, ({ request }) => {
+        const respond = responders.shift() ?? chatHandler;
+        return respond(request);
+      }),
+    );
+  }
+
+  const failure = () => HttpResponse.json({}, { status: 500 });
+
+  /**
+   * Streams "Part" of an answer and holds the rest until released. The rest
+   * reaching the page would mean the answer was never cancelled.
+   */
+  function heldMidStream() {
+    const rest = Promise.withResolvers<undefined>();
+    async function* events(): AsyncGenerator<AssistantEvent> {
+      yield { type: 'start', intent: 'testing', related: null };
+      yield { type: 'text-start', id: 'text-1' };
+      yield { type: 'text-delta', id: 'text-1', delta: 'Part' };
+      await rest.promise;
+      yield { type: 'text-delta', id: 'text-1', delta: ' arrived late' };
+      yield { type: 'text-end', id: 'text-1' };
+      yield { type: 'finish', followUps: [], sources: [] };
+    }
+    const respond = () =>
+      new HttpResponse(
+        eventStream(events(), () => undefined),
+        { headers: EVENT_STREAM_HEADERS },
+      );
+    return {
+      respond,
+      releaseRest: () => {
+        rest.resolve(undefined);
+      },
+    };
+  }
+
+  /** The real endpoint, held back until released. */
+  function realAnswerOnRelease() {
+    const gate = Promise.withResolvers<undefined>();
+    const respond = async (request: Request) => {
+      await gate.promise;
+      return chatHandler(request);
+    };
+    return {
+      respond,
+      release: () => {
+        gate.resolve(undefined);
+      },
+    };
+  }
+
+  async function failThenStream(user: ReturnType<typeof renderWorkspace>) {
+    await user.type(composer(), `${failedQuestion}{Enter}`);
+    const alert = await screen.findByRole('alert');
+    await user.type(composer(), `${streamingQuestion}{Enter}`);
+    await within(latestAnswer()).findByText('Part');
+    return alert;
+  }
+
+  const answers = () => within(conversation()).getAllByRole('article');
+  function answerAt(index: number): HTMLElement {
+    const answer = answers()[index];
+    if (!answer) throw new Error(`no answer at ${String(index)}`);
+    return answer;
+  }
+
+  it('stops the streaming answer when an older one is retried, and streams only the retry', async () => {
+    const streaming = heldMidStream();
+    const retried = realAnswerOnRelease();
+    respondInTurn(failure, streaming.respond, retried.respond);
+    const user = renderWorkspace();
+    const alert = await failThenStream(user);
+
+    await user.click(within(alert).getByRole('button', { name: 'Try again' }));
+
+    // The failed exchange is asked again at the end, so the interrupted answer comes first.
+    const interrupted = answerAt(0);
+    expect(interrupted).toHaveTextContent('Part');
+    expect(within(interrupted).getByText('Response stopped')).toBeInTheDocument();
+    expect(within(answerAt(1)).queryByText('Response stopped')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Stop generating' })).toBeInTheDocument();
+
+    streaming.releaseRest();
+    retried.release();
+
+    expect(
+      await within(latestAnswer()).findByRole('group', { name: 'Answer actions' }),
+    ).toBeInTheDocument();
+    expect(latestAnswer()).toHaveTextContent('Roots');
+    expect(interrupted).not.toHaveTextContent('arrived late');
+    expect(conversation()).toHaveAttribute('aria-busy', 'false');
+    expect(screen.getByRole('button', { name: 'Send question' })).toBeInTheDocument();
+  });
+
+  it('stops the streaming answer when an older question is taken back to edit', async () => {
+    const streaming = heldMidStream();
+    respondInTurn(failure, streaming.respond);
+    const user = renderWorkspace();
+    const alert = await failThenStream(user);
+
+    await user.click(within(alert).getByRole('button', { name: 'Edit question' }));
+
+    expect(composer()).toHaveValue(failedQuestion);
+    expect(answers()).toHaveLength(1);
+    const interrupted = answerAt(0);
+    expect(interrupted).toHaveTextContent('Part');
+    expect(within(interrupted).getByText('Response stopped')).toBeInTheDocument();
+    expect(conversation()).toHaveAttribute('aria-busy', 'false');
+    expect(screen.getByRole('status')).toHaveTextContent('Response stopped');
+
+    streaming.releaseRest();
+    await user.keyboard('{Enter}');
+
+    expect(
+      await within(latestAnswer()).findByRole('group', { name: 'Answer actions' }),
+    ).toBeInTheDocument();
+    expect(interrupted).not.toHaveTextContent('arrived late');
+  });
+
+  it.each([
+    [
+      'Start over',
+      () =>
+        within(screen.getByRole('complementary', { name: 'Portfolio navigation' })).getByRole(
+          'button',
+          { name: 'New conversation' },
+        ),
+    ],
+    ['Stop generating', () => screen.getByRole('button', { name: 'Stop generating' })],
+  ])('ends the streaming answer the same way with %s', async (_, control) => {
+    const streaming = heldMidStream();
+    respondInTurn(failure, streaming.respond);
+    const user = renderWorkspace();
+    await failThenStream(user);
+
+    await user.click(control());
+    streaming.releaseRest();
+    await user.type(composer(), 'What did he do at Roots?{Enter}');
+
+    expect(
+      await within(latestAnswer()).findByRole('group', { name: 'Answer actions' }),
+    ).toBeInTheDocument();
+    expect(conversation()).not.toHaveTextContent('arrived late');
     expect(screen.getByRole('button', { name: 'Send question' })).toBeInTheDocument();
   });
 });

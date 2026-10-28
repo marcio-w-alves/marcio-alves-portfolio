@@ -2,6 +2,7 @@ import type { AnswerSource } from '@/core/assistant/assistant-event';
 import { education, languages } from './data/education';
 import { experience } from './data/experience';
 import { metrics } from './data/metrics';
+import * as practice from './data/practice';
 import { assistant, contact, principles, profile, welcome } from './data/profile';
 import { projects } from './data/projects';
 import { certifications, skills } from './data/skills';
@@ -26,6 +27,7 @@ export const knowledgeBase = {
   projects,
   education,
   languages,
+  practice,
 } as const;
 
 export type KnowledgeBase = typeof knowledgeBase;

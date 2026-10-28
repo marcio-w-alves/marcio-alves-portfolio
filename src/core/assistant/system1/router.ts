@@ -34,6 +34,7 @@ export const SCORED_INTENTS = [
   'scaling',
   'enterprise',
   'staffFit',
+  'aiEngineering',
   'philosophy',
   'architecture',
   'performance',
@@ -62,12 +63,16 @@ export type Route =
 
 // English only: a question in another language is escalated before these run,
 // and the model applies the same rules in the visitor's language.
+// "act as" refuses only when addressed to the assistant ("did he act as a tech
+// lead" is a career question). A private word that is also an engineering word
+// ("React children", "codebase health issues", "password reset", "saga
+// compensation steps") refuses only when the question is about him.
 const GUARDS: Readonly<Record<Guard, RegExp>> = {
   offPurpose:
-    /\b(ignore (all |any )?(the )?(previous|prior|above|earlier)|system prompt|you are now|pretend (to be|you)|jailbreak|developer mode|disregard (your|the|all)|reveal (your|the) (instructions|prompt|rules)|act as (a|an|my))\b/,
+    /\b(ignore (all |any )?(the )?(previous|prior|above|earlier)|system prompt|you are now|pretend (to be|you)|jailbreak|developer mode|disregard (your|the|all)|reveal (your|the) (instructions|prompt|rules))\b|(^|[.!?;:] )((please|hey|ok|okay|alright|now|so|just|then|from now on),? )*act as\b|\byou ((?!he\b|m[aá]rcio\b)\w+ ){0,2}act as\b/,
   // City-level location is shareable; a home address is not.
   privateInfo:
-    /\b(salary|salaries|compensation|hourly rate|how much (does|do|did) he (charge|make|earn)|home address|street address|phone number|how old|his age|birthday|married|wife|husband|girlfriend|boyfriend|his kids|children|religio\w*|politic\w*|health|password)\b/,
+    /\b(salary|salaries|hourly rate|day rate|(his|m[aá]rcio( alves)?'s) (age|birthday|kids|children|wife|husband|girlfriend|boyfriend|religio\w*|politic\w*|(mental |physical )?health|(\w+ )?compensation|(\w+ )?password(?! (reset|hashing|policy|flow|manager))|(mobile|cell)( phone)?)|compensation (is he|does he|expectations?|package|range)|what compensation|(any|has|have|had) health (problems|issues|conditions?)|how many (kids|children)|(is|was) (he|m[aá]rcio) (married|single|divorced|religious)|he's (married|single|divorced|religious)|(does|did|has) (he|m[aá]rcio) (have|got) (any )?(kids|children|a wife|a husband|a girlfriend|a boyfriend)|how old is (he|m[aá]rcio)|how much (does|do|did) (he|m[aá]rcio) (charge|make|earn)|home address|street address|(phone|mobile|cell) number)\b/,
 };
 
 // No \b: without the u flag it is ASCII-only, so it never matches after the "á"
@@ -202,6 +207,11 @@ const INTENT_RULES: Readonly<Record<ScoredIntent, readonly Rule[]>> = {
     [/\bposition\b/, 1],
     [/\bhire\b/, 2],
     [/\bwhy (should|would) (we|i)\b/, 2],
+  ],
+  aiEngineering: [
+    [/\b(codex|claude( code)?|cursor|copilot)\b/, 5],
+    [/\b(ai|llms?|artificial intelligence|genai)\b/, 4],
+    [/\b(agents?|agentic|prompts?|rag)\b/, 2],
   ],
   philosophy: [
     [/\bphilosoph\w*\b/, 5],
