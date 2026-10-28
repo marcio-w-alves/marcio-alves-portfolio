@@ -96,13 +96,16 @@ export interface Profile {
 }
 
 export interface Welcome {
-  readonly eyebrow: string;
   readonly heading: string;
-  readonly subheading: string;
   readonly description: string;
-  readonly invitation: string;
   readonly placeholder: string;
   readonly helper: string;
+}
+
+/** How the assistant presents itself beside its answers. */
+export interface AssistantIdentity {
+  readonly name: string;
+  readonly initials: string;
 }
 
 export interface Contact {

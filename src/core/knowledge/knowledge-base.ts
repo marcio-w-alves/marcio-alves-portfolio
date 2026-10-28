@@ -2,7 +2,7 @@ import type { AnswerSource } from '@/core/assistant/assistant-event';
 import { education, languages } from './data/education';
 import { experience } from './data/experience';
 import { metrics } from './data/metrics';
-import { contact, principles, profile, welcome } from './data/profile';
+import { assistant, contact, principles, profile, welcome } from './data/profile';
 import { projects } from './data/projects';
 import { certifications, skills } from './data/skills';
 import { sourceLabels } from './data/sources';
@@ -16,6 +16,7 @@ import type { Project, Role } from './types';
 export const knowledgeBase = {
   profile,
   welcome,
+  assistant,
   contact,
   principles,
   metrics,

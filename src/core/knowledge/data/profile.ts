@@ -1,4 +1,4 @@
-import type { Contact, Principle, Profile, Welcome } from '../types';
+import type { AssistantIdentity, Contact, Principle, Profile, Welcome } from '../types';
 
 export const profile: Profile = {
   name: 'Marcio Alves',
@@ -31,16 +31,14 @@ export const profile: Profile = {
 // The landing screen speaks as Marcio, in the first person. The assistant
 // always speaks about him in the third person.
 export const welcome: Welcome = {
-  eyebrow: 'Welcome to my portfolio',
   heading: "Hi, I'm Marcio",
-  subheading: 'Frontend engineer, architect, and problem solver',
   description:
-    "I've spent over a decade building scalable web applications, improving performance, and helping engineering teams deliver better products.",
-  invitation:
-    'Explore my experience, dive into technical decisions, or ask my AI assistant anything about my work.',
-  placeholder: 'Ask anything about my experience, skills, or projects...',
-  helper: 'Powered by AI · Grounded in my professional experience',
+    'Staff-level frontend engineer with 10+ years in React, TypeScript and frontend architecture. Ask anything about my work.',
+  placeholder: 'Ask about my experience, skills or projects…',
+  helper: 'AI answers grounded in my professional experience',
 };
+
+export const assistant: AssistantIdentity = { name: "Marcio's assistant", initials: 'MA' };
 
 export const contact: Contact = {
   email: 'marcio.welben@gmail.com',

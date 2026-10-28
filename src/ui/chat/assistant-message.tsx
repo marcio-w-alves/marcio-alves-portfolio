@@ -1,4 +1,5 @@
 import type { AssistantMessage as Message, Feedback } from '@/core/conversation/messages';
+import { knowledgeBase } from '@/core/knowledge/knowledge-base';
 import { cn } from '../cn';
 import { Button, Eyebrow, Icon, Tag } from '../primitives';
 import { SuggestedQuestions } from '../welcome';
@@ -62,7 +63,7 @@ export function AssistantMessage({
           <span className="hidden @max-phone/ma:grid">
             <AssistantAvatar inline />
           </span>
-          <strong className="font-medium text-ink">Portfolio assistant</strong>
+          <strong className="font-medium text-ink">{knowledgeBase.assistant.name}</strong>
           {topicLabel && <Tag tone="accent">{topicLabel}</Tag>}
         </div>
 
