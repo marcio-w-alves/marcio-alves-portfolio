@@ -31,6 +31,20 @@ const PRODUCTION_CONTACT = `Object.assign(window.MAPortfolio.kb.contact, ${JSON.
   resumeUrl: knowledgeBase.contact.resumeUrl,
 })});`;
 
+/**
+ * The prototype sizes a composer's textarea once, when it mounts, which can
+ * be before its web font has loaded: a draft that rewraps onto another line
+ * once the font arrives keeps its old height and hides that line. This runs
+ * the prototype's own sizing again (height from the content, capped at
+ * 200px) once the fonts are in.
+ */
+function remeasureTextareas() {
+  for (const textarea of document.querySelectorAll('textarea')) {
+    textarea.style.height = 'auto';
+    textarea.style.height = `${String(Math.min(textarea.scrollHeight, 200))}px`;
+  }
+}
+
 await mkdir(OUT, { recursive: true });
 const browser = await chromium.launch();
 const only = new Set(process.argv.slice(2));
@@ -44,6 +58,7 @@ for (const board of BOARDS.filter(({ name }) => only.size === 0 || only.has(name
   await page.goto(`${DESIGN_URL}/${board.name}.dc.html`, { waitUntil: 'networkidle' });
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(SETTLE_MS);
+  await page.evaluate(remeasureTextareas);
   await page.addStyleTag({ content: FREEZE_CSS + WITHOUT_PROTOTYPE_NOTICE });
   await page.screenshot({ path: new URL(`${board.name}.png`, OUT).pathname });
   await page.close();
