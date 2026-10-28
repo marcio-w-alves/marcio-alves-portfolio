@@ -69,7 +69,8 @@ function parseArguments(raw: string): unknown {
 
 const SEARCH = 'searchKnowledge';
 const SEARCH_FIRST =
-  "Not recorded: first call searchKnowledge with the visitor's question and no category, and decline only if no passage answers it.";
+  'Your decline was not recorded. These passages come from a search of his whole record for the question: answer from them if one answers it, and call declineToAnswer again only if none does.';
+const MAX_QUERY = 300;
 
 export function createModelAssistant({
   model,
@@ -95,11 +96,23 @@ export function createModelAssistant({
   // The prompt asks for a search before anything is called not documented,
   // and the model still skips it after a narrower action comes back empty
   // ("did he work on the Roots backend?" once went getTechnologyEvidence →
-  // decline, while his notes answer it). Such a decline is sent back.
+  // decline, while his notes answer it). Sending the decline back was not
+  // enough — the model then answered without searching — so the search runs
+  // in its place, with the visitor's own question.
+
   function declinesUnsearched(call: ToolCall, searched: boolean): boolean {
     if (!canSearch || searched || call.name !== 'declineToAnswer') return false;
     const parsed = parseArguments(call.arguments) as { reason?: unknown } | undefined;
     return parsed?.reason === 'not_documented';
+  }
+
+  async function searchInstead(question: string): Promise<ToolOutcome> {
+    const outcome = await tools.run(SEARCH, { query: question.slice(0, MAX_QUERY) });
+    if (!outcome.ok) return outcome;
+    return {
+      ok: true,
+      result: { ...outcome.result, data: { note: SEARCH_FIRST, results: outcome.result.data } },
+    };
   }
 
   return {
@@ -170,7 +183,9 @@ export function createModelAssistant({
         // encyclopedia lookup and a GitHub read should not wait on each other.
         // Every call needs a reply, or the conversation is invalid; calls past
         // the cap get one that declines to run them.
-        searched ||= calls.some((call) => call.name === SEARCH);
+        const searchesNow: boolean = searched || calls.some((call) => call.name === SEARCH);
+        const searchesInstead = (call: ToolCall) => declinesUnsearched(call, searchesNow);
+        searched = searchesNow || calls.some(searchesInstead);
         const outcomes = await Promise.all(
           calls.map((call, index): Promise<ToolOutcome> =>
             index >= MAX_CALLS_PER_ROUND
@@ -178,8 +193,8 @@ export function createModelAssistant({
                   ok: false,
                   error: 'Too many actions in one step; this one was not run.',
                 })
-              : declinesUnsearched(call, searched)
-                ? Promise.resolve({ ok: false, error: SEARCH_FIRST })
+              : searchesInstead(call)
+                ? searchInstead(question)
                 : execute(call),
           ),
         );

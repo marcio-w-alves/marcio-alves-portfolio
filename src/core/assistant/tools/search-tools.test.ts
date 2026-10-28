@@ -69,7 +69,35 @@ describe('searchKnowledge', () => {
     expect(queries).toEqual([
       { query: 'leadership', limit: 5 },
       { query: 'leadership', limit: 2, category: 'skills' },
+      { query: 'leadership', limit: 2 },
     ]);
+  });
+
+  it('widens a category that has nothing to the whole record, and says so', async () => {
+    const dogs: Passage = {
+      id: 'notes:14.q47',
+      category: 'notes',
+      text: 'He has two dogs.',
+      source: { id: 'notes', label: 'Knowledge base' },
+      score: 0.54,
+    };
+    const queries: KnowledgeSearchQuery[] = [];
+    const port: KnowledgeSearchPort = {
+      search: (query) => {
+        queries.push(query);
+        return Promise.resolve(query.category ? [] : [dogs]);
+      },
+    };
+    const result = await run(port, { query: 'pets', category: 'profile' });
+    expect(queries).toEqual([
+      { query: 'pets', limit: 5, category: 'profile' },
+      { query: 'pets', limit: 5 },
+    ]);
+    expect(result.data).toEqual({
+      note: 'Nothing under "profile"; these come from his whole record.',
+      passages: [{ text: 'He has two dogs.', category: 'notes', relevance: 0.54 }],
+    });
+    expect(result.sources).toEqual([{ id: 'notes', label: 'Knowledge base' }]);
   });
 
   it('refuses an empty or oversized query', async () => {

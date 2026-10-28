@@ -428,6 +428,13 @@ export const CASES: readonly EvaluationCase[] = [
     expect: { path: 'model', language: 'pt', mentions: ['frontend'] },
   },
   {
+    id: 'notes-pets-pt',
+    category: 'notes',
+    // POR-72: once answered "not documented" while his notes say he has two dogs.
+    question: 'Ele tem animais de estimação?',
+    expect: { path: 'model', language: 'pt', mentions: ['cachorros'] },
+  },
+  {
     id: 'pt-accessibility',
     category: 'language',
     // Once answered with "se precisar de mais informações, estou à disposição".

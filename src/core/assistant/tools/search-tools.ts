@@ -21,15 +21,21 @@ export function createSearchTools(search: KnowledgeSearchPort): Tool[] {
       limit: z.number().int().min(1).max(8).optional(),
     },
     execute: async ({ query, category, limit }) => {
-      const passages = await search.search({
-        query,
-        limit: limit ?? DEFAULT_LIMIT,
-        ...(category ? { category } : {}),
-      });
+      const asked = { query, limit: limit ?? DEFAULT_LIMIT };
+      const inCategory = category ? await search.search({ ...asked, category }) : [];
+      // A category the model guessed is only a preference: "his pets" filed
+      // under profile found nothing, while his notes had them.
+      const widened = Boolean(category) && inCategory.length === 0;
+      const passages = category && !widened ? inCategory : await search.search(asked);
       return {
         data:
           passages.length > 0
             ? {
+                ...(widened
+                  ? {
+                      note: `Nothing under "${String(category)}"; these come from his whole record.`,
+                    }
+                  : {}),
                 passages: passages.map((passage) => ({
                   text: passage.text,
                   category: passage.category,
