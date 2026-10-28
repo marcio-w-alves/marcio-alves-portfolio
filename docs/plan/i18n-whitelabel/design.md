@@ -883,6 +883,7 @@ Ids, dependencies and sets follow the PRD's task table. **Deps** lists both beha
 
 - Files: `tools/knowledge-tools.ts` (`getExperience` gains `aspect: 'all' | 'leadership' | 'impact'`), `system-prompt.ts` (the leadership rule), new `system2/sources.ts#usedSources(text, evidence)` (keep a source only if the answer names its company/product or shares at least 2 distinctive word trigrams with its evidence), `model-assistant.ts`.
 - Measured with POR-47: AC-35.1 at ≥ 2/3.
+- **As built (deviation):** leadership retrieval is a re-rank inside `searchKnowledge` (`tools/search-tools.ts`), not a `getExperience` `aspect`, so POR-51 stays out of `knowledge-tools.ts`, which POR-52 rewrites. For a question about leading people (leader/líder/mentor/supervise/gestor, or manage/lead/gerenciar/gestão/coordenar with a people word nearby) it adds at most 3 passages from an experience-only search in front, displacing only the weakest résumé passages, never notes. The prompt sends leadership questions to that search and forbids answering with skill names. Tool results may attribute text per source (`ToolResult.evidence`). In `usedSources`, a name counts only when it does not open a sentence and exactly one of the answer's sources carries it. Cards always cite what they show, and when nothing matches, every retrieved source is kept. T51.3 is replaced by the `search-tools.test.ts` leadership cases.
 
 **POR-52 — Profile folder and knowledge injection (FR-1 part, FR-2 part, FR-5) · Deps: 44, 46, 47, 49 · S6**
 
