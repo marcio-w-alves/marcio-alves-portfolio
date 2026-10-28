@@ -8,8 +8,11 @@ import { ThinkingDots } from './thinking-dots';
  * a person would say it. The first phase is the design's own line; the rest
  * rotate so a slower answer visibly keeps working instead of looking stuck.
  */
-export const THINKING_PHASES = [
-  "Reading Marcio's documented experience",
+function phasesFor(ownerFirstName: string): readonly string[] {
+  return [`Reading ${ownerFirstName}'s documented experience`, ...LATER_PHASES];
+}
+
+const LATER_PHASES = [
   'Thinking',
   'Checking the sources',
   'Connecting the dots',
@@ -17,16 +20,21 @@ export const THINKING_PHASES = [
   'Pondering',
   'Mulling it over',
   'Choosing the words',
-] as const;
+];
+const PHASE_COUNT = LATER_PHASES.length + 1;
 
 const PHASE_MS = 1600;
 
-export function ThinkingStatus() {
+interface ThinkingStatusProps {
+  readonly ownerFirstName: string;
+}
+
+export function ThinkingStatus({ ownerFirstName }: ThinkingStatusProps) {
   const [phase, setPhase] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setPhase((current) => (current + 1) % THINKING_PHASES.length);
+      setPhase((current) => (current + 1) % PHASE_COUNT);
     }, PHASE_MS);
     return () => {
       clearInterval(timer);
@@ -40,7 +48,7 @@ export function ThinkingStatus() {
         key={phase}
         className="relative animate-reveal overflow-hidden after:absolute after:inset-0 after:animate-shimmer after:bg-linear-to-r after:from-transparent after:via-bg/80 after:to-transparent after:content-['']"
       >
-        {THINKING_PHASES[phase]}…
+        {phasesFor(ownerFirstName)[phase]}…
       </span>
     </p>
   );

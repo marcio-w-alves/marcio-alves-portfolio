@@ -279,7 +279,11 @@ describe('POST /api/chat — the fast path', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('content-type')).toBe('text/event-stream; charset=utf-8');
     const events = await allEventsOf(response);
-    expect(events[0]).toEqual({ type: 'start', intent: 'career', related: 'deel' });
+    expect(events[0]).toEqual({
+      type: 'start',
+      intent: 'career',
+      related: { id: 'deel', company: 'Deel' },
+    });
     expect(events.at(-1)?.type).toBe('finish');
     expect(outbound).toEqual([]);
   });

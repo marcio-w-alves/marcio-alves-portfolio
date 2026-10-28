@@ -1,8 +1,9 @@
 import type { AnswerSet } from '@/core/assistant/answer-set';
 import { createResponseKit, type ResponseKit } from '@/core/assistant/response-kit';
-import { createTopicIntro, type TopicIntro } from '@/core/assistant/topic-pages';
+import { createTopicIntro } from '@/core/assistant/topic-pages';
 import { createTopicCatalog, type TopicCatalog } from '@/core/assistant/topics';
 import type { TopicId } from '@/core/chat/topic-id';
+import type { TopicIntro } from '@/core/chat/topic-intro';
 import { localize } from '@/core/knowledge/localize';
 import type { Knowledge, KnowledgeSource } from '@/core/knowledge/schema';
 

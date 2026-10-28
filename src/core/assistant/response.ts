@@ -1,9 +1,5 @@
-import type { AnswerSource, AssistantEvent } from '../chat/events';
-import type { RichComponent } from '../chat/components';
-
-export type ComponentPart = { readonly type: 'component' } & RichComponent;
-
-export type ResponsePart = { readonly type: 'text'; readonly text: string } | ComponentPart;
+import type { AnswerSource, AssistantEvent, RelatedRole } from '../chat/events';
+import type { ResponsePart } from '../chat/components';
 
 /**
  * A complete answer, before it is streamed. Both the deterministic fast path
@@ -15,7 +11,7 @@ export interface AssistantResponse {
   readonly parts: readonly ResponsePart[];
   readonly followUps: readonly string[];
   readonly sources: readonly AnswerSource[];
-  readonly related: string | null;
+  readonly related: RelatedRole | null;
   /** False when the answer is a refusal or a gap rather than documented fact. */
   readonly grounded: boolean;
 }

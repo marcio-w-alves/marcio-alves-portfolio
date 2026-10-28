@@ -33,8 +33,14 @@ export interface AssistantError {
   readonly retryAfterSeconds?: number;
 }
 
+/** The role an answer is about, so the interface can offer the rest of that experience. */
+export interface RelatedRole {
+  readonly id: string;
+  readonly company: string;
+}
+
 export type AssistantEvent =
-  | { readonly type: 'start'; readonly intent: string; readonly related: string | null }
+  | { readonly type: 'start'; readonly intent: string; readonly related: RelatedRole | null }
   | { readonly type: 'text-start'; readonly id: string }
   | { readonly type: 'text-delta'; readonly id: string; readonly delta: string }
   | { readonly type: 'text-end'; readonly id: string }
@@ -71,6 +77,9 @@ const isSource = (value: unknown) =>
   isString(value.label) &&
   (value.url === undefined || isString(value.url));
 
+const isRelated = (value: unknown) =>
+  value === null || (isRecord(value) && isString(value.id) && isString(value.company));
+
 const isError = (value: unknown) =>
   isRecord(value) &&
   isOneOf(value.code, ASSISTANT_ERROR_CODES) &&
@@ -79,7 +88,7 @@ const isError = (value: unknown) =>
 
 // Keyed by the union, so an event type cannot be added without saying how it is recognized.
 const HAS_SHAPE: Readonly<Record<AssistantEventType, (event: Fields) => boolean>> = {
-  start: (event) => isString(event.intent) && (event.related === null || isString(event.related)),
+  start: (event) => isString(event.intent) && isRelated(event.related),
   'text-start': (event) => isString(event.id),
   'text-delta': (event) => isString(event.id) && isString(event.delta),
   'text-end': (event) => isString(event.id),

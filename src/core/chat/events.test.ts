@@ -9,7 +9,7 @@ import {
 const VALID: {
   readonly [Type in AssistantEvent['type']]: Extract<AssistantEvent, { type: Type }>;
 } = {
-  start: { type: 'start', intent: 'company:acme', related: null },
+  start: { type: 'start', intent: 'company:acme', related: { id: 'acme', company: 'Acme' } },
   'text-start': { type: 'text-start', id: 'p0' },
   'text-delta': { type: 'text-delta', id: 'p0', delta: 'At Acme' },
   'text-end': { type: 'text-end', id: 'p0' },
@@ -40,7 +40,12 @@ describe('reading an event off the wire', () => {
     ['an unknown type', { type: 'evil' }],
     ['a type inherited from every object', { type: 'constructor' }],
     ['a start without an intent', { type: 'start', related: null }],
-    ['a start whose related role is not a name', { type: 'start', intent: 'x', related: 3 }],
+    ['a start whose related role is not a role', { type: 'start', intent: 'x', related: 3 }],
+    ['a start whose related role is a bare id', { type: 'start', intent: 'x', related: 'acme' }],
+    [
+      'a start whose related role has no company',
+      { type: 'start', intent: 'x', related: { id: 'acme' } },
+    ],
     ['a text part without an id', { type: 'text-start' }],
     ['a text delta without its text', { type: 'text-delta', id: 'p0' }],
     ['a text end without an id', { type: 'text-end', id: 7 }],

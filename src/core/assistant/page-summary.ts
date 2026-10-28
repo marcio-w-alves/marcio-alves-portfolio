@@ -1,4 +1,4 @@
-import type { ResponsePart } from './response';
+import type { ResponsePart } from '../chat/components';
 
 const MAX_TEXT = 700;
 const MAX_SUMMARY = 4000;

@@ -97,6 +97,11 @@ export type RichComponent =
 
 export type RichComponentName = RichComponent['component'];
 
+/** A block as part of an answer or a page, before the stream gives it an id. */
+export type ComponentPart = { readonly type: 'component' } & RichComponent;
+
+export type ResponsePart = { readonly type: 'text'; readonly text: string } | ComponentPart;
+
 export const RICH_COMPONENTS = [
   'metrics',
   'timeline',

@@ -79,6 +79,17 @@ module.exports = {
       to: { path: `^src/(app|http|site|infrastructure|${ROOTS})${MODULE_END}` },
     },
     {
+      name: 'ui-reads-contracts-only',
+      comment:
+        'Everything the interface and the conversation it holds import ships to the browser. ' +
+        'They read the wire contracts in src/core/chat and are handed the record as data built ' +
+        'on the server, so the knowledge base and the assistant engine never join the client ' +
+        'bundle, not even as types that could become values with one careless edit.',
+      severity: 'error',
+      from: { path: '^src/(ui|core/conversation)/', pathNot: TESTS },
+      to: { path: '^src/core/(knowledge|assistant)/' },
+    },
+    {
       name: 'ui-keeps-zod-out',
       comment:
         'The request schema is zod, which the browser never needs: the interface reads the ' +

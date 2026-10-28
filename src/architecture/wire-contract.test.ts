@@ -11,7 +11,7 @@ const ENDPOINT = 'http://portfolio.test/api/chat';
 const SAMPLES: {
   readonly [Type in AssistantEvent['type']]: Extract<AssistantEvent, { type: Type }>;
 } = {
-  start: { type: 'start', intent: 'company:roots', related: 'roots' },
+  start: { type: 'start', intent: 'company:roots', related: { id: 'roots', company: 'Roots' } },
   'text-start': { type: 'text-start', id: 'p0' },
   'text-delta': { type: 'text-delta', id: 'p0', delta: 'He led the “frontend” — in 2021.' },
   'text-end': { type: 'text-end', id: 'p0' },

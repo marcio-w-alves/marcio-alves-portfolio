@@ -1,7 +1,8 @@
 import type { Knowledge } from '@/core/knowledge/schema';
+import type { ResponsePart } from '../../chat/components';
 import type { ConversationContext } from '../../chat/request';
 import type { AnswerSet } from '../answer-set';
-import type { AssistantResponse, ResponsePart } from '../response';
+import type { AssistantResponse } from '../response';
 import { createResponseKit } from '../response-kit';
 import { summarizePage } from '../page-summary';
 import { createTopicIntro } from '../topic-pages';

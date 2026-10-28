@@ -1,12 +1,10 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import type { SuggestedQuestion } from '@/core/assistant/topics';
 import type { TopicId } from '@/core/chat/topic-id';
 import { latestAnswerId } from '@/core/conversation/conversation';
 import type { Conversation } from '@/core/conversation/messages';
 import { toPlainText } from '@/core/conversation/plain-text';
-import type { Welcome } from '@/core/knowledge/schema';
 import { ChatComposer, ComposerDock, JumpToLatest, type ChatComposerHandle } from '../composer';
 import { AppShell } from '../shell/app-shell';
 import { ConversationTopBar } from '../shell/conversation-top-bar';
@@ -16,23 +14,35 @@ import {
   type SidebarProfile,
   type SidebarTopic,
 } from '../shell/sidebar';
-import { SuggestedQuestions, WelcomeLayout, WelcomeScreen } from '../welcome';
+import {
+  SuggestedQuestions,
+  WelcomeLayout,
+  WelcomeScreen,
+  type QuestionChoice,
+  type WelcomeGreeting,
+} from '../welcome';
 import { AssistantMessage } from './assistant-message';
 import { copyText } from './copy-text';
 import { useChat } from './use-chat';
 import { useReveal } from './use-reveal';
 
+/** The greeting, and how the first composer invites a question. */
+interface WelcomeCopy extends WelcomeGreeting {
+  readonly placeholder: string;
+  readonly helper: string;
+}
+
 interface ChatWorkspaceProps {
   readonly profile: SidebarProfile;
+  /** How the thinking status names the owner while an answer is on its way. */
+  readonly ownerFirstName: string;
   readonly links: SidebarLinks;
   readonly topics: readonly SidebarTopic[];
-  readonly welcome: Welcome;
+  readonly welcome: WelcomeCopy;
   /** The name the assistant goes by beside its answers. */
   readonly assistantName: string;
-  /** Each role's company, by role id, for the link under an answer about one role. */
-  readonly companies: Readonly<Record<string, string>>;
   /** The questions the welcome screen offers. */
-  readonly suggestions: readonly SuggestedQuestion[];
+  readonly suggestions: readonly QuestionChoice[];
   /** The conversation the page opens with, and starts over from. */
   readonly seed: Conversation;
   /** The longest question the API accepts. */
@@ -57,11 +67,11 @@ function topicIn(topics: readonly SidebarTopic[], id: string): SidebarTopic {
 /** Owns the conversation and hands plain data and callbacks to the presentational parts. */
 export function ChatWorkspace({
   profile,
+  ownerFirstName,
   links,
   topics,
   welcome,
   assistantName,
-  companies,
   suggestions,
   seed,
   maxQuestionLength,
@@ -221,12 +231,13 @@ export function ChatWorkspace({
                   </li>
                 );
               }
-              const company = message.related ? companies[message.related] : undefined;
+              const company = message.related?.company;
               return (
                 <li key={message.id} className="animate-turn">
                   <AssistantMessage
                     message={reveal.view(message)}
                     assistantName={assistantName}
+                    ownerFirstName={ownerFirstName}
                     busy={busy || chat.waiting}
                     isLatest={message.id === latestId}
                     topicLabel={
@@ -257,7 +268,7 @@ export function ChatWorkspace({
               title="Suggested questions"
               hideTitle
               align="center"
-              questions={suggestions.map(({ question, short }) => ({ question, label: short }))}
+              questions={suggestions}
               onPick={ask}
               disabled={chat.waiting}
             />

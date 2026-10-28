@@ -1,4 +1,4 @@
-import type { AnswerSource, AssistantError } from '../chat/events';
+import type { AnswerSource, AssistantError, RelatedRole } from '../chat/events';
 import type { RichComponent } from '../chat/components';
 import type { TopicId } from '../chat/topic-id';
 
@@ -24,7 +24,7 @@ export interface AssistantMessage {
   readonly parts: readonly MessagePart[];
   readonly followUps: readonly string[];
   readonly sources: readonly AnswerSource[];
-  readonly related: string | null;
+  readonly related: RelatedRole | null;
   readonly intent: string | null;
   readonly feedback: Feedback | null;
   readonly error: AssistantError | null;

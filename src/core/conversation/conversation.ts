@@ -5,8 +5,8 @@ import {
   type ConversationContext,
   type HistoryTurn,
 } from '../chat/request';
-import type { TopicIntro } from '../assistant/topic-pages';
 import type { TopicId } from '../chat/topic-id';
+import type { TopicIntro } from '../chat/topic-intro';
 import type { AssistantMessage, Conversation, Feedback, UserMessage } from './messages';
 import { toPlainText } from './plain-text';
 

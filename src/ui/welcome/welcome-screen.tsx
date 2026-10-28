@@ -1,7 +1,11 @@
-import type { Welcome } from '@/core/knowledge/schema';
+/** How the home page greets a visitor, as the server worded it. */
+export interface WelcomeGreeting {
+  readonly heading: string;
+  readonly description: string;
+}
 
 interface WelcomeScreenProps {
-  readonly welcome: Welcome;
+  readonly welcome: WelcomeGreeting;
 }
 
 /** The greeting. Its title is the page's main heading until a conversation starts. */
