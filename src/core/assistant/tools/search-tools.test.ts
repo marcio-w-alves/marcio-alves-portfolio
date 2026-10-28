@@ -10,7 +10,7 @@ import { fixtureKnowledge } from '@/testing/fixture-profile/knowledge';
 import { createCitation } from '../citations';
 import { createSearchTools, SEARCH_UNAVAILABLE } from './search-tools';
 
-const SHALL = { id: 'resume.shall', label: 'Resume' };
+const GLOBEX = { id: 'cv.globex', label: 'CV' };
 
 function searchReturning(passages: Passage[]): {
   port: KnowledgeSearchPort;
@@ -164,7 +164,7 @@ describe('searchKnowledge', () => {
       id,
       category: 'experience',
       text: `passage ${id}`,
-      source: SHALL,
+      source: GLOBEX,
       score,
     });
     const { port } = searchReturning([passage('a', 0.4172), passage('b', 0.33)]);
@@ -175,7 +175,7 @@ describe('searchKnowledge', () => {
         { text: 'passage b', category: 'experience', relevance: 0.33 },
       ],
     });
-    expect(result.sources).toEqual([SHALL]);
+    expect(result.sources).toEqual([GLOBEX]);
   });
 
   it('tells the model not to fall back on general knowledge when nothing matches', async () => {

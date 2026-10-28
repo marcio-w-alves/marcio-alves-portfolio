@@ -65,9 +65,16 @@ function escaped(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-/** Case-sensitive, and only as a whole word: "Roots" is a name, "uproots" is not. */
+/**
+ * Case-sensitive, and only as a whole word: "Roots" is a name, "uproots" is
+ * not. The line is source text, so an escape before the term — the "\\n" of
+ * 'a.\\nRoots' — ends the word before it like a space would.
+ */
 function matcher(term: Term): RegExp {
-  return new RegExp(`(?<![\\p{L}\\p{N}_])${escaped(term.text)}(?![\\p{L}\\p{N}_])`, 'u');
+  return new RegExp(
+    `(?:(?<=\\\\[nrt])|(?<![\\p{L}\\p{N}_]))${escaped(term.text)}(?![\\p{L}\\p{N}_])`,
+    'u',
+  );
 }
 
 /** Every line that names the owner, as `file:line: "term" (kind)`. */
@@ -157,16 +164,30 @@ export function findFigureLiterals(
 
 /**
  * Words that are the owner's but not proper names a case-sensitive scan would
- * catch: the profile's vocabulary and the owner's names in any case, as
- * words of their own or as parts of an identifier ("hrisRole").
+ * catch: the profile's vocabulary, the owner's names and the record's role and
+ * project ids, in any case, as words of their own or as parts of an
+ * identifier ("hrisRole").
  */
-export function ownerWords(identity: Identity, vocabulary: Vocabulary): string[] {
+export function ownerWords(
+  identity: Identity,
+  knowledge: KnowledgeSource,
+  vocabulary: Vocabulary,
+): string[] {
   const vocabularyWords = Object.values(vocabulary)
     .flat()
     .flatMap(([pattern]) => pattern.source.replace(/\\[a-zA-Z]/g, ' ').match(/[a-z]{3,}/gi) ?? []);
-  return [...new Set([identity.firstName, identity.lastName, ...vocabularyWords])].map((word) =>
-    word.toLowerCase(),
-  );
+  const skipped = new Set(identity.nonIdentifyingTerms);
+  const recordIds = [
+    ...knowledge.experience.filter((role) => !skipped.has(role.company)),
+    ...knowledge.projects,
+  ].map((entry) => entry.id);
+  return [
+    ...new Set(
+      [identity.firstName, identity.lastName, ...vocabularyWords, ...recordIds].map((word) =>
+        word.toLowerCase(),
+      ),
+    ),
+  ];
 }
 
 // Any case, but a word ends where a lowercase letter cannot continue it, so the

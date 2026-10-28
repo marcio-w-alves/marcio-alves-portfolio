@@ -59,7 +59,7 @@ describe('usedSources — the evidence an answer drew on', () => {
   });
 
   it('does not take a capitalized word that opens a line for a name', () => {
-    const answer = 'He joined in 2022.\nDeel was where he worked.';
+    const answer = 'He joined in 2022.\nAcme was where he worked.';
 
     expect(usedSources(answer, [PAYROLL_LEAD, DEGREE])).toEqual([]);
   });

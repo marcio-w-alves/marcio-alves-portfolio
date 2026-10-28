@@ -65,6 +65,15 @@ describe('owner literals outside the profile', () => {
     expect(findOwnerLiterals([planted], terms)).toContain(`src/x.ts:3: "${name}" (identity)`);
   });
 
+  it('reports a term that follows an escape sequence inside a string', () => {
+    const [company] = terms.filter((term) => term.kind === 'company');
+    if (!company) throw new Error('the profile names no company');
+    const planted = { path: 'src/e.ts', text: `const text = 'a.\\n${company.text} b';` };
+    expect(findOwnerLiterals([planted], [company])).toEqual([
+      `src/e.ts:1: "${company.text}" (company)`,
+    ]);
+  });
+
   it('matches a term only as a whole word, in its own case', () => {
     const [company] = terms.filter((term) => term.kind === 'company');
     if (!company) throw new Error('the profile names no company');
@@ -98,13 +107,20 @@ describe('owner specifics outside the profile, in the core', () => {
   const core = repositoryFiles(['src/core']);
   const shipped = core.filter(({ path }) => !/\.test\.tsx?$/.test(path));
   const figures = recordFigures(profile.knowledge);
-  const words = ownerWords(profile.identity, profile.copy.en.answers.vocabulary);
+  const words = ownerWords(profile.identity, profile.knowledge, profile.copy.en.answers.vocabulary);
 
   it("derives the record's figures and the owner's words from the profile", () => {
     const metricValues = Object.values(profile.knowledge.metrics).map((metric) => metric.value);
     expect(figures).toEqual(expect.arrayContaining(metricValues));
     expect(figures).toContain(String(profile.knowledge.profile.careerStartYear));
     expect(words).toContain(profile.identity.firstName.toLowerCase());
+    const ids = [
+      ...profile.knowledge.experience.filter(
+        (role) => !profile.identity.nonIdentifyingTerms.includes(role.company),
+      ),
+      ...profile.knowledge.projects,
+    ].map((entry) => entry.id.toLowerCase());
+    expect(words).toEqual(expect.arrayContaining(ids));
     expect(words.length).toBeGreaterThan(2);
   });
 

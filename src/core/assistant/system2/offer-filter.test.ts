@@ -23,8 +23,8 @@ describe('offers of help in a streamed answer', () => {
       'He led the payroll team at Acme.',
     ],
     [
-      'Ele liderou a acessibilidade na Toptal.\n\nSe precisar de mais informações sobre suas experiências, estou à disposição.',
-      'Ele liderou a acessibilidade na Toptal.',
+      'Ele liderou a acessibilidade na Acme.\n\nSe precisar de mais informações sobre suas experiências, estou à disposição.',
+      'Ele liderou a acessibilidade na Acme.',
     ],
     [
       'Trabajó con React en Acme. Si necesitas más información, no dudes en preguntar.',

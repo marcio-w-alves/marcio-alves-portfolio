@@ -282,7 +282,7 @@ describe('router — generic follow-ups continue the conversation', () => {
   });
 
   it('moves from a company answer to its results', () => {
-    expect(intentOf('Tell me more', { ...FRESH, lastIntent: 'company:deel' })).toBe('achievements');
+    expect(intentOf('Tell me more', { ...FRESH, lastIntent: 'company:acme' })).toBe('achievements');
   });
 
   it('falls back to the topic the visitor is browsing', () => {

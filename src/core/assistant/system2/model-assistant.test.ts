@@ -759,7 +759,7 @@ const PAYROLL_LEAD = recordPassage(
   "Acme (Principal Platform Engineer, 2022 — Present): Helped lead and maintain the payroll team responsible for the company's core HR tools product.",
   'cv.acme',
 );
-const ROOTS_TEAM = recordPassage(
+const GLOBEX_TEAM = recordPassage(
   'role:globex:1',
   'experience',
   'Globex (Senior Platform Engineer, 2018 — 2022): Expanded the frontend team from a solo developer setup by recruiting and integrating three additional developers.',
@@ -789,8 +789,8 @@ const leadershipRecord: KnowledgeSearchPort = {
   search: ({ category }) =>
     Promise.resolve(
       category === 'experience'
-        ? [PAYROLL_LEAD, ROOTS_TEAM]
-        : [SKILL_LIST, DEGREE, COURSES, PAYROLL_LEAD, ROOTS_TEAM],
+        ? [PAYROLL_LEAD, GLOBEX_TEAM]
+        : [SKILL_LIST, DEGREE, COURSES, PAYROLL_LEAD, GLOBEX_TEAM],
     ),
 };
 
@@ -838,7 +838,7 @@ describe('model assistant — leadership answers rest on the roles where he led'
 
       const events = await answerWithSearch(port, leadershipRecord, question);
 
-      expect(passagesShown(requests[1]).slice(0, 2)).toEqual([PAYROLL_LEAD.text, ROOTS_TEAM.text]);
+      expect(passagesShown(requests[1]).slice(0, 2)).toEqual([PAYROLL_LEAD.text, GLOBEX_TEAM.text]);
       expect(text(events)).toBe(answer);
       expect(citedIds(events)).toEqual(['cv.acme', 'cv.globex']);
     },
