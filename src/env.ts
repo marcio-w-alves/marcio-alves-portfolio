@@ -8,10 +8,8 @@ import { z } from 'zod';
  * fast path instead of failing.
  */
 // `KEY=` in an env file means "not set", not "set to nothing".
-const optionalSecret = z.preprocess(
-  (value) => (value === '' ? undefined : value),
-  z.string().min(1).optional(),
-);
+const unset = (value: unknown) => (value === '' ? undefined : value);
+const optionalSecret = z.preprocess(unset, z.string().min(1).optional());
 
 const serverEnvSchema = z.object({
   OPENAI_API_KEY: optionalSecret,
@@ -25,6 +23,45 @@ let cached: ServerEnv | undefined;
 export function serverEnv(): ServerEnv {
   cached ??= serverEnvSchema.parse(process.env);
   return cached;
+}
+
+const positiveInteger = (fallback: number) =>
+  z.preprocess(unset, z.coerce.number().int().positive().default(fallback));
+
+/**
+ * Operational knobs: which model answers, and how much traffic and spend the
+ * site accepts. None is secret and all have defaults, so a deployment only
+ * sets what it wants to change. The embedding model is deliberately not
+ * here: the committed index was built with it, so changing it is a code
+ * change followed by `pnpm rag:build`.
+ */
+const assistantSettingsSchema = z
+  .object({
+    OPENAI_CHAT_MODEL: z.preprocess(unset, z.string().min(1).default('gpt-4o-mini')),
+    OPENAI_TIMEOUT_MS: positiveInteger(20_000),
+    /** Any request, fast path included: enough for a curious visitor, not for a script. */
+    CHAT_REQUESTS_PER_TEN_MINUTES: positiveInteger(40),
+    /** Model answers specifically, the part that costs money. */
+    MODEL_ANSWERS_PER_TEN_MINUTES: positiveInteger(15),
+    /**
+     * Roughly two hundred model answers a day per instance — about US$0.35 at
+     * gpt-4o-mini prices. Per instance, so the hard ceiling is the spending
+     * limit set on the OpenAI project itself.
+     */
+    MODEL_DAILY_TOKENS: positiveInteger(2_000_000),
+  })
+  .transform((env) => ({
+    chatModel: env.OPENAI_CHAT_MODEL,
+    openAITimeoutMs: env.OPENAI_TIMEOUT_MS,
+    requestsPerTenMinutes: env.CHAT_REQUESTS_PER_TEN_MINUTES,
+    modelAnswersPerTenMinutes: env.MODEL_ANSWERS_PER_TEN_MINUTES,
+    dailyModelTokens: env.MODEL_DAILY_TOKENS,
+  }));
+
+export type AssistantSettings = z.output<typeof assistantSettingsSchema>;
+
+export function assistantSettings(): AssistantSettings {
+  return assistantSettingsSchema.parse(process.env);
 }
 
 /**

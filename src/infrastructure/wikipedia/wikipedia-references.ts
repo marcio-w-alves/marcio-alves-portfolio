@@ -6,7 +6,9 @@ const TIMEOUT_MS = 4000;
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 // Wikimedia asks clients to identify themselves; a URL is enough contact.
-export const USER_AGENT = 'MarcioAlvesPortfolio/1.0 (https://marciomariani.dev)';
+export function userAgent(siteUrl: URL): string {
+  return `MarcioAlvesPortfolio/1.0 (${siteUrl.origin})`;
+}
 
 interface SummaryPayload {
   readonly type?: string;
@@ -15,12 +17,16 @@ interface SummaryPayload {
   readonly content_urls?: { readonly desktop?: { readonly page?: string } };
 }
 
-async function fetchSummary(title: string, timeoutMs: number): Promise<ReferenceSummary | null> {
+async function fetchSummary(
+  title: string,
+  agent: string,
+  timeoutMs: number,
+): Promise<ReferenceSummary | null> {
   try {
     const response = await fetch(
       SUMMARY_ENDPOINT + encodeURIComponent(title.replaceAll(' ', '_')),
       {
-        headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' },
+        headers: { 'User-Agent': agent, Accept: 'application/json' },
         signal: AbortSignal.timeout(timeoutMs),
       },
     );
@@ -42,6 +48,18 @@ async function fetchSummary(title: string, timeoutMs: number): Promise<Reference
   }
 }
 
-export function createWikipediaReferences({ timeoutMs = TIMEOUT_MS } = {}): ReferencePort {
-  return { summary: cacheSuccesses(CACHE_TTL_MS, (title) => fetchSummary(title, timeoutMs)) };
+interface WikipediaOptions {
+  /** The site making the requests, named in the User-Agent as its contact. */
+  readonly siteUrl: URL;
+  readonly timeoutMs?: number;
+}
+
+export function createWikipediaReferences({
+  siteUrl,
+  timeoutMs = TIMEOUT_MS,
+}: WikipediaOptions): ReferencePort {
+  const agent = userAgent(siteUrl);
+  return {
+    summary: cacheSuccesses(CACHE_TTL_MS, (title) => fetchSummary(title, agent, timeoutMs)),
+  };
 }

@@ -1,7 +1,9 @@
 import { delay, http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { createWikipediaReferences, USER_AGENT } from './wikipedia-references';
+import { createWikipediaReferences } from './wikipedia-references';
+
+const SITE = new URL('https://portfolio.example');
 
 const SUMMARY = 'https://en.wikipedia.org/api/rest_v1/page/summary/:title';
 const server = setupServer();
@@ -36,12 +38,12 @@ describe('Wikipedia references', () => {
         return HttpResponse.json(article('TypeScript'));
       }),
     );
-    expect(await createWikipediaReferences().summary('TypeScript')).toEqual({
+    expect(await createWikipediaReferences({ siteUrl: SITE }).summary('TypeScript')).toEqual({
       title: 'TypeScript',
       extract: 'TypeScript is described here.',
       url: 'https://en.wikipedia.org/wiki/TypeScript',
     });
-    expect(userAgent).toBe(USER_AGENT);
+    expect(userAgent).toBe('MarcioAlvesPortfolio/1.0 (https://portfolio.example)');
     expect(requested).toBe('TypeScript');
   });
 
@@ -53,18 +55,20 @@ describe('Wikipedia references', () => {
         return HttpResponse.json(article('React (software)'));
       }),
     );
-    await createWikipediaReferences().summary('React (software)');
+    await createWikipediaReferences({ siteUrl: SITE }).summary('React (software)');
     expect(decodeURIComponent(requested)).toBe('React_(software)');
   });
 
   it('treats a disambiguation page as no article, since it describes nothing', async () => {
     server.use(http.get(SUMMARY, () => HttpResponse.json(article('Deel', 'disambiguation'))));
-    expect(await createWikipediaReferences().summary('Deel')).toBeNull();
+    expect(await createWikipediaReferences({ siteUrl: SITE }).summary('Deel')).toBeNull();
   });
 
   it('reports a missing article as unavailable', async () => {
     server.use(http.get(SUMMARY, () => HttpResponse.json({ type: 'not_found' }, { status: 404 })));
-    expect(await createWikipediaReferences().summary('Core Web Vitals')).toBeNull();
+    expect(
+      await createWikipediaReferences({ siteUrl: SITE }).summary('Core Web Vitals'),
+    ).toBeNull();
   });
 
   it('gives up on a slow response instead of holding the answer open', async () => {
@@ -75,7 +79,9 @@ describe('Wikipedia references', () => {
       }),
     );
     const started = Date.now();
-    expect(await createWikipediaReferences({ timeoutMs: 50 }).summary('Redis')).toBeNull();
+    expect(
+      await createWikipediaReferences({ siteUrl: SITE, timeoutMs: 50 }).summary('Redis'),
+    ).toBeNull();
     expect(Date.now() - started).toBeLessThan(400);
   });
 
@@ -87,7 +93,7 @@ describe('Wikipedia references', () => {
         return HttpResponse.json(article('Next.js'));
       }),
     );
-    const references = createWikipediaReferences();
+    const references = createWikipediaReferences({ siteUrl: SITE });
     await references.summary('Next.js');
     await references.summary('Next.js');
     expect(requests).toBe(1);

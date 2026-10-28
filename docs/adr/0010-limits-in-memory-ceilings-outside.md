@@ -12,7 +12,8 @@ another dependency in every request.
 
 The limits are in memory, per server instance: 40 requests per IP per ten
 minutes (429 with `Retry-After`), 15 model answers per visitor per ten
-minutes, two million tokens per instance per day, a one-hour cache of answers
+minutes, two million tokens per instance per day (the first three are
+defaults a deployment can override through its environment), a one-hour cache of answers
 to history-free questions, a 32 KB body cap, and a circuit breaker on the
 model. They are defence in depth. The hard ceilings are outside the code: the
 provider's spending limit, and the platform's firewall if traffic ever needs

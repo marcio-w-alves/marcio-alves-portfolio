@@ -1,3 +1,4 @@
+import type { ModelBudgetPort } from '@/core/assistant/ports/model-budget.port';
 import { createAssistant, type AnswerReport, type Assistant } from '@/core/assistant/assistant';
 import {
   createModelAssistant,
@@ -9,13 +10,19 @@ import { createToolRegistry } from '@/core/assistant/tools/registry';
 import { createSearchTools } from '@/core/assistant/tools/search-tools';
 import { buildCorpus } from '@/core/knowledge/corpus';
 import { knowledgeBase } from '@/core/knowledge/knowledge-base';
-import { serverEnv, type ServerEnv } from '@/env';
+import {
+  assistantSettings,
+  serverEnv,
+  siteUrl,
+  type AssistantSettings,
+  type ServerEnv,
+} from '@/env';
 import { createAnswerCache } from '@/infrastructure/budget/answer-cache';
 import { createModelBudget } from '@/infrastructure/budget/model-budget';
 import { createGithubApi } from '@/infrastructure/github/github-api';
 import { createClientTagger } from '@/infrastructure/logging/client-tag';
 import { errorFields, logger } from '@/infrastructure/logging/logger';
-import { createOpenAIClient, OPENAI_TIMEOUT_MS } from '@/infrastructure/openai/openai-client';
+import { createOpenAIClient } from '@/infrastructure/openai/openai-client';
 import { createOpenAIEmbeddings } from '@/infrastructure/openai/openai-embeddings';
 import { createOpenAILanguageModel } from '@/infrastructure/openai/openai-language-model';
 import {
@@ -39,22 +46,11 @@ import { createWikipediaReferences } from '@/infrastructure/wikipedia/wikipedia-
  * depends on. Nothing under `src/core` may import from here.
  */
 
-const CHAT_MODEL = 'gpt-4o-mini';
 // Low but not zero: answers stay close to the action results without reading
 // like a form letter.
 const TEMPERATURE = 0;
 
 const TEN_MINUTES = 10 * 60 * 1000;
-/** Any request, fast path included: enough for a curious visitor, not for a script. */
-const REQUESTS_PER_TEN_MINUTES = 40;
-/** Model answers specifically, the part that costs money. */
-const MODEL_ANSWERS_PER_TEN_MINUTES = 15;
-/**
- * Roughly two hundred model answers a day per instance — about US$0.35 at
- * gpt-4o-mini prices. Per instance, so the hard ceiling is the spending limit
- * set on the OpenAI project itself.
- */
-const DAILY_MODEL_TOKENS = 2_000_000;
 
 /** What the health check may say about the model: whether it is configured, and whether it is reachable. */
 export interface ModelStatus {
@@ -85,14 +81,16 @@ function reportRateLimited(clientId: string): void {
   logger.warn('chat.rate_limited', { client: tagClient(clientId) });
 }
 
-const budget = createModelBudget({
-  answersPerWindow: MODEL_ANSWERS_PER_TEN_MINUTES,
-  windowMs: TEN_MINUTES,
-  dailyTokens: DAILY_MODEL_TOKENS,
-  onExhausted: () => {
-    logger.warn('model.budget_exhausted', { dailyTokens: DAILY_MODEL_TOKENS });
-  },
-});
+function createBudget(settings: AssistantSettings): ModelBudgetPort {
+  return createModelBudget({
+    answersPerWindow: settings.modelAnswersPerTenMinutes,
+    windowMs: TEN_MINUTES,
+    dailyTokens: settings.dailyModelTokens,
+    onExhausted: () => {
+      logger.warn('model.budget_exhausted', { dailyTokens: settings.dailyModelTokens });
+    },
+  });
+}
 
 function createModelCircuitBreaker(): CircuitBreaker {
   return createCircuitBreaker({
@@ -118,14 +116,22 @@ interface GuardedModelAssistant {
 export interface ContainerOptions extends Observers {
   /** Defaults to the validated process environment. */
   readonly env?: ServerEnv;
+  /** Defaults to the settings in the process environment. */
+  readonly settings?: AssistantSettings;
   /** How long an OpenAI call may wait for a response, or go quiet in the middle of one. */
   readonly openAITimeoutMs?: number;
 }
 
+interface ModelWiring {
+  readonly apiKey: string;
+  readonly githubToken: string | undefined;
+  readonly chatModel: string;
+  readonly openAITimeoutMs: number;
+  readonly budget: ModelBudgetPort;
+}
+
 function buildModelAssistant(
-  apiKey: string,
-  githubToken: string | undefined,
-  openAITimeoutMs: number,
+  { apiKey, githubToken, chatModel, openAITimeoutMs, budget }: ModelWiring,
   observers: Observers,
 ): GuardedModelAssistant {
   const client = createOpenAIClient(apiKey, { timeoutMs: openAITimeoutMs });
@@ -144,13 +150,16 @@ function buildModelAssistant(
   });
   const tools = createToolRegistry([
     ...createSearchTools(search),
-    ...createExternalTools({ references: createWikipediaReferences(), github }),
+    ...createExternalTools({
+      references: createWikipediaReferences({ siteUrl: siteUrl() }),
+      github,
+    }),
   ]);
   const breaker = createModelCircuitBreaker();
   const model = withCircuitBreaker(
     createOpenAILanguageModel({
       client,
-      model: CHAT_MODEL,
+      model: chatModel,
       temperature: TEMPERATURE,
       idleTimeoutMs: openAITimeoutMs,
     }),
@@ -175,13 +184,24 @@ function buildModelAssistant(
  */
 export function buildContainer({
   env = serverEnv(),
-  openAITimeoutMs = OPENAI_TIMEOUT_MS,
+  settings = assistantSettings(),
+  openAITimeoutMs = settings.openAITimeoutMs,
   ...observers
 }: ContainerOptions = {}): Container {
+  const budget = createBudget(settings);
   // Without a credential the site still answers everything the fast path
   // recognizes, and says plainly what it cannot.
   const model = env.OPENAI_API_KEY
-    ? buildModelAssistant(env.OPENAI_API_KEY, env.GITHUB_TOKEN, openAITimeoutMs, observers)
+    ? buildModelAssistant(
+        {
+          apiKey: env.OPENAI_API_KEY,
+          githubToken: env.GITHUB_TOKEN,
+          chatModel: settings.chatModel,
+          openAITimeoutMs,
+          budget,
+        },
+        observers,
+      )
     : null;
   return {
     assistant: createAssistant({
@@ -199,7 +219,7 @@ export function buildContainer({
       circuit: model?.breaker.state() ?? null,
     }),
     requestLimiter: createSlidingWindowLimiter({
-      limit: REQUESTS_PER_TEN_MINUTES,
+      limit: settings.requestsPerTenMinutes,
       windowMs: TEN_MINUTES,
     }),
   };

@@ -174,7 +174,8 @@ past that) and start 15 model answers; a visitor over the second limit gets a
 free answer explaining it, with suggestions the fast path answers. A
 context-free question already answered is replayed from cache, at no cost and
 without counting against the visitor. Each instance also stops calling the
-model after about two million tokens a UTC day.
+model after about two million tokens a UTC day. Each of these numbers is a
+default a deployment can change through its environment (see `.env.example`).
 
 All of that is in memory, so per instance: defence in depth, not a quota. The
 hard ceiling is the monthly budget set on the OpenAI project, which is where
@@ -406,7 +407,12 @@ open range — the documented form Vercel resolves, and the honest one for a
 project that pins every other version.
 
 Environment variables are set in the Vercel project, never committed.
-`.env.example` is the list, and `OPENAI_API_KEY` is server-side only: a model
+`.env.example` is the list: the secrets, the canonical origin, and the
+operational settings (the chat model, the OpenAI timeout and the limits
+above), each with a default, so a deployment only sets what it changes. An
+invalid number fails the first request loudly instead of silently disabling a
+limit. The embedding model is not among them: the committed index was built
+with it. `OPENAI_API_KEY` is server-side only: a model
 credential behind a `NEXT_PUBLIC_` prefix would be readable by every visitor.
 
 ## Observability

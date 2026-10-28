@@ -88,3 +88,15 @@ describe('production logs of a chat request', () => {
     expect(logs.lines.join('\n')).not.toContain(VISITOR_IP);
   });
 });
+
+describe('limits set by the deployment', () => {
+  it('turns visitors away once they pass the request limit in the environment', async () => {
+    captureLogs();
+    vi.stubEnv('CHAT_REQUESTS_PER_TEN_MINUTES', '2');
+    const handle = createChatHandler(buildContainer());
+
+    expect((await ask(handle, 'hi')).status).toBe(200);
+    expect((await ask(handle, 'hi')).status).toBe(200);
+    expect((await ask(handle, 'hi')).status).toBe(429);
+  });
+});
