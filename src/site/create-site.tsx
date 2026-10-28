@@ -30,7 +30,7 @@ interface ImageSize {
  * re-export what this returns, so any profile that validates renders a site.
  */
 export function createSite(profile: SiteProfile, { fontClassName, siteUrl }: SiteOptions) {
-  const content = createSiteContent(profile.knowledge);
+  const content = createSiteContent(profile.knowledge, profile.copy.en.answers);
   const { knowledge } = content;
 
   function RootLayout({ children }: { readonly children: ReactNode }) {

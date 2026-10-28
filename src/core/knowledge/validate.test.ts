@@ -113,7 +113,7 @@ describe('validating a record', () => {
           { name: 'Another course', issuer: 'Guild', source: 'cv.skills' },
         ],
       },
-      ['certifications', 1, 'source'],
+      ['certifications', fixtureKnowledge.certifications.length, 'source'],
     ],
     [
       'languages split across sources, though they are cited as one section',

@@ -24,6 +24,7 @@ const metricSchema = z.strictObject({
 const roleSchema = z.strictObject({
   id: text,
   company: text,
+  aliases: z.array(text).optional(),
   role: text,
   period: text,
   start: z.number(),
@@ -37,6 +38,7 @@ const roleSchema = z.strictObject({
   metrics: z.array(text),
   highlights: texts.min(1),
   source: text,
+  reference: z.strictObject({ encyclopediaTitle: text }).optional(),
 });
 
 const projectSchema = z.strictObject({
@@ -139,7 +141,11 @@ const knowledgeSchema = z.strictObject({
   sourceLabels: z.record(z.string(), localized),
   notes: z.strictObject({
     source: text,
+    guide: text,
     passages: z.array(z.strictObject({ id: text, text })),
+  }),
+  references: z.strictObject({
+    technologies: z.record(z.string(), text.nullable()),
   }),
 });
 

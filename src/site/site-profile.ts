@@ -1,3 +1,4 @@
+import type { AnswerSet } from '@/core/assistant/answer-set';
 import type { KnowledgeSource } from '@/core/knowledge/schema';
 
 /** Every colour of the design, each `--color-<token>` in the stylesheet. */
@@ -43,4 +44,5 @@ export interface Brand {
 export interface SiteProfile {
   readonly knowledge: KnowledgeSource;
   readonly brand: Brand;
+  readonly copy: { readonly en: { readonly answers: AnswerSet } };
 }

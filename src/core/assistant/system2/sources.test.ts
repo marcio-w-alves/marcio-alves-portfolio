@@ -2,45 +2,44 @@ import { describe, expect, it } from 'vitest';
 import { buildCorpus, type KnowledgeChunk } from '@/core/knowledge/corpus';
 import { localize } from '@/core/knowledge/localize';
 import type { Knowledge } from '@/core/knowledge/schema';
-import { profile } from '@/profile';
 import { fixtureKnowledge } from '@/testing/fixture-profile/knowledge';
 import { createCitation } from '../citations';
 import { evidenceOf, usedSources, type SourceEvidence } from './sources';
 
-const DEEL = { id: 'resume.deel', label: 'Resume' };
-const ROOTS = { id: 'resume.roots', label: 'Resume' };
-const EDUCATION = { id: 'resume.education', label: 'Resume' };
+const ACME = { id: 'cv.acme', label: 'CV' };
+const GLOBEX = { id: 'cv.globex', label: 'CV' };
+const EDUCATION = { id: 'cv.education', label: 'CV' };
 const NOTES = { id: 'notes', label: 'Knowledge base' };
 
-const HRIS_LEAD: SourceEvidence = {
-  source: DEEL,
-  text: "Deel (Senior Frontend Engineer, 2022 — 2026): Helped lead and maintain the HRIS team responsible for the company's core HR tools product.",
+const PAYROLL_LEAD: SourceEvidence = {
+  source: ACME,
+  text: "Acme (Principal Platform Engineer, 2022 — Present): Helped lead and maintain the payroll team responsible for the company's core HR tools product.",
 };
-const ROOTS_TEAM: SourceEvidence = {
-  source: ROOTS,
-  text: 'Roots (Lead Frontend Engineer, 2020 — 2022): Expanded the frontend team from a solo developer setup by recruiting and integrating three additional developers.',
+const GLOBEX_TEAM: SourceEvidence = {
+  source: GLOBEX,
+  text: 'Globex (Senior Platform Engineer, 2018 — 2022): Expanded the frontend team from a solo developer setup by recruiting and integrating three additional developers.',
 };
 const DEGREE: SourceEvidence = {
   source: EDUCATION,
   text: 'Education: Bachelor of Computer Science, completed in 2015.',
 };
 const FASTER_PAGES: SourceEvidence = {
-  source: DEEL,
+  source: ACME,
   text: 'reduced loading time on critical pages through targeted refactoring and optimization.',
 };
 
 describe('usedSources — the evidence an answer drew on', () => {
   it('keeps a source whose company the answer names, in another language than the record', () => {
     const answer =
-      'Sim. Na Deel, ele ajudou a liderar a equipe de HRIS; na Roots, expandiu a equipe de frontend de um para quatro desenvolvedores.';
+      'Sim. Na Acme, ele ajudou a liderar a equipe de payroll; na Globex, expandiu a equipe de frontend de um para quatro desenvolvedores.';
 
-    expect(usedSources(answer, [HRIS_LEAD, DEGREE, ROOTS_TEAM])).toEqual([DEEL, ROOTS]);
+    expect(usedSources(answer, [PAYROLL_LEAD, DEGREE, GLOBEX_TEAM])).toEqual([ACME, GLOBEX]);
   });
 
   it('keeps a source whose evidence the answer paraphrases', () => {
     const answer = 'he cut the loading time on critical pages through targeted refactoring.';
 
-    expect(usedSources(answer, [FASTER_PAGES, DEGREE])).toEqual([DEEL]);
+    expect(usedSources(answer, [FASTER_PAGES, DEGREE])).toEqual([ACME]);
   });
 
   it('drops a source that shares a single run of words with the answer', () => {
@@ -62,13 +61,13 @@ describe('usedSources — the evidence an answer drew on', () => {
   it('does not take a capitalized word that opens a line for a name', () => {
     const answer = 'He joined in 2022.\nDeel was where he worked.';
 
-    expect(usedSources(answer, [HRIS_LEAD, DEGREE])).toEqual([]);
+    expect(usedSources(answer, [PAYROLL_LEAD, DEGREE])).toEqual([]);
   });
 
   it('cites a source once, however many of its passages the answer used', () => {
-    const answer = 'At Deel he cut loading time on critical pages through targeted refactoring.';
+    const answer = 'At Acme he cut loading time on critical pages through targeted refactoring.';
 
-    expect(usedSources(answer, [HRIS_LEAD, FASTER_PAGES])).toEqual([DEEL]);
+    expect(usedSources(answer, [PAYROLL_LEAD, FASTER_PAGES])).toEqual([ACME]);
   });
 });
 
@@ -76,11 +75,11 @@ describe('evidenceOf — what each source of a result vouches for', () => {
   it('takes the text the action attributed to each source', () => {
     const result = {
       data: { passages: [] },
-      sources: [DEEL, ROOTS],
-      evidence: { 'resume.deel': HRIS_LEAD.text, 'resume.roots': ROOTS_TEAM.text },
+      sources: [ACME, GLOBEX],
+      evidence: { 'cv.acme': PAYROLL_LEAD.text, 'cv.globex': GLOBEX_TEAM.text },
     };
 
-    expect(evidenceOf(result)).toEqual([HRIS_LEAD, ROOTS_TEAM]);
+    expect(evidenceOf(result)).toEqual([PAYROLL_LEAD, GLOBEX_TEAM]);
   });
 
   it("backs a source the action did not attribute with the result's values, not its field names", () => {
@@ -134,36 +133,5 @@ describe('usedSources — names shared by several sources do not count', () => {
     const answer = `Before that ${firstName} studied at the Universidade do Porto.`;
 
     expect(usedSources(answer, EVERY_SOURCE).map(({ id }) => id)).toEqual(['cv.education']);
-  });
-});
-
-// The owner's own record: what a leadership search returns there is what FR-35 is about.
-describe('usedSources — for what a leadership search returns from the record', () => {
-  const retrieved = evidenceFrom(localize(profile.knowledge, 'en'), [
-    'notes:14.q6',
-    'skills:leadership',
-    'notes:8.1',
-    'role:deel:1',
-    'notes:8',
-    'education',
-    'role:roots:1',
-    'role:roots:2',
-  ]);
-
-  it('cites the roles an English answer paraphrases, not the skill list or the degree', () => {
-    const answer =
-      'Yes. At Deel he helped lead and maintain the HRIS team responsible for the core HR tools product; at Roots he expanded the frontend team from a solo developer setup by recruiting and integrating three developers.';
-
-    expect(usedSources(answer, retrieved).map(({ id }) => id)).toEqual([
-      'resume.deel',
-      'resume.roots',
-    ]);
-  });
-
-  it('cites the note a Portuguese answer paraphrases, not the skill list or the degree', () => {
-    const answer =
-      'Sim. Na Roots, ajudou a expandir a equipe frontend de um para quatro engenheiros e coordenou entregas. Na Deel, ajudou a liderar e manter o time de HRIS.';
-
-    expect(usedSources(answer, retrieved).map(({ id }) => id)).toEqual(['notes']);
   });
 });

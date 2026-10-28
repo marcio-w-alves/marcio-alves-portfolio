@@ -1,14 +1,15 @@
 import { describe, expect, it } from 'vitest';
+import type { ConversationContext, ResponsePart } from '@/core/assistant/response';
+import { createResponseKit } from '@/core/assistant/response-kit';
+import { createFastPath } from '@/core/assistant/system1/fast-path';
+import { createTopicCatalog } from '@/core/assistant/topics';
 import { localize } from '@/core/knowledge/localize';
 import { profile } from '@/profile';
-import type { ConversationContext, ResponsePart } from '../response';
-import { createResponseKit } from '../response-kit';
-import { createTopicCatalog } from '../topics';
-import { createFastPath } from './fast-path';
 
 const knowledge = localize(profile.knowledge, 'en');
-const { topics } = createTopicCatalog(createResponseKit(knowledge));
-const fastPath = createFastPath(knowledge).answer;
+const { answers } = profile.copy.en;
+const { topics } = createTopicCatalog(answers.topics(createResponseKit(knowledge)));
+const fastPath = createFastPath(knowledge, answers).answer;
 
 // Temporary safety net: deleted in POR-54 once the answers have moved to the
 // profile and still match it byte for byte.

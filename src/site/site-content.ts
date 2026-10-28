@@ -1,3 +1,4 @@
+import type { AnswerSet } from '@/core/assistant/answer-set';
 import { createResponseKit, type ResponseKit } from '@/core/assistant/response-kit';
 import { createTopicIntro, type TopicIntro } from '@/core/assistant/topic-pages';
 import { createTopicCatalog, type TopicCatalog, type TopicId } from '@/core/assistant/topics';
@@ -12,14 +13,14 @@ export interface SiteContent {
   readonly topicIntro: (topic: TopicId) => TopicIntro;
 }
 
-export function createSiteContent(source: KnowledgeSource): SiteContent {
+export function createSiteContent(source: KnowledgeSource, answers: AnswerSet): SiteContent {
   const knowledge = localize(source, 'en');
   const responseKit = createResponseKit(knowledge);
-  const topicCatalog = createTopicCatalog(responseKit);
+  const topicCatalog = createTopicCatalog(answers.topics(responseKit));
   return {
     knowledge,
     responseKit,
     topicCatalog,
-    topicIntro: createTopicIntro(responseKit, topicCatalog),
+    topicIntro: createTopicIntro(topicCatalog),
   };
 }

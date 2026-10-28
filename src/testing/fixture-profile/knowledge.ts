@@ -56,11 +56,18 @@ export const fixtureKnowledge: KnowledgeSource = {
       context: 'Globex',
       source: 'cv.globex',
     },
+    'globex-team': {
+      value: '2 → 6',
+      label: en('Platform team grown'),
+      context: 'Globex',
+      source: 'cv.globex',
+    },
   },
   experience: [
     {
       id: 'acme',
       company: 'Acme',
+      aliases: ['Acme Corp'],
       role: 'Principal Platform Engineer',
       period: '2022 — Present',
       start: 2022,
@@ -74,6 +81,7 @@ export const fixtureKnowledge: KnowledgeSource = {
       metrics: ['acme-build-time'],
       highlights: [en('Cut build times by 40% with remote caching.')],
       source: 'cv.acme',
+      reference: { encyclopediaTitle: 'Acme Corporation' },
     },
     {
       id: 'globex',
@@ -88,7 +96,7 @@ export const fixtureKnowledge: KnowledgeSource = {
       leadership: [],
       achievements: [en('Tripled daily deploys.')],
       focus: [en('Continuous delivery')],
-      metrics: ['globex-deploys'],
+      metrics: ['globex-deploys', 'globex-team'],
       highlights: [en('Tripled daily deploys with a new pipeline.')],
       source: 'cv.globex',
     },
@@ -126,6 +134,7 @@ export const fixtureKnowledge: KnowledgeSource = {
   ],
   certifications: [
     { name: 'Certified Platform Engineer', issuer: 'Platform Guild', source: 'cv.courses' },
+    { name: 'Terraform Basics', issuer: 'Cloud Academy', source: 'cv.courses' },
   ],
   projects: [
     {
@@ -227,9 +236,19 @@ export const fixtureKnowledge: KnowledgeSource = {
   },
   notes: {
     source: 'notes',
+    guide: 'Passages marked [ADA] are her own account, not verified fact.',
     passages: [
       { id: '1', text: 'Notes — Platform:\nAda reports she migrated three monorepos to Bazel.' },
       { id: '2', text: 'Notes — Studies:\nAda studies Nix for reproducible builds.' },
+      { id: '3', text: 'Notes — Tooling:\nAda reports she runs the CI agents on Docker.' },
     ],
+  },
+  references: {
+    technologies: {
+      Bazel: 'Bazel (software)',
+      Go: 'Go (programming language)',
+      Terraform: 'Terraform (software)',
+      Nix: null,
+    },
   },
 };

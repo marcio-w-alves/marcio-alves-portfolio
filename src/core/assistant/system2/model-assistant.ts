@@ -13,7 +13,7 @@ import type { ToolOutcome } from '../tools/tool';
 import { createLinkAllowList, createLinkFilter, urlsIn, type LinkAllowList } from './link-filter';
 import { createOfferFilter } from './offer-filter';
 import { distinct, evidenceOf, usedSources, type SourceEvidence } from './sources';
-import { systemPrompt } from './system-prompt';
+import { systemPrompt, type PromptSubject } from './system-prompt';
 import { createUsageMeter } from './usage';
 
 /**
@@ -57,6 +57,8 @@ interface Options {
   readonly model: LanguageModelPort;
   readonly tools: ToolRegistry;
   readonly clock: ClockPort;
+  /** Who the answers are about. */
+  readonly subject: PromptSubject;
   /**
    * Addresses an answer may always link to — the record's own. Any other
    * must have come back from an action during that answer.
@@ -100,11 +102,11 @@ function pageMessage(page: ModelAssistantRequest['page']): ModelMessage[] {
 function startMessages(
   question: string,
   history: readonly HistoryTurn[],
-  now: Date,
+  instructions: string,
   page: ModelAssistantRequest['page'],
 ): ModelMessage[] {
   return [
-    { role: 'system', content: systemPrompt(now) },
+    { role: 'system', content: instructions },
     ...pageMessage(page),
     ...history.slice(-HISTORY_TURNS).map((turn): ModelMessage => ({
       role: turn.role,
@@ -145,9 +147,9 @@ const MAX_QUERY = 300;
  * decline made without a search is replaced by the passages. Below it the
  * decline stands: handed weakly related passages, the model wrote "not
  * documented" without declining and cited them. Calibrated on real
- * embeddings: answerable questions (his dogs, the Roots backend, MongoDB)
- * scored 0.53–0.74 and undocumented ones (GPA, salary, leaving Deel, Google)
- * 0.34–0.43.
+ * embeddings: answerable questions (his dogs, the backend of a former
+ * employer, MongoDB) scored 0.53–0.74 and undocumented ones (GPA, salary, why
+ * he left an employer, Google) 0.34–0.43.
  */
 const ANSWERABLE = 0.5;
 
@@ -174,8 +176,8 @@ function roundMessages(turn: ModelTurn, results: readonly ActionResult[]): Model
  * can be answered cleanly by the caller's fallback instead of leaving a
  * half-started reply.
  */
-function createReply(isLinkAllowed: (url: string) => boolean) {
-  const offers = createOfferFilter();
+function createReply(isLinkAllowed: (url: string) => boolean, subject: PromptSubject) {
+  const offers = createOfferFilter({ subjectNames: [subject.firstName, subject.name] });
   const links = createLinkFilter(isLinkAllowed);
   let started = false;
   let wroteText = false;
@@ -283,6 +285,7 @@ export function createModelAssistant({
   model,
   tools,
   clock,
+  subject,
   knownUrls = [],
   onUsage,
   onToolResult,
@@ -338,7 +341,7 @@ export function createModelAssistant({
 
   // The prompt asks for a search before anything is called not documented,
   // and the model still skips it after a narrower action comes back empty
-  // ("did he work on the Roots backend?" once went getTechnologyEvidence →
+  // ("did he work on <an employer>'s backend?" once went getTechnologyEvidence →
   // decline, while his notes answer it), or calls it private ("what are his
   // dogs called?", which he chose to share). Sending the decline back was not
   // enough — the model then answered without searching — so the search runs
@@ -386,9 +389,10 @@ export function createModelAssistant({
 
   return {
     async *answer({ question, history, followUps, page }, signal) {
-      const messages = startMessages(question, history, clock.now(), page);
+      const instructions = systemPrompt(clock.now(), subject);
+      const messages = startMessages(question, history, instructions, page);
       const linkable = createLinkAllowList(knownUrls);
-      const reply = createReply((url) => linkable.allows(url));
+      const reply = createReply((url) => linkable.allows(url), subject);
       const effects = collectEffects(page?.cards ?? []);
       let searched = false;
       let answer = '';

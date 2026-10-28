@@ -23,8 +23,7 @@ export function createKnowledgeTools(kit: ResponseKit): Tool[] {
 
   const getProfileSummary = defineTool({
     name: 'getProfileSummary',
-    description:
-      "Marcio's professional summary: title, years of experience, specializations, focus, and where he is based.",
+    description: `${profile.firstName}'s professional summary: title, years of experience, specializations, focus, and where he is based.`,
     input: {},
     execute: () => ({
       data: {
@@ -47,8 +46,7 @@ export function createKnowledgeTools(kit: ResponseKit): Tool[] {
 
   const getExperience = defineTool({
     name: 'getExperience',
-    description:
-      "Marcio's roles, newest first, with the resume's own statements for each. Pass a company to get only that role.",
+    description: `${profile.firstName}'s roles, newest first, with the resume's own statements for each. Pass a company to get only that role.`,
     input: {
       company: roleIds.optional().describe('Limit the result to one role.'),
     },
@@ -103,8 +101,7 @@ export function createKnowledgeTools(kit: ResponseKit): Tool[] {
 
   const getTechnologyEvidence = defineTool({
     name: 'getTechnologyEvidence',
-    description:
-      "Where a technology appears in Marcio's record: professional work, listed skills, or coursework only. Use it before saying whether he has used something.",
+    description: `Where a technology appears in ${profile.firstName}'s record: professional work, listed skills, or coursework only. Use it before saying whether he has used something.`,
     input: { technology: z.string().trim().min(1).max(60) },
     execute: ({ technology }) => evidenceReport(technology),
   });
@@ -142,7 +139,7 @@ export function createKnowledgeTools(kit: ResponseKit): Tool[] {
 
   const getContactChannels = defineTool({
     name: 'getContactChannels',
-    description: 'How to reach Marcio. A phone number is never shared.',
+    description: `How to reach ${profile.firstName}. A phone number is never shared.`,
     input: {},
     execute: () => ({
       data: {

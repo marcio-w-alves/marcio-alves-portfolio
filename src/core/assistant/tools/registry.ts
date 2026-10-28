@@ -6,7 +6,7 @@ import { defineTool, type Tool, type ToolFailure, type ToolOutcome } from './too
 
 /**
  * Declining is an action like any other, so an answer that falls outside what
- * Marcio documented is recorded as such — measurably — instead of being
+ * the owner documented is recorded as such — measurably — instead of being
  * indistinguishable from a grounded one.
  */
 const declineToAnswer = defineTool({

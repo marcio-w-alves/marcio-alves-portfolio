@@ -35,7 +35,7 @@ describe('homeMetadata', () => {
 
 describe('topicMetadata', () => {
   // The topics' labels and introductions are still written for the owner's record.
-  const content = createSiteContent(profile.knowledge);
+  const content = createSiteContent(profile.knowledge, profile.copy.en.answers);
 
   it.each(TOPIC_IDS.filter((id) => id !== 'overview'))(
     'titles the %s page with its topic and points it at its own address',

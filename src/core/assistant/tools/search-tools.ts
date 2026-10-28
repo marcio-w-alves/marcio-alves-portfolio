@@ -96,7 +96,7 @@ export function createSearchTools(
   const searchKnowledge = defineTool({
     name: SEARCH_KNOWLEDGE,
     description:
-      "Semantic search over Marcio's documented record — his résumé, plus his knowledge-base notes on how he works, system design, AI-assisted engineering, studies, own products, goals and interests — for questions no specific action covers. Returns the matching passages; an empty result means the record does not cover the question.",
+      'Semantic search over his documented record — his résumé, plus his knowledge-base notes on how he works, system design, AI-assisted engineering, studies, own products, goals and interests — for questions no specific action covers. Returns the matching passages; an empty result means the record does not cover the question.',
     input: {
       query: z.string().trim().min(2).max(300),
     },

@@ -5,7 +5,7 @@ import { profile } from '@/profile';
 import { createSiteContent } from '@/site/site-content';
 import { SuggestedQuestions } from './suggested-questions';
 
-const { topicCatalog } = createSiteContent(profile.knowledge);
+const { topicCatalog } = createSiteContent(profile.knowledge, profile.copy.en.answers);
 
 const welcomeChoices = topicCatalog
   .suggestedQuestions('overview', 0, 4)

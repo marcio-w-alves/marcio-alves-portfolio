@@ -1,7 +1,7 @@
 import type { Knowledge } from '@/core/knowledge/schema';
 
 /**
- * Technologies visitors ask about. Whether Marcio has used one is decided by
+ * Technologies visitors ask about. Whether the owner has used one is decided by
  * searching the record, not by a list of what is "undocumented" — such a list
  * had already contradicted the resume once, about Kotlin and testing.
  *

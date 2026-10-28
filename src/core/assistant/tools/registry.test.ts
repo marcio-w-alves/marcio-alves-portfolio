@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { localize } from '@/core/knowledge/localize';
-import { profile } from '@/profile';
 import { fixtureKnowledge } from '@/testing/fixture-profile/knowledge';
 import { createResponseKit } from '../response-kit';
 import type { GithubPort } from '../ports/github.port';
@@ -12,7 +11,7 @@ function rethrow(error: unknown): never {
   throw error;
 }
 
-const kit = createResponseKit(localize(profile.knowledge, 'en'));
+const kit = createResponseKit(localize(fixtureKnowledge, 'en'));
 const registry = createToolRegistry({ kit, reportError: rethrow });
 
 function succeeded(outcome: ToolOutcome): ToolResult {
@@ -59,10 +58,10 @@ describe('tool registry — the allow-list', () => {
     ['no arguments at all', undefined],
     ['null', null],
     ['an array', []],
-    ['a string', 'deel'],
+    ['a string', 'acme'],
     ['a number', 7],
     ['a company of the wrong type', { company: 1 }],
-    ['an extra key next to a valid one', { company: 'deel', role: 'admin' }],
+    ['an extra key next to a valid one', { company: 'acme', role: 'admin' }],
     ['a smuggled prototype', JSON.parse('{"__proto__": {"admin": true}}') as unknown],
   ])('rejects %s as arguments instead of running the action', async (_label, args) => {
     const outcome = await registry.run('getExperience', args);
@@ -155,62 +154,58 @@ describe('tool registry — the allow-list', () => {
 
 describe('knowledge actions', () => {
   it("returns a role's resume statements verbatim, with its source", async () => {
-    const result = succeeded(await registry.run('getExperience', { company: 'deel' }));
+    const result = succeeded(await registry.run('getExperience', { company: 'acme' }));
     expect(result.data).toEqual([
       expect.objectContaining({
-        company: 'Deel',
-        statements: expect.arrayContaining([
-          'Reduced loading time on critical pages by 50% through targeted refactoring and optimization, decreasing People List page load time from six seconds to three seconds on cold run.',
-        ]) as unknown,
+        company: 'Acme',
+        statements: ['Cut build times by 40% with remote caching.'],
       }),
     ]);
-    expect(result.sources).toEqual([{ id: 'resume.deel', label: 'Resume' }]);
+    expect(result.sources).toEqual([{ id: 'cv.acme', label: 'CV' }]);
   });
 
   it('returns only the metrics produced at the company asked about', async () => {
-    const metrics = (await data('getAchievementMetrics', { company: 'roots' })) as { id: string }[];
-    expect(metrics.map((metric) => metric.id)).toEqual(['roots-team']);
+    const metrics = (await data('getAchievementMetrics', { company: 'globex' })) as {
+      id: string;
+    }[];
+    expect(metrics.map((metric) => metric.id)).toEqual(['globex-deploys', 'globex-team']);
   });
 
   it('gives the city he says he lives in', async () => {
     expect(await data('getProfileSummary')).toMatchObject({
-      location: { country: 'Brazil', city: 'João Pessoa, Paraíba' },
+      location: { country: 'Portugal', city: 'Porto' },
     });
   });
 
   it('never exposes a phone number among the contact channels', async () => {
     const channels = JSON.stringify(await data('getContactChannels'));
     expect(channels).not.toMatch(/\d{4,}/);
-    expect(channels).toContain('marcio.welben@gmail.com');
+    expect(channels).toContain('ada@rivera.example');
   });
 });
 
 describe('getTechnologyEvidence', () => {
   it.each([
-    ['Kotlin', 'documented'],
-    ['accessibility', 'documented'],
-    ['automated testing', 'documented'],
-    ['Angular', 'coursework only'],
-    ['Redux', 'coursework only'],
-    ['MongoDB', 'reported in his notes'],
-    ['Elasticsearch', 'reported in his notes'],
-    ['Rust', 'not documented'],
+    ['Bazel', 'documented'],
+    ['remote caching', 'documented'],
+    ['Terraform', 'coursework only'],
+    ['Docker', 'reported in his notes'],
+    ['Nix', 'reported in his notes'],
+    ['Scala', 'not documented'],
   ])('classifies %s as %s', async (technology, verdict) => {
     expect(await data('getTechnologyEvidence', { technology })).toMatchObject({ verdict });
   });
 
   it('hands over the note that reports a technology, with its tag, and cites the notes', async () => {
-    const result = succeeded(
-      await registry.run('getTechnologyEvidence', { technology: 'Cassandra' }),
-    );
+    const result = succeeded(await registry.run('getTechnologyEvidence', { technology: 'Docker' }));
     expect(result.data).toMatchObject({ professionalWork: [], listedSkills: [] });
     const { reportedInNotes } = result.data as { reportedInNotes: string[] };
-    expect(reportedInNotes.join('\n')).toMatch(/Cassandra[\s\S]*\[RELATO\]/);
-    expect(result.sources).toEqual([{ id: 'notes', label: 'Knowledge base' }]);
+    expect(reportedInNotes).toEqual(['Ada reports she runs the CI agents on Docker.']);
+    expect(result.sources).toEqual([{ id: 'notes', label: 'Notes' }]);
   });
 
   it('reads the technology without the spaces around it', async () => {
-    expect(await data('getTechnologyEvidence', { technology: '  Kotlin  ' })).toMatchObject({
+    expect(await data('getTechnologyEvidence', { technology: '  Bazel  ' })).toMatchObject({
       verdict: 'documented',
     });
   });
@@ -240,7 +235,7 @@ describe('getTechnologyEvidence', () => {
 
 describe('display actions', () => {
   it('resolves metric ids into cards on the server', async () => {
-    const result = succeeded(await registry.run('showMetrics', { ids: ['deel-people-list'] }));
+    const result = succeeded(await registry.run('showMetrics', { ids: ['acme-build-time'] }));
     expect(result.effect).toEqual({
       kind: 'display',
       component: {
@@ -248,9 +243,9 @@ describe('display actions', () => {
         props: {
           items: [
             {
-              value: '6s → 3s',
-              label: 'People List load time on a cold run',
-              context: 'Deel',
+              value: '40%',
+              label: 'Faster builds',
+              context: 'Acme',
             },
           ],
         },
@@ -260,11 +255,11 @@ describe('display actions', () => {
 
   it('cites the facts a card shows, since a card is an answer too', async () => {
     const metrics = succeeded(
-      await registry.run('showMetrics', { ids: ['deel-people-list', 'roots-team'] }),
+      await registry.run('showMetrics', { ids: ['acme-build-time', 'globex-team'] }),
     );
-    expect(metrics.sources.map((source) => source.id)).toEqual(['resume.deel', 'resume.roots']);
-    const timeline = succeeded(await registry.run('showTimeline', { companies: ['way2b1'] }));
-    expect(timeline.sources.map((source) => source.id)).toEqual(['resume.way2b1']);
+    expect(metrics.sources.map((source) => source.id)).toEqual(['cv.acme', 'cv.globex']);
+    const timeline = succeeded(await registry.run('showTimeline', { companies: ['initech'] }));
+    expect(timeline.sources.map((source) => source.id)).toEqual(['cv.initech']);
   });
 
   it('refuses a metric the knowledge base does not have', async () => {
@@ -283,12 +278,12 @@ describe('display actions', () => {
   });
 
   it('shows up to eight metrics on one card', async () => {
-    const eight = Array.from({ length: 8 }, () => 'deel-people-list');
+    const eight = Array.from({ length: 8 }, () => 'acme-build-time');
     expect((await registry.run('showMetrics', { ids: eight })).ok).toBe(true);
   });
 
   it('bounds how much a single card can show', async () => {
-    const many = Array.from({ length: 9 }, () => 'deel-people-list');
+    const many = Array.from({ length: 9 }, () => 'acme-build-time');
     expect((await registry.run('showMetrics', { ids: many })).ok).toBe(false);
   });
 });

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ZodError } from 'zod';
-import { fixtureBrand } from '@/testing/fixture-profile/brand';
-import { fixtureKnowledge } from '@/testing/fixture-profile/knowledge';
+import { fixtureAnswers, fixtureBrand, fixtureKnowledge } from '@/testing/fixture-profile';
 import { validateProfile, type Identity, type Profile } from './schema';
 
 const identity: Identity = {
@@ -24,6 +23,7 @@ const valid: Profile = {
   locales: ['en'],
   knowledge: fixtureKnowledge,
   brand: fixtureBrand,
+  copy: { en: { answers: fixtureAnswers } },
   evaluation: [],
 };
 

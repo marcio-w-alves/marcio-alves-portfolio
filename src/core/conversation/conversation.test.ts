@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { localize } from '@/core/knowledge/localize';
-import { profile } from '@/profile';
+import { fixtureAnswers, fixtureKnowledge } from '@/testing/fixture-profile';
 import type { AssistantEvent } from '../assistant/assistant-event';
 import { toEvents } from '../assistant/response';
 import { createResponseKit } from '../assistant/response-kit';
@@ -21,11 +21,10 @@ import {
 } from './conversation';
 import type { AssistantMessage, Conversation } from './messages';
 
-const knowledge = localize(profile.knowledge, 'en');
-const kit = createResponseKit(knowledge);
-const catalog = createTopicCatalog(kit);
-const topicIntro = createTopicIntro(kit, catalog);
-const fastPath = createFastPath(knowledge).answer;
+const knowledge = localize(fixtureKnowledge, 'en');
+const catalog = createTopicCatalog(fixtureAnswers.topics(createResponseKit(knowledge)));
+const topicIntro = createTopicIntro(catalog);
+const fastPath = createFastPath(knowledge, fixtureAnswers).answer;
 
 /** The events the server would stream for this question, from the real fast path. */
 function eventsFor(question: string, conversation: Conversation): AssistantEvent[] {
@@ -57,21 +56,21 @@ describe('asking a question', () => {
   it('adds the question and a pending answer', () => {
     const { conversation, answerId } = addExchange(
       createConversation(),
-      'What did he do at Roots?',
+      'What did she do at Globex?',
     );
     expect(conversation.messages.map((message) => message.role)).toEqual(['user', 'assistant']);
     expect(answer(conversation, answerId)).toMatchObject({
       status: 'pending',
-      question: 'What did he do at Roots?',
+      question: 'What did she do at Globex?',
     });
     expect(activeAnswer(conversation)?.id).toBe(answerId);
   });
 
   it('builds the answer from the streamed events and finishes it', () => {
-    const { conversation, answerId } = ask(createConversation(), "Tell me about Marcio's career.");
+    const { conversation, answerId } = ask(createConversation(), "Tell me about Ada's career.");
     const done = answer(conversation, answerId);
     expect(done.status).toBe('done');
-    expect(done.parts.some((part) => part.type === 'text' && part.text.includes('Way2b1'))).toBe(
+    expect(done.parts.some((part) => part.type === 'text' && part.text.includes('Acme'))).toBe(
       true,
     );
     expect(
@@ -102,7 +101,7 @@ describe('asking a question', () => {
   });
 
   it('remembers once the contact card has been shown', () => {
-    const { conversation } = ask(createConversation(), 'How can I contact Marcio?');
+    const { conversation } = ask(createConversation(), 'How can I contact Ada?');
     expect(contextOf(conversation).ctaShown).toBe(true);
   });
 
@@ -126,7 +125,7 @@ describe('stopping an answer', () => {
   });
 
   it('leaves a finished answer alone', () => {
-    const { conversation, answerId } = ask(createConversation(), "Tell me about Marcio's career.");
+    const { conversation, answerId } = ask(createConversation(), "Tell me about Ada's career.");
     expect(stopAnswer(conversation, answerId)).toBe(conversation);
   });
 });
@@ -164,10 +163,10 @@ describe('topic pages', () => {
 
 describe('editing and retrying', () => {
   it('removes an exchange and hands its question back', () => {
-    const first = ask(createConversation(), "Tell me about Marcio's career.");
-    const second = ask(first.conversation, 'How did he grow the team at Roots?');
+    const first = ask(createConversation(), "Tell me about Ada's career.");
+    const second = ask(first.conversation, 'Did she grow a team at Globex?');
     const removed = removeExchange(second.conversation, second.answerId);
-    expect(removed.question).toBe('How did he grow the team at Roots?');
+    expect(removed.question).toBe('Did she grow a team at Globex?');
     expect(removed.conversation.messages).toEqual(first.conversation.messages);
   });
 
@@ -179,7 +178,7 @@ describe('editing and retrying', () => {
 
 describe('feedback', () => {
   it('toggles a rating off when chosen twice', () => {
-    const { conversation, answerId } = ask(createConversation(), "Tell me about Marcio's career.");
+    const { conversation, answerId } = ask(createConversation(), "Tell me about Ada's career.");
     const rated = setFeedback(conversation, answerId, 'up');
     expect(answer(rated, answerId).feedback).toBe('up');
     expect(answer(setFeedback(rated, answerId, 'down'), answerId).feedback).toBe('down');
@@ -190,26 +189,26 @@ describe('feedback', () => {
 describe('history sent to the server', () => {
   it('carries questions and finished answers as plain text, without introductions or failures', () => {
     let conversation = createConversation('experience', topicIntro('experience'));
-    conversation = ask(conversation, 'What did he do at Roots?').conversation;
+    conversation = ask(conversation, 'What did she do at Globex?').conversation;
     conversation = ask(conversation, 'Broken', [
       { type: 'error', error: { code: 'network', message: 'x', retryable: true } },
     ]).conversation;
     const history = historyOf(conversation);
     expect(history.map((turn) => turn.role)).toEqual(['user', 'assistant', 'user']);
-    expect(history[1]?.text).toContain('Roots');
+    expect(history[1]?.text).toContain('Globex');
     expect(history[1]?.text).not.toContain('**');
   });
 
   it('keeps only the latest turns', () => {
     let conversation = createConversation();
     for (let turn = 0; turn < 10; turn += 1) {
-      conversation = ask(conversation, "Tell me about Marcio's career.").conversation;
+      conversation = ask(conversation, "Tell me about Ada's career.").conversation;
     }
     expect(historyOf(conversation)).toHaveLength(12);
   });
 
   it('points at the latest answer', () => {
-    const { conversation, answerId } = ask(createConversation(), "Tell me about Marcio's career.");
+    const { conversation, answerId } = ask(createConversation(), "Tell me about Ada's career.");
     expect(latestAnswerId(conversation)).toBe(answerId);
   });
 });

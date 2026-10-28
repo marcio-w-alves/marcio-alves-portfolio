@@ -210,7 +210,7 @@ describe('searchKnowledge', () => {
     const { port, queries } = searchReturning([]);
     await run(port, { query: 'ux' });
     await run(port, { query: 'é'.repeat(300) });
-    await run(port, { query: 'acessibilidade na Deel 🚀' });
+    await run(port, { query: 'acessibilidade na Acme 🚀' });
     expect(queries).toHaveLength(3);
   });
 

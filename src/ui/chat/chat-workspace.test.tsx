@@ -18,7 +18,7 @@ import { createModelBudget } from '@/infrastructure/budget/model-budget';
 import { ChatWorkspace } from './chat-workspace';
 import { ConversationsProvider } from './conversation-store';
 
-const content = createSiteContent(profile.knowledge);
+const content = createSiteContent(profile.knowledge, profile.copy.en.answers);
 const { knowledge, topicCatalog } = content;
 
 const CHAT_URL = `${window.location.origin}/api/chat`;
@@ -26,7 +26,7 @@ const CHAT_URL = `${window.location.origin}/api/chat`;
 /** The real endpoint, answering from the fast path: what production does without a model key. */
 const chatHandler = createChatHandler({
   assistant: createAssistant({
-    fastPath: createFastPath(knowledge),
+    fastPath: createFastPath(knowledge, profile.copy.en.answers),
     modelAssistant: null,
     clock: { now: () => new Date() },
     reportError: () => undefined,

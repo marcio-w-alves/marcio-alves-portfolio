@@ -1,4 +1,4 @@
-import type { ResponseKit } from './response-kit';
+import type { ResponsePart } from './response';
 
 /**
  * Topics are the site's pages: each opens with a curated introduction and its
@@ -30,6 +30,24 @@ export interface TopicQuestion {
   readonly short?: string;
 }
 
+/** How a profile writes one topic: the page's name, introduction, questions and record. */
+export interface TopicCopy {
+  readonly label: string;
+  readonly intro: string;
+  readonly questions: readonly TopicQuestion[];
+  /** What the page shows beneath its introduction: its part of the record. */
+  readonly page: readonly ResponsePart[];
+}
+
+const TOPIC_ICONS: Readonly<Record<TopicId, TopicIcon>> = {
+  overview: 'home',
+  experience: 'briefcase',
+  skills: 'code',
+  projects: 'folder',
+  philosophy: 'compass',
+  education: 'graduation',
+};
+
 export interface Topic {
   readonly id: TopicId;
   readonly label: string;
@@ -45,10 +63,6 @@ export interface SuggestedQuestion {
   readonly short: string;
 }
 
-function joinNames(names: readonly string[]): string {
-  return `${names.slice(0, -1).join(', ')} and ${names.at(-1) ?? ''}`;
-}
-
 /** The site's pages, their introductions and the questions each suggests. */
 export interface TopicCatalog {
   readonly topics: readonly [Topic, ...Topic[]];
@@ -61,10 +75,21 @@ export interface TopicCatalog {
   ) => SuggestedQuestion[];
   /** The same rotation, as the bare questions. */
   readonly suggestions: (topicId: string, page: number, count: number) => string[];
+  /** What a topic's page shows beneath its introduction. */
+  readonly pageOf: (topicId: TopicId) => readonly ResponsePart[];
 }
 
-export function createTopicCatalog(kit: ResponseKit): TopicCatalog {
-  const topics = topicsFrom(kit);
+export function createTopicCatalog(copy: Readonly<Record<TopicId, TopicCopy>>): TopicCatalog {
+  const topicOf = (id: TopicId): Topic => ({
+    id,
+    label: copy[id].label,
+    icon: TOPIC_ICONS[id],
+    intro: copy[id].intro,
+    questions: copy[id].questions,
+  });
+  // A tuple, so the first topic is a known fallback rather than a possibly-undefined index.
+  const [firstId, ...otherIds] = TOPIC_IDS;
+  const topics: readonly [Topic, ...Topic[]] = [topicOf(firstId), ...otherIds.map(topicOf)];
 
   function topicById(id: string): Topic {
     return topics.find((topic) => topic.id === id) ?? topics[0];
@@ -88,119 +113,6 @@ export function createTopicCatalog(kit: ResponseKit): TopicCatalog {
     suggestedQuestions,
     suggestions: (topicId, page, count) =>
       suggestedQuestions(topicId, page, count).map((suggestion) => suggestion.question),
+    pageOf: (topicId) => copy[topicId].page,
   };
-}
-
-// A tuple, so the first topic is a known fallback rather than a possibly-undefined index.
-function topicsFrom({ knowledge }: ResponseKit): readonly [Topic, ...Topic[]] {
-  const { profile, experience, projects, languages, education } = knowledge;
-  const liveProducts = joinNames(
-    projects.filter((project) => project.live).map((project) => project.name),
-  );
-  return [
-    {
-      id: 'overview',
-      label: 'Overview',
-      icon: 'home',
-      intro: `Here's the short version: ${profile.firstName} is a Staff-level frontend engineer with ${profile.yearsLabel} in React, TypeScript and frontend architecture, with measurable wins in performance and team growth. What would you like to know?`,
-      questions: [
-        { question: "Tell me about Marcio's career.", tag: 'Career', short: 'His career' },
-        {
-          question: 'What makes Marcio a strong Staff Engineer?',
-          tag: 'Staff-level',
-          short: 'Why Staff-level',
-        },
-        { question: 'What has he built at Deel?', tag: 'Deel', short: 'Work at Deel' },
-        {
-          question: 'How experienced is he with React and TypeScript?',
-          tag: 'React & TypeScript',
-          short: 'React & TypeScript',
-        },
-        {
-          question: 'What are his biggest technical achievements?',
-          tag: 'Impact',
-          short: 'Biggest wins',
-        },
-        { question: 'Has he led engineering teams?', tag: 'Leadership', short: 'Leadership' },
-        { question: 'What projects is he working on?', tag: 'Projects', short: 'Side projects' },
-        {
-          question: 'How does he approach frontend architecture?',
-          tag: 'Architecture',
-          short: 'Architecture',
-        },
-      ],
-    },
-    {
-      id: 'experience',
-      label: 'Experience',
-      icon: 'briefcase',
-      intro: `Marcio's career spans ${String(experience.length)} roles since ${String(profile.careerStartYear)} — from freelance web development to lead and senior frontend roles at Roots and Deel and, today, full-stack work at Way2b1. Pick a company, or ask how his scope grew over time.`,
-      questions: [
-        { question: "Tell me about Marcio's career.", tag: 'Career' },
-        { question: 'What has he built at Deel?', tag: 'Deel' },
-        { question: 'What did he do at Roots?', tag: 'Roots' },
-        { question: 'What is he working on at Way2b1?', tag: 'Way2b1' },
-        { question: 'Tell me about his experience scaling frontend applications.', tag: 'Scale' },
-        { question: 'Has he ever built something from scratch?', tag: 'Zero to one' },
-        { question: 'Is he experienced with enterprise applications?', tag: 'Enterprise' },
-        { question: 'Has he worked with backend systems?', tag: 'Full stack' },
-      ],
-    },
-    {
-      id: 'skills',
-      label: 'Technical Skills',
-      icon: 'code',
-      intro:
-        "Marcio's core stack is React, TypeScript and Next.js, backed by architecture, performance and leadership skills. Ask about any area and you'll get the evidence behind it, not a self-rated score.",
-      questions: [
-        { question: 'How experienced is he with React and TypeScript?', tag: 'React & TypeScript' },
-        { question: 'How did he optimize performance?', tag: 'Performance' },
-        { question: 'Has he worked with backend systems?', tag: 'Full stack' },
-        { question: 'Does he have Next.js and SSR experience?', tag: 'Next.js' },
-        { question: 'What does he know about design systems?', tag: 'Design systems' },
-        { question: 'How does he approach accessibility?', tag: 'Accessibility' },
-        { question: 'How does he approach testing?', tag: 'Testing' },
-        { question: 'How does he use AI in engineering?', tag: 'AI engineering' },
-      ],
-    },
-    {
-      id: 'projects',
-      label: 'Projects',
-      icon: 'folder',
-      intro: `Beyond his day job, Marcio builds his own products. ${liveProducts} already have public sites, and FictionDraft is still a concept. Ask about any of them — I'll be clear about what's live versus planned.`,
-      questions: [
-        { question: 'Tell me more about EvCopilot.', tag: 'EvCopilot' },
-        { question: 'Tell me more about FormDaily.', tag: 'FormDaily' },
-        { question: 'What is TargUp?', tag: 'TargUp' },
-        { question: 'What is FictionDraft?', tag: 'FictionDraft' },
-        { question: 'Has he built mobile apps?', tag: 'Mobile' },
-      ],
-    },
-    {
-      id: 'philosophy',
-      label: 'Engineering Philosophy',
-      icon: 'compass',
-      intro:
-        "Marcio's engineering is pragmatic: readable code other people can evolve, architecture sized to the product's real stage, and quality he can verify. Here are the principles he works by and how he takes a problem from question to delivery.",
-      questions: [
-        { question: "What's his engineering philosophy?", tag: 'Principles' },
-        { question: 'How does he use AI in engineering?', tag: 'AI engineering' },
-        { question: 'How does he approach frontend architecture?', tag: 'Architecture' },
-        { question: 'How does he approach testing?', tag: 'Testing' },
-        { question: 'How does he work with product teams?', tag: 'Product' },
-        { question: 'How does he think about code quality?', tag: 'Quality' },
-      ],
-    },
-    {
-      id: 'education',
-      label: 'Education & Languages',
-      icon: 'graduation',
-      intro: `Marcio holds a ${education.degree.replace("Bachelor's Degree", "Bachelor's degree")} from ${education.school} (${String(education.year)}) and works in ${joinNames(languages.map((language) => language.name))}.`,
-      questions: [
-        { question: 'How does he use AI in engineering?', tag: 'AI engineering' },
-        { question: 'Has he worked with backend systems?', tag: 'Full stack' },
-        { question: 'Can I see his resume?', tag: 'Resume' },
-      ],
-    },
-  ];
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { localize } from '@/core/knowledge/localize';
-import { profile } from '@/profile';
+import { fixtureKnowledge } from '@/testing/fixture-profile';
 import type { AssistantEvent } from '../assistant-event';
 import type {
   LanguageModelPort,
@@ -15,6 +15,7 @@ import { createExternalTools } from '../tools/external-tools';
 import { createToolRegistry } from '../tools/registry';
 import { createSearchTools } from '../tools/search-tools';
 import { defineTool, type Tool, type ToolFailure } from '../tools/tool';
+import { promptSubject } from './system-prompt';
 import {
   createModelAssistant,
   EMPTY_REPLY,
@@ -56,7 +57,8 @@ function rethrow(error: unknown): never {
   throw error;
 }
 
-const kit = createResponseKit(localize(profile.knowledge, 'en'));
+const kit = createResponseKit(localize(fixtureKnowledge, 'en'));
+const subject = promptSubject(kit.knowledge);
 
 /** The real allow-list; an action that throws unexpectedly fails the test. */
 function registry(
@@ -67,7 +69,7 @@ function registry(
 }
 
 async function collect(model: LanguageModelPort, question = 'question', history = []) {
-  const assistant = createModelAssistant({ model, tools: registry(), clock });
+  const assistant = createModelAssistant({ subject, model, tools: registry(), clock });
   const events: AssistantEvent[] = [];
   for await (const event of assistant.answer({ question, history, followUps: ['Next?'] })) {
     events.push(event);
@@ -90,20 +92,18 @@ function toolReplies(request: ModelRequest | undefined): Record<string, unknown>
 describe('model assistant — answering through actions', () => {
   it('answers from action results and cites exactly the sources those actions returned', async () => {
     const { port, requests } = scriptedModel([
-      { calls: [call('getExperience', { company: 'deel' })] },
-      { text: 'At Deel he halved critical page loading time through targeted refactoring.' },
+      { calls: [call('getExperience', { company: 'acme' })] },
+      { text: 'At Acme she cut build times with remote caching.' },
     ]);
     const events = await collect(port);
 
-    expect(text(events)).toBe(
-      'At Deel he halved critical page loading time through targeted refactoring.',
-    );
+    expect(text(events)).toBe('At Acme she cut build times with remote caching.');
     expect(events.at(-1)).toEqual({
       type: 'finish',
       followUps: ['Next?'],
-      sources: [{ id: 'resume.deel', label: 'Resume' }],
+      sources: [{ id: 'cv.acme', label: 'CV' }],
     });
-    expect(JSON.stringify(toolReplies(requests[1]))).toContain('targeted refactoring');
+    expect(JSON.stringify(toolReplies(requests[1]))).toContain('remote caching');
   });
 
   it('streams the reply as it is written, announced only once there is something to show', async () => {
@@ -122,17 +122,24 @@ describe('model assistant — answering through actions', () => {
 
   it('leaves out an offer of help, while the model still sees what it wrote', async () => {
     const reply =
-      'At Deel he halved critical page loading time.\n\nIf you need more details, feel free to ask!';
+      'At Acme he halved critical page loading time.\n\nIf you need more details, feel free to ask!';
     const { port, requests } = scriptedModel([
-      { text: reply, calls: [call('getExperience', { company: 'deel' })] },
+      { text: reply, calls: [call('getExperience', { company: 'acme' })] },
       { text: 'He did it through targeted refactoring. Let me know if you want more.' },
     ]);
     const events = await collect(port);
 
     expect(text(events)).toBe(
-      'At Deel he halved critical page loading time.He did it through targeted refactoring.',
+      'At Acme he halved critical page loading time.He did it through targeted refactoring.',
     );
     expect(requests[1]?.messages).toContainEqual(expect.objectContaining({ content: reply }));
+  });
+
+  it('keeps a sentence that starts like an offer when it names the person the answers are about', async () => {
+    const reply = 'If you need more details, Ada led the platform team at Acme.';
+    const { port } = scriptedModel([{ text: reply }]);
+
+    expect(text(await collect(port))).toBe(reply);
   });
 
   it('gives the model only the allow-list, described by the same schemas that validate it', async () => {
@@ -146,12 +153,12 @@ describe('model assistant — answering through actions', () => {
 
   it('starts the conversation with the standing instructions, then history, then the question', async () => {
     const { port, requests } = scriptedModel([{ text: 'ok' }]);
-    const assistant = createModelAssistant({ model: port, tools: registry(), clock });
+    const assistant = createModelAssistant({ subject, model: port, tools: registry(), clock });
     const history = [
       { role: 'user' as const, text: 'Who is he?' },
       { role: 'assistant' as const, text: 'A frontend engineer.' },
     ];
-    await Array.fromAsync(assistant.answer({ question: 'And at Deel?', history, followUps: [] }));
+    await Array.fromAsync(assistant.answer({ question: 'And at Acme?', history, followUps: [] }));
     const roles = requests[0]?.messages.map((message) => message.role);
     expect(roles).toEqual(['system', 'user', 'assistant', 'user']);
     const [system] = requests[0]?.messages ?? [];
@@ -165,7 +172,7 @@ describe('model assistant — answering through actions', () => {
 describe('model assistant — conversation memory is bounded', () => {
   it('sends only the latest twelve turns, each cut to a thousand characters', async () => {
     const { port, requests } = scriptedModel([{ text: 'ok' }]);
-    const assistant = createModelAssistant({ model: port, tools: registry(), clock });
+    const assistant = createModelAssistant({ subject, model: port, tools: registry(), clock });
     const history = Array.from({ length: 20 }, (_, i) => ({
       role: i % 2 === 0 ? ('user' as const) : ('assistant' as const),
       text: `${String(i)}:${'z'.repeat(5000)}`,
@@ -183,7 +190,7 @@ describe('model assistant — the model is untrusted', () => {
   it('turns invalid arguments into an error the model can correct, and lets it recover', async () => {
     const { port, requests } = scriptedModel([
       { calls: [call('getExperience', { company: 'google' }, 'bad')] },
-      { calls: [call('getExperience', { company: 'roots' }, 'good')] },
+      { calls: [call('getExperience', { company: 'globex' }, 'good')] },
       { text: 'Fixed.' },
     ]);
     const events = await collect(port);
@@ -195,7 +202,7 @@ describe('model assistant — the model is untrusted', () => {
 
   it('rejects arguments that are not JSON', async () => {
     const { port, requests } = scriptedModel([
-      { calls: [call('getExperience', '{company: deel', 'broken')] },
+      { calls: [call('getExperience', '{company: acme', 'broken')] },
       { text: 'ok' },
     ]);
     await collect(port);
@@ -211,11 +218,11 @@ describe('model assistant — the model is untrusted', () => {
     ]);
     await collect(port);
     expect(toolReplies(requests[1]).bare).toEqual(
-      expect.arrayContaining([expect.objectContaining({ area: 'frontend' })]),
+      expect.arrayContaining([expect.objectContaining({ area: 'platform' })]),
     );
   });
 
-  it.each([['null'], ['[]'], ['"deel"'], ['42']])(
+  it.each([['null'], ['[]'], ['"acme"'], ['42']])(
     'rejects the JSON %s, which is not an object of arguments',
     async (raw) => {
       const { port, requests } = scriptedModel([
@@ -267,6 +274,7 @@ describe('model assistant — spending', () => {
     const { port } = scriptedModel([{ calls: [call('getSkills', {})] }, { text: 'Done.' }]);
     const usage: { inputTokens: number; outputTokens: number }[] = [];
     const assistant = createModelAssistant({
+      subject,
       model: port,
       tools: registry(),
       clock,
@@ -282,6 +290,7 @@ describe('model assistant — spending', () => {
   function spendingOf(port: LanguageModelPort) {
     const usage: ModelUsage[] = [];
     const assistant = createModelAssistant({
+      subject,
       model: port,
       tools: registry(),
       clock,
@@ -370,7 +379,7 @@ describe('model assistant — spending', () => {
 describe('model assistant — on a topic page', () => {
   it('tells the model what the page shows, right after its rules', async () => {
     const { port, requests } = scriptedModel([{ text: 'ok' }]);
-    const assistant = createModelAssistant({ model: port, tools: registry(), clock });
+    const assistant = createModelAssistant({ subject, model: port, tools: registry(), clock });
     await Array.fromAsync(
       assistant.answer({
         question: 'q',
@@ -392,7 +401,7 @@ describe('model assistant — on a topic page', () => {
       { calls: [call('showSkills', {})] },
       { text: 'Beyond the list above, his depth is in React.' },
     ]);
-    const assistant = createModelAssistant({ model: port, tools: registry(), clock });
+    const assistant = createModelAssistant({ subject, model: port, tools: registry(), clock });
     const events = await Array.fromAsync(
       assistant.answer({
         question: 'q',
@@ -402,12 +411,12 @@ describe('model assistant — on a topic page', () => {
       }),
     );
     expect(events.some((event) => event.type === 'component')).toBe(false);
-    expect(events.at(-1)).toMatchObject({ type: 'finish', sources: [{ label: 'Resume' }] });
+    expect(events.at(-1)).toMatchObject({ type: 'finish', sources: [{ label: 'CV' }] });
   });
 
   it('sends no page message when the visitor is on the overview', async () => {
     const { port, requests } = scriptedModel([{ text: 'ok' }]);
-    const assistant = createModelAssistant({ model: port, tools: registry(), clock });
+    const assistant = createModelAssistant({ subject, model: port, tools: registry(), clock });
     await Array.fromAsync(
       assistant.answer({ question: 'q', history: [], followUps: [], page: null }),
     );
@@ -418,7 +427,7 @@ describe('model assistant — on a topic page', () => {
 describe('model assistant — what reaches the visitor', () => {
   it('renders the blocks the model asked for after the text, with data resolved on the server', async () => {
     const { port } = scriptedModel([
-      { calls: [call('showMetrics', { ids: ['deel-people-list'] })] },
+      { calls: [call('showMetrics', { ids: ['acme-build-time'] })] },
       { text: 'Here is the result.' },
     ]);
     const events = await collect(port);
@@ -430,9 +439,9 @@ describe('model assistant — what reaches the visitor', () => {
       props: {
         items: [
           {
-            value: '6s → 3s',
-            label: 'People List load time on a cold run',
-            context: 'Deel',
+            value: '40%',
+            label: 'Faster builds',
+            context: 'Acme',
           },
         ],
       },
@@ -458,8 +467,8 @@ describe('model assistant — what reaches the visitor', () => {
   it('searches the whole record in place of a "not documented" decline made before any search', async () => {
     const { port, requests } = scriptedModel([
       { calls: [call('declineToAnswer', { reason: 'not_documented' })] },
-      { calls: [call('searchKnowledge', { query: 'Roots backend' })] },
-      { text: 'The Roots backend was in Python, owned by another team.' },
+      { calls: [call('searchKnowledge', { query: 'Globex backend' })] },
+      { text: 'The Globex backend was in Python, owned by another team.' },
     ]);
     const search = createSearchTools(
       {
@@ -468,7 +477,7 @@ describe('model assistant — what reaches the visitor', () => {
             {
               id: 'notes:3.3',
               category: 'notes',
-              text: 'O backend da Roots era em Python, e Marcio não trabalhou nele.',
+              text: 'O backend da Globex era em Python, e Ada não trabalhou nele.',
               source: { id: 'notes', label: 'Knowledge base' },
               score: 0.6,
             },
@@ -477,6 +486,7 @@ describe('model assistant — what reaches the visitor', () => {
       rethrow,
     );
     const assistant = createModelAssistant({
+      subject,
       model: port,
       tools: registry(search),
       clock,
@@ -518,6 +528,7 @@ describe('model assistant — what reaches the visitor', () => {
       rethrow,
     );
     const assistant = createModelAssistant({
+      subject,
       model: port,
       tools: registry(search),
       clock,
@@ -550,8 +561,8 @@ describe('model assistant — what reaches the visitor', () => {
             {
               id: 'education',
               category: 'education',
-              text: 'Education: Computer Engineering at UFPB, completed in 2019.',
-              source: { id: 'resume.education', label: 'Resume' },
+              text: 'Education: MSc in Distributed Systems at UP, completed in 2012.',
+              source: { id: 'resume.education', label: 'CV' },
               score: 0.35,
             },
           ]),
@@ -559,6 +570,7 @@ describe('model assistant — what reaches the visitor', () => {
       rethrow,
     );
     const assistant = createModelAssistant({
+      subject,
       model: port,
       tools: registry(search),
       clock,
@@ -579,13 +591,14 @@ describe('model assistant — what reaches the visitor', () => {
     const { port } = scriptedModel([
       {
         calls: [
-          call('searchKnowledge', { query: 'why he left Deel' }),
+          call('searchKnowledge', { query: 'why he left Acme' }),
           call('declineToAnswer', { reason: 'not_documented' }),
         ],
       },
       { text: "That isn't documented." },
     ]);
     const assistant = createModelAssistant({
+      subject,
       model: port,
       tools: registry(createSearchTools({ search: () => Promise.resolve([]) }, rethrow)),
       clock,
@@ -613,6 +626,7 @@ describe('model assistant — what reaches the visitor', () => {
       { text: 'That is not available right now.' },
     ]);
     const assistant = createModelAssistant({
+      subject,
       model: port,
       tools: registry([exploding], (error) => reported.push(error)),
       clock,
@@ -633,7 +647,7 @@ describe('model assistant — what reaches the visitor', () => {
   it("hands the visitor's request signal to the actions it runs", async () => {
     const signals: (AbortSignal | undefined)[] = [];
     const { port } = scriptedModel([
-      { calls: [call('searchKnowledge', { query: 'Roots backend' })] },
+      { calls: [call('searchKnowledge', { query: 'Globex backend' })] },
       { text: 'Done.' },
     ]);
     const search = createSearchTools(
@@ -646,7 +660,12 @@ describe('model assistant — what reaches the visitor', () => {
       rethrow,
     );
     const request = new AbortController();
-    const assistant = createModelAssistant({ model: port, tools: registry(search), clock });
+    const assistant = createModelAssistant({
+      subject,
+      model: port,
+      tools: registry(search),
+      clock,
+    });
 
     await Array.fromAsync(
       assistant.answer({ question: 'q', history: [], followUps: [] }, request.signal),
@@ -673,17 +692,18 @@ describe('model assistant — what reaches the visitor', () => {
     const { port } = scriptedModel([
       {
         text: 'Early [guess](https://en.wikipedia.org/wiki/React_(software)). ',
-        calls: [call('getTechnologyBrief', { technology: 'React' })],
+        calls: [call('getTechnologyBrief', { technology: 'Bazel' })],
       },
       {
-        text: 'See [React on Wikipedia](https://en.wikipedia.org/wiki/React_(software)), the [official docs](https://evil.example/login) and [his LinkedIn](https://www.linkedin.com/in/marcio-montenegro/).',
+        text: 'See [React on Wikipedia](https://en.wikipedia.org/wiki/React_(software)), the [official docs](https://evil.example/login) and [his LinkedIn](https://www.linkedin.com/in/ada-rivera-example/).',
       },
     ]);
     const assistant = createModelAssistant({
+      subject,
       model: port,
       tools: registry(createExternalTools({ kit, references, github: unreachableGithub })),
       clock,
-      knownUrls: ['https://www.linkedin.com/in/marcio-montenegro'],
+      knownUrls: ['https://www.linkedin.com/in/ada-rivera-example'],
     });
 
     const events = await Array.fromAsync(
@@ -691,7 +711,7 @@ describe('model assistant — what reaches the visitor', () => {
     );
 
     expect(text(events)).toBe(
-      `Early guess. See [React on Wikipedia](${wikipedia}), the official docs and [his LinkedIn](https://www.linkedin.com/in/marcio-montenegro/).`,
+      `Early guess. See [React on Wikipedia](${wikipedia}), the official docs and [his LinkedIn](https://www.linkedin.com/in/ada-rivera-example/).`,
     );
   });
 
@@ -713,7 +733,7 @@ describe('model assistant — what reaches the visitor', () => {
 
   it('announces nothing when the model fails before saying anything, so the caller can fall back', async () => {
     const { port } = scriptedModel([{ throws: new Error('provider down') }]);
-    const assistant = createModelAssistant({ model: port, tools: registry(), clock });
+    const assistant = createModelAssistant({ subject, model: port, tools: registry(), clock });
     const seen: AssistantEvent[] = [];
     await expect(async () => {
       for await (const event of assistant.answer({ question: 'q', history: [], followUps: [] })) {
@@ -730,20 +750,20 @@ function recordPassage(
   text: string,
   sourceId: string,
 ): Passage {
-  return { id, category, text, source: { id: sourceId, label: 'Resume' }, score: 0.4 };
+  return { id, category, text, source: { id: sourceId, label: 'CV' }, score: 0.4 };
 }
 
-const HRIS_LEAD = recordPassage(
-  'role:deel:1',
+const PAYROLL_LEAD = recordPassage(
+  'role:acme:1',
   'experience',
-  "Deel (Senior Frontend Engineer, 2022 — 2026): Helped lead and maintain the HRIS team responsible for the company's core HR tools product.",
-  'resume.deel',
+  "Acme (Principal Platform Engineer, 2022 — Present): Helped lead and maintain the payroll team responsible for the company's core HR tools product.",
+  'cv.acme',
 );
 const ROOTS_TEAM = recordPassage(
-  'role:roots:1',
+  'role:globex:1',
   'experience',
-  'Roots (Lead Frontend Engineer, 2020 — 2022): Expanded the frontend team from a solo developer setup by recruiting and integrating three additional developers.',
-  'resume.roots',
+  'Globex (Senior Platform Engineer, 2018 — 2022): Expanded the frontend team from a solo developer setup by recruiting and integrating three additional developers.',
+  'cv.globex',
 );
 const SKILL_LIST = recordPassage(
   'skills:leadership',
@@ -769,8 +789,8 @@ const leadershipRecord: KnowledgeSearchPort = {
   search: ({ category }) =>
     Promise.resolve(
       category === 'experience'
-        ? [HRIS_LEAD, ROOTS_TEAM]
-        : [SKILL_LIST, DEGREE, COURSES, HRIS_LEAD, ROOTS_TEAM],
+        ? [PAYROLL_LEAD, ROOTS_TEAM]
+        : [SKILL_LIST, DEGREE, COURSES, PAYROLL_LEAD, ROOTS_TEAM],
     ),
 };
 
@@ -780,7 +800,7 @@ async function answerWithSearch(
   question: string,
 ) {
   const tools = registry(createSearchTools(record, rethrow));
-  const assistant = createModelAssistant({ model, tools, clock });
+  const assistant = createModelAssistant({ subject, model, tools, clock });
   const events: AssistantEvent[] = [];
   for await (const event of assistant.answer({ question, history: [], followUps: [] })) {
     events.push(event);
@@ -802,11 +822,11 @@ describe('model assistant — leadership answers rest on the roles where he led'
   it.each([
     [
       'Has he led teams?',
-      'Yes. At Deel he helped lead and maintain the HRIS team; at Roots he grew the frontend team from a solo setup by recruiting three developers.',
+      'Yes. At Acme he helped lead and maintain the payroll team; at Globex he grew the frontend team from a solo setup by recruiting three developers.',
     ],
     [
       'Ele já liderou equipes?',
-      'Sim. Na Deel, ajudou a liderar e manter o time de HRIS; na Roots, expandiu a equipe de frontend, recrutando e integrando três desenvolvedores.',
+      'Sim. Na Acme, ajudou a liderar e manter o time de payroll; na Globex, expandiu a equipe de frontend, recrutando e integrando três desenvolvedores.',
     ],
   ])(
     'hands the model the role statements first and cites only them for "%s"',
@@ -818,9 +838,9 @@ describe('model assistant — leadership answers rest on the roles where he led'
 
       const events = await answerWithSearch(port, leadershipRecord, question);
 
-      expect(passagesShown(requests[1]).slice(0, 2)).toEqual([HRIS_LEAD.text, ROOTS_TEAM.text]);
+      expect(passagesShown(requests[1]).slice(0, 2)).toEqual([PAYROLL_LEAD.text, ROOTS_TEAM.text]);
       expect(text(events)).toBe(answer);
-      expect(citedIds(events)).toEqual(['resume.deel', 'resume.roots']);
+      expect(citedIds(events)).toEqual(['cv.acme', 'cv.globex']);
     },
   );
 });
@@ -841,12 +861,12 @@ describe('model assistant — sources are the evidence the answer used', () => {
   it('cites what a card shows, even when the text says nothing about it', async () => {
     const { port } = scriptedModel([
       {
-        calls: [call('getProfileSummary', {}), call('showMetrics', { ids: ['deel-people-list'] })],
+        calls: [call('getProfileSummary', {}), call('showMetrics', { ids: ['acme-build-time'] })],
       },
       { text: 'Here is one measured result.' },
     ]);
 
-    expect(citedIds(await collect(port))).toEqual(['resume.deel']);
+    expect(citedIds(await collect(port))).toEqual(['cv.acme']);
   });
 
   it('keeps every source when the answer echoes none of them closely enough to tell', async () => {

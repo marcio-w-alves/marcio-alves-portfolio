@@ -108,8 +108,7 @@ export function createDisplayTools(kit: ResponseKit): Tool[] {
 
   const showContactCard = defineTool({
     name: 'showContactCard',
-    description:
-      'Show the contact card. Use it when the visitor wants to reach Marcio or hire him.',
+    description: `Show the contact card. Use it when the visitor wants to reach ${knowledge.profile.firstName} or hire him.`,
     input: {},
     execute: () => display(kit.contactCard(), cite([knowledge.profile.source])),
   });
