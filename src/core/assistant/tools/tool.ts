@@ -76,3 +76,10 @@ export function defineTool<S extends Shape>(spec: ToolSpec<S>): Tool {
     },
   };
 }
+
+/** Only the ids the record holds, so the model cannot ask for one that does not exist. */
+export function oneOf(ids: readonly string[]) {
+  const [first, ...rest] = ids;
+  if (first === undefined) throw new Error('An id argument needs at least one id to accept.');
+  return z.enum([first, ...rest]);
+}

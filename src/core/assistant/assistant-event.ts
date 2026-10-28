@@ -1,4 +1,3 @@
-import type { RoleId } from '@/core/knowledge/ids';
 import type { RichComponent } from './components';
 
 /**
@@ -25,7 +24,7 @@ export interface AssistantError {
 }
 
 export type AssistantEvent =
-  | { readonly type: 'start'; readonly intent: string; readonly related: RoleId | null }
+  | { readonly type: 'start'; readonly intent: string; readonly related: string | null }
   | { readonly type: 'text-start'; readonly id: string }
   | { readonly type: 'text-delta'; readonly id: string; readonly delta: string }
   | { readonly type: 'text-end'; readonly id: string }

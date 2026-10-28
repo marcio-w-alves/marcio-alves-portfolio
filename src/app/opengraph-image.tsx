@@ -1,10 +1,10 @@
 import { ImageResponse } from 'next/og';
-import { knowledgeBase } from '@/core/knowledge/knowledge-base';
 import { siteUrl } from '@/env';
 import { brandColors } from './brand-colors';
 import { imageFonts } from './image-fonts';
+import { knowledge } from './site-knowledge';
 
-const { profile, welcome } = knowledgeBase;
+const { profile, welcome } = knowledge;
 
 export const alt = `${profile.name}, ${profile.title}`;
 export const size = { width: 1200, height: 630 };

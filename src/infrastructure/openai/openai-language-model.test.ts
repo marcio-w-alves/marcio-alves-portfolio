@@ -57,7 +57,7 @@ const usage = {
 const REQUEST: ModelRequest = {
   messages: [
     { role: 'system', content: 'rules' },
-    { role: 'user', content: 'What did he do at Deel?' },
+    { role: 'user', content: 'What did she do at Acme?' },
     {
       role: 'assistant',
       content: null,
@@ -176,7 +176,7 @@ describe('OpenAI language model adapter', () => {
       ],
       messages: [
         { role: 'system', content: 'rules' },
-        { role: 'user', content: 'What did he do at Deel?' },
+        { role: 'user', content: 'What did she do at Acme?' },
         {
           role: 'assistant',
           content: null,

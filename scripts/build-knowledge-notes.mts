@@ -10,8 +10,8 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { parseNotes } from '../src/core/knowledge/notes';
 
-const SOURCE = new URL('../src/core/knowledge/data/knowledge-base.md', import.meta.url);
-const OUTPUT = new URL('../src/core/knowledge/data/notes.json', import.meta.url);
+const SOURCE = new URL('../src/profile/knowledge/knowledge-base.md', import.meta.url);
+const OUTPUT = new URL('../src/profile/knowledge/notes.json', import.meta.url);
 
 const notes = parseNotes(await readFile(SOURCE, 'utf8'));
 await writeFile(OUTPUT, `${JSON.stringify(notes, null, 1)}\n`);

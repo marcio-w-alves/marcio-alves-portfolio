@@ -1,0 +1,101 @@
+import type { ProjectSource } from '@/core/knowledge/schema';
+
+// Marcio's own products. Descriptions and status come from each product's
+// public site (Oct 2026): no users, revenue or release dates may be inferred
+// beyond what those sites state.
+export const projects: readonly ProjectSource[] = [
+  {
+    id: 'evcopilot',
+    name: 'EvCopilot',
+    category: { en: 'Electric mobility · Brazil' },
+    status: { en: 'iPhone beta · invite only' },
+    live: true,
+    description: {
+      en: 'A trip-planning app for electric-vehicle drivers in Brazil: compatible chargers, predicted battery at every stop and a backup charger for each one.',
+    },
+    scopeLabel: { en: 'Key features' },
+    scope: [
+      { en: 'Chargers filtered by connector and power' },
+      { en: 'Battery prediction per stop' },
+      { en: 'Backup charger for every stop' },
+      { en: 'Offline itinerary' },
+      { en: 'Handoff to Apple Maps, Google Maps or Waze' },
+      { en: 'Station status with source and date' },
+    ],
+    platforms: [{ en: 'iPhone (beta)' }],
+    technologies: [],
+    considerations: [],
+    links: [{ label: { en: 'Visit evcopilotapp.io' }, url: 'https://evcopilotapp.io' }],
+    source: 'projects',
+  },
+  {
+    id: 'formdaily',
+    name: 'FormDaily',
+    category: { en: 'Fitness & coaching' },
+    status: { en: 'Invite-only access' },
+    live: true,
+    description: {
+      en: 'A workout app for personal trainers and their students: trainers build workouts, run sessions and track progress; students follow their plan and log every set.',
+    },
+    scopeLabel: { en: 'Key features' },
+    scope: [
+      { en: 'Workout builder with loads, rest and videos' },
+      { en: 'Scheduling with Google Meet for online sessions' },
+      { en: 'Live session tracking, even offline' },
+      { en: 'AI workout suggestions reviewed by the trainer' },
+      { en: 'Student progress charts' },
+      { en: 'Verified trainer badge' },
+    ],
+    platforms: [{ en: 'Web' }, { en: 'iOS' }, { en: 'Android' }],
+    technologies: [],
+    considerations: [],
+    links: [{ label: { en: 'Visit formdaily.app' }, url: 'https://formdaily.app' }],
+    source: 'projects',
+  },
+  {
+    id: 'targup',
+    name: 'TargUp',
+    category: { en: 'Business automation' },
+    status: { en: 'In development · live preview' },
+    live: true,
+    description: {
+      en: 'A business automation platform that replaces repetitive manual work with connected workflows, AI-assisted automation and operational visibility.',
+    },
+    scopeLabel: { en: 'Key features' },
+    scope: [
+      { en: 'Workflow automation' },
+      { en: 'AI that classifies, drafts and recommends within business rules' },
+      { en: 'Integrations and analytics' },
+      { en: 'Role-based permissions and human approval' },
+      { en: 'WhatsApp appointment booking' },
+      { en: 'Chat, Social and Affiliate products' },
+    ],
+    platforms: [{ en: 'Web' }],
+    technologies: [],
+    considerations: [],
+    links: [{ label: { en: 'Visit TargUp' }, url: 'https://dev.targup.com/' }],
+    source: 'projects',
+  },
+  {
+    id: 'fictiondraft',
+    name: 'FictionDraft',
+    category: { en: 'AI writing & publishing' },
+    status: { en: 'In development · not published' },
+    live: false,
+    description: {
+      en: 'An AI writing assistant for novels, books, documents and scripts: a template for each kind of text, with an AI that checks it against what was already written.',
+    },
+    scopeLabel: { en: 'Planned scope' },
+    scope: [
+      { en: 'Editing' },
+      { en: 'Review' },
+      { en: 'Translation' },
+      { en: 'Document consistency' },
+    ],
+    platforms: [],
+    technologies: [],
+    considerations: [],
+    links: [],
+    source: 'projects',
+  },
+];

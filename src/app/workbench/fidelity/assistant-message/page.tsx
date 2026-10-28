@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { toEvents } from '@/core/assistant/response';
-import { fastPath } from '@/core/assistant/system1/fast-path';
+import { createFastPath } from '@/core/assistant/system1/fast-path';
 import {
   addExchange,
   applyEvent,
@@ -9,6 +9,7 @@ import {
   createConversation,
 } from '@/core/conversation/conversation';
 import type { AssistantMessage } from '@/core/conversation/messages';
+import { knowledge } from '../../../site-knowledge';
 import { AssistantMessageSpecimen } from './assistant-message-specimen';
 
 // The design's AssistantMessage artboard: the answer the fast path gives to
@@ -20,7 +21,7 @@ const QUESTION = 'How does he approach frontend architecture?';
 
 function answerTo(question: string): AssistantMessage {
   const { conversation, answerId } = addExchange(createConversation(), question);
-  const result = fastPath(question, contextOf(conversation));
+  const result = createFastPath(knowledge).answer(question, contextOf(conversation));
   if (result.kind !== 'answered') throw new Error(`The fast path no longer answers "${question}".`);
   const answered = toEvents(result.response).reduce(
     (next, event) => applyEvent(next, answerId, event),
@@ -34,9 +35,15 @@ function answerTo(question: string): AssistantMessage {
 export default function AssistantMessageFidelityPage() {
   if (process.env.NODE_ENV === 'production') notFound();
 
+  const message = answerTo(QUESTION);
+  const company = knowledge.experience.find((role) => role.id === message.related)?.company;
   return (
     <div className="min-h-screen p-10">
-      <AssistantMessageSpecimen message={answerTo(QUESTION)} />
+      <AssistantMessageSpecimen
+        message={message}
+        assistantName={knowledge.assistant.name}
+        relatedLabel={company ? `View ${company} experience` : undefined}
+      />
     </div>
   );
 }

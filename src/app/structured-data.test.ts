@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { knowledgeBase } from '@/core/knowledge/knowledge-base';
+import { knowledge } from './site-knowledge';
 import { personStructuredData, serializeStructuredData } from './structured-data';
 
 describe('personStructuredData', () => {
@@ -26,7 +26,7 @@ describe('personStructuredData', () => {
   });
 
   it('does not claim coursework as expertise', () => {
-    const courses = knowledgeBase.certifications.map(({ name }) => name);
+    const courses = knowledge.certifications.map(({ name }) => name);
 
     expect(person.knowsAbout).not.toContain('AngularJS');
     expect(person.knowsAbout.some((topic) => courses.includes(topic))).toBe(false);

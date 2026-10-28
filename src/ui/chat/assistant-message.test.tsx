@@ -2,7 +2,6 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { AssistantMessage as Message } from '@/core/conversation/messages';
-import { knowledgeBase } from '@/core/knowledge/knowledge-base';
 import { AssistantMessage } from './assistant-message';
 
 function message(fields: Partial<Message>): Message {
@@ -34,7 +33,14 @@ function renderMessage(fields: Partial<Message>) {
     onViewRelated: vi.fn(),
     onAskFollowUp: vi.fn(),
   };
-  render(<AssistantMessage message={message(fields)} isLatest {...handlers} />);
+  render(
+    <AssistantMessage
+      message={message(fields)}
+      assistantName="Ada's assistant"
+      isLatest
+      {...handlers}
+    />,
+  );
   return handlers;
 }
 
@@ -44,7 +50,7 @@ describe('an answer', () => {
     const answer = screen.getByRole('article', {
       name: "Answer from Marcio's portfolio assistant",
     });
-    expect(within(answer).getByText(knowledgeBase.assistant.name).tagName).toBe('STRONG');
+    expect(within(answer).getByText("Ada's assistant").tagName).toBe('STRONG');
   });
 
   it('cites the résumé once, however many of its sections the answer drew on', () => {
@@ -177,6 +183,7 @@ describe('a topic introduction', () => {
           followUps: ['What did he do at Roots?'],
           sources: [{ id: 'profile', label: 'Professional profile' }],
         })}
+        assistantName="Ada's assistant"
         isLatest
         topicLabel="Experience"
         onFollowUp={vi.fn()}

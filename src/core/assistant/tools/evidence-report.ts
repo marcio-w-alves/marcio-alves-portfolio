@@ -1,6 +1,11 @@
 import type { AnswerSource } from '../assistant-event';
-import { citation } from '../citations';
-import { findEvidence, TECHNOLOGIES, type Technology } from '../system1/technologies';
+import type { ResponseKit } from '../response-kit';
+import {
+  createEvidenceFinder,
+  TECHNOLOGIES,
+  type Technology,
+  type TechnologyEvidence,
+} from '../system1/technologies';
 
 export type EvidenceVerdict =
   'documented' | 'reported in his notes' | 'coursework only' | 'not documented';
@@ -27,14 +32,24 @@ function technologyNamed(name: string): Technology {
 
 const NOTES_SHOWN = 3;
 
+export type EvidenceReporter = (name: string) => EvidenceReport;
+
 /**
  * Where a technology appears in Marcio's record, never upgrading coursework
  * into experience, not even when his notes mention it too. What only his
  * notes mention is reported, not documented:
  * the passage's own tag says whether it is his account or a study.
  */
-export function evidenceReport(name: string): EvidenceReport {
-  const evidence = findEvidence(technologyNamed(name));
+export function createEvidenceReporter({ knowledge, citation }: ResponseKit): EvidenceReporter {
+  const findEvidence = createEvidenceFinder(knowledge);
+  return (name) => report(findEvidence(technologyNamed(name)), name, citation);
+}
+
+function report(
+  evidence: TechnologyEvidence,
+  name: string,
+  citation: ResponseKit['citation'],
+): EvidenceReport {
   const verdict: EvidenceVerdict =
     evidence.work.length > 0 || evidence.skills.length > 0
       ? 'documented'

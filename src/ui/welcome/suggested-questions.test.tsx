@@ -1,13 +1,15 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { suggestedQuestions } from '@/core/assistant/topics';
+import { topicCatalog } from '@/app/site-knowledge';
 import { SuggestedQuestions } from './suggested-questions';
 
-const welcomeChoices = suggestedQuestions('overview', 0, 4).map(({ question, short }) => ({
-  question,
-  label: short,
-}));
+const welcomeChoices = topicCatalog
+  .suggestedQuestions('overview', 0, 4)
+  .map(({ question, short }) => ({
+    question,
+    label: short,
+  }));
 
 describe('SuggestedQuestions', () => {
   it('shows each suggestion by its short label, under its title', () => {

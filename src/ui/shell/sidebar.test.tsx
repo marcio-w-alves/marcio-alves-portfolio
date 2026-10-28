@@ -1,18 +1,22 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { topics } from '@/core/assistant/topics';
-import { knowledgeBase } from '@/core/knowledge/knowledge-base';
+import { knowledge, topicCatalog } from '@/app/site-knowledge';
 import { Sidebar, type SidebarLinks } from './sidebar';
 
-const { profile, contact } = knowledgeBase;
+const { profile, contact } = knowledge;
 
 function renderSidebar(links: SidebarLinks = contact) {
   const handlers = { onNewConversation: vi.fn(), onClose: vi.fn() };
   render(
     <Sidebar
       profile={{ name: profile.name, title: profile.title }}
-      topics={topics.map(({ id, label, icon }) => ({ id, label, icon, href: `/${id}` }))}
+      topics={topicCatalog.topics.map(({ id, label, icon }) => ({
+        id,
+        label,
+        icon,
+        href: `/${id}`,
+      }))}
       activeTopic="overview"
       links={links}
       {...handlers}

@@ -6,7 +6,7 @@
  */
 import { mkdir } from 'node:fs/promises';
 import { chromium } from '@playwright/test';
-import { knowledgeBase } from '../../src/core/knowledge/knowledge-base';
+import { profile } from '../../src/profile';
 import { BOARDS, FREEZE_CSS } from './boards';
 
 const DESIGN_URL = process.env.DESIGN_URL ?? 'http://localhost:4410';
@@ -27,8 +27,8 @@ const WITHOUT_PROTOTYPE_NOTICE = '.ma-helper-note{display:none!important}';
  * reference shows what the design does with the real data.
  */
 const PRODUCTION_CONTACT = `Object.assign(window.MAPortfolio.kb.contact, ${JSON.stringify({
-  github: knowledgeBase.contact.github,
-  resumeUrl: knowledgeBase.contact.resumeUrl,
+  github: profile.knowledge.contact.github,
+  resumeUrl: profile.knowledge.contact.resumeUrl,
 })});`;
 
 /**

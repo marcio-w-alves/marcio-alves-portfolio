@@ -1,4 +1,4 @@
-import type { Welcome } from '@/core/knowledge/types';
+import type { Welcome } from '@/core/knowledge/schema';
 
 interface WelcomeScreenProps {
   readonly welcome: Welcome;

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
-import { topicById, type TopicId } from '@/core/assistant/topics';
+import type { TopicId } from '@/core/assistant/topics';
 import { ChatWorkspace } from '@/ui/chat/chat-workspace';
+import { knowledge, topicCatalog } from './site-knowledge';
 import { topicPath } from './topic-routes';
 import { workspaceProps } from './workspace-props';
 
@@ -10,8 +11,8 @@ import { workspaceProps } from './workspace-props';
  * else, before any rendering starts.
  */
 export function topicMetadata(id: TopicId): Metadata {
-  const topic = topicById(id);
-  const title = `${topic.label} — Marcio Alves`;
+  const topic = topicCatalog.topicById(id);
+  const title = `${topic.label} — ${knowledge.profile.name}`;
   return {
     title,
     description: topic.intro,
@@ -22,5 +23,5 @@ export function topicMetadata(id: TopicId): Metadata {
 }
 
 export function TopicPage({ topic }: { readonly topic: TopicId }) {
-  return <ChatWorkspace {...workspaceProps()} topic={topic} />;
+  return <ChatWorkspace {...workspaceProps(topic)} />;
 }

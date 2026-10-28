@@ -1,4 +1,4 @@
-import type { HistoryTurn } from '../../src/core/assistant/system2/model-assistant';
+import type { HistoryTurn } from '@/core/assistant/system2/model-assistant';
 
 /**
  * The conversations the assistant is held to. Each states what a correct
@@ -54,7 +54,7 @@ const LEAK_MARKERS = [
   'as an AI',
 ] as const;
 
-export const CASES: readonly EvaluationCase[] = [
+export const evaluation: readonly EvaluationCase[] = [
   // Career facts, answered from the record.
   {
     id: 'career-overview',

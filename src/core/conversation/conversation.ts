@@ -1,8 +1,7 @@
 import type { AssistantEvent } from '../assistant/assistant-event';
 import type { ConversationContext } from '../assistant/response';
-import { text } from '../assistant/response-kit';
-import { topicData } from '../assistant/topic-pages';
-import { suggestions, topicById, type TopicId } from '../assistant/topics';
+import type { TopicIntro } from '../assistant/topic-pages';
+import type { TopicId } from '../assistant/topics';
 import type {
   AssistantMessage,
   Conversation,
@@ -19,7 +18,6 @@ import { toPlainText } from './plain-text';
  */
 
 const HISTORY_LIMIT = 12;
-const INTRO_FOLLOW_UPS = 3;
 
 function newId(prefix: string): string {
   return `${prefix}-${crypto.randomUUID()}`;
@@ -75,18 +73,17 @@ function findAnswer(conversation: Conversation, id: string): AssistantMessage | 
  * call. The introduction's ids are fixed, so the server and the browser
  * render the same page.
  */
-export function createConversation(topic: TopicId = 'overview'): Conversation {
+export function createConversation(topic: TopicId = 'overview', intro?: TopicIntro): Conversation {
   const empty = { messages: [], topic, lastIntent: null, ctaShown: false };
-  if (topic === 'overview') return empty;
-  const parts = [text(topicById(topic).intro), ...topicData(topic)];
-  const intro = assistantMessage('intro', {
+  if (topic === 'overview' || !intro) return empty;
+  const message = assistantMessage('intro', {
     id: `intro-${topic}`,
     status: 'done',
     topicId: topic,
-    parts: parts.map((part, index) => ({ ...part, id: `intro-${String(index)}` })),
-    followUps: suggestions(topic, 0, INTRO_FOLLOW_UPS),
+    parts: intro.parts.map((part, index) => ({ ...part, id: `intro-${String(index)}` })),
+    followUps: intro.followUps,
   });
-  return { ...empty, messages: [intro] };
+  return { ...empty, messages: [message] };
 }
 
 export function addExchange(

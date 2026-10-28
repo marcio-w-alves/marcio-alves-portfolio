@@ -1,6 +1,4 @@
-import type { RoleId } from '@/core/knowledge/ids';
-import notes from '@/core/knowledge/data/notes.json';
-import { knowledgeBase } from '@/core/knowledge/knowledge-base';
+import type { Knowledge } from '@/core/knowledge/schema';
 
 /**
  * Technologies visitors ask about. Whether Marcio has used one is decided by
@@ -64,7 +62,7 @@ const PRACTICES: readonly Technology[] = [
 export const TECHNOLOGIES: readonly Technology[] = [...ROUTED_TECHNOLOGIES, ...PRACTICES];
 
 export interface WorkEvidence {
-  readonly role: RoleId;
+  readonly role: string;
   readonly company: string;
   readonly statement: string;
 }
@@ -87,21 +85,29 @@ function paragraphsOf(text: string): string[] {
   return body.split('\n\n');
 }
 
-const NOTE_PARAGRAPHS = [...new Set(notes.flatMap((note) => paragraphsOf(note.text)))];
+export type EvidenceFinder = (technology: Technology) => TechnologyEvidence;
 
-export function findEvidence(technology: Technology): TechnologyEvidence {
-  const matches = (value: string) => technology.evidence.test(value);
-  return {
-    technology,
-    work: knowledgeBase.experience.flatMap((role) =>
-      role.highlights
-        .filter(matches)
-        .map((statement) => ({ role: role.id, company: role.company, statement })),
-    ),
-    skills: knowledgeBase.skills.flatMap((group) => group.items.filter(matches)),
-    coursework: knowledgeBase.certifications
-      .filter((certification) => matches(certification.name))
-      .map((certification) => `${certification.name} (${certification.issuer})`),
-    notes: NOTE_PARAGRAPHS.filter(matches),
+export function createEvidenceFinder({
+  experience,
+  skills,
+  certifications,
+  notes,
+}: Knowledge): EvidenceFinder {
+  const noteParagraphs = [...new Set(notes.flatMap((note) => paragraphsOf(note.text)))];
+  return (technology) => {
+    const matches = (value: string) => technology.evidence.test(value);
+    return {
+      technology,
+      work: experience.flatMap((role) =>
+        role.highlights
+          .filter(matches)
+          .map((statement) => ({ role: role.id, company: role.company, statement })),
+      ),
+      skills: skills.flatMap((group) => group.items.filter(matches)),
+      coursework: certifications
+        .filter((certification) => matches(certification.name))
+        .map((certification) => `${certification.name} (${certification.issuer})`),
+      notes: noteParagraphs.filter(matches),
+    };
   };
 }

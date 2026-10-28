@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { MAX_QUESTION_LENGTH } from '@/core/assistant/system1/router';
-import { welcome } from '@/core/knowledge/data/profile';
+import { knowledge } from '../../site-knowledge';
 import type { ComposerStatus, ComposerVariant } from '@/ui/composer';
 import { Eyebrow } from '@/ui/primitives';
 import { ComposerSpecimen, DockSpecimen } from './composer-specimen';
+
+const { welcome } = knowledge;
 
 // Every composer state from the design, in both variants, for checking them
 // against the artboards. A development tool, so production answers 404.

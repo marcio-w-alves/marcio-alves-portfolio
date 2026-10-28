@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { ToolTrace } from '../../src/core/assistant/system2/model-assistant';
+import { createResponseKit } from '../../src/core/assistant/response-kit';
 import { createToolRegistry } from '../../src/core/assistant/tools/registry';
+import { localize } from '../../src/core/knowledge/localize';
+import { fixtureKnowledge } from '../../src/testing/fixture-profile/knowledge';
 import {
   describeTrace,
   formatCaseReport,
@@ -9,6 +12,8 @@ import {
   type CaseReport,
   type RunReport,
 } from './report';
+
+const kit = createResponseKit(localize(fixtureKnowledge, 'en'));
 
 function rethrow(error: unknown): never {
   throw error;
@@ -19,7 +24,7 @@ async function traced(name: string, input: object): Promise<ToolTrace> {
   return {
     name,
     arguments: JSON.stringify(input),
-    outcome: await createToolRegistry({ reportError: rethrow }).run(name, input),
+    outcome: await createToolRegistry({ kit, reportError: rethrow }).run(name, input),
   };
 }
 
@@ -60,31 +65,31 @@ describe('the evaluation report', () => {
   });
 
   it('shows the actions behind a failing model run', async () => {
-    const trace = [await traced('getExperience', { company: 'deel' })];
+    const trace = [await traced('getExperience', { company: 'acme' })];
     const report = formatCaseReport(caseReport('leadership', 'leadership', [failing(trace)]));
     expect(report).toContain('unsupported: he led fifteen engineers');
-    expect(report).toContain('getExperience {"company":"deel"} → sources: resume.deel');
+    expect(report).toContain('getExperience {"company":"acme"} → sources: cv.acme');
   });
 
   it('shows the tool trace when a claim fails calibration', async () => {
     const trace = [
-      await traced('getExperience', { company: 'roots' }),
+      await traced('getExperience', { company: 'globex' }),
       await traced('getExperience', { company: 'google' }),
     ];
     const output = formatMiscalibration({
-      answer: 'At Deel he improved web vitals by 30%.',
+      answer: 'At Acme she cut build times by 90%.',
       planted: 1,
       flagged: [],
       trace,
     });
     expect(output).toContain('expected 1 flags, got 0');
-    expect(output).toContain('getExperience {"company":"roots"} → sources: resume.roots');
+    expect(output).toContain('getExperience {"company":"globex"} → sources: cv.globex');
     expect(output).toMatch(/getExperience \{"company":"google"\} → error: /);
   });
 
   it('names the knowledge base as the evidence when there was no trace', () => {
     const output = formatMiscalibration({
-      answer: 'Marcio worked at Google.',
+      answer: 'Ada worked at Google.',
       planted: 1,
       flagged: [],
     });

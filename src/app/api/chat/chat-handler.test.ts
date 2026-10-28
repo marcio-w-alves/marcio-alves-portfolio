@@ -3,14 +3,20 @@ import { buildContainer } from '@/composition-root';
 import { createAssistant, type Assistant } from '@/core/assistant/assistant';
 import type { AssistantEvent } from '@/core/assistant/assistant-event';
 import type { LanguageModelPort, ToolCall } from '@/core/assistant/ports/language-model.port';
+import { createResponseKit } from '@/core/assistant/response-kit';
+import { createFastPath } from '@/core/assistant/system1/fast-path';
 import { createModelAssistant } from '@/core/assistant/system2/model-assistant';
 import { createAnswerCache } from '@/infrastructure/budget/answer-cache';
 import { createModelBudget } from '@/infrastructure/budget/model-budget';
 import { createSlidingWindowLimiter } from '@/infrastructure/rate-limit/sliding-window';
 import { createToolRegistry } from '@/core/assistant/tools/registry';
+import { localize } from '@/core/knowledge/localize';
 import { assistantSettings } from '@/env';
+import { profile } from '@/profile';
 import { createChatHandler, MAX_BODY_BYTES } from './chat-handler';
 
+const knowledge = localize(profile.knowledge, 'en');
+const fastPath = createFastPath(knowledge);
 const reported: unknown[] = [];
 const reportError = (error: unknown) => reported.push(error);
 const rateLimited: string[] = [];
@@ -53,6 +59,7 @@ function spending() {
 }
 
 const fastPathOnly = createAssistant({
+  fastPath,
   modelAssistant: null,
   clock,
   reportError,
@@ -90,12 +97,13 @@ describe('POST /api/chat — answering', () => {
 
   it('streams a model answer built from a real action over the real knowledge base', async () => {
     const assistant = createAssistant({
+      fastPath,
       modelAssistant: createModelAssistant({
         model: scriptedModel(
           { id: 'c1', name: 'getExperience', arguments: '{"company":"roots"}' },
           'He led the Roots frontend.',
         ),
-        tools: createToolRegistry({ reportError }),
+        tools: createToolRegistry({ kit: createResponseKit(knowledge), reportError }),
         clock,
       }),
       clock,

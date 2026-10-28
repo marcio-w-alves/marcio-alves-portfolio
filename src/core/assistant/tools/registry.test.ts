@@ -1,4 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { localize } from '@/core/knowledge/localize';
+import { profile } from '@/profile';
+import { fixtureKnowledge } from '@/testing/fixture-profile/knowledge';
+import { createResponseKit } from '../response-kit';
 import { createToolRegistry } from './registry';
 import { defineTool, type ToolOutcome, type ToolResult } from './tool';
 
@@ -6,7 +10,8 @@ function rethrow(error: unknown): never {
   throw error;
 }
 
-const registry = createToolRegistry({ reportError: rethrow });
+const kit = createResponseKit(localize(profile.knowledge, 'en'));
+const registry = createToolRegistry({ kit, reportError: rethrow });
 
 function succeeded(outcome: ToolOutcome): ToolResult {
   if (!outcome.ok) throw new Error(`Tool failed: ${outcome.error}`);
@@ -80,7 +85,7 @@ describe('tool registry — the allow-list', () => {
       input: {},
       execute: () => ({ data: null, sources: [] }),
     });
-    expect(() => createToolRegistry({ extra: [impostor], reportError: rethrow })).toThrow(
+    expect(() => createToolRegistry({ kit, extra: [impostor], reportError: rethrow })).toThrow(
       'Two tools share a name.',
     );
   });
@@ -94,6 +99,7 @@ describe('tool registry — the allow-list', () => {
     });
     const reported: unknown[] = [];
     const withExploding = createToolRegistry({
+      kit,
       extra: [exploding],
       reportError: (error) => reported.push(error),
     });
@@ -121,6 +127,7 @@ describe('tool registry — the allow-list', () => {
     });
     const reported: unknown[] = [];
     const withWaiting = createToolRegistry({
+      kit,
       extra: [waiting],
       reportError: (error) => reported.push(error),
     });
@@ -296,5 +303,22 @@ describe('declineToAnswer', () => {
     ['a reason outside the list', { reason: 'too_hard' }],
   ])('refuses to record a decline with %s', async (_label, args) => {
     expect((await registry.run('declineToAnswer', args)).ok).toBe(false);
+  });
+});
+
+describe('the record the actions read', () => {
+  it('accepts exactly the ids of the record it was given, and answers from it', async () => {
+    const fixture = createToolRegistry({
+      kit: createResponseKit(localize(fixtureKnowledge, 'en')),
+      reportError: rethrow,
+    });
+    const getExperience = fixture.tools.find((tool) => tool.name === 'getExperience');
+    expect(getExperience?.parameters).toMatchObject({
+      properties: { company: { enum: ['acme', 'globex', 'initech'] } },
+    });
+
+    const roles = succeeded(await fixture.run('getExperience', { company: 'globex' })).data;
+    expect(roles).toMatchObject([{ company: 'Globex', role: 'Senior Platform Engineer' }]);
+    expect((await fixture.run('getExperience', { company: 'umbrella' })).ok).toBe(false);
   });
 });

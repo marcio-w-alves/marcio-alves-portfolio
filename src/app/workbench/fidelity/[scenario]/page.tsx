@@ -32,8 +32,7 @@ async function Scenario({ params }: ScenarioPageProps) {
   const { conversation, drawerOpen } = build();
   return (
     <ChatWorkspace
-      {...workspaceProps()}
-      topic={conversation.topic}
+      {...workspaceProps(conversation.topic)}
       initialConversation={conversation}
       initialDrawerOpen={drawerOpen}
     />

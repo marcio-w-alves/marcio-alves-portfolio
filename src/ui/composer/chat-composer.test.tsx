@@ -3,8 +3,10 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { MAX_QUESTION_LENGTH } from '@/core/assistant/system1/router';
-import { welcome } from '@/core/knowledge/data/profile';
+import { knowledge } from '@/app/site-knowledge';
 import { ChatComposer, ComposerDock, JumpToLatest, type ChatComposerHandle } from '.';
+
+const { welcome } = knowledge;
 
 type HarnessProps = Partial<Parameters<typeof ChatComposer>[0]> & {
   readonly initialValue?: string;

@@ -1,12 +1,6 @@
-import type { MetricId, ProjectId, RoleId, SkillGroupId, SourceId } from '@/core/knowledge/ids';
-import {
-  isConcurrent,
-  knowledgeBase,
-  projectById,
-  roleById,
-} from '@/core/knowledge/knowledge-base';
-import type { Project, Role } from '@/core/knowledge/types';
-import { citation } from './citations';
+import type { Knowledge, Metric, Project, Role } from '@/core/knowledge/schema';
+import type { AnswerSource } from './assistant-event';
+import { createCitation } from './citations';
 import type { MetricItem, NoteTone, ProjectView, RoleSection, RoleView } from './components';
 import type {
   AssistantResponse,
@@ -32,84 +26,6 @@ export function text(markdown: string): ResponsePart {
   return { type: 'text', text: markdown };
 }
 
-export function metrics(ids: readonly MetricId[]): ComponentPart {
-  const items = ids.map((id): MetricItem => {
-    const metric = knowledgeBase.metrics[id];
-    return { value: metric.value, label: metric.label, context: metric.context };
-  });
-  return { type: 'component', component: 'metrics', props: { items } };
-}
-
-function roleView(role: Role): RoleView {
-  const sections: RoleSection[] = [];
-  if (role.responsibilities.length > 0) {
-    sections.push({ title: 'Responsibilities', kind: 'list', items: role.responsibilities });
-  }
-  if (role.metrics.length > 0) {
-    sections.push({
-      title: 'Engineering impact',
-      kind: 'metrics',
-      items: role.metrics.map((id) => {
-        const metric = knowledgeBase.metrics[id];
-        return { value: metric.value, label: metric.label };
-      }),
-    });
-  }
-  if (role.leadership.length > 0) {
-    sections.push({ title: 'Leadership', kind: 'list', items: role.leadership });
-  }
-  if (role.achievements.length > 0) {
-    sections.push({ title: 'Notable achievements', kind: 'list', items: role.achievements });
-  }
-  if (role.focus.length > 0) {
-    sections.push({ title: 'Focus areas', kind: 'tags', items: role.focus });
-  }
-  return {
-    id: role.id,
-    company: role.company,
-    role: role.role,
-    period: role.period,
-    summary: role.summary,
-    current: role.current,
-    concurrent: isConcurrent(role),
-    sections,
-  };
-}
-
-export function timeline(ids?: readonly RoleId[]): ComponentPart {
-  const roles = ids ? ids.map(roleById) : knowledgeBase.experience;
-  return {
-    type: 'component',
-    component: 'timeline',
-    props: { roles: roles.map(roleView), expanded: [] },
-  };
-}
-
-export function skills(ids?: readonly SkillGroupId[]): ComponentPart {
-  const groups = ids
-    ? knowledgeBase.skills.filter((group) => ids.includes(group.id))
-    : knowledgeBase.skills;
-  return {
-    type: 'component',
-    component: 'skills',
-    props: { groups: groups.map((group) => ({ title: group.title, items: group.items })) },
-  };
-}
-
-// A card shows what a product is, not whether it is live: the status says that in words.
-function projectView({ source: _source, live: _live, ...view }: Project): ProjectView {
-  return view;
-}
-
-export function projects(ids?: readonly ProjectId[]): ComponentPart {
-  const list = ids ? ids.map(projectById) : knowledgeBase.projects;
-  return {
-    type: 'component',
-    component: 'projects',
-    props: { projects: list.map(projectView) },
-  };
-}
-
 export function table(
   columns: readonly string[],
   rows: readonly (readonly string[])[],
@@ -126,56 +42,184 @@ export function details(summary: string, markdown: string): ComponentPart {
   return { type: 'component', component: 'details', props: { summary, text: markdown } };
 }
 
-export function contactCard(): ComponentPart {
-  const { email, linkedin, github, resumeUrl } = knowledgeBase.contact;
-  return {
-    type: 'component',
-    component: 'contact',
-    props: {
-      heading: 'Interested in working together?',
-      text: 'Get in touch with Marcio to discuss engineering, architecture, and product opportunities.',
-      email,
-      linkedin,
-      github,
-      resumeUrl,
-    },
-  };
-}
-
-/**
- * Recruitment-flavoured answers may close with the contact call to action,
- * but only once per conversation, so it never turns into repeated promotion.
- */
-export function contactOnce(context: ConversationContext): ComponentPart | null {
-  return context.ctaShown ? null : contactCard();
-}
-
-export function metricValue(id: MetricId): string {
-  return knowledgeBase.metrics[id].value;
-}
-
-export function allRoleSources(): SourceId[] {
-  return knowledgeBase.experience.map((role) => role.source);
-}
-
 interface ResponseMeta {
   readonly followUps: readonly string[];
-  readonly sources: readonly SourceId[];
-  readonly related?: RoleId;
+  readonly sources: readonly string[];
+  readonly related?: string;
   readonly grounded?: boolean;
 }
 
-export function response(
-  intent: string,
-  parts: readonly (ResponsePart | null)[],
-  meta: ResponseMeta,
-): AssistantResponse {
+/** The builders that read the record, bound to the knowledge they were created with. */
+export interface ResponseKit {
+  readonly knowledge: Knowledge;
+  readonly roleById: (id: string) => Role;
+  readonly projectById: (id: string) => Project;
+  readonly metricById: (id: string) => Metric;
+  readonly citation: (id: string) => AnswerSource;
+  readonly metrics: (ids: readonly string[]) => ComponentPart;
+  readonly timeline: (ids?: readonly string[]) => ComponentPart;
+  readonly skills: (ids?: readonly string[]) => ComponentPart;
+  readonly projects: (ids?: readonly string[]) => ComponentPart;
+  readonly contactCard: () => ComponentPart;
+  /**
+   * Recruitment-flavoured answers may close with the contact call to action,
+   * but only once per conversation, so it never turns into repeated promotion.
+   */
+  readonly contactOnce: (context: ConversationContext) => ComponentPart | null;
+  readonly metricValue: (id: string) => string;
+  /** The engineering problem behind one of the owner's products. */
+  readonly productDepth: (projectId: string) => string;
+  readonly allRoleSources: () => string[];
+  readonly response: (
+    intent: string,
+    parts: readonly (ResponsePart | null)[],
+    meta: ResponseMeta,
+  ) => AssistantResponse;
+}
+
+function lookup<Item extends { readonly id: string }>(items: readonly Item[], kind: string) {
+  const byId = new Map(items.map((item) => [item.id, item]));
+  return (id: string): Item => {
+    const item = byId.get(id);
+    if (!item) throw new Error(`Unknown ${kind} "${id}".`);
+    return item;
+  };
+}
+
+/** Whether a role overlapped in time with any other. An open end means "still running". */
+function isConcurrent(target: Role, experience: readonly Role[]): boolean {
+  const targetEnd = target.end ?? Infinity;
+  return experience.some(
+    (other) =>
+      other.id !== target.id && target.start < (other.end ?? Infinity) && other.start < targetEnd,
+  );
+}
+
+// A card shows what a product is, not whether it is live: the status says that in words.
+function projectView({ source: _source, live: _live, ...view }: Project): ProjectView {
+  return view;
+}
+
+export function createResponseKit(knowledge: Knowledge): ResponseKit {
+  const roleById = lookup(knowledge.experience, 'role');
+  const projectById = lookup(knowledge.projects, 'project');
+  const citation = createCitation(knowledge.sourceLabels);
+
+  function metricById(id: string): Metric {
+    const metric = knowledge.metrics[id];
+    if (!metric) throw new Error(`Unknown metric "${id}".`);
+    return metric;
+  }
+
+  function roleView(role: Role): RoleView {
+    const sections: RoleSection[] = [];
+    if (role.responsibilities.length > 0) {
+      sections.push({ title: 'Responsibilities', kind: 'list', items: role.responsibilities });
+    }
+    if (role.metrics.length > 0) {
+      sections.push({
+        title: 'Engineering impact',
+        kind: 'metrics',
+        items: role.metrics.map((id) => {
+          const metric = metricById(id);
+          return { value: metric.value, label: metric.label };
+        }),
+      });
+    }
+    if (role.leadership.length > 0) {
+      sections.push({ title: 'Leadership', kind: 'list', items: role.leadership });
+    }
+    if (role.achievements.length > 0) {
+      sections.push({ title: 'Notable achievements', kind: 'list', items: role.achievements });
+    }
+    if (role.focus.length > 0) {
+      sections.push({ title: 'Focus areas', kind: 'tags', items: role.focus });
+    }
+    return {
+      id: role.id,
+      company: role.company,
+      role: role.role,
+      period: role.period,
+      summary: role.summary,
+      current: role.current,
+      concurrent: isConcurrent(role, knowledge.experience),
+      sections,
+    };
+  }
+
+  function contactCard(): ComponentPart {
+    const { email, linkedin, github, resumeUrl } = knowledge.contact;
+    return {
+      type: 'component',
+      component: 'contact',
+      props: {
+        heading: 'Interested in working together?',
+        text: `Get in touch with ${knowledge.profile.firstName} to discuss engineering, architecture, and product opportunities.`,
+        email,
+        linkedin,
+        github,
+        resumeUrl,
+      },
+    };
+  }
+
   return {
-    intent,
-    parts: parts.filter((part): part is ResponsePart => part !== null),
-    followUps: meta.followUps,
-    sources: meta.sources.map(citation),
-    related: meta.related ?? null,
-    grounded: meta.grounded ?? true,
+    knowledge,
+    roleById,
+    projectById,
+    metricById,
+    citation,
+    metrics(ids) {
+      const items = ids.map((id): MetricItem => {
+        const metric = metricById(id);
+        return { value: metric.value, label: metric.label, context: metric.context };
+      });
+      return { type: 'component', component: 'metrics', props: { items } };
+    },
+    timeline(ids) {
+      const roles = ids ? ids.map(roleById) : knowledge.experience;
+      return {
+        type: 'component',
+        component: 'timeline',
+        props: { roles: roles.map(roleView), expanded: [] },
+      };
+    },
+    skills(ids) {
+      const groups = ids
+        ? knowledge.skills.filter((group) => ids.includes(group.id))
+        : knowledge.skills;
+      return {
+        type: 'component',
+        component: 'skills',
+        props: { groups: groups.map((group) => ({ title: group.title, items: group.items })) },
+      };
+    },
+    projects(ids) {
+      const list = ids ? ids.map(projectById) : knowledge.projects;
+      return {
+        type: 'component',
+        component: 'projects',
+        props: { projects: list.map(projectView) },
+      };
+    },
+    contactCard,
+    contactOnce: (context) => (context.ctaShown ? null : contactCard()),
+    metricValue: (id) => metricById(id).value,
+    productDepth: (projectId) => {
+      const depth = knowledge.practice.productDepth[projectId];
+      if (depth === undefined) throw new Error(`Unknown project "${projectId}".`);
+      return depth;
+    },
+    allRoleSources: () => knowledge.experience.map((role) => role.source),
+    response(intent, parts, meta) {
+      return {
+        intent,
+        parts: parts.filter((part): part is ResponsePart => part !== null),
+        followUps: meta.followUps,
+        sources: meta.sources.map(citation),
+        related: meta.related ?? null,
+        grounded: meta.grounded ?? true,
+      };
+    },
   };
 }

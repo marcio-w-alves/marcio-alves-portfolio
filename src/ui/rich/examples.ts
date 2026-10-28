@@ -1,6 +1,6 @@
 import type { RichComponent, RichComponentName } from '@/core/assistant/components';
 import type { ComponentPart, ConversationContext } from '@/core/assistant/response';
-import { fastPath } from '@/core/assistant/system1/fast-path';
+import type { FastPath } from '@/core/assistant/system1/fast-path';
 
 /**
  * Real blocks, exactly as the fast path sends them, for the workbench and the
@@ -21,13 +21,15 @@ type BlockOf<Name extends RichComponentName> = Extract<RichComponent, { componen
 
 const FIRST_VISIT: ConversationContext = { topic: 'overview', lastIntent: null, ctaShown: false };
 
-export function exampleBlock<Name extends RichComponentName>(name: Name): BlockOf<Name> {
-  const result = fastPath(QUESTION_FOR[name], FIRST_VISIT);
-  const parts = result.kind === 'answered' ? result.response.parts : [];
-  const block = parts.find(
-    (part): part is ComponentPart & BlockOf<Name> =>
-      part.type === 'component' && part.component === name,
-  );
-  if (!block) throw new Error(`The fast path no longer answers with a ${name} block.`);
-  return block;
+export function exampleBlocks(fastPath: FastPath) {
+  return <Name extends RichComponentName>(name: Name): BlockOf<Name> => {
+    const result = fastPath.answer(QUESTION_FOR[name], FIRST_VISIT);
+    const parts = result.kind === 'answered' ? result.response.parts : [];
+    const block = parts.find(
+      (part): part is ComponentPart & BlockOf<Name> =>
+        part.type === 'component' && part.component === name,
+    );
+    if (!block) throw new Error(`The fast path no longer answers with a ${name} block.`);
+    return block;
+  };
 }

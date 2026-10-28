@@ -1,5 +1,4 @@
 import type { AssistantMessage as Message, Feedback } from '@/core/conversation/messages';
-import { knowledgeBase } from '@/core/knowledge/knowledge-base';
 import { cn } from '../cn';
 import { Button, Eyebrow, Icon, Tag } from '../primitives';
 import { SuggestedQuestions } from '../welcome';
@@ -10,6 +9,8 @@ import { ThinkingStatus } from './thinking-status';
 
 interface AssistantMessageProps {
   readonly message: Message;
+  /** The name the assistant goes by beside its answers. */
+  readonly assistantName: string;
   /** Follow-ups are only offered under the newest answer. */
   readonly isLatest: boolean;
   /** Shown beside the name on a topic's introduction. */
@@ -33,6 +34,7 @@ interface AssistantMessageProps {
  */
 export function AssistantMessage({
   message,
+  assistantName,
   isLatest,
   topicLabel,
   relatedLabel,
@@ -66,7 +68,7 @@ export function AssistantMessage({
           <span className="hidden @max-phone/ma:grid">
             <AssistantAvatar inline />
           </span>
-          <strong className="font-medium text-ink">{knowledgeBase.assistant.name}</strong>
+          <strong className="font-medium text-ink">{assistantName}</strong>
           {topicLabel && <Tag tone="accent">{topicLabel}</Tag>}
         </div>
 

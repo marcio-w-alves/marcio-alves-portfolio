@@ -39,6 +39,8 @@ const repositoriesSchema = z.array(
 
 interface Options {
   readonly username: string;
+  /** How the site names itself; GitHub rejects requests that carry no User-Agent. */
+  readonly userAgent: string;
   /** Optional: raises the rate limit from 60 to 5,000 requests an hour. */
   readonly token?: string;
   readonly timeoutMs?: number;
@@ -47,6 +49,7 @@ interface Options {
 
 export function createGithubApi({
   username,
+  userAgent,
   token,
   timeoutMs = TIMEOUT_MS,
   logger,
@@ -58,7 +61,7 @@ export function createGithubApi({
         headers: {
           Accept: 'application/vnd.github+json',
           'X-GitHub-Api-Version': '2022-11-28',
-          'User-Agent': 'MarcioAlvesPortfolio',
+          'User-Agent': userAgent,
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         timeoutMs,

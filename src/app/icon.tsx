@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
-import { knowledgeBase } from '@/core/knowledge/knowledge-base';
 import { brandColors } from './brand-colors';
 import { imageFonts } from './image-fonts';
+import { knowledge } from './site-knowledge';
 
 export const size = { width: 64, height: 64 };
 export const contentType = 'image/png';
@@ -25,7 +25,7 @@ export default function Icon() {
         letterSpacing: 1,
       }}
     >
-      {knowledgeBase.profile.initials}
+      {knowledge.profile.initials}
     </div>,
     { ...size, fonts: [...imageFonts] },
   );

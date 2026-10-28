@@ -59,6 +59,24 @@ const FORBIDDEN_EDGES = [
     to: 'src/ui/format.test.ts',
   },
   {
+    fixture: 'profile-to-infrastructure',
+    rule: 'profile-is-configuration',
+    from: 'src/profile/identity.ts',
+    to: 'src/infrastructure/adapter.ts',
+  },
+  {
+    fixture: 'profile-to-ui',
+    rule: 'profile-uses-only-types-outward',
+    from: 'src/profile/copy.ts',
+    to: 'src/ui/panel.ts',
+  },
+  {
+    fixture: 'ui-to-profile',
+    rule: 'only-roots-read-the-profile',
+    from: 'src/ui/panel.ts',
+    to: 'src/profile/index.ts',
+  },
+  {
     fixture: 'src-to-scripts',
     rule: 'src-never-imports-scripts',
     from: 'src/ui/panel.ts',
@@ -73,7 +91,7 @@ describe('module boundaries', () => {
     expect(violations).toEqual([{ rule, from, to }]);
   });
 
-  it('reports nothing for a tree whose every edge points inward', async () => {
+  it('reports nothing for a tree whose every edge points inward, the profile read only by the root', async () => {
     const violations = violationsOf(await cruiseFixture('clean'));
 
     expect(violations).toEqual([]);

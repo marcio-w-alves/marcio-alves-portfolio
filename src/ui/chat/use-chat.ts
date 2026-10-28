@@ -7,7 +7,6 @@ import {
   addExchange,
   applyEvent,
   contextOf,
-  createConversation,
   historyOf,
   removeExchange,
   setFeedback,
@@ -23,9 +22,9 @@ import { useConversationStore } from './conversation-store';
  * per page; starting over, retrying or editing cancels the one in flight.
  * The conversation itself lives in the store, so it outlasts the page.
  */
-export function useChat(topic: TopicId, initial?: Conversation) {
+export function useChat(topic: TopicId, opening: Conversation, initial?: Conversation) {
   const store = useConversationStore();
-  const [seed] = useState(() => initial ?? createConversation(topic));
+  const [seed] = useState(() => initial ?? opening);
   const conversation = store.conversations.get(topic) ?? seed;
   const [announcement, setAnnouncement] = useState('');
 
@@ -92,7 +91,7 @@ export function useChat(topic: TopicId, initial?: Conversation) {
 
   function startOver() {
     cancel();
-    setConversation(createConversation(topic));
+    setConversation(opening);
     setAnnouncement('New conversation started');
   }
 

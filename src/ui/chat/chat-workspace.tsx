@@ -1,12 +1,11 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { suggestedQuestions, topicById, type TopicId } from '@/core/assistant/topics';
+import type { SuggestedQuestion, TopicId } from '@/core/assistant/topics';
 import { latestAnswerId } from '@/core/conversation/conversation';
-import type { AssistantMessage as Answer, Conversation } from '@/core/conversation/messages';
+import type { Conversation } from '@/core/conversation/messages';
 import { toPlainText } from '@/core/conversation/plain-text';
-import { roleById } from '@/core/knowledge/knowledge-base';
-import type { Welcome } from '@/core/knowledge/types';
+import type { Welcome } from '@/core/knowledge/schema';
 import { ChatComposer, ComposerDock, JumpToLatest, type ChatComposerHandle } from '../composer';
 import { AppShell } from '../shell/app-shell';
 import { ConversationTopBar } from '../shell/conversation-top-bar';
@@ -27,6 +26,14 @@ interface ChatWorkspaceProps {
   readonly links: SidebarLinks;
   readonly topics: readonly SidebarTopic[];
   readonly welcome: Welcome;
+  /** The name the assistant goes by beside its answers. */
+  readonly assistantName: string;
+  /** Each role's company, by role id, for the link under an answer about one role. */
+  readonly companies: Readonly<Record<string, string>>;
+  /** The questions the welcome screen offers. */
+  readonly suggestions: readonly SuggestedQuestion[];
+  /** The conversation the page opens with, and starts over from. */
+  readonly seed: Conversation;
   /** The longest question the API accepts. */
   readonly maxQuestionLength: number;
   /** The page this workspace is: the overview is the welcome screen, every other topic its own page. */
@@ -36,13 +43,8 @@ interface ChatWorkspaceProps {
   readonly initialDrawerOpen?: boolean | undefined;
 }
 
-const SUGGESTION_COUNT = 4;
 // Within this distance of the bottom the visitor is reading the newest message.
 const PINNED_WITHIN_PX = 80;
-
-function relatedRole(message: Answer) {
-  return message.related ? roleById(message.related) : undefined;
-}
 
 /** Owns the conversation and hands plain data and callbacks to the presentational parts. */
 export function ChatWorkspace({
@@ -50,13 +52,19 @@ export function ChatWorkspace({
   links,
   topics,
   welcome,
+  assistantName,
+  companies,
+  suggestions,
+  seed,
   maxQuestionLength,
   topic = 'overview',
   initialConversation,
   initialDrawerOpen,
 }: ChatWorkspaceProps) {
-  const chat = useChat(topic, initialConversation);
+  const chat = useChat(topic, seed, initialConversation);
   const { conversation } = chat;
+  const labelOf = (id: string) => topics.find((item) => item.id === id)?.label;
+  const currentTopic = topics.find((item) => item.id === conversation.topic);
   const reveal = useReveal(conversation);
   // The answer is still coming in, or still being typed out.
   const busy = chat.streaming || reveal.typing;
@@ -178,9 +186,11 @@ export function ChatWorkspace({
           <h1 className="sr-only">
             {topic === 'overview'
               ? "Conversation with Marcio's portfolio assistant"
-              : `${topicById(topic).label} — Marcio Alves`}
+              : `${labelOf(topic) ?? ''} — ${profile.name}`}
           </h1>
-          <ConversationTopBar topic={topicById(conversation.topic)} onNewConversation={startOver} />
+          {currentTopic && (
+            <ConversationTopBar topic={currentTopic} onNewConversation={startOver} />
+          )}
         </>
       )}
 
@@ -206,26 +216,27 @@ export function ChatWorkspace({
                   </li>
                 );
               }
-              const role = relatedRole(message);
+              const company = message.related ? companies[message.related] : undefined;
               return (
                 <li key={message.id} className="animate-turn">
                   <AssistantMessage
                     message={reveal.view(message)}
+                    assistantName={assistantName}
                     busy={busy || chat.waiting}
                     isLatest={message.id === latestId}
                     topicLabel={
                       message.kind === 'intro' && message.topicId
-                        ? topicById(message.topicId).label
+                        ? labelOf(message.topicId)
                         : undefined
                     }
-                    relatedLabel={role ? `View ${role.company} experience` : undefined}
+                    relatedLabel={company ? `View ${company} experience` : undefined}
                     onFollowUp={ask}
                     onCopy={(answer) => copyText(toPlainText(answer.parts))}
                     onRetry={chat.retry}
                     onEdit={editQuestion}
                     onRate={chat.rate}
                     onViewRelated={() => {
-                      if (role) ask(`Tell me about his time at ${role.company}.`);
+                      if (company) ask(`Tell me about his time at ${company}.`);
                     }}
                     onAskFollowUp={focusComposer}
                   />
@@ -241,9 +252,7 @@ export function ChatWorkspace({
               title="Suggested questions"
               hideTitle
               align="center"
-              questions={suggestedQuestions(conversation.topic, 0, SUGGESTION_COUNT).map(
-                ({ question, short }) => ({ question, label: short }),
-              )}
+              questions={suggestions.map(({ question, short }) => ({ question, label: short }))}
               onPick={ask}
               disabled={chat.waiting}
             />

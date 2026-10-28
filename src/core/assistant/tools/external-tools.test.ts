@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import { localize } from '@/core/knowledge/localize';
+import { profile } from '@/profile';
 import type { GithubPort, GithubProfile, GithubRepository } from '../ports/github.port';
 import type { ReferencePort, ReferenceSummary } from '../ports/reference.port';
+import { createResponseKit } from '../response-kit';
 import { createExternalTools } from './external-tools';
 import type { ToolResult } from './tool';
+
+const kit = createResponseKit(localize(profile.knowledge, 'en'));
 
 const UNREACHABLE_GITHUB: GithubPort = {
   profile: () => Promise.resolve(null),
@@ -30,7 +35,7 @@ async function call(
   references: ReferencePort,
   github: GithubPort = UNREACHABLE_GITHUB,
 ): Promise<ToolResult> {
-  const tool = createExternalTools({ references, github }).find((t) => t.name === name);
+  const tool = createExternalTools({ kit, references, github }).find((t) => t.name === name);
   if (!tool) throw new Error(`No tool ${name}`);
   const outcome = await tool.run(args);
   if (!outcome.ok) throw new Error(outcome.error);
@@ -55,6 +60,7 @@ describe('getTechnologyBrief', () => {
 
   it('refuses a technology outside his record, so the site does not explain unrelated stacks', async () => {
     const tool = createExternalTools({
+      kit,
       references: referencesFrom({}).port,
       github: UNREACHABLE_GITHUB,
     }).find((t) => t.name === 'getTechnologyBrief');
@@ -119,6 +125,7 @@ describe('getCompanyBrief', () => {
 
   it('refuses a company that is not one of his roles', async () => {
     const tool = createExternalTools({
+      kit,
       references: referencesFrom({}).port,
       github: UNREACHABLE_GITHUB,
     }).find((t) => t.name === 'getCompanyBrief');
@@ -206,6 +213,7 @@ describe('GitHub and LinkedIn', () => {
     'refuses %j repositories, so the model cannot ask for an unbounded list',
     async (limit) => {
       const tool = createExternalTools({
+        kit,
         references: referencesFrom({}).port,
         github: LIVE_GITHUB,
       }).find((t) => t.name === 'getRepositories');

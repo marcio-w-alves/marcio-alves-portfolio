@@ -3,8 +3,7 @@ import type { AnswerCachePort } from './ports/answer-cache.port';
 import type { ClockPort } from './ports/clock.port';
 import type { ModelBudgetPort } from './ports/model-budget.port';
 import { toEvents, type ConversationContext } from './response';
-import { fastPath, followUpsFor } from './system1/fast-path';
-import { slowDown, unknown } from './system1/responses/boundaries';
+import type { FastPath } from './system1/fast-path';
 import { normalize } from './system1/router';
 import type { HistoryTurn, ModelAssistant } from './system2/model-assistant';
 
@@ -42,6 +41,8 @@ export interface AnswerReport {
 type Handling = Pick<AnswerReport, 'path' | 'outcome' | 'intent'>;
 
 interface Options {
+  /** Answers what it recognizes from the record, for free. */
+  readonly fastPath: FastPath;
   /** Null when no model credential is configured. */
   readonly modelAssistant: ModelAssistant | null;
   readonly budget: ModelBudgetPort;
@@ -73,6 +74,7 @@ const INTERRUPTED: AssistantEvent = {
  * visitor still gets an honest answer instead of an error.
  */
 export function createAssistant({
+  fastPath,
   modelAssistant,
   budget,
   answerCache,
@@ -84,7 +86,7 @@ export function createAssistant({
     { question, history, context, clientId }: AssistantRequest,
     signal: AbortSignal | undefined,
   ): AsyncGenerator<AssistantEvent, Handling> {
-    const routed = fastPath(question, context);
+    const routed = fastPath.answer(question, context);
     if (routed.kind === 'answered') {
       yield* toEvents(routed.response);
       return { path: 'fast', outcome: 'answered', intent: routed.response.intent };
@@ -95,11 +97,11 @@ export function createAssistant({
       intent: routed.nearest,
     });
     if (!modelAssistant) {
-      yield* toEvents(unknown());
+      yield* toEvents(fastPath.unknown());
       return escalated('unavailable');
     }
 
-    const followUps = followUpsFor(routed.nearest, context);
+    const followUps = fastPath.followUpsFor(routed.nearest, context);
     // Only a question asked without history means the same thing every time.
     const cacheKey = history.length === 0 ? normalize(question) : null;
     const cached = cacheKey === null ? undefined : answerCache.get(cacheKey);
@@ -108,7 +110,7 @@ export function createAssistant({
       return escalated('cached');
     }
     if (!budget.admit(clientId)) {
-      yield* toEvents(slowDown(followUps));
+      yield* toEvents(fastPath.slowDown(followUps));
       return escalated('paced');
     }
 
@@ -128,7 +130,7 @@ export function createAssistant({
       if (signal?.aborted) return escalated('abandoned');
       reportError(error);
       if (emitted.length === 0) {
-        yield* toEvents(unknown());
+        yield* toEvents(fastPath.unknown());
         return escalated('failed');
       }
       yield INTERRUPTED;

@@ -8,7 +8,7 @@
  */
 // Only what Vitest runs counts as a test; any other name is shipped code and obeys every rule.
 const TESTS = '\\.test\\.tsx?$';
-const ROOTS = 'composition-root|env';
+const ROOTS = 'composition-root|site-root|env';
 // A folder (`ui/`) or a single module (`env.ts`), never a prefix of a longer name.
 const MODULE_END = '(/|\\.)';
 
@@ -31,12 +31,23 @@ module.exports = {
     {
       name: 'core-is-innermost',
       comment:
-        'src/core may not reach the app, the interface, the adapters, the roots, or the test ' +
-        'helpers. Where the flow of control needs to go outward, invert it with a port under ' +
-        'src/core/**/ports.',
+        'src/core may not reach the app, the interface, the adapters, the profile, the roots, or ' +
+        'the test helpers. Where the flow of control needs to go outward, invert it with a port ' +
+        'under src/core/**/ports; where it needs the owner, take the value as a parameter.',
       severity: 'error',
-      from: { path: '^src/core' },
-      to: { path: `^src/(app|ui|infrastructure|testing|${ROOTS})${MODULE_END}` },
+      from: { path: '^src/core', pathNot: TESTS },
+      to: {
+        path: `^src/(app|http|site|ui|infrastructure|profile|testing|${ROOTS})${MODULE_END}`,
+      },
+    },
+    {
+      name: 'core-tests-stay-inside',
+      comment:
+        "The core's tests exercise the core: they may read a profile or the fictional fixture " +
+        'to have a record to answer from, but not the app, the interface or the adapters.',
+      severity: 'error',
+      from: { path: `^src/core/.*${TESTS}` },
+      to: { path: `^src/(app|http|site|ui|infrastructure|${ROOTS})${MODULE_END}` },
     },
     {
       name: 'knowledge-is-below-assistant',
@@ -73,6 +84,37 @@ module.exports = {
       severity: 'error',
       from: { path: '^src/app/', pathNot: TESTS },
       to: { path: '^src/infrastructure/' },
+    },
+    {
+      name: 'profile-is-configuration',
+      comment:
+        "The profile is the owner's data and copy. It may use the core's types and helpers, " +
+        'never the app, the adapters, the roots that read it, or the test helpers.',
+      severity: 'error',
+      from: { path: '^src/profile/', pathNot: TESTS },
+      to: { path: `^src/(app|http|infrastructure|testing|${ROOTS})${MODULE_END}` },
+    },
+    {
+      name: 'profile-uses-only-types-outward',
+      comment:
+        'The profile satisfies types the interface and the site own; importing their code ' +
+        'would make the data depend on how it is shown.',
+      severity: 'error',
+      from: { path: '^src/profile/', pathNot: TESTS },
+      to: { path: `^src/(ui|site)${MODULE_END}`, dependencyTypesNot: ['type-only'] },
+    },
+    {
+      name: 'only-roots-read-the-profile',
+      comment:
+        'The core receives the owner as values, so nothing but the roots that bind it, the ' +
+        'scripts and the tests reads the profile. The app reads it until its helpers move ' +
+        'behind a root.',
+      severity: 'error',
+      from: {
+        path: '^src/',
+        pathNot: [TESTS, `^src/(profile|testing|app|${ROOTS})${MODULE_END}`],
+      },
+      to: { path: '^src/profile/' },
     },
     {
       name: 'fixtures-only-in-tests',

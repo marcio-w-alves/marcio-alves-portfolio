@@ -1,14 +1,18 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import type { RichComponent } from '@/core/assistant/components';
+import { createFastPath } from '@/core/assistant/system1/fast-path';
 import { Eyebrow } from '@/ui/primitives';
 import { RichBlock } from '@/ui/rich';
-import { exampleBlock } from '@/ui/rich/examples';
+import { exampleBlocks } from '@/ui/rich/examples';
+import { knowledge } from '../../site-knowledge';
 
 // Every rich answer block, with the data the fast path really sends, at the
 // answer column's width and at a phone's. A development tool, so production
 // answers 404.
 export const metadata: Metadata = { robots: { index: false } };
+
+const exampleBlock = exampleBlocks(createFastPath(knowledge));
 
 function demos(): readonly { readonly title: string; readonly block: RichComponent }[] {
   const timeline = exampleBlock('timeline');

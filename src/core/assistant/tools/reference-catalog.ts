@@ -1,5 +1,3 @@
-import type { RoleId } from '@/core/knowledge/ids';
-
 /**
  * The only subjects the assistant may look up externally, and the exact
  * article for each. Technologies are limited to what Marcio's own record
@@ -52,7 +50,7 @@ export const REFERENCED_TECHNOLOGIES = Object.keys(TECHNOLOGY_REFERENCES) as [
  * "Deel" alone is a disambiguation page; the company's article has its own
  * title. The other employers have no article.
  */
-export const COMPANY_REFERENCES: Partial<Record<RoleId, string>> = {
+export const COMPANY_REFERENCES: Readonly<Record<string, string>> = {
   toptal: 'Toptal',
   deel: 'Deel (company)',
 };

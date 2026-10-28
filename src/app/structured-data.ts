@@ -1,8 +1,8 @@
-import { knowledgeBase } from '@/core/knowledge/knowledge-base';
+import { knowledge } from './site-knowledge';
 
-/** Marcio as a schema.org Person, from the record. */
+/** The owner as a schema.org Person, from the record. */
 export function personStructuredData(url: URL) {
-  const { profile, contact, skills } = knowledgeBase;
+  const { profile, contact, skills } = knowledge;
   return {
     '@context': 'https://schema.org',
     '@type': 'Person',
