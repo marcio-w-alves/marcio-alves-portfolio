@@ -22,11 +22,13 @@
     "prepare": "lefthook install",
     "release": "semantic-release",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "rag:build": "tsx --env-file=.env.local scripts/build-knowledge-index.mts"
   },
   "dependencies": {
     "geist": "1.8.2",
     "next": "16.4.3",
+    "openai": "7.45.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "zod": "4.6.7"
@@ -46,10 +48,12 @@
     "eslint-config-next": "16.4.3",
     "eslint-config-prettier": "10.1.8",
     "lefthook": "2.2.2",
+    "msw": "3.0.3",
     "prettier": "3.9.10",
     "prettier-plugin-tailwindcss": "0.8.1",
     "semantic-release": "25.0.9",
     "tailwindcss": "4.3.3",
+    "tsx": "4.23.15",
     "typescript": "6.0.3",
     "typescript-eslint": "8.72.1",
     "vite": "8.3.5",

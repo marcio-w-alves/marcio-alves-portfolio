@@ -18,18 +18,19 @@ pnpm dev
 
 ## Scripts
 
-| Command             | Purpose                               |
-| ------------------- | ------------------------------------- |
-| `pnpm dev`          | Development server                    |
-| `pnpm build`        | Production build                      |
-| `pnpm typecheck`    | Route types, then TypeScript, no emit |
-| `pnpm lint`         | ESLint, warnings treated as failures  |
-| `pnpm lint:fix`     | ESLint with autofix                   |
-| `pnpm format`       | Prettier, write                       |
-| `pnpm format:check` | Prettier, verify only                 |
-| `pnpm boundaries`   | Module-boundary rules                 |
-| `pnpm test`         | Unit and integration tests (Vitest)   |
-| `pnpm verify`       | Every gate, in the order CI runs them |
+| Command             | Purpose                                       |
+| ------------------- | --------------------------------------------- |
+| `pnpm dev`          | Development server                            |
+| `pnpm build`        | Production build                              |
+| `pnpm typecheck`    | Route types, then TypeScript, no emit         |
+| `pnpm lint`         | ESLint, warnings treated as failures          |
+| `pnpm lint:fix`     | ESLint with autofix                           |
+| `pnpm format`       | Prettier, write                               |
+| `pnpm format:check` | Prettier, verify only                         |
+| `pnpm boundaries`   | Module-boundary rules                         |
+| `pnpm test`         | Unit and integration tests (Vitest)           |
+| `pnpm rag:build`    | Re-embed the knowledge corpus (needs the key) |
+| `pnpm verify`       | Every gate, in the order CI runs them         |
 
 ## Quality gates
 
@@ -95,6 +96,19 @@ record per id, and which roles overlapped.
 
 Nothing is inferred. The resume states a country but not a city, so the city
 is `null` and the assistant says it is not documented rather than guessing.
+
+### Retrieval
+
+The knowledge base is also flattened into categorized passages — profile,
+experience, skills, education, languages, certifications, projects,
+principles — one per resume statement, each naming its company and role. They
+are embedded with `text-embedding-3-small` at 512 dimensions into
+`src/infrastructure/retrieval/knowledge-index.json`, which is committed.
+
+The index is built offline with `pnpm rag:build`, never during a build, because
+the build must not need a secret; at runtime only the question is embedded.
+The index records a hash of the corpus it came from, and a test fails the
+moment the knowledge base changes without the index being rebuilt.
 
 ## Design tokens
 
