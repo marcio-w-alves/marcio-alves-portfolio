@@ -23,7 +23,8 @@ function ProjectPreview({ project }: { readonly project: ProjectView }) {
       aria-label={`Project: ${project.name}`}
       className="@container/project flex h-full animate-block-enter flex-col gap-3.5 rounded-lg bg-surface px-5 py-4.5 shadow-ring"
     >
-      <div className="flex items-center gap-3">
+      {/* A narrow card puts the status beneath the name rather than squeezing both. */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <span
           aria-hidden="true"
           className="grid size-9 shrink-0 place-items-center rounded-control bg-ice text-ink shadow-ring"
@@ -36,7 +37,9 @@ function ProjectPreview({ project }: { readonly project: ProjectView }) {
           </h4>
           <p className="mt-0.5 text-12.5 leading-label text-ink-muted">{project.category}</p>
         </div>
-        <Tag tone="accent">{project.status}</Tag>
+        <div className="basis-full pl-12 @sm/project:basis-auto @sm/project:pl-0">
+          <Tag tone="accent">{project.status}</Tag>
+        </div>
       </div>
       <p className="text-14.5 leading-reading text-ink">{project.description}</p>
       {project.scope.length > 0 ? (
@@ -84,7 +87,7 @@ function Scope({ items }: { readonly items: readonly string[] }) {
       {items.map((item) => (
         <li
           key={item}
-          className="inline-flex h-7 items-center gap-1.75 rounded-pill bg-ice pr-2.75 pl-2.25 text-12.5 shadow-ring"
+          className="inline-flex min-h-7 items-center gap-1.75 rounded-pill bg-ice py-1 pr-2.75 pl-2.25 text-12.5 leading-label shadow-ring"
         >
           <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full inset-shadow-dot" />
           {item}
