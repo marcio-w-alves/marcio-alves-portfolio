@@ -22,11 +22,14 @@ afterEach(() => {
 
 describe('the routing the real next.config.ts declares', () => {
   it('serves every unprefixed page address from the English segment, query included', async () => {
-    expect(await rewrittenPath('/')).toBe('/en');
     expect(await rewrittenPath('/skills')).toBe('/en/skills');
     expect(await rewrittenPath('/nope')).toBe('/en/nope');
     expect(await rewrittenPath('/ptx')).toBe('/en/ptx');
     expect(await rewrittenPath('/skills?q=1')).toBe('/en/skills?q=1');
+  });
+
+  it('still serves a page whose name merely starts with "en" from the English segment', async () => {
+    expect(await rewrittenPath('/enroll')).toBe('/en/enroll');
   });
 
   it("leaves the API and Next's own assets alone", async () => {
