@@ -68,6 +68,14 @@
   --text-display: clamp(40px, 7.2cqi, 60px);
   --text-subhead: clamp(20px, 2.8cqi, 26px);
 
+  /* Rich answer blocks. `code` is relative to the text it sits in. */
+  --text-17: 17px;
+  --text-18: 18px;
+  --text-26: 26px;
+  --text-30: 30px;
+  --text-code: 0.875em;
+  --text-code--line-height: normal;
+
   --leading-display: 1.02;
   --leading-heading: 1.3;
   --leading-compact: 1.35;
@@ -77,6 +85,11 @@
 
   --leading-subhead: 1.25;
 
+  /* Rich answer blocks */
+  --leading-figure: 1.05;
+  --leading-caption: 1.45;
+  --leading-reading: 1.6;
+
   --tracking-display: -0.045em;
   --tracking-subhead: -0.02em;
   --tracking-name: -0.01em;
@@ -84,6 +97,11 @@
   --tracking-avatar: 0.02em;
   --tracking-monogram: 0.03em;
   --tracking-label: 0.08em;
+
+  /* Rich answer blocks */
+  --tracking-figure: -0.035em;
+  --tracking-title: -0.015em;
+  --tracking-caps: 0.06em;
 
   --font-weight-book: 450;
 
@@ -99,6 +117,10 @@
   --radius-xl: 18px;
   --radius-pill: 999px;
 
+  /* Rich answer blocks */
+  --radius-code: 5px;
+  --radius-card: 14px;
+
   /* Depth */
   --inset-shadow-ring: inset 0 0 0 1px var(--color-border);
   --inset-shadow-ring-strong: inset 0 0 0 1px var(--color-border-strong);
@@ -111,6 +133,10 @@
   --shadow-floating:
     0 1px 2px rgb(32 36 32 / 0.05), 0 0 0 1px var(--color-border),
     0 8px 20px -12px rgb(32 36 32 / 0.3);
+
+  /* Timeline and planned-scope markers */
+  --inset-shadow-dot: inset 0 0 0 1.5px var(--color-ink-faint);
+  --shadow-dot-current: 0 0 0 3px var(--color-accent-bg);
 
   /* Motion. One easing curve, two durations — anything else is improvisation. */
   --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -126,6 +152,14 @@
   --animate-fade-slow: fade 450ms var(--ease-standard);
   /* The "Jump to latest" pill rises a little faster than the default. */
   --animate-rise-short: rise 200ms var(--ease-standard);
+
+  /*
+   * A rich block rises a little slower than a message; metrics
+   * stagger through --metric-delay, set per item; a disclosure body fades in.
+   */
+  --animate-block-enter: rise 280ms var(--ease-standard) both;
+  --animate-metric-rise: rise 300ms var(--ease-standard) var(--metric-delay, 0ms) both;
+  --animate-reveal: fade 200ms var(--ease-standard);
 
   @keyframes rise {
     from {
@@ -182,6 +216,27 @@
   --container-welcome: 760px;
   --container-measure: 62ch;
   --grid-template-columns-suggestions: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+
+  /*
+   * Rich answer blocks. Each block is its own size container, so it
+   * adapts to wherever it is rendered; the breakpoints are one pixel over the
+   * design's inclusive max-width for the same reason as above.
+   */
+  --container-metrics-narrow: 421px;
+  --container-contact-narrow: 441px;
+  --container-timeline-narrow: 541px;
+
+  --width-bleed: calc(100% + 16px);
+
+  --grid-template-columns-metrics: repeat(auto-fill, minmax(min(150px, 100%), 1fr));
+  --grid-template-columns-skills: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  --grid-template-columns-projects: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+  --grid-template-columns-scope: repeat(auto-fit, minmax(min(170px, 100%), 1fr));
+  --grid-template-columns-timeline: 136px 20px minmax(0, 1fr);
+  --grid-template-columns-timeline-narrow: 16px minmax(0, 1fr);
+  --grid-template-columns-impact: 84px minmax(0, 1fr);
+
+  --list-style-type-circle: circle;
 }
 
 /* The two named durations, so a component writes the token and not a number. */
