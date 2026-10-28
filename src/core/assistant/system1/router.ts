@@ -1,4 +1,4 @@
-import type { ProjectId, RoleId } from '@/core/knowledge/ids';
+import { ROLE_IDS, type ProjectId, type RoleId } from '@/core/knowledge/ids';
 import { knowledgeBase } from '@/core/knowledge/knowledge-base';
 import type { ConversationContext } from '../response';
 import { isTopicId, type TopicId } from '../topics';
@@ -321,15 +321,17 @@ const INTENT_RULES: Readonly<Record<ScoredIntent, readonly Rule[]>> = {
   ],
 };
 
-const COMPANIES: readonly (readonly [RoleId, RegExp])[] = [
-  ['toptal', /\btoptal\b/],
-  ['deel', /\bdeel\b/],
-  ['roots', /\broots\b/],
-  ['maison', /\bmaison( modern)?\b/],
-  ['shall', /\bshall (and|&) partners\b/],
-  ['webfi', /\bwebfi\b/],
-  ['freelance', /\bfreelanc\w*\b/],
-];
+/** How the questions name each employer, as regular-expression source. */
+const COMPANY_NAMES: Readonly<Record<RoleId, string>> = {
+  toptal: 'toptal',
+  deel: 'deel',
+  roots: 'roots',
+  maison: 'maison( modern)?',
+  shall: 'shall (and|&) partners',
+  webfi: 'webfi',
+  freelance: 'freelanc\\w*',
+};
+const COMPANIES = ROLE_IDS.map((id) => [id, new RegExp(`\\b${COMPANY_NAMES[id]}\\b`)] as const);
 const COMPANY_WEIGHT = 2.5;
 
 /** Below this score the router is guessing, and a guess is worse than escalating. */
@@ -350,10 +352,12 @@ const MAX_FAST_PATH_WORDS = 25;
 // brief tool, not an account of Marcio's experience. Questions about him
 // ("what is he working on", "what are his skills") are not definitions.
 const DEFINITION = /^(what is|what's|what are|o que é|define|explain what) (?!(he|his|marcio)\b)/;
-const COMPANY_PROFILE =
-  /\b(what (kind|type|sort) of (company|business|startup)|what does (the company|toptal|deel|roots|maison( modern)?|webfi) do)\b/;
+const ANY_COMPANY = Object.values(COMPANY_NAMES).join('|');
+const COMPANY_PROFILE = new RegExp(
+  `\\b(what (kind|type|sort) of (company|business|startup)|what does (the company|${ANY_COMPANY}) do)\\b`,
+);
 
-const NEXT_INTENT: Readonly<Record<ScoredIntent, ScoredIntent | null>> = {
+export const NEXT_INTENT: Readonly<Record<ScoredIntent, ScoredIntent | null>> = {
   identity: null,
   resume: null,
   contact: 'career',
@@ -388,7 +392,7 @@ const NEXT_INTENT: Readonly<Record<ScoredIntent, ScoredIntent | null>> = {
   career: 'achievements',
 };
 
-const TOPIC_DEFAULT: Readonly<Record<TopicId, ScoredIntent>> = {
+export const TOPIC_DEFAULT: Readonly<Record<TopicId, ScoredIntent>> = {
   overview: 'career',
   experience: 'career',
   skills: 'skills',

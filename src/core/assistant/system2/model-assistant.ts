@@ -8,7 +8,7 @@ import type {
   ToolCall,
 } from '../ports/language-model.port';
 import type { ToolRegistry } from '../tools/registry';
-import type { DeclineReason, ToolOutcome } from '../tools/tool';
+import type { ToolOutcome } from '../tools/tool';
 import { createOfferFilter } from './offer-filter';
 import { systemPrompt } from './system-prompt';
 
@@ -67,9 +67,138 @@ function parseArguments(raw: string): unknown {
   }
 }
 
+function startMessages(
+  question: string,
+  history: readonly HistoryTurn[],
+  now: Date,
+): ModelMessage[] {
+  return [
+    { role: 'system', content: systemPrompt(now) },
+    ...history.slice(-HISTORY_TURNS).map((turn): ModelMessage => ({
+      role: turn.role,
+      content: turn.text.slice(0, HISTORY_CHARS),
+    })),
+    { role: 'user', content: question },
+  ];
+}
+
+interface ModelTurn {
+  readonly text: string;
+  readonly calls: readonly ToolCall[];
+}
+
+interface ActionResult {
+  readonly call: ToolCall;
+  readonly outcome: ToolOutcome;
+}
+
+const SKIPPED_ACTION: ToolOutcome = {
+  ok: false,
+  error: 'Too many actions in one step; this one was not run.',
+};
+
 const SEARCH = 'searchKnowledge';
-const SEARCH_FIRST =
-  "Not recorded: first call searchKnowledge with the visitor's question and no category, and decline only if no passage answers it.";
+const SEARCH_FIRST: ToolOutcome = {
+  ok: false,
+  error:
+    "Not recorded: first call searchKnowledge with the visitor's question and no category, and decline only if no passage answers it.",
+};
+
+// Every call needs a reply, or the conversation is invalid.
+function roundMessages(turn: ModelTurn, results: readonly ActionResult[]): ModelMessage[] {
+  return [
+    { role: 'assistant', content: turn.text || null, toolCalls: turn.calls },
+    ...results.map(({ call, outcome }): ModelMessage => ({
+      role: 'tool',
+      toolCallId: call.id,
+      content: JSON.stringify(outcome.ok ? outcome.result.data : { error: outcome.error }),
+    })),
+  ];
+}
+
+/**
+ * The reply as the visitor sees it. Nothing is announced until the model
+ * produces something real, so a failure while it is still consulting actions
+ * can be answered cleanly by the caller's fallback instead of leaving a
+ * half-started reply.
+ */
+function createReply() {
+  const offers = createOfferFilter();
+  let started = false;
+  let wroteText = false;
+
+  function* begin(): Generator<AssistantEvent> {
+    if (started) return;
+    started = true;
+    yield { type: 'start', intent: 'model', related: null };
+  }
+
+  function* show(text: string): Generator<AssistantEvent> {
+    if (!text) return;
+    yield* begin();
+    if (!wroteText) {
+      wroteText = true;
+      yield { type: 'text-start', id: 'p0' };
+    }
+    yield { type: 'text-delta', id: 'p0', delta: text };
+  }
+
+  return {
+    begin,
+    write: (delta: string) => show(offers.push(delta)),
+    // A sentence never runs on into the next round's text.
+    endRound: () => show(offers.flush()),
+    /** Shown unfiltered when the answer would otherwise be empty. */
+    fallback: (text: string) => show(text),
+    *endText(): Generator<AssistantEvent> {
+      if (wroteText) yield { type: 'text-end', id: 'p0' };
+    },
+    hasText: () => wroteText,
+  };
+}
+
+type Reply = ReturnType<typeof createReply>;
+
+/** What the actions contributed beyond data for the model: sources, displays and declines. */
+interface Effects {
+  readonly components: readonly RichComponent[];
+  add(outcome: ToolOutcome): void;
+  citedSources(): AnswerSource[];
+}
+
+function collectEffects(): Effects {
+  const sources = new Map<string, AnswerSource>();
+  const components: RichComponent[] = [];
+  let declined = false;
+
+  return {
+    components,
+    add(outcome: ToolOutcome): void {
+      if (!outcome.ok) return;
+      for (const source of outcome.result.sources) sources.set(source.id, source);
+      const effect = outcome.result.effect;
+      if (effect?.kind === 'display') components.push(effect.component);
+      if (effect?.kind === 'decline') declined = true;
+    },
+    // A declined answer cites nothing, so it can never look grounded.
+    citedSources: (): AnswerSource[] => (declined ? [] : [...sources.values()]),
+  };
+}
+
+function* closeAnswer(
+  reply: Reply,
+  effects: Effects,
+  followUps: readonly string[],
+): Generator<AssistantEvent> {
+  yield* reply.begin();
+  // An empty reply would render as a blank bubble.
+  if (!reply.hasText() && effects.components.length === 0) yield* reply.fallback(EMPTY_REPLY);
+  yield* reply.endText();
+  for (const [index, component] of effects.components.entries()) {
+    yield { type: 'component', id: `p${String(index + 1)}`, ...component };
+  }
+  yield { type: 'finish', followUps, sources: effects.citedSources() };
+}
 
 export function createModelAssistant({
   model,
@@ -84,13 +213,42 @@ export function createModelAssistant({
     parameters,
   }));
 
-  const canSearch = tools.tools.some((tool) => tool.name === SEARCH);
+  async function* streamRound(
+    messages: readonly ModelMessage[],
+    round: number,
+    reply: Reply,
+    signal?: AbortSignal,
+  ): AsyncGenerator<AssistantEvent, ModelTurn> {
+    let text = '';
+    let calls: readonly ToolCall[] = [];
+    const stream = model.stream({
+      messages,
+      tools: definitions,
+      toolChoice: round === MAX_ROUNDS ? 'none' : 'auto',
+      maxOutputTokens: MAX_OUTPUT_TOKENS,
+      ...(signal ? { signal } : {}),
+    });
+    for await (const event of stream) {
+      if (event.type === 'text-delta' && event.delta) {
+        text += event.delta;
+        yield* reply.write(event.delta);
+      } else if (event.type === 'tool-calls') {
+        calls = event.calls;
+      } else if (event.type === 'finish') {
+        onUsage?.(event.usage);
+      }
+    }
+    yield* reply.endRound();
+    return { text, calls };
+  }
 
   async function execute(call: ToolCall): Promise<ToolOutcome> {
     const parsed = parseArguments(call.arguments);
     if (parsed === undefined) return { ok: false, error: 'The arguments were not valid JSON.' };
     return tools.run(call.name, parsed);
   }
+
+  const canSearch = tools.tools.some((tool) => tool.name === SEARCH);
 
   // The prompt asks for a search before anything is called not documented,
   // and the model still skips it after a narrower action comes back empty
@@ -102,120 +260,42 @@ export function createModelAssistant({
     return parsed?.reason === 'not_documented';
   }
 
+  // Calls past the cap get a reply that declines to run them.
+  function outcomeOf(call: ToolCall, index: number, searched: boolean): Promise<ToolOutcome> {
+    if (index >= MAX_CALLS_PER_ROUND) return Promise.resolve(SKIPPED_ACTION);
+    if (declinesUnsearched(call, searched)) return Promise.resolve(SEARCH_FIRST);
+    return execute(call);
+  }
+
+  // Actions in one round are independent, so they run concurrently: an
+  // encyclopedia lookup and a GitHub read should not wait on each other.
+  function runActions(calls: readonly ToolCall[], searched: boolean): Promise<ActionResult[]> {
+    return Promise.all(
+      calls.map(async (call, index) => ({ call, outcome: await outcomeOf(call, index, searched) })),
+    );
+  }
+
   return {
     async *answer({ question, history, followUps }, signal) {
-      const messages: ModelMessage[] = [
-        { role: 'system', content: systemPrompt(clock.now()) },
-        ...history.slice(-HISTORY_TURNS).map((turn): ModelMessage => ({
-          role: turn.role,
-          content: turn.text.slice(0, HISTORY_CHARS),
-        })),
-        { role: 'user', content: question },
-      ];
-      const sources = new Map<string, AnswerSource>();
-      const components: RichComponent[] = [];
-      let declined: DeclineReason | null = null;
-      let started = false;
-      // Set inside write(), which narrowing cannot see.
-      let wroteText = false as boolean;
-      const offers = createOfferFilter();
+      const messages = startMessages(question, history, clock.now());
+      const reply = createReply();
+      const effects = collectEffects();
       let searched = false;
 
-      // Nothing is announced until the model produces something real, so a
-      // failure while it is still consulting actions can be answered cleanly
-      // by the caller's fallback instead of leaving a half-started reply.
-      function* begin(): Generator<AssistantEvent> {
-        if (!started) {
-          started = true;
-          yield { type: 'start', intent: 'model', related: null };
-        }
-      }
-
-      function* write(text: string): Generator<AssistantEvent> {
-        if (!text) return;
-        yield* begin();
-        if (!wroteText) {
-          wroteText = true;
-          yield { type: 'text-start', id: 'p0' };
-        }
-        yield { type: 'text-delta', id: 'p0', delta: text };
-      }
-
       for (let round = 1; round <= MAX_ROUNDS; round += 1) {
-        let roundText = '';
-        let calls: readonly ToolCall[] = [];
-        const stream = model.stream({
-          messages,
-          tools: definitions,
-          toolChoice: round === MAX_ROUNDS ? 'none' : 'auto',
-          maxOutputTokens: MAX_OUTPUT_TOKENS,
-          ...(signal ? { signal } : {}),
-        });
-        for await (const event of stream) {
-          if (event.type === 'text-delta' && event.delta) {
-            roundText += event.delta;
-            yield* write(offers.push(event.delta));
-          } else if (event.type === 'tool-calls') {
-            calls = event.calls;
-          } else if (event.type === 'finish') {
-            onUsage?.(event.usage);
-          }
-        }
-        // A sentence never runs on into the next round's text.
-        yield* write(offers.flush());
-        if (calls.length === 0) break;
+        const turn = yield* streamRound(messages, round, reply, signal);
+        if (turn.calls.length === 0) break;
 
-        messages.push({ role: 'assistant', content: roundText || null, toolCalls: calls });
-        // Actions in one round are independent, so they run concurrently: an
-        // encyclopedia lookup and a GitHub read should not wait on each other.
-        // Every call needs a reply, or the conversation is invalid; calls past
-        // the cap get one that declines to run them.
-        searched ||= calls.some((call) => call.name === SEARCH);
-        const outcomes = await Promise.all(
-          calls.map((call, index): Promise<ToolOutcome> =>
-            index >= MAX_CALLS_PER_ROUND
-              ? Promise.resolve({
-                  ok: false,
-                  error: 'Too many actions in one step; this one was not run.',
-                })
-              : declinesUnsearched(call, searched)
-                ? Promise.resolve({ ok: false, error: SEARCH_FIRST })
-                : execute(call),
-          ),
-        );
-        for (const [index, call] of calls.entries()) {
-          const outcome = outcomes[index] ?? { ok: false, error: 'The action did not run.' };
+        searched ||= turn.calls.some((call) => call.name === SEARCH);
+        const results = await runActions(turn.calls, searched);
+        messages.push(...roundMessages(turn, results));
+        for (const { call, outcome } of results) {
           onToolResult?.({ name: call.name, arguments: call.arguments, outcome });
-          messages.push({
-            role: 'tool',
-            toolCallId: call.id,
-            content: JSON.stringify(outcome.ok ? outcome.result.data : { error: outcome.error }),
-          });
-          if (!outcome.ok) continue;
-          for (const source of outcome.result.sources) sources.set(source.id, source);
-          const effect = outcome.result.effect;
-          if (effect?.kind === 'display') components.push(effect.component);
-          if (effect?.kind === 'decline') declined = effect.reason;
+          effects.add(outcome);
         }
       }
 
-      yield* begin();
-      if (!wroteText && components.length === 0) {
-        // An empty reply would render as a blank bubble.
-        yield { type: 'text-start', id: 'p0' };
-        yield { type: 'text-delta', id: 'p0', delta: EMPTY_REPLY };
-        wroteText = true;
-      }
-      if (wroteText) yield { type: 'text-end', id: 'p0' };
-      for (const [index, component] of components.entries()) {
-        yield { type: 'component', id: `p${String(index + 1)}`, ...component };
-      }
-      yield {
-        type: 'finish',
-        followUps,
-        // A declined answer cites nothing, so it can never look grounded.
-        sources: declined ? [] : [...sources.values()],
-      };
+      yield* closeAnswer(reply, effects, followUps);
     },
   };
 }

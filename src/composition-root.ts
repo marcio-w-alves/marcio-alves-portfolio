@@ -46,8 +46,8 @@ import { createWikipediaReferences } from '@/infrastructure/wikipedia/wikipedia-
  * depends on. Nothing under `src/core` may import from here.
  */
 
-// Low but not zero: answers stay close to the action results without reading
-// like a form letter.
+// Zero, for determinism: the same question and evidence give the same answer,
+// which keeps answers close to the action results and reproducible.
 const TEMPERATURE = 0;
 
 const TEN_MINUTES = 10 * 60 * 1000;
