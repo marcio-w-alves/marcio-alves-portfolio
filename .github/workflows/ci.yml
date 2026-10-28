@@ -76,12 +76,51 @@ jobs:
           --to ${{ github.event.pull_request.head.sha }}
           --verbose
 
+  # Axe, the security headers and the search metadata, checked in Chromium
+  # against a production build. No screenshots are compared, so the runner's
+  # fonts cannot make it flaky.
+  a11y:
+    name: a11y
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:a11y
+      - name: Keep the traces of failed checks
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: a11y-traces
+          path: test-results/
+          retention-days: 7
+
+  # The performance budget. Lighthouse runs three times against a production
+  # build and the job fails when the budgets in lighthouserc.json are missed.
+  lhci:
+    name: lhci
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - run: pnpm build
+      - run: pnpm lighthouse
+      - name: Keep the Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: lighthouse-reports
+          path: .lighthouseci/reports/
+          retention-days: 14
+
   # One status that summarises the rest, so branch protection can require a
   # single check instead of a list that has to be edited whenever a job is added.
   ci:
     name: ci
     if: always()
-    needs: [verify, build, commits]
+    needs: [verify, build, commits, a11y, lhci]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

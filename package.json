@@ -23,6 +23,8 @@
     "release": "semantic-release",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:a11y": "playwright test --config playwright.a11y.config.ts",
+    "lighthouse": "lhci autorun",
     "rag:build": "tsx --env-file=.env.local scripts/build-knowledge-index.mts",
     "eval:assistant": "tsx --env-file=.env.local scripts/evaluate-assistant.mts",
     "fidelity": "tsx scripts/fidelity/check.mts",
@@ -30,6 +32,7 @@
     "fidelity:live": "tsx scripts/fidelity/check.mts --live"
   },
   "dependencies": {
+    "@fontsource/inter-tight": "5.3.0",
     "clsx": "2.1.1",
     "next": "16.4.3",
     "openai": "7.45.1",
@@ -39,8 +42,10 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
     "@commitlint/cli": "21.2.4",
     "@commitlint/config-conventional": "21.2.4",
+    "@lhci/cli": "0.15.1",
     "@playwright/test": "1.64.1",
     "@semantic-release/commit-analyzer": "13.0.1",
     "@semantic-release/github": "12.0.10",

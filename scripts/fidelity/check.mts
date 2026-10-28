@@ -41,7 +41,11 @@ const results: { name: string; ratio: number; note: string }[] = [];
 
 for (const board of boards) {
   const reference = PNG.sync.read(await readFile(new URL(`${board.name}.png`, REFERENCES)));
-  const page = await browser.newPage({ viewport: { width: board.width, height: board.height } });
+  // The production policy refuses inline style elements, the freeze below included.
+  const page = await browser.newPage({
+    viewport: { width: board.width, height: board.height },
+    bypassCSP: true,
+  });
   const route = live ? (board.liveRoute ?? board.route) : board.route;
   const response = await page.goto(`${APP_URL}${route}`, { waitUntil: 'networkidle' });
   if (!response?.ok()) {
