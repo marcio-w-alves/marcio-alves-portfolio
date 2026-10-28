@@ -80,6 +80,28 @@ The commit-message rule is enforced twice on purpose. The `commit-msg` hook
 only protects whoever installed it; the `commits` job is the one nobody can
 skip.
 
+## Design tokens
+
+`src/app/globals.css` is the whole visual vocabulary, declared as Tailwind v4
+`@theme` variables: surfaces, ink, lines, accent, radii, shadows, one easing
+curve, two durations, four keyframes, and the two layout widths. Every visual
+decision is therefore expressible as a utility over a token — `bg-surface`,
+`text-ink-muted`, `shadow-composer`, `duration-fast`.
+
+The corollary matters more than the list: **a value that cannot be written as
+a utility is a missing token, not a licence to write CSS.** The only raw CSS in
+the project is what no utility can reach — the global focus ring, two
+text-rendering hints, and the `prefers-reduced-motion` collapse.
+
+`--color-ink-faint` is for icons, rules and decoration. It does not reach WCAG
+AA as body text, which is what `--color-ink-muted` exists for: the design
+prototype darkened the brief's `#767b77` to `#686d69` for exactly that reason,
+and the corrected value is the one that ships. Where contrast and fidelity
+disagree, contrast wins.
+
+Both Geist faces are self-hosted through the `geist` package, so no build or
+page load depends on Google Fonts.
+
 ## Architecture
 
 Source dependencies point inward. `src/core` is plain TypeScript: it never
