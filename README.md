@@ -178,6 +178,11 @@ every board. The full-screen states (a streaming answer, a failure, a long
 follow-up…) are rebuilt the way the prototype builds them: real fast-path
 answers replayed through the conversation's transitions.
 
+`pnpm fidelity:live` checks the boards production renders as they are — the
+welcome screen on a desktop and on a phone — against the live site, so a
+deployment that differs from what was built locally is caught too. It found
+one: a build that reused a stale stylesheet (see `next.config.ts`).
+
 The references take three deliberate liberties with the prototype, each
 explained where it is made: they omit its "Preview with scripted answers"
 notice, they run its logic with the production contact data (GitHub linked,

@@ -9,6 +9,8 @@ export interface Board {
   readonly height: number;
   /** The candidate: a development-only page under /workbench/fidelity. */
   readonly route: string;
+  /** Where production renders the same state, for checking a deployment. */
+  readonly liveRoute?: string;
 }
 
 const board = (name: string, width: number, height: number): Board => ({
@@ -19,8 +21,8 @@ const board = (name: string, width: number, height: number): Board => ({
 });
 
 export const BOARDS: readonly Board[] = [
-  board('Main', 1440, 900),
-  board('Mobile', 390, 844),
+  { ...board('Main', 1440, 900), liveRoute: '/' },
+  { ...board('Mobile', 390, 844), liveRoute: '/' },
   board('StateTopic', 1280, 800),
   board('StateStreaming', 1280, 800),
   board('StateRichAnswer', 1280, 800),
