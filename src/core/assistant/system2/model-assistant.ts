@@ -41,6 +41,12 @@ export interface ModelAssistantRequest {
   readonly history: readonly HistoryTurn[];
   /** Questions the fast path can answer, offered after this answer. */
   readonly followUps: readonly string[];
+  /** The topic page the visitor is reading, when not the overview. */
+  readonly page?: {
+    readonly label: string;
+    readonly summary: string;
+    readonly cards: readonly string[];
+  } | null;
 }
 
 export interface ModelAssistant {
@@ -79,13 +85,27 @@ function parseArguments(raw: string): unknown {
   }
 }
 
+// The visitor already reads the page's record above the conversation, so an
+// answer that restates it adds nothing (POR-77).
+function pageMessage(page: ModelAssistantRequest['page']): ModelMessage[] {
+  if (!page) return [];
+  return [
+    {
+      role: 'system',
+      content: `The visitor is on the "${page.label}" page, which already shows them the following. Do not repeat it: answer with what the page does not show — the details, the context, the how and why behind it. When the question asks for something this page shows, say in one sentence that it is on the page, then go deeper. Do not add a card this page already shows.\n\n${page.summary}`,
+    },
+  ];
+}
+
 function startMessages(
   question: string,
   history: readonly HistoryTurn[],
   now: Date,
+  page: ModelAssistantRequest['page'],
 ): ModelMessage[] {
   return [
     { role: 'system', content: systemPrompt(now) },
+    ...pageMessage(page),
     ...history.slice(-HISTORY_TURNS).map((turn): ModelMessage => ({
       role: turn.role,
       content: turn.text.slice(0, HISTORY_CHARS),
@@ -201,7 +221,7 @@ interface Effects {
   citedSources(answer: string): AnswerSource[];
 }
 
-function collectEffects(): Effects {
+function collectEffects(cardsOnPage: readonly string[]): Effects {
   const shown: AnswerSource[] = [];
   const evidence: SourceEvidence[] = [];
   const components: RichComponent[] = [];
@@ -223,7 +243,8 @@ function collectEffects(): Effects {
       if (!outcome.ok) return;
       const effect = outcome.result.effect;
       if (effect?.kind === 'display') {
-        components.push(effect.component);
+        // The page above already shows this card; its facts stay cited.
+        if (!cardsOnPage.includes(effect.component.component)) components.push(effect.component);
         shown.push(...outcome.result.sources);
       } else {
         evidence.push(...evidenceOf(outcome.result));
@@ -364,11 +385,11 @@ export function createModelAssistant({
   }
 
   return {
-    async *answer({ question, history, followUps }, signal) {
-      const messages = startMessages(question, history, clock.now());
+    async *answer({ question, history, followUps, page }, signal) {
+      const messages = startMessages(question, history, clock.now(), page);
       const linkable = createLinkAllowList(knownUrls);
       const reply = createReply((url) => linkable.allows(url));
-      const effects = collectEffects();
+      const effects = collectEffects(page?.cards ?? []);
       let searched = false;
       let answer = '';
 

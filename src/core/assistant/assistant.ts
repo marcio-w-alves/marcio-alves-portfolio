@@ -102,8 +102,9 @@ export function createAssistant({
     }
 
     const followUps = fastPath.followUpsFor(routed.nearest, context);
-    // Only a question asked without history means the same thing every time.
-    const cacheKey = history.length === 0 ? normalize(question) : null;
+    // Only a question asked without history means the same thing every time —
+    // on the same page, since a topic page changes what is worth saying.
+    const cacheKey = history.length === 0 ? `${context.topic}:${normalize(question)}` : null;
     const cached = cacheKey === null ? undefined : answerCache.get(cacheKey);
     if (cached) {
       yield* cached;
@@ -116,7 +117,11 @@ export function createAssistant({
 
     const emitted: AssistantEvent[] = [];
     try {
-      for await (const event of modelAssistant.answer({ question, history, followUps }, signal)) {
+      const page = fastPath.pageShown(context);
+      for await (const event of modelAssistant.answer(
+        { question, history, followUps, page },
+        signal,
+      )) {
         emitted.push(event);
         yield event;
       }
