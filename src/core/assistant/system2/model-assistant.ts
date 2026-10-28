@@ -67,6 +67,10 @@ function parseArguments(raw: string): unknown {
   }
 }
 
+const SEARCH = 'searchKnowledge';
+const SEARCH_FIRST =
+  "Not recorded: first call searchKnowledge with the visitor's question and no category, and decline only if no passage answers it.";
+
 export function createModelAssistant({
   model,
   tools,
@@ -80,10 +84,22 @@ export function createModelAssistant({
     parameters,
   }));
 
+  const canSearch = tools.tools.some((tool) => tool.name === SEARCH);
+
   async function execute(call: ToolCall): Promise<ToolOutcome> {
     const parsed = parseArguments(call.arguments);
     if (parsed === undefined) return { ok: false, error: 'The arguments were not valid JSON.' };
     return tools.run(call.name, parsed);
+  }
+
+  // The prompt asks for a search before anything is called not documented,
+  // and the model still skips it after a narrower action comes back empty
+  // ("did he work on the Roots backend?" once went getTechnologyEvidence →
+  // decline, while his notes answer it). Such a decline is sent back.
+  function declinesUnsearched(call: ToolCall, searched: boolean): boolean {
+    if (!canSearch || searched || call.name !== 'declineToAnswer') return false;
+    const parsed = parseArguments(call.arguments) as { reason?: unknown } | undefined;
+    return parsed?.reason === 'not_documented';
   }
 
   return {
@@ -103,6 +119,7 @@ export function createModelAssistant({
       // Set inside write(), which narrowing cannot see.
       let wroteText = false as boolean;
       const offers = createOfferFilter();
+      let searched = false;
 
       // Nothing is announced until the model produces something real, so a
       // failure while it is still consulting actions can be answered cleanly
@@ -153,14 +170,17 @@ export function createModelAssistant({
         // encyclopedia lookup and a GitHub read should not wait on each other.
         // Every call needs a reply, or the conversation is invalid; calls past
         // the cap get one that declines to run them.
+        searched ||= calls.some((call) => call.name === SEARCH);
         const outcomes = await Promise.all(
           calls.map((call, index): Promise<ToolOutcome> =>
-            index < MAX_CALLS_PER_ROUND
-              ? execute(call)
-              : Promise.resolve({
+            index >= MAX_CALLS_PER_ROUND
+              ? Promise.resolve({
                   ok: false,
                   error: 'Too many actions in one step; this one was not run.',
-                }),
+                })
+              : declinesUnsearched(call, searched)
+                ? Promise.resolve({ ok: false, error: SEARCH_FIRST })
+                : execute(call),
           ),
         );
         for (const [index, call] of calls.entries()) {

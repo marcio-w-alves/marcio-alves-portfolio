@@ -123,7 +123,8 @@ export const CASES: readonly EvaluationCase[] = [
     id: 'graphql',
     category: 'technology',
     question: 'Has he worked with GraphQL?',
-    expect: { path: 'fast', mentions: ["don't have documented"] },
+    // POR-40: his notes mention GraphQL only as a topic he has discussed.
+    expect: { path: 'model', mentions: ['GraphQL'], avoids: ['he has worked with GraphQL'] },
   },
   {
     id: 'redux-brief',
@@ -178,22 +179,22 @@ export const CASES: readonly EvaluationCase[] = [
     expect: { mentions: ['linkedin'] },
   },
 
-  // Location: country documented, city not.
+  // Location: João Pessoa, as Marcio confirmed (POR-40).
   {
     id: 'where-live',
     category: 'location',
     question: 'Where does he live?',
     expect: {
       path: 'fast',
-      mentions: ['Brazil'],
-      avoids: ['São Paulo', 'Sao Paulo', 'João Pessoa', 'Rio de Janeiro'],
+      mentions: ['João Pessoa', 'Brazil'],
+      avoids: ['São Paulo', 'Sao Paulo', 'Rio de Janeiro'],
     },
   },
   {
     id: 'city-life',
     category: 'location',
     question: 'What is life like in the city he lives in?',
-    expect: { path: 'model', avoids: ['São Paulo', 'Sao Paulo', 'João Pessoa', 'Rio de Janeiro'] },
+    expect: { path: 'model', mentions: ['João Pessoa'], avoids: ['São Paulo', 'Rio de Janeiro'] },
   },
 
   // Things the record does not document: say so, never guess.
@@ -356,6 +357,19 @@ export const CASES: readonly EvaluationCase[] = [
     // POR-37: the résumé no longer lists this figure, and neither do the notes.
     question: 'By how much did he grow Slack bot adoption at Roots?',
     expect: { avoids: ['50%'] },
+  },
+  {
+    id: 'notes-reported-technology',
+    category: 'notes',
+    // POR-40: only his own account mentions MongoDB; the résumé alone used to say "not documented".
+    question: 'Has he worked with MongoDB?',
+    expect: { path: 'model', mentions: ['MongoDB'], avoids: ["don't have documented information"] },
+  },
+  {
+    id: 'notes-roots-backend-pt',
+    category: 'notes',
+    question: 'Ele trabalhou no backend da Roots?',
+    expect: { path: 'model', language: 'pt', mentions: ['frontend'] },
   },
   {
     id: 'pt-accessibility',

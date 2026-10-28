@@ -110,9 +110,15 @@ describe('fast path — technologies', () => {
   });
 
   it('says so plainly when a technology is not in the record', () => {
-    const response = answer('Has he worked with GraphQL?');
+    const response = answer('Has he worked with Vue?');
     expect(plainText(response)).toContain("I don't have documented information");
     expect(response.grounded).toBe(false);
+  });
+
+  it('leaves a technology only his notes report to the model, which reads their evidence tags', () => {
+    for (const question of ['Has he worked with MongoDB?', 'Ele já usou Elasticsearch?']) {
+      expect(fastPath(question, FRESH).kind, question).toBe('escalate');
+    }
   });
 
   it('answers each technology in a question separately, without upgrading one into another', () => {
@@ -141,10 +147,8 @@ describe('fast path — boundaries', () => {
     expect(plainText(response)).not.toMatch(/script|alert/);
   });
 
-  it('gives the country and declines to guess the city', () => {
-    const text = plainText(answer('Where does he live?'));
-    expect(text).toContain('Brazil');
-    expect(text).toContain("isn't documented");
+  it('gives the city and the country he lives in', () => {
+    expect(plainText(answer('Where does he live?'))).toContain('João Pessoa, Paraíba, Brazil');
   });
 
   it('escalates instead of answering what it does not recognize', () => {

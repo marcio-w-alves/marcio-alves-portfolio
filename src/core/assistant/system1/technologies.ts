@@ -1,4 +1,5 @@
 import type { RoleId } from '@/core/knowledge/ids';
+import notes from '@/core/knowledge/data/notes.json';
 import { knowledgeBase } from '@/core/knowledge/knowledge-base';
 
 /**
@@ -74,7 +75,19 @@ export interface TechnologyEvidence {
   readonly skills: readonly string[];
   /** Coursework, which is not professional experience. */
   readonly coursework: readonly string[];
+  /**
+   * Paragraphs of his knowledge-base notes that mention it: his own account or
+   * his studies, each carrying its evidence tag, never résumé evidence.
+   */
+  readonly notes: readonly string[];
 }
+
+function paragraphsOf(text: string): string[] {
+  const body = text.slice(text.indexOf(':\n') + 2);
+  return body.split('\n\n');
+}
+
+const NOTE_PARAGRAPHS = [...new Set(notes.flatMap((note) => paragraphsOf(note.text)))];
 
 export function findEvidence(technology: Technology): TechnologyEvidence {
   const matches = (value: string) => technology.evidence.test(value);
@@ -89,5 +102,6 @@ export function findEvidence(technology: Technology): TechnologyEvidence {
     coursework: knowledgeBase.certifications
       .filter((certification) => matches(certification.name))
       .map((certification) => `${certification.name} (${certification.issuer})`),
+    notes: NOTE_PARAGRAPHS.filter(matches),
   };
 }

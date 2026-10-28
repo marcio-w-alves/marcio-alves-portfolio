@@ -51,8 +51,8 @@ describe('knowledge base', () => {
     for (const role of knowledgeBase.experience) expect(role.highlights.length).toBeGreaterThan(0);
   });
 
-  it('does not invent a city that the resume never states', () => {
-    expect(knowledgeBase.profile.location.city).toBeNull();
+  it('states the city Marcio confirmed (POR-40), not one guessed from context', () => {
+    expect(knowledgeBase.profile.location.city).toBe('João Pessoa, Paraíba');
   });
 });
 

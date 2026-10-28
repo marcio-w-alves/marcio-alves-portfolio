@@ -26,7 +26,10 @@ describe('knowledge-base notes', () => {
   });
 
   it('keep the evidence tags, so the assistant can tell a reported fact from the résumé', () => {
-    const deel = notes.find((note) => note.id === '3.2')?.text;
+    const deel = notes
+      .filter((note) => note.id.startsWith('3.2'))
+      .map((note) => note.text)
+      .join('\n');
     expect(deel).toContain('[CV-2026]');
     expect(deel).toContain('[RELATO]');
   });
