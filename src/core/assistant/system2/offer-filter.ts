@@ -6,6 +6,7 @@
  *
  * Text is passed through as it arrives. Only a sentence that begins the way
  * an offer begins is held back until it ends, then dropped if it is one.
+ * A sentence that carries a fact is never an offer, however it begins.
  */
 
 const OPENERS = [
@@ -37,8 +38,15 @@ const OPENERS = [
   'quedo a',
 ];
 
-const OFFER =
-  /feel free|let me know|happy to help|just ask|à (?:sua )?disposição|fique à vontade|não hesite|no dudes|a (?:tu|su) disposición|\b(?:ask|questions?|more (?:details|information)|mais (?:informações|detalhes)|pergunt\w*|más (?:información|detalles)|pregunt\w*)\b/i;
+const OFFER_PHRASE =
+  /feel free|let me know|\b(?:just ask|ask away)\b|happy to help|\bI can tell you (?:more )?about\b|\b(?:need|want|would like|'d like|have)\b (?:any (?:more |further |other )?|more |further |other |additional )(?:details|information|questions)\b|à (?:sua )?disposição|fique à vontade|não hesite|é só perguntar|\bposso (?:falar|contar)\b|\bpergunte\b|mais (?:informações|detalhes)|outras perguntas|no dudes|a (?:tu|su) disposición|más (?:información|detalles)|otras preguntas|\bpuedo contarte\b|pregúnta(?:me)?\b|\bpregunte\b/i;
+
+const THIRD_PERSON = ['he', 'his', 'him', 'she', 'her', 'ele', 'ela', 'dele', 'dela', 'él', 'ella'];
+
+function wholeWords(words: readonly string[]): RegExp {
+  const escaped = words.map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  return new RegExp(`(?<![\\p{L}\\d])(?:${escaped.join('|')})(?![\\p{L}\\d])`, 'iu');
+}
 
 /** A sentence ends at terminal punctuation followed by whitespace, or before a line break. */
 const BOUNDARY = /[.!?](?=\s)|(?=\n)/g;
@@ -59,8 +67,15 @@ function mayBeOffer(start: string): boolean {
   return OPENERS.some((opener) => lower.startsWith(opener) || opener.startsWith(lower));
 }
 
-function isOffer(sentence: string): boolean {
-  return mayBeOffer(sentence.trimStart()) && OFFER.test(sentence);
+function offerDetector(subjectNames: readonly string[]): (sentence: string) => boolean {
+  const subject = wholeWords([...THIRD_PERSON, ...subjectNames]);
+  const statesFact = (clause: string) =>
+    !OFFER_PHRASE.test(clause) && (/\d/.test(clause) || subject.test(clause));
+  // The condition ("If you need more details about his work,") may name the
+  // person or a number; only the clauses after it can state a fact.
+  const carriesFact = (sentence: string) => sentence.split(/[,;:]/).slice(1).some(statesFact);
+  return (sentence) =>
+    mayBeOffer(sentence.trimStart()) && OFFER_PHRASE.test(sentence) && !carriesFact(sentence);
 }
 
 export interface OfferFilter {
@@ -70,7 +85,13 @@ export interface OfferFilter {
   flush(): string;
 }
 
-export function createOfferFilter(): OfferFilter {
+export interface OfferFilterOptions {
+  /** Names the answers use for the person they are about. */
+  subjectNames?: readonly string[];
+}
+
+export function createOfferFilter({ subjectNames = [] }: OfferFilterOptions = {}): OfferFilter {
+  const isOffer = offerDetector(subjectNames);
   let pending = '';
   // Once a sentence is known not to be an offer, the rest of it streams freely.
   let passing = false;
