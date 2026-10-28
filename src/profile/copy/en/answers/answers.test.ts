@@ -5,6 +5,7 @@ import { createFastPath } from '@/core/assistant/system1/fast-path';
 import { createTopicIntro } from '@/core/assistant/topic-pages';
 import { createTopicCatalog } from '@/core/assistant/topics';
 import { localize } from '@/core/knowledge/localize';
+import { withMetric, withRole } from '@/testing/fixture-profile/variants';
 import { answers } from '.';
 import { knowledge as source } from '../../../knowledge';
 
@@ -260,5 +261,50 @@ describe('what a topic page tells the model it already shows', () => {
     expect(page?.label).toBe('Experience');
     expect(page?.summary).toContain('Deel — Senior Frontend Engineer');
     expect(page?.cards).toEqual(['timeline']);
+  });
+});
+
+describe('the answers follow the record they are given', () => {
+  const changed = withMetric(
+    withMetric(
+      withRole(source, 'deel', { period: '2023 — 2027', start: 2023, end: 2027 }),
+      'deel-critical-load',
+      { value: '73%' },
+    ),
+    'roots-team',
+    { value: '1 → 6' },
+  );
+  const changedPath = createFastPath(localize(changed, 'en'), answers).answer;
+
+  function changedAnswer(question: string): string {
+    const result = changedPath(question, FRESH);
+    if (result.kind !== 'answered') throw new Error(`Escalated instead of answering: ${question}`);
+    return plainText(result.response);
+  }
+
+  it("shows a role's changed dates in the career and company answers", () => {
+    const career = changedAnswer("Tell me about Marcio's career.");
+    expect(career).toContain('**Deel** (2023 — 2027)');
+    // The record's own prose (its career arc) still names the old years; the copy must not.
+    expect(career).not.toContain('**Deel** (2022 — 2026)');
+    expect(changedAnswer('What has he built at Deel?')).toContain('from 2023 to 2027');
+  });
+
+  it('shows a changed metric value, with the wording that fits it', () => {
+    const deel = changedAnswer('What has he built at Deel?');
+    expect(deel).toContain('critical-page loading time fell by 73% overall');
+    expect(deel).not.toContain('fell by 50%');
+    const react = changedAnswer('How experienced is he with React and TypeScript?');
+    expect(react).toContain('cut critical page loading time by 73%');
+    expect(react).not.toContain('halved');
+    expect(plainText(answer('How experienced is he with React and TypeScript?'))).toContain(
+      'halved critical page loading time',
+    );
+  });
+
+  it('shows a changed team size in words', () => {
+    const growth = changedAnswer('How did he grow the team at Roots?');
+    expect(growth).toContain('to six developers by recruiting and integrating five');
+    expect(growth).not.toContain('four');
   });
 });
