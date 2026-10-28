@@ -77,4 +77,32 @@ describe('searchKnowledge', () => {
     expect((await tool?.run({ query: ' ' }))?.ok).toBe(false);
     expect((await tool?.run({ query: 'x'.repeat(301) }))?.ok).toBe(false);
   });
+
+  it('searches for the query without the spaces around it', async () => {
+    const { port, queries } = searchReturning([]);
+    await run(port, { query: '  leadership \n' });
+    expect(queries.map((query) => query.query)).toEqual(['leadership']);
+  });
+
+  it('accepts a query at either length limit, in any script', async () => {
+    const { port, queries } = searchReturning([]);
+    await run(port, { query: 'ux' });
+    await run(port, { query: 'é'.repeat(300) });
+    await run(port, { query: 'liderança de equipes 🚀' });
+    expect(queries).toHaveLength(3);
+  });
+
+  it.each([
+    ['a one-letter query', { query: 'a' }],
+    ['a category the record does not have', { query: 'leadership', category: 'salary' }],
+    ['no results', { query: 'leadership', limit: 0 }],
+    ['more results than allowed', { query: 'leadership', limit: 9 }],
+    ['a fractional limit', { query: 'leadership', limit: 2.5 }],
+    ['a query that is not text', { query: ['leadership'] }],
+  ])('refuses %s without searching', async (_label, args) => {
+    const { port, queries } = searchReturning([]);
+    const [tool] = createSearchTools(port);
+    expect((await tool?.run(args))?.ok).toBe(false);
+    expect(queries).toEqual([]);
+  });
 });

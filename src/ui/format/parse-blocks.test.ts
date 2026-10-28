@@ -49,7 +49,53 @@ describe('answer blocks', () => {
     ]);
   });
 
-  it('has nothing to show for empty text', () => {
-    expect(parseBlocks('')).toEqual([]);
+  it.each([[''], ['   '], ['\n\n  \n']])('has nothing to show for %j', (markdown) => {
+    expect(parseBlocks(markdown)).toEqual([]);
+  });
+
+  it.each([
+    ['## Two', true],
+    ['#### Four', true],
+    ['# One', false],
+    ['##### Five', false],
+    ['###NoSpace', false],
+  ])('reads %j as a heading: %s', (line, isHeading) => {
+    const [block] = parseBlocks(line);
+    expect(block?.kind === 'heading').toBe(isHeading);
+  });
+
+  it('lets a heading end the paragraph before it', () => {
+    expect(parseBlocks('Intro\n### Deel')).toEqual([
+      { kind: 'paragraph', content: text('Intro') },
+      { kind: 'heading', content: text('Deel') },
+    ]);
+  });
+
+  it('reads star and indented bullets as items of one list', () => {
+    expect(parseBlocks('* React\n  - Next.js')).toEqual([
+      { kind: 'list', ordered: false, items: [text('React'), text('Next.js')] },
+    ]);
+  });
+
+  it('starts a new list after a blank line', () => {
+    expect(parseBlocks('- one\n\n- two')).toEqual([
+      { kind: 'list', ordered: false, items: [text('one')] },
+      { kind: 'list', ordered: false, items: [text('two')] },
+    ]);
+  });
+
+  it('keeps blank lines and markdown-looking lines inside fenced code', () => {
+    expect(parseBlocks('```\n# not a heading\n\n- not a list\n```\nAfter.')).toEqual([
+      { kind: 'code', language: 'text', code: '# not a heading\n\n- not a list' },
+      { kind: 'paragraph', content: text('After.') },
+    ]);
+  });
+
+  it('reads text with Windows line endings like any other', () => {
+    expect(parseBlocks('### Deel\r\n- HRIS\r\n\r\nDone.\r\n')).toEqual([
+      { kind: 'heading', content: text('Deel') },
+      { kind: 'list', ordered: false, items: [text('HRIS')] },
+      { kind: 'paragraph', content: text('Done.') },
+    ]);
   });
 });

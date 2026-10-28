@@ -29,6 +29,7 @@ pnpm dev
 | `pnpm format:check`        | Prettier, verify only                                |
 | `pnpm boundaries`          | Module-boundary rules                                |
 | `pnpm test`                | Unit and integration tests (Vitest)                  |
+| `pnpm test:coverage`       | The tests, with a coverage report in `coverage/`     |
 | `pnpm test:e2e`            | Critical journeys in Chromium (Playwright)           |
 | `pnpm rag:build`           | Re-embed the knowledge corpus (needs the key)        |
 | `pnpm eval:assistant`      | Grade the assistant end to end (needs the key)       |
@@ -64,6 +65,10 @@ Hooks are installed by `pnpm install` (the `prepare` script). `pre-commit`
 formats and lints what is staged, `commit-msg` validates the message, and
 `pre-push` runs typecheck, lint and the boundary rules. Never bypass them with
 `--no-verify`: fix the gate or fix what the gate found.
+
+Coverage is deliberately not a gate. `pnpm test:coverage` shows which code no
+test reaches, which is worth reading; a threshold would only reward tests
+written to move the number.
 
 ## Continuous integration
 
