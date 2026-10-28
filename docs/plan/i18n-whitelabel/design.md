@@ -964,6 +964,10 @@ Ids, dependencies and sets follow the PRD's task table. **Deps** lists both beha
   - the `ui-reads-contracts-only` rule is enabled.
 - Assertions: AC-45.1; first-load JS ≤ 0.9 × baseline, stored as `{ baseline, ceiling }`. Later tasks assert `≤ ceiling + 5 KB`.
 - Fidelity: unchanged.
+- **As built (deviation):**
+  - The baseline is taken at `821abaf`, the last commit that still shipped the record to the browser: 180,908 B gzipped on `/`. POR-52…58 had already moved the record behind server-built props, so at the start of POR-59 only type-only imports remained, and those emit no JS.
+  - NFR-1's 10% cut was not reached: first-load JS on `/` and `/experience` is 167,042 B, −7.7% across POR-52…59. The orchestrator accepted this. The remaining ~149 KB is React, the Next router and tailwind-merge; the app's own client code is ~14 KB of interactive and streaming UI, so cutting further would mean a UI redesign (server-rendered slots for the sidebar and welcome screen), not a bundle fix.
+  - `e2e/budgets/client-js.json` therefore stores `ceiling` as the measured POR-59 value (167,042 B) with `growthAllowance` 5,120 B. From POR-59 on, `e2e/bundle.spec.ts` asserts the home page stays `≤ ceiling + growthAllowance`.
 
 **POR-60 — Heartbeat, deadline, `maxDuration`, parser (FR-41, FR-48, AC-41.2) · Deps: 58 · S9**
 

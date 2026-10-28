@@ -21,7 +21,6 @@ const LATER_PHASES = [
   'Mulling it over',
   'Choosing the words',
 ];
-const PHASE_COUNT = LATER_PHASES.length + 1;
 
 const PHASE_MS = 1600;
 
@@ -30,16 +29,17 @@ interface ThinkingStatusProps {
 }
 
 export function ThinkingStatus({ ownerFirstName }: ThinkingStatusProps) {
+  const phases = phasesFor(ownerFirstName);
   const [phase, setPhase] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setPhase((current) => (current + 1) % PHASE_COUNT);
+      setPhase((current) => (current + 1) % phases.length);
     }, PHASE_MS);
     return () => {
       clearInterval(timer);
     };
-  }, []);
+  }, [phases.length]);
 
   return (
     <p className="m-0 flex min-h-7 items-center gap-2.5 text-14 text-ink-muted">
@@ -48,7 +48,7 @@ export function ThinkingStatus({ ownerFirstName }: ThinkingStatusProps) {
         key={phase}
         className="relative animate-reveal overflow-hidden after:absolute after:inset-0 after:animate-shimmer after:bg-linear-to-r after:from-transparent after:via-bg/80 after:to-transparent after:content-['']"
       >
-        {phasesFor(ownerFirstName)[phase]}…
+        {phases[phase]}…
       </span>
     </p>
   );
