@@ -13,12 +13,14 @@ type IconButtonProps = Omit<ComponentProps<'button'>, 'children' | 'aria-label'>
   /** An icon alone says nothing to a screen reader; the label is the control's name. */
   readonly label: string;
   readonly size?: keyof typeof SIZES;
+  readonly iconSize?: NonNullable<ComponentProps<typeof Icon>['size']>;
 };
 
 export function IconButton({
   icon,
   label,
   size = 'default',
+  iconSize = 'md',
   className,
   type = 'button',
   ...props
@@ -36,7 +38,7 @@ export function IconButton({
       )}
       {...props}
     >
-      <Icon name={icon} />
+      <Icon name={icon} size={iconSize} />
     </button>
   );
 }

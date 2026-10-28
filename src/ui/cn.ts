@@ -55,6 +55,7 @@ export const THEME_TOKENS = {
     'figure',
     'title',
     'caps',
+    'identity',
   ],
   'font-weight': ['book'],
   radius: [

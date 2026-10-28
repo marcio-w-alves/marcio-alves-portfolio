@@ -3,10 +3,9 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { cn } from '../cn';
 import { IconButton } from '../primitives';
-import { Monogram } from './monogram';
 
 interface AppShellProps {
-  readonly profile: { readonly name: string; readonly initials: string };
+  readonly profile: { readonly name: string };
   /** The sidebar. In the compact layout it becomes a drawer over the conversation. */
   readonly navigation: ReactNode;
   readonly drawerOpen: boolean;
@@ -74,7 +73,7 @@ export function AppShell({
       ref={rootRef}
       className="@container/ma relative h-dvh overflow-hidden bg-bg font-sans text-ink"
     >
-      <div className="grid h-full grid-cols-[var(--container-sidebar)_minmax(0,1fr)] @max-compact/ma:grid-cols-1">
+      <div className="grid h-full grid-cols-shell @max-compact/ma:grid-cols-1">
         <button
           type="button"
           tabIndex={-1}
@@ -82,7 +81,7 @@ export function AppShell({
           onClick={close}
           className={cn(
             'hidden @max-compact/ma:absolute @max-compact/ma:inset-0 @max-compact/ma:z-20 @max-compact/ma:block',
-            'bg-ink/32 transition-opacity duration-medium ease-standard',
+            'bg-ink/18 p-0 transition-opacity duration-medium ease-standard',
             drawerOpen ? 'opacity-100' : 'pointer-events-none opacity-0',
           )}
         />
@@ -93,9 +92,9 @@ export function AppShell({
             if (event.key === 'Escape' && drawerOpen) close();
           }}
           className={cn(
-            'bg-sidebar min-h-0 border-r border-border',
+            'min-h-0 bg-ice inset-shadow-rule-right',
             '@max-compact/ma:absolute @max-compact/ma:inset-y-0 @max-compact/ma:left-0 @max-compact/ma:z-30',
-            '@max-compact/ma:w-76 @max-compact/ma:max-w-[86%] @max-compact/ma:border-r-0',
+            '@max-compact/ma:w-drawer @max-compact/ma:inset-shadow-none',
             '@max-compact/ma:duration-medium @max-compact/ma:ease-standard',
             // Visibility flips at once on opening, so focus can move in; on
             // closing it waits for the slide to finish.
@@ -107,8 +106,8 @@ export function AppShell({
           {navigation}
         </div>
 
-        <main inert={drawerOpen} className="relative flex min-h-0 min-w-0 flex-col">
-          <header className="hidden h-14 shrink-0 items-center gap-1 border-b border-border bg-bg px-1.5 @max-compact/ma:flex">
+        <main inert={drawerOpen} className="relative flex min-h-0 min-w-0 flex-col bg-bg">
+          <header className="hidden h-14 shrink-0 items-center gap-1 bg-bg px-1.5 inset-shadow-rule-bottom @max-compact/ma:flex">
             <IconButton
               ref={menuButtonRef}
               icon="menu"
@@ -120,10 +119,9 @@ export function AppShell({
                 onDrawerOpenChange(true);
               }}
             />
-            <div className="flex min-w-0 flex-1 items-center gap-2.5">
-              <Monogram initials={profile.initials} />
-              <p className="text-14.5 font-semibold tracking-name">{profile.name}</p>
-            </div>
+            <p className="min-w-0 flex-1 text-center font-display text-15 leading-none font-semibold tracking-identity">
+              {profile.name}
+            </p>
             <IconButton
               icon="compose"
               label="New conversation"
