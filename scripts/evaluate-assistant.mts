@@ -242,8 +242,23 @@ async function runCase(testCase: EvaluationCase, index: number): Promise<Outcome
   for (const claim of await unsupportedClaims(verdict, evidence))
     failures.push(`unsupported: ${claim}`);
   if (events.some((event) => event.type === 'error')) failures.push('ended with an error event');
+  if (path === 'model' && !expect.declines && closesWithOffer(answer))
+    failures.push('closes with an offer of help');
 
   return { ...testCase, path, intent, answer, sources, evidence, verdict, failures, ms };
+}
+
+/**
+ * A closing offer of help ("let me know if…", "estou à disposição") adds
+ * nothing the page does not already offer, and the prompt forbids it. Only
+ * the last paragraph is checked: a decline may still say what it covers.
+ */
+const CLOSING_OFFER =
+  /\b(let me know|feel free|happy to help|if you (?:need|have|want|would like)|à (?:sua )?disposição|se (?:precisar|quiser|tiver)|fique à vontade|estou aqui para|si (?:necesitas|quieres|tienes)|estoy a (?:tu|su) disposición|no dudes)\b/i;
+
+export function closesWithOffer(answer: string): boolean {
+  const paragraphs = answer.trim().split(/\n\s*\n/);
+  return CLOSING_OFFER.test(paragraphs.at(-1) ?? '');
 }
 
 async function pool<T, R>(

@@ -90,6 +90,21 @@ describe('model assistant — answering through actions', () => {
     ]);
   });
 
+  it('leaves out an offer of help, while the model still sees what it wrote', async () => {
+    const reply =
+      'At Deel he cut the backlog by two-thirds.\n\nIf you need more details, feel free to ask!';
+    const { port, requests } = scriptedModel([
+      { text: reply, calls: [call('getExperience', { company: 'deel' })] },
+      { text: 'He did it with planned bug sprints. Let me know if you want more.' },
+    ]);
+    const events = await collect(port);
+
+    expect(text(events)).toBe(
+      'At Deel he cut the backlog by two-thirds.He did it with planned bug sprints.',
+    );
+    expect(requests[1]?.messages).toContainEqual(expect.objectContaining({ content: reply }));
+  });
+
   it('gives the model only the allow-list, described by the same schemas that validate it', async () => {
     const { port, requests } = scriptedModel([{ text: 'ok' }]);
     await collect(port);

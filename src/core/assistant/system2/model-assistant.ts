@@ -9,6 +9,7 @@ import type {
 } from '../ports/language-model.port';
 import type { ToolRegistry } from '../tools/registry';
 import type { DeclineReason, ToolOutcome } from '../tools/tool';
+import { createOfferFilter } from './offer-filter';
 import { systemPrompt } from './system-prompt';
 
 /**
@@ -99,7 +100,9 @@ export function createModelAssistant({
       const components: RichComponent[] = [];
       let declined: DeclineReason | null = null;
       let started = false;
-      let wroteText = false;
+      // Set inside write(), which narrowing cannot see.
+      let wroteText = false as boolean;
+      const offers = createOfferFilter();
 
       // Nothing is announced until the model produces something real, so a
       // failure while it is still consulting actions can be answered cleanly
@@ -109,6 +112,16 @@ export function createModelAssistant({
           started = true;
           yield { type: 'start', intent: 'model', related: null };
         }
+      }
+
+      function* write(text: string): Generator<AssistantEvent> {
+        if (!text) return;
+        yield* begin();
+        if (!wroteText) {
+          wroteText = true;
+          yield { type: 'text-start', id: 'p0' };
+        }
+        yield { type: 'text-delta', id: 'p0', delta: text };
       }
 
       for (let round = 1; round <= MAX_ROUNDS; round += 1) {
@@ -123,19 +136,16 @@ export function createModelAssistant({
         });
         for await (const event of stream) {
           if (event.type === 'text-delta' && event.delta) {
-            yield* begin();
-            if (!wroteText) {
-              wroteText = true;
-              yield { type: 'text-start', id: 'p0' };
-            }
             roundText += event.delta;
-            yield { type: 'text-delta', id: 'p0', delta: event.delta };
+            yield* write(offers.push(event.delta));
           } else if (event.type === 'tool-calls') {
             calls = event.calls;
           } else if (event.type === 'finish') {
             onUsage?.(event.usage);
           }
         }
+        // A sentence never runs on into the next round's text.
+        yield* write(offers.flush());
         if (calls.length === 0) break;
 
         messages.push({ role: 'assistant', content: roundText || null, toolCalls: calls });

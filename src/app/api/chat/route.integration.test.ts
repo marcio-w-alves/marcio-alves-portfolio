@@ -271,14 +271,15 @@ describe('POST /api/chat — a model answer', () => {
 
     const events = await allEventsOf(await postChat()(question(MODEL_QUESTION)));
 
-    expect(events.map((event) => event.type)).toEqual([
+    const types = events.map((event) => event.type);
+    expect(types.filter((type, index) => type !== types[index - 1])).toEqual([
       'start',
       'text-start',
-      'text-delta',
       'text-delta',
       'text-end',
       'finish',
     ]);
+    expect(types.filter((type) => type === 'text-delta').length).toBeGreaterThan(1);
     expect(events[0]).toEqual({ type: 'start', intent: 'model', related: null });
     expect(textOf(events)).toBe('He led the Roots frontend.');
     expect(events.at(-1)).toMatchObject({
