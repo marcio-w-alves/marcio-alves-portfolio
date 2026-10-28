@@ -1,4 +1,7 @@
 import type { Metadata } from 'next';
+import { topics } from '@/core/assistant/topics';
+import { knowledgeBase } from '@/core/knowledge/knowledge-base';
+import { ChatWorkspace } from '@/ui/chat/chat-workspace';
 
 // Declared on the page rather than the root layout: a canonical inherited by
 // every route would point each of them at the home page.
@@ -7,5 +10,12 @@ export const metadata: Metadata = {
 };
 
 export default function HomePage() {
-  return <main />;
+  const { profile, contact } = knowledgeBase;
+  return (
+    <ChatWorkspace
+      profile={{ name: profile.name, title: profile.title, initials: profile.initials }}
+      links={contact}
+      topics={topics.map(({ id, label, icon }) => ({ id, label, icon }))}
+    />
+  );
 }

@@ -61,7 +61,14 @@
   --text-16: 16px;
   --text-16\.5: 16.5px;
 
-  /* POR-12: rich answer blocks. `code` is relative to the text it sits in. */
+  /*
+   * The hero sizes scale with the app's width, not the viewport. `cqi`
+   * resolves against the nearest container, which is the `ma` app root.
+   */
+  --text-display: clamp(40px, 7.2cqi, 60px);
+  --text-subhead: clamp(20px, 2.8cqi, 26px);
+
+  /* Rich answer blocks. `code` is relative to the text it sits in. */
   --text-17: 17px;
   --text-18: 18px;
   --text-26: 26px;
@@ -76,7 +83,9 @@
   --leading-body: 1.55;
   --leading-prose: 1.65;
 
-  /* POR-12: rich answer blocks */
+  --leading-subhead: 1.25;
+
+  /* Rich answer blocks */
   --leading-figure: 1.05;
   --leading-caption: 1.45;
   --leading-reading: 1.6;
@@ -89,7 +98,7 @@
   --tracking-monogram: 0.03em;
   --tracking-label: 0.08em;
 
-  /* POR-12: rich answer blocks */
+  /* Rich answer blocks */
   --tracking-figure: -0.035em;
   --tracking-title: -0.015em;
   --tracking-caps: 0.06em;
@@ -108,7 +117,7 @@
   --radius-xl: 18px;
   --radius-pill: 999px;
 
-  /* POR-12: rich answer blocks */
+  /* Rich answer blocks */
   --radius-code: 5px;
   --radius-card: 14px;
 
@@ -120,7 +129,12 @@
   --shadow-drawer: 0 0 48px rgb(32 36 32 / 0.18);
   --shadow-focus: 0 0 0 3px rgb(55 107 86 / 0.22);
 
-  /* POR-12: timeline and planned-scope markers */
+  /* The "Jump to latest" pill floats over the conversation. */
+  --shadow-floating:
+    0 1px 2px rgb(32 36 32 / 0.05), 0 0 0 1px var(--color-border),
+    0 8px 20px -12px rgb(32 36 32 / 0.3);
+
+  /* Timeline and planned-scope markers */
   --inset-shadow-dot: inset 0 0 0 1.5px var(--color-ink-faint);
   --shadow-dot-current: 0 0 0 3px var(--color-accent-bg);
 
@@ -134,8 +148,13 @@
   --animate-blink: blink 1s steps(1, end) infinite;
   --animate-pulse-dot: pulse-dot 1.4s var(--ease-standard) infinite;
 
+  /* The welcome state settles in more slowly than a message does. */
+  --animate-fade-slow: fade 450ms var(--ease-standard);
+  /* The "Jump to latest" pill rises a little faster than the default. */
+  --animate-rise-short: rise 200ms var(--ease-standard);
+
   /*
-   * POR-12: a rich block rises a little slower than a message; metrics
+   * A rich block rises a little slower than a message; metrics
    * stagger through --metric-delay, set per item; a disclosure body fades in.
    */
   --animate-block-enter: rise 280ms var(--ease-standard) both;
@@ -194,8 +213,12 @@
   --container-compact: 861px;
   --container-phone: 601px;
 
+  --container-welcome: 760px;
+  --container-measure: 62ch;
+  --grid-template-columns-suggestions: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+
   /*
-   * POR-12: rich answer blocks. Each block is its own size container, so it
+   * Rich answer blocks. Each block is its own size container, so it
    * adapts to wherever it is rendered; the breakpoints are one pixel over the
    * design's inclusive max-width for the same reason as above.
    */
@@ -225,12 +248,37 @@
   transition-duration: var(--duration-medium);
 }
 
+/* A suggestion's arrow moves at the medium pace but recolours at the fast one. */
+@utility transition-nudge {
+  transition:
+    translate var(--duration-medium) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+/* A row that scrolls sideways without showing a scrollbar. */
+@utility scrollbar-none {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /*
- * Only what no utility can reach: a global focus ring, two text-rendering
- * hints, and the reduced-motion collapse. Surface and type for the document
+ * Only what no utility can reach: the root line height, a global focus
+ * ring, two text-rendering hints, and the reduced-motion collapse. Surface and type for the document
  * itself are utilities on <body>, in the root layout.
  */
 @layer base {
+  /*
+   * Tailwind's preflight sets 1.5 here; the design has no reset and so
+   * inherits the browser's \`normal\`. Every line that sets no height of its own
+   * depends on this, so it follows the design.
+   */
+  html {
+    line-height: normal;
+  }
+
   :focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;

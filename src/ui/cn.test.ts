@@ -23,6 +23,11 @@ describe('cn', () => {
     expect(cn('leading-label', 'leading-none')).toBe('leading-none');
   });
 
+  it('lets a font size reset a line height set before it, so a leading must come after', () => {
+    expect(cn('leading-none', 'text-14')).toBe('text-14');
+    expect(cn('text-14 leading-none', 'px-4')).toBe('text-14 leading-none px-4');
+  });
+
   it('drops falsy entries', () => {
     expect(cn('px-4', false, undefined, 'h-10')).toBe('px-4 h-10');
   });
