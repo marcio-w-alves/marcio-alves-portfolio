@@ -23,7 +23,14 @@ export default defineConfig({
     contextOptions: { reducedMotion: 'reduce' },
   },
   projects: [
-    { name: 'desktop', use: { ...devices['Desktop Chrome'] }, testIgnore: /mobile/ },
+    { name: 'desktop', use: { ...devices['Desktop Chrome'] }, testIgnore: /mobile|motion/ },
+    {
+      // How the interface moves, and that it stops for a visitor who asks it
+      // to: motion stays on here, and each test sets the preference it checks.
+      name: 'motion',
+      use: { ...devices['Desktop Chrome'], contextOptions: { reducedMotion: 'no-preference' } },
+      testMatch: /motion/,
+    },
     {
       name: 'mobile',
       use: {

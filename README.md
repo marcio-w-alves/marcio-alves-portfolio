@@ -29,6 +29,7 @@ pnpm dev
 | `pnpm format:check`        | Prettier, verify only                                |
 | `pnpm boundaries`          | Module-boundary rules                                |
 | `pnpm test`                | Unit and integration tests (Vitest)                  |
+| `pnpm test:motion`         | Motion and reduced-motion checks in Chromium         |
 | `pnpm test:coverage`       | The tests, with a coverage report in `coverage/`     |
 | `pnpm test:e2e`            | Critical journeys in Chromium (Playwright)           |
 | `pnpm rag:build`           | Re-embed the knowledge corpus (needs the key)        |

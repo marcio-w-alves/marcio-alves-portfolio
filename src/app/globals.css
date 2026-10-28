@@ -145,8 +145,6 @@
 
   --animate-rise: rise var(--duration-medium) var(--ease-standard) both;
   --animate-blink: blink 1s steps(1, end) infinite;
-  /* The thinking dots stagger through --dot-delay, set per dot. */
-  --animate-pulse-dot: pulse-dot 1.2s ease-in-out var(--dot-delay, 0ms) infinite;
   --animate-turn: rise 360ms var(--ease-standard) both;
 
   /* The welcome state settles in more slowly than a message does. */
@@ -154,12 +152,8 @@
   /* The "Jump to latest" pill rises a little faster than the default. */
   --animate-rise-short: rise 200ms var(--ease-standard);
 
-  /*
-   * A rich block rises a little slower than a message; metrics
-   * stagger through --metric-delay, set per item; a disclosure body fades in.
-   */
+  /* A rich block rises a little slower than a message; a disclosure body fades in. */
   --animate-block-enter: rise 320ms var(--ease-standard) both;
-  --animate-metric-rise: rise 340ms var(--ease-standard) var(--metric-delay, 0ms) both;
   --animate-reveal: fade 200ms var(--ease-standard);
 
   @keyframes rise {
@@ -291,6 +285,18 @@
   --font-code-block: monospace;
 }
 
+/*
+ * The staggered animations read a delay set on each element. Declared
+ * `inline`, the utility carries the value itself, so the delay resolves on
+ * the element; through a variable on :root it would resolve there, to 0ms.
+ */
+@theme inline {
+  /* The thinking dots stagger through --dot-delay, set per dot. */
+  --animate-pulse-dot: pulse-dot 1.2s ease-in-out var(--dot-delay, 0ms) infinite;
+  /* Metrics stagger through --metric-delay, set per item. */
+  --animate-metric-rise: rise 340ms var(--ease-standard) var(--metric-delay, 0ms) both;
+}
+
 /* The two named durations, so a component writes the token and not a number. */
 @utility duration-fast {
   transition-duration: var(--duration-fast);
@@ -338,13 +344,19 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  /*
+   * Delays collapse too: a staggered metric would otherwise wait out its
+   * delay invisible, and arrive late instead of at once.
+   */
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
     *::after {
       animation-duration: 0.001ms !important;
+      animation-delay: 0s !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.001ms !important;
+      transition-delay: 0s !important;
       scroll-behavior: auto !important;
     }
   }
