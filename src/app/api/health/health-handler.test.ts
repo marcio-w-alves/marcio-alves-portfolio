@@ -36,13 +36,19 @@ describe('GET /api/health', () => {
       environment: 'production',
       model: 'enabled',
       circuit: 'closed',
+      retrieval: 'closed',
     });
   });
 
   it('reports the model disabled, and the site still ok, without the credential', async () => {
     vi.stubEnv('OPENAI_API_KEY', '');
     const body: unknown = await (await getHealth()).json();
-    expect(body).toMatchObject({ status: 'ok', model: 'disabled', circuit: null });
+    expect(body).toMatchObject({
+      status: 'ok',
+      model: 'disabled',
+      circuit: null,
+      retrieval: null,
+    });
   });
 
   it('never reveals the credential itself', async () => {

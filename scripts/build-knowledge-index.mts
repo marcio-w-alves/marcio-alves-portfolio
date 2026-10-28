@@ -33,6 +33,8 @@ const embeddings = createOpenAIEmbeddings({
   client: createOpenAIClient(apiKey),
   model: EMBEDDING_MODEL,
   dimensions: EMBEDDING_DIMENSIONS,
+  // The whole corpus in one call, not one visitor's question.
+  timeoutMs: 60_000,
 });
 const vectors = await embeddings.embed(chunks.map((chunk) => chunk.text));
 

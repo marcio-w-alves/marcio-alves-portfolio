@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { LanguageModelPort, ModelRequest } from '@/core/assistant/ports/language-model.port';
-import { CircuitOpenError, createCircuitBreaker, withCircuitBreaker } from './circuit-breaker';
+import {
+  CircuitOpenError,
+  createCircuitBreaker,
+  guard,
+  withCircuitBreaker,
+} from './circuit-breaker';
 
 const REQUEST: ModelRequest = { messages: [], tools: [], toolChoice: 'auto', maxOutputTokens: 1 };
 
@@ -124,5 +129,58 @@ describe('circuit breaker', () => {
     advance(30_000);
     await expect(drain(guarded)).rejects.toThrow('down');
     expect(transitions).toEqual(['open', 'open']);
+  });
+});
+
+describe('guard — one call through the breaker', () => {
+  function guarded(outcome: () => Promise<string>) {
+    let calls = 0;
+    let clock = 0;
+    const breaker = createCircuitBreaker({
+      failureThreshold: 3,
+      cooldownMs: 30_000,
+      now: () => clock,
+    });
+    return {
+      call: () =>
+        guard(breaker, () => {
+          calls += 1;
+          return outcome();
+        }),
+      calls: () => calls,
+      state: () => breaker.state(),
+      advance: (ms: number) => {
+        clock += ms;
+      },
+    };
+  }
+
+  it('returns what the call returns while the dependency is healthy', async () => {
+    const { call, state } = guarded(() => Promise.resolve('vector'));
+    expect(await call()).toBe('vector');
+    expect(state()).toBe('closed');
+  });
+
+  it('fails fast once the dependency keeps failing, and lets one trial through after the cooldown', async () => {
+    let healthy = false;
+    const { call, calls, advance } = guarded(() =>
+      healthy ? Promise.resolve('vector') : Promise.reject(new Error('timed out')),
+    );
+    for (let i = 0; i < 3; i += 1) await expect(call()).rejects.toThrow('timed out');
+    await expect(call()).rejects.toBeInstanceOf(CircuitOpenError);
+    expect(calls()).toBe(3);
+
+    advance(30_000);
+    healthy = true;
+    expect(await call()).toBe('vector');
+    expect(calls()).toBe(4);
+  });
+
+  it('does not count a cancelled call as the dependency failing', async () => {
+    const abort = new DOMException('The operation was aborted.', 'AbortError');
+    const { call, calls, state } = guarded(() => Promise.reject(abort));
+    for (let i = 0; i < 5; i += 1) await expect(call()).rejects.toBe(abort);
+    expect(calls()).toBe(5);
+    expect(state()).toBe('closed');
   });
 });

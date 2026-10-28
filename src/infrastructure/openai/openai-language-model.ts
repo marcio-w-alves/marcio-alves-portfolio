@@ -86,26 +86,33 @@ export function createOpenAILanguageModel({
   return {
     async *stream({ messages, tools, toolChoice, maxOutputTokens, signal }) {
       const stall = new AbortController();
-      const stream = await client.chat.completions.create(
-        {
-          model,
-          temperature,
-          stream: true,
-          stream_options: { include_usage: true },
-          max_completion_tokens: maxOutputTokens,
-          messages: messages.map(toOpenAI),
-          tools: tools.map((tool) => ({
-            type: 'function' as const,
-            function: {
-              name: tool.name,
-              description: tool.description,
-              parameters: { ...tool.parameters },
-            },
-          })),
-          tool_choice: toolChoice,
-        },
-        { signal: signal ? AbortSignal.any([signal, stall.signal]) : stall.signal },
-      );
+      const stream = await client.chat.completions
+        .create(
+          {
+            model,
+            temperature,
+            stream: true,
+            stream_options: { include_usage: true },
+            max_completion_tokens: maxOutputTokens,
+            messages: messages.map(toOpenAI),
+            tools: tools.map((tool) => ({
+              type: 'function' as const,
+              function: {
+                name: tool.name,
+                description: tool.description,
+                parameters: { ...tool.parameters },
+              },
+            })),
+            tool_choice: toolChoice,
+          },
+          { signal: signal ? AbortSignal.any([signal, stall.signal]) : stall.signal },
+        )
+        .catch((error: unknown) => {
+          // The SDK reports a visitor leaving before the headers as a generic
+          // error; throw it as the abort it is, so it is not the provider's fault.
+          signal?.throwIfAborted();
+          throw error;
+        });
 
       yield { type: 'started' };
 

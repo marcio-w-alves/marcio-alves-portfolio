@@ -1,5 +1,8 @@
+import { z } from 'zod';
 import type { ReferencePort, ReferenceSummary } from '@/core/assistant/ports/reference.port';
+import { fetchJson } from '../http/fetch-json';
 import { cacheSuccesses } from '../http/ttl-cache';
+import type { Logger } from '../logging/logger';
 
 const SUMMARY_ENDPOINT = 'https://en.wikipedia.org/api/rest_v1/page/summary/';
 const TIMEOUT_MS = 4000;
@@ -10,56 +13,56 @@ export function userAgent(siteUrl: URL): string {
   return `MarcioAlvesPortfolio/1.0 (${siteUrl.origin})`;
 }
 
-interface SummaryPayload {
-  readonly type?: string;
-  readonly title?: string;
-  readonly extract?: string;
-  readonly content_urls?: { readonly desktop?: { readonly page?: string } };
-}
+const summarySchema = z.object({
+  type: z.string(),
+  title: z.string(),
+  extract: z.string(),
+  content_urls: z.object({ desktop: z.object({ page: z.string() }).optional() }).optional(),
+});
 
 async function fetchSummary(
   title: string,
   agent: string,
-  timeoutMs: number,
+  { timeoutMs, logger }: { readonly timeoutMs: number; readonly logger: Logger },
 ): Promise<ReferenceSummary | null> {
-  try {
-    const response = await fetch(
-      SUMMARY_ENDPOINT + encodeURIComponent(title.replaceAll(' ', '_')),
-      {
-        headers: { 'User-Agent': agent, Accept: 'application/json' },
-        signal: AbortSignal.timeout(timeoutMs),
-      },
-    );
-    if (!response.ok) return null;
-    const payload = (await response.json()) as SummaryPayload;
-    // A disambiguation page lists meanings; it is not a description of anything.
-    if (payload.type !== 'standard' || !payload.title || !payload.extract) return null;
-    return {
-      title: payload.title,
-      extract: payload.extract,
-      url:
-        payload.content_urls?.desktop?.page ??
-        `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`,
-    };
-  } catch {
-    // Timeouts and network failures read as "unavailable", which the action
-    // reports to the model explicitly rather than as missing knowledge.
-    return null;
-  }
+  // A null reads as "unavailable", which the action reports to the model
+  // explicitly rather than as missing knowledge.
+  const payload = await fetchJson(
+    {
+      url: SUMMARY_ENDPOINT + encodeURIComponent(title.replaceAll(' ', '_')),
+      headers: { 'User-Agent': agent, Accept: 'application/json' },
+      timeoutMs,
+      schema: summarySchema,
+    },
+    { logger, adapter: 'wikipedia', operation: 'summary' },
+  );
+  // A disambiguation page lists meanings; it is not a description of anything.
+  if (payload?.type !== 'standard' || !payload.extract) return null;
+  return {
+    title: payload.title,
+    extract: payload.extract,
+    url:
+      payload.content_urls?.desktop?.page ??
+      `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`,
+  };
 }
 
 interface WikipediaOptions {
   /** The site making the requests, named in the User-Agent as its contact. */
   readonly siteUrl: URL;
   readonly timeoutMs?: number;
+  readonly logger: Logger;
 }
 
 export function createWikipediaReferences({
   siteUrl,
   timeoutMs = TIMEOUT_MS,
+  logger,
 }: WikipediaOptions): ReferencePort {
   const agent = userAgent(siteUrl);
   return {
-    summary: cacheSuccesses(CACHE_TTL_MS, (title) => fetchSummary(title, agent, timeoutMs)),
+    summary: cacheSuccesses(CACHE_TTL_MS, (title) =>
+      fetchSummary(title, agent, { timeoutMs, logger }),
+    ),
   };
 }

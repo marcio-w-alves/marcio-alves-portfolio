@@ -344,7 +344,11 @@ const CALIBRATION: readonly CalibrationItem[] = [
 
 /** Runs the actions for real, so the trace is exactly what the model would have received. */
 async function traceOf(actions: NonNullable<CalibrationItem['actions']>): Promise<ToolTrace[]> {
-  const registry = createToolRegistry();
+  const registry = createToolRegistry({
+    reportError: (error) => {
+      console.error(error);
+    },
+  });
   return Promise.all(
     actions.map(async ({ name, arguments: input }) => ({
       name,

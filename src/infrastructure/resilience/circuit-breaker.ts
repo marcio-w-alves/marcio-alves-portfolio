@@ -2,7 +2,7 @@ import type { LanguageModelPort } from '@/core/assistant/ports/language-model.po
 
 export class CircuitOpenError extends Error {
   constructor() {
-    super('The model is temporarily unavailable; the circuit is open.');
+    super('The dependency is temporarily unavailable; its circuit is open.');
     this.name = 'CircuitOpenError';
   }
 }
@@ -74,9 +74,21 @@ export function createCircuitBreaker({
 export type CircuitBreaker = ReturnType<typeof createCircuitBreaker>;
 
 function isCancellation(error: unknown): boolean {
-  return (
-    error instanceof Error && (error.name === 'AbortError' || error.name === 'APIUserAbortError')
-  );
+  return error instanceof Error && error.name === 'AbortError';
+}
+
+/** Runs one call through the breaker: refused while it is open, counted when it fails. */
+export async function guard<T>(breaker: CircuitBreaker, call: () => Promise<T>): Promise<T> {
+  breaker.admit();
+  try {
+    const result = await call();
+    breaker.succeeded();
+    return result;
+  } catch (error) {
+    if (isCancellation(error)) breaker.released();
+    else breaker.failed();
+    throw error;
+  }
 }
 
 export function withCircuitBreaker(

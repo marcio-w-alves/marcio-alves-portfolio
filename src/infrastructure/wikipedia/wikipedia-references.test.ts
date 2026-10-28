@@ -1,6 +1,7 @@
 import { delay, http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { createLogger } from '../logging/logger';
 import { createWikipediaReferences } from './wikipedia-references';
 
 const SITE = new URL('https://portfolio.example');
@@ -17,6 +18,15 @@ afterEach(() => {
 afterAll(() => {
   server.close();
 });
+
+/** The adapter, with what it logs kept as parsed lines. */
+function wikipedia(options: { timeoutMs?: number } = {}) {
+  const logged: Record<string, unknown>[] = [];
+  const logger = createLogger({
+    write: (level, line) => logged.push({ ...(JSON.parse(line) as object), level }),
+  });
+  return { references: createWikipediaReferences({ siteUrl: SITE, logger, ...options }), logged };
+}
 
 function article(title: string, type = 'standard') {
   return {
@@ -38,7 +48,7 @@ describe('Wikipedia references', () => {
         return HttpResponse.json(article('TypeScript'));
       }),
     );
-    expect(await createWikipediaReferences({ siteUrl: SITE }).summary('TypeScript')).toEqual({
+    expect(await wikipedia().references.summary('TypeScript')).toEqual({
       title: 'TypeScript',
       extract: 'TypeScript is described here.',
       url: 'https://en.wikipedia.org/wiki/TypeScript',
@@ -55,20 +65,18 @@ describe('Wikipedia references', () => {
         return HttpResponse.json(article('React (software)'));
       }),
     );
-    await createWikipediaReferences({ siteUrl: SITE }).summary('React (software)');
+    await wikipedia().references.summary('React (software)');
     expect(decodeURIComponent(requested)).toBe('React_(software)');
   });
 
   it('treats a disambiguation page as no article, since it describes nothing', async () => {
     server.use(http.get(SUMMARY, () => HttpResponse.json(article('Deel', 'disambiguation'))));
-    expect(await createWikipediaReferences({ siteUrl: SITE }).summary('Deel')).toBeNull();
+    expect(await wikipedia().references.summary('Deel')).toBeNull();
   });
 
   it('reports a missing article as unavailable', async () => {
     server.use(http.get(SUMMARY, () => HttpResponse.json({ type: 'not_found' }, { status: 404 })));
-    expect(
-      await createWikipediaReferences({ siteUrl: SITE }).summary('Core Web Vitals'),
-    ).toBeNull();
+    expect(await wikipedia().references.summary('Core Web Vitals')).toBeNull();
   });
 
   it('gives up on a slow response instead of holding the answer open', async () => {
@@ -79,9 +87,7 @@ describe('Wikipedia references', () => {
       }),
     );
     const started = Date.now();
-    expect(
-      await createWikipediaReferences({ siteUrl: SITE, timeoutMs: 50 }).summary('Redis'),
-    ).toBeNull();
+    expect(await wikipedia({ timeoutMs: 50 }).references.summary('Redis')).toBeNull();
     expect(Date.now() - started).toBeLessThan(400);
   });
 
@@ -93,9 +99,72 @@ describe('Wikipedia references', () => {
         return HttpResponse.json(article('Next.js'));
       }),
     );
-    const references = createWikipediaReferences({ siteUrl: SITE });
+    const references = wikipedia().references;
     await references.summary('Next.js');
     await references.summary('Next.js');
     expect(requests).toBe(1);
+  });
+
+  it('reads a valid summary and ignores fields it does not use', async () => {
+    server.use(
+      http.get(SUMMARY, () =>
+        HttpResponse.json({ ...article('Redis'), thumbnail: { source: 'x.png' }, lang: 'en' }),
+      ),
+    );
+    const { references, logged } = wikipedia();
+    expect(await references.summary('Redis')).toMatchObject({ title: 'Redis' });
+    expect(logged).toEqual([]);
+  });
+
+  it.each([
+    ['a 5xx', () => HttpResponse.json({}, { status: 503 }), { cause: 'status', status: 503 }],
+    [
+      'a missing article',
+      () => HttpResponse.json({ type: 'not_found' }, { status: 404 }),
+      { cause: 'status', status: 404 },
+    ],
+    [
+      'a summary of the wrong shape',
+      () => HttpResponse.json({ type: 'standard', title: 'Redis', extract: 42 }),
+      { cause: 'shape', status: 200 },
+    ],
+    ['a network error', () => HttpResponse.error(), { cause: 'network', status: null }],
+  ])('degrades to unavailable on %s, logging why', async (_label, reply, why) => {
+    server.use(http.get(SUMMARY, reply));
+    const { references, logged } = wikipedia();
+
+    expect(await references.summary('Redis')).toBeNull();
+    expect(logged).toEqual([
+      expect.objectContaining({
+        level: 'warn',
+        event: 'adapter.degraded',
+        adapter: 'wikipedia',
+        operation: 'summary',
+        ...why,
+      }),
+    ]);
+  });
+
+  it('logs a timeout without the title it looked up', async () => {
+    server.use(
+      http.get(SUMMARY, async () => {
+        await delay('infinite');
+        return HttpResponse.json(article('Redis'));
+      }),
+    );
+    const { references, logged } = wikipedia({ timeoutMs: 50 });
+
+    expect(await references.summary('Redis')).toBeNull();
+    expect(logged).toEqual([
+      expect.objectContaining({ event: 'adapter.degraded', cause: 'timeout', status: null }),
+    ]);
+    expect(JSON.stringify(logged)).not.toContain('Redis');
+  });
+
+  it('logs nothing for a disambiguation page, which is an answer and not a failure', async () => {
+    server.use(http.get(SUMMARY, () => HttpResponse.json(article('Deel', 'disambiguation'))));
+    const { references, logged } = wikipedia();
+    await references.summary('Deel');
+    expect(logged).toEqual([]);
   });
 });

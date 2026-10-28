@@ -4,7 +4,7 @@ import type {
   KnowledgeSearchQuery,
   Passage,
 } from '../ports/knowledge-search.port';
-import { createSearchTools } from './search-tools';
+import { createSearchTools, SEARCH_UNAVAILABLE } from './search-tools';
 
 const SHALL = { id: 'resume.shall', label: 'Resume' };
 
@@ -24,8 +24,12 @@ function searchReturning(passages: Passage[]): {
   };
 }
 
+function rethrow(error: unknown): never {
+  throw error;
+}
+
 async function run(port: KnowledgeSearchPort, args: unknown) {
-  const [tool] = createSearchTools(port);
+  const [tool] = createSearchTools(port, rethrow);
   if (!tool) throw new Error('searchKnowledge is missing');
   const outcome = await tool.run(args);
   if (!outcome.ok) throw new Error(outcome.error);
@@ -101,7 +105,7 @@ describe('searchKnowledge', () => {
   });
 
   it('refuses an empty or oversized query', async () => {
-    const [tool] = createSearchTools(searchReturning([]).port);
+    const [tool] = createSearchTools(searchReturning([]).port, rethrow);
     expect((await tool?.run({ query: ' ' }))?.ok).toBe(false);
     expect((await tool?.run({ query: 'x'.repeat(301) }))?.ok).toBe(false);
   });
@@ -129,8 +133,48 @@ describe('searchKnowledge', () => {
     ['a query that is not text', { query: ['leadership'] }],
   ])('refuses %s without searching', async (_label, args) => {
     const { port, queries } = searchReturning([]);
-    const [tool] = createSearchTools(port);
+    const [tool] = createSearchTools(port, rethrow);
     expect((await tool?.run(args))?.ok).toBe(false);
     expect(queries).toEqual([]);
+  });
+
+  it('tells the model search is unavailable when retrieval fails, reporting why', async () => {
+    const outage = new Error('embeddings circuit open');
+    const reported: unknown[] = [];
+    const [tool] = createSearchTools({ search: () => Promise.reject(outage) }, (error) =>
+      reported.push(error),
+    );
+
+    const outcome = await tool?.run({ query: 'leadership', category: 'skills' });
+
+    expect(outcome).toEqual({
+      ok: true,
+      result: { data: { passages: [], note: SEARCH_UNAVAILABLE }, sources: [] },
+    });
+    expect(reported).toEqual([{ tool: 'searchKnowledge', error: outage }]);
+    expect(SEARCH_UNAVAILABLE).toContain('Do not answer from general knowledge.');
+  });
+
+  it('stops with the visitor instead of answering when the search was cancelled', async () => {
+    const request = new AbortController();
+    request.abort();
+    const [tool] = createSearchTools(
+      { search: () => Promise.reject(request.signal.reason as Error) },
+      () => {
+        throw new Error('a cancellation is not a failure to report');
+      },
+    );
+
+    await expect(tool?.run({ query: 'leadership' }, request.signal)).rejects.toMatchObject({
+      name: 'AbortError',
+    });
+  });
+
+  it('searches on behalf of the visitor request, so it stops when they leave', async () => {
+    const { port, queries } = searchReturning([]);
+    const [tool] = createSearchTools(port, rethrow);
+    const request = new AbortController();
+    await tool?.run({ query: 'leadership' }, request.signal);
+    expect(queries[0]?.signal).toBe(request.signal);
   });
 });

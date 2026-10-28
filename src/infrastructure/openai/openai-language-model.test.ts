@@ -2,6 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import type { ModelEvent, ModelRequest } from '@/core/assistant/ports/language-model.port';
+import { createCircuitBreaker, withCircuitBreaker } from '../resilience/circuit-breaker';
 import { createOpenAIClient } from './openai-client';
 import { createOpenAILanguageModel } from './openai-language-model';
 
@@ -200,5 +201,43 @@ describe('OpenAI language model adapter', () => {
       ),
     );
     await expect(events()).rejects.toThrow('stubbed: overloaded');
+  });
+
+  it('does not count a visitor leaving before the response starts as the provider failing', async () => {
+    let arrived = Promise.withResolvers<undefined>();
+    let attempts = 0;
+    server.use(
+      http.post(COMPLETIONS, ({ request }) => {
+        attempts += 1;
+        arrived.resolve(undefined);
+        return new Promise<Response>((resolve) => {
+          request.signal.addEventListener('abort', () => {
+            resolve(HttpResponse.error());
+          });
+        });
+      }),
+    );
+    const breaker = createCircuitBreaker({ failureThreshold: 3, cooldownMs: 30_000 });
+    const model = withCircuitBreaker(
+      createOpenAILanguageModel({
+        client: createOpenAIClient('test-key'),
+        model: 'gpt-4o-mini',
+        temperature: 0,
+        idleTimeoutMs: 1000,
+      }),
+      breaker,
+    );
+
+    for (let i = 0; i < 4; i += 1) {
+      arrived = Promise.withResolvers<undefined>();
+      const visitor = new AbortController();
+      const answer = Array.fromAsync(model.stream({ ...REQUEST, signal: visitor.signal }));
+      await arrived.promise;
+      visitor.abort();
+      await expect(answer).rejects.toMatchObject({ name: 'AbortError' });
+    }
+
+    expect(attempts).toBe(4);
+    expect(breaker.state()).toBe('closed');
   });
 });
