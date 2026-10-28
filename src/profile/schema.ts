@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { KnowledgeSource, Locale } from '@/core/knowledge/schema';
 import { knowledgeRecordSchema } from '@/core/knowledge/validate';
+import type { Brand } from '@/site/site-profile';
 import type { EvaluationCase } from './evaluation/cases';
 
 /** Who the site is about. Every value here identifies the owner, which is why it lives in one place. */
@@ -30,6 +31,8 @@ export interface Profile {
   /** The languages the site is published in. */
   readonly locales: readonly Locale[];
   readonly knowledge: KnowledgeSource;
+  /** The colours and image face the pages, the share image and the tab icon are drawn in. */
+  readonly brand: Brand;
   /** The conversations `pnpm eval:assistant` holds the assistant to. */
   readonly evaluation: readonly EvaluationCase[];
 }
@@ -47,10 +50,19 @@ const identitySchema = z.strictObject({
   nonIdentifyingTerms: z.array(z.string()),
 });
 
+const brandSchema = z.strictObject({
+  colors: z.record(z.string(), z.string().regex(/^#[0-9a-f]{6}$/, 'Must be a #rrggbb colour')),
+  imageFont: z.strictObject({
+    family: z.string().regex(/\S/),
+    files: z.strictObject({ 400: z.string().endsWith('.woff'), 600: z.string().endsWith('.woff') }),
+  }),
+});
+
 const profileSchema = z.strictObject({
   identity: identitySchema,
   locales: z.array(z.enum(['en'])).min(1),
   knowledge: knowledgeRecordSchema,
+  brand: brandSchema,
   evaluation: z.array(z.looseObject({ id: z.string().regex(/\S/) })),
 });
 

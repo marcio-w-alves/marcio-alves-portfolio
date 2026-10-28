@@ -4,10 +4,11 @@ import { delay, http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { Fragment } from 'react';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createChatHandler } from '@/app/api/chat/chat-handler';
-import { EVENT_STREAM_HEADERS, eventStream } from '@/app/api/chat/event-stream';
-import { knowledge, topicCatalog } from '@/app/site-knowledge';
-import { workspaceProps } from '@/app/workspace-props';
+import { createChatHandler } from '@/http/chat-handler';
+import { EVENT_STREAM_HEADERS, eventStream } from '@/http/event-stream';
+import { profile } from '@/profile';
+import { createSiteContent } from '@/site/site-content';
+import { workspaceView } from '@/site/workspace-view';
 import type { AssistantEvent } from '@/core/assistant/assistant-event';
 import { createAssistant } from '@/core/assistant/assistant';
 import { createFastPath } from '@/core/assistant/system1/fast-path';
@@ -16,6 +17,9 @@ import { createAnswerCache } from '@/infrastructure/budget/answer-cache';
 import { createModelBudget } from '@/infrastructure/budget/model-budget';
 import { ChatWorkspace } from './chat-workspace';
 import { ConversationsProvider } from './conversation-store';
+
+const content = createSiteContent(profile.knowledge);
+const { knowledge, topicCatalog } = content;
 
 const CHAT_URL = `${window.location.origin}/api/chat`;
 
@@ -67,7 +71,7 @@ afterAll(() => {
 
 /** The page as the server renders it: the workspace with the view built for its topic. */
 function workspace(topic: TopicId = 'overview') {
-  return <ChatWorkspace {...workspaceProps(topic)} />;
+  return <ChatWorkspace {...workspaceView(content, topic)} />;
 }
 
 /** One page of the site, inside the store every page shares. */
@@ -459,7 +463,7 @@ describe('when an answer fails', () => {
 
 describe('topic pages', () => {
   it('names a topic page from the navigation the server built, and refuses one it lacks', () => {
-    const props = workspaceProps('skills');
+    const props = workspaceView(content, 'skills');
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     expect(() =>

@@ -55,7 +55,7 @@ gate is fixed, never bypassed.
 - The assistant reaches data only through allow-listed actions with strict
   schemas ([ADR 0003](docs/adr/0003-the-model-never-holds-the-record.md)).
   Every fact in the knowledge base carries its source.
-- Styling is Tailwind utilities over the tokens in `src/app/globals.css`, and
+- Styling is Tailwind utilities over the tokens in `src/ui/globals.css`, and
   nothing else. A value no utility can express is a missing token: add it to
   `@theme`, and register `text`, `leading`, `tracking`, `font-weight` and
   `radius` tokens in `THEME_TOKENS` (`src/ui/cn.ts`).

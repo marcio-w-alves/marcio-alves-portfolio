@@ -2,7 +2,7 @@ import { z } from 'zod';
 import type { Assistant } from '@/core/assistant/assistant';
 import { MAX_QUESTION_LENGTH } from '@/core/assistant/system1/router';
 import { TOPIC_IDS } from '@/core/assistant/topics';
-import { clientIdOf } from '@/http/client-key';
+import { clientIdOf } from './client-key';
 import { EVENT_STREAM_HEADERS, eventStream } from './event-stream';
 
 /** Generous for twelve turns of history, far short of anything abusive. */

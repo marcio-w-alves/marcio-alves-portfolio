@@ -1,7 +1,7 @@
-import { TopicPage, topicMetadata } from '../topic-page';
+import { site } from '@/site-root';
 
-export const metadata = topicMetadata('projects');
+const page = site.topicPage('projects');
 
-export default function Page() {
-  return <TopicPage topic="projects" />;
-}
+export const metadata = page.metadata;
+
+export default page.Page;

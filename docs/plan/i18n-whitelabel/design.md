@@ -162,7 +162,7 @@ Top level, outside `src/`: `scripts/` (`ingest-sites.mts`, `generate-resume.mts`
 | `src/app/workspace-props.ts`                                                                                                 | `site/workspace-view.ts`                                                                                      | 53                |
 | `src/app/structured-data.ts` (+test)                                                                                         | `site/structured-data.ts`                                                                                     | 53                |
 | `src/app/brand-colors.ts` (+test)                                                                                            | deleted; values in `profile/brand.ts`, drift test in `profile/generated`                                      | 53, 63            |
-| `src/app/fonts.ts`                                                                                                           | `src/profile/fonts.ts` (generic CSS variables `--font-text`, `--font-display`, `--font-code`)                 | 53, 63            |
+| `src/app/fonts.ts`                                                                                                           | `src/profile/fonts.ts` (generic CSS variables `--font-face-text`, `--font-face-display`, `--font-face-code`)  | 53, 63            |
 | `src/app/image-fonts.ts`                                                                                                     | `site/image-fonts.ts` (files named by `profile/brand.ts`)                                                     | 53                |
 | `src/app/icon.tsx`                                                                                                           | `app/brand/icon.png/route.tsx` + `site/icon.tsx`                                                              | 64                |
 | `src/app/opengraph-image.tsx`                                                                                                | `app/[locale]/brand/share-image.png/route.tsx` + `site/share-image.tsx`                                       | 64                |
@@ -323,10 +323,10 @@ Type-level contracts stay primary: `AnswerSet` must define every intent, and `Ui
 
 ### 4.4 Brand colours and fonts → Tailwind v4 tokens (FR-3, AC-3.1)
 
-- `scripts/generate-brand-css.mts` renders `@theme { --color-<token>: <hex>; … --font-sans: var(--font-text), <fallbacks>; --font-display: …; --font-mono: …; }` from `brand.ts` into `src/profile/generated/brand.css`, prefixed with a "generated, do not edit" banner. `pnpm brand:css` runs it.
+- `scripts/generate-brand-css.mts` renders `@theme { --color-<token>: <hex>; … --font-sans: var(--font-face-text), <fallbacks>; --font-display: …; --font-mono: …; }` from `brand.ts` into `src/profile/generated/brand.css`, prefixed with a "generated, do not edit" banner. `pnpm brand:css` runs it.
 - `src/ui/globals.css` keeps every non-brand token (type scale, radii, shadows, motion, keyframes) and adds `@import '../profile/generated/brand.css';` after `@import 'tailwindcss';`. Tailwind v4 merges multiple `@theme` blocks. Shadows that mix ink with alpha (`rgb(15 17 21 / 0.03)`) become `color-mix(in srgb, var(--color-ink) 3%, transparent)`, which is pixel-equal in sRGB. The fidelity gate proves it in POR-63.
 - Test `profile/generated/brand-css.test.ts`: `render(brand) === readFile('brand.css')`, failing with "run pnpm brand:css". It replaces `app/brand-colors.test.ts`. The share image, icon and PDF import `brand.ts` directly, so the values have a single source.
-- Fonts: `profile/fonts.ts` calls the `next/font/google` loaders (literal options, as `next/font` requires) with the generic variables `--font-text`, `--font-display` and `--font-code`, and exports `fontClassName`. Only `site-root.ts` imports it. `profile/index.ts` never does, so scripts and tests never evaluate `next/font`.
+- Fonts: `profile/fonts.ts` calls the `next/font/google` loaders (literal options, as `next/font` requires) with the generic variables `--font-face-text`, `--font-face-display` and `--font-face-code`, and exports `fontClassName`. Only `site-root.ts` and `app/global-error.tsx` import it (see POR-53 as built). `profile/index.ts` never does, so scripts and tests never evaluate `next/font`.
 - No hand-written CSS outside the token layer and no inline `style` on `<html>`. CSP is unchanged.
 
 ### 4.5 The whitelabel test (FR-2, AC-1.1, AC-4.2)
@@ -904,6 +904,14 @@ Ids, dependencies and sets follow the PRD's task table. **Deps** lists both beha
 - Files: `src/http/{chat-handler,event-stream,health-handler}.ts` (moved next to `client-key.ts`), `src/site/*` (metadata, structured data, routes, workspace view, images, sitemap/robots builders, workbench fixtures, `create-site.tsx`), `src/site-root.ts` (server-only), thin `src/app` files, `profile/fonts.ts` and `profile/brand.ts` (the old equality test now points at `brand.ts` until POR-63 generates the CSS), the boundary rules for `site`, `http` and the `core`/`profile` clauses of `app-goes-through-roots`.
 - Still one locale and no `[locale]` segment (that is POR-64), so routes are unchanged.
 - Fidelity: unchanged.
+- As built (deviation):
+  - Font face variables are `--font-face-text`, `--font-face-display` and `--font-face-code`. The planned `--font-display` would collide with the Tailwind `--font-display` token, which would then reference itself. §2.3 and §4.4 are corrected; POR-63 generates `brand.css` with these names.
+  - `globals.css` moved to `src/ui/globals.css` here rather than in POR-63, because AC-42.1 allows only route and special files in `src/app`. `prettier.config.mjs` and `ui/cn.test.ts` point at the new path.
+  - `app/global-error.tsx` (a client component, so it cannot use the server-only `site-root`) imports `profile/fonts` directly. A rule, `global-error-reads-only-fonts`, allows exactly that file; `client-boundary.test.ts` exempts `profile/fonts.ts` from the server-only set.
+  - `profile` reading is reported only by `only-roots-read-the-profile`; `site-is-profile-agnostic` and `http-is-injected` omit it so one edge raises one violation.
+  - No `site/workbench`: POR-75 (#68) deleted the workbench and the fidelity tooling, so nothing was moved there, and `ui/rich/examples.ts` stays put.
+  - The root title and description are built from the profile name (same text); the rest of that copy moves to the profile in POR-63. The types file is `site/site-profile.ts` (`Brand`, `SiteProfile`).
+  - Turbopack splits CSS by folder, so the font CSS and the stylesheet now ship as two files instead of one; the rules and their order are unchanged.
 
 **POR-54 — Fast path derives facts; prose, owner intents and vocabulary to the profile (FR-4, FR-54 core) · Deps: 52, 51 · S8**
 

@@ -65,7 +65,28 @@ module.exports = {
         'configuration stay out of it, so none of them can leak into the client bundle.',
       severity: 'error',
       from: { path: '^src/ui/', pathNot: TESTS },
-      to: { path: `^src/(app|infrastructure|${ROOTS})${MODULE_END}` },
+      to: { path: `^src/(app|http|site|infrastructure|${ROOTS})${MODULE_END}` },
+    },
+    {
+      name: 'site-is-profile-agnostic',
+      comment:
+        'src/site builds the pages from whatever profile it is handed, which is how a test ' +
+        'renders a fictional one. The site-root binds the real profile; the site never reaches ' +
+        'for it, for the adapters, the API handlers or the routes. (Reading the profile is ' +
+        'reported by only-roots-read-the-profile.)',
+      severity: 'error',
+      from: { path: '^src/site/', pathNot: TESTS },
+      to: { path: `^src/(app|http|infrastructure|${ROOTS})${MODULE_END}` },
+    },
+    {
+      name: 'http-is-injected',
+      comment:
+        'src/http translates HTTP into calls on the core. What it calls arrives through its ' +
+        'factory, from the composition root, so it never imports an adapter, a root, the pages ' +
+        'or the interface. (Reading the profile is reported by only-roots-read-the-profile.)',
+      severity: 'error',
+      from: { path: '^src/http/', pathNot: TESTS },
+      to: { path: '^src/(app|ui|site|infrastructure|composition-root|site-root)(/|\\.)' },
     },
     {
       name: 'infrastructure-is-a-plugin',
@@ -74,16 +95,27 @@ module.exports = {
         'interface, or the root that wires them.',
       severity: 'error',
       from: { path: '^src/infrastructure/', pathNot: TESTS },
-      to: { path: `^src/(app|ui|composition-root)${MODULE_END}` },
+      to: { path: `^src/(app|http|site|ui|composition-root|site-root)${MODULE_END}` },
     },
     {
       name: 'app-goes-through-roots',
       comment:
-        'Routes reach adapters only through the composition root, which decides which ' +
-        'implementation runs. A route that imports an adapter has wired it by hand.',
+        'Route files are thin: they re-export what the site-root and the composition root ' +
+        'bound, and hand requests to src/http. A route that imports an adapter has wired it by ' +
+        'hand; one that imports the core has grown logic of its own.',
       severity: 'error',
       from: { path: '^src/app/', pathNot: TESTS },
-      to: { path: '^src/infrastructure/' },
+      to: { path: '^src/(infrastructure|core)/' },
+    },
+    {
+      name: 'global-error-reads-only-fonts',
+      comment:
+        'The global error page replaces the root layout, so it brings its own document and ' +
+        'cannot use the server-only site-root. Of the profile it may read the font loaders, ' +
+        'which are safe in the browser, and nothing else.',
+      severity: 'error',
+      from: { path: '^src/app/global-error\\.tsx$' },
+      to: { path: '^src/profile/', pathNot: '^src/profile/fonts\\.ts$' },
     },
     {
       name: 'profile-is-configuration',
@@ -106,13 +138,17 @@ module.exports = {
     {
       name: 'only-roots-read-the-profile',
       comment:
-        'The core receives the owner as values, so nothing but the roots that bind it, the ' +
-        'scripts and the tests reads the profile. The app reads it until its helpers move ' +
-        'behind a root.',
+        'The core and the site receive the owner as values, so nothing but the roots that bind ' +
+        'it, the scripts and the tests reads the profile. The global error page has its own ' +
+        'rule, global-error-reads-only-fonts.',
       severity: 'error',
       from: {
         path: '^src/',
-        pathNot: [TESTS, `^src/(profile|testing|app|${ROOTS})${MODULE_END}`],
+        pathNot: [
+          TESTS,
+          `^src/(profile|testing|${ROOTS})${MODULE_END}`,
+          '^src/app/global-error\\.tsx$',
+        ],
       },
       to: { path: '^src/profile/' },
     },

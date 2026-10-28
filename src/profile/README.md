@@ -3,8 +3,8 @@
 Everything that makes this site about one person lives in this folder. To make
 the site yours, edit these files and nothing outside them. The rest of the code
 reads the profile only through the roots that bind it (`src/composition-root.ts`
-and, for now, the helpers in `src/app`), so it works for any profile that
-validates.
+for the API and `src/site-root.ts` for the pages), so it works for any profile
+that validates.
 
 ## What to edit
 
@@ -12,6 +12,8 @@ validates.
 | ----------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | `identity.ts`                 | Your name, initials, email, LinkedIn and GitHub, the domain, and the name the site gives itself in a User-Agent |
 | `locales.ts`                  | The languages the site is published in                                                                          |
+| `brand.ts`                    | Your colours, one per design token, and the face the share image and tab icon are set in                        |
+| `fonts.ts`                    | The faces the pages are set in, loaded with `next/font`                                                         |
 | `knowledge/`                  | Your record: profile, experience, metrics, projects, skills, education, practice and how each source is cited   |
 | `knowledge/knowledge-base.md` | Your long-form notes; `notes.json` beside it is generated from it                                               |
 | `evaluation/`                 | The conversations `pnpm eval:assistant` holds the assistant to                                                  |
@@ -29,9 +31,10 @@ your name, employers and products out of the rest of the code lets them appear
 there.
 
 Not everything is here yet: the fast path's answer prose and the topic copy
-still live in `src/core/assistant` until POR-54, and the interface copy, the
-page metadata and the brand colours and fonts still live in `src/ui` and
-`src/app` until POR-53 and POR-63 move them into this folder.
+still live in `src/core/assistant` until POR-54, and the interface copy and the
+page metadata still live in `src/ui` and `src/site` until POR-63 moves them
+into this folder. Until then the stylesheet's colour tokens are also written in
+`src/ui/globals.css`, and a test keeps them equal to `brand.ts`.
 
 ## After editing
 

@@ -37,14 +37,16 @@
 
   /*
    * Type: Inter for text, Inter Tight for display, Geist Mono for code, all
-   * self-hosted by next/font. Inter's character variants come with the stack.
+   * self-hosted by next/font with the faces in src/profile/fonts.ts. Inter's
+   * character variants come with the stack.
    */
   --font-sans:
-    var(--font-inter), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    var(--font-face-text), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-sans--font-feature-settings: 'cv11', 'ss01', 'ss03';
   --font-display:
-    var(--font-inter-tight), var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    var(--font-face-display), var(--font-face-text), ui-sans-serif, system-ui, -apple-system,
+    sans-serif;
+  --font-mono: var(--font-face-code), ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
   /*
    * Type scale. The prototype works in half-pixel steps, so each size is named

@@ -9,7 +9,7 @@ const prettierConfig = {
   trailingComma: 'all',
   printWidth: 100,
   plugins: ['prettier-plugin-tailwindcss'],
-  tailwindStylesheet: './src/app/globals.css',
+  tailwindStylesheet: './src/ui/globals.css',
   tailwindFunctions: ['cn', 'cva'],
 };
 
