@@ -33,14 +33,17 @@ test('the home page describes itself to search engines and link previews', async
   );
 });
 
-test('the home page identifies Marcio as a schema.org Person', async ({ page }) => {
+test('the home page is a schema.org ProfilePage about Marcio as a Person', async ({ page }) => {
   await page.goto('/');
   const canonical = await page.locator('link[rel="canonical"]').getAttribute('href');
   const json = await page.locator('script[type="application/ld+json"]').textContent();
-  const person = JSON.parse(String(json)) as Record<string, unknown>;
+  const { '@graph': graph } = JSON.parse(String(json)) as {
+    '@graph': Record<string, unknown>[];
+  };
+  expect(graph.map((node) => node['@type'])).toEqual(['WebSite', 'ProfilePage', 'Person']);
+  const person = graph[2] ?? {};
 
   expect(person).toMatchObject({
-    '@context': 'https://schema.org',
     '@type': 'Person',
     name: 'Marcio Alves',
     jobTitle: 'Senior Frontend Engineer with tech-lead responsibilities',
@@ -48,6 +51,42 @@ test('the home page identifies Marcio as a schema.org Person', async ({ page }) 
   });
   expect(new URL(String(person.url)).href).toBe(new URL(String(canonical)).href);
   expect(person.knowsAbout).toEqual(expect.arrayContaining(['React', 'TypeScript', 'Next.js']));
+  expect(person.worksFor).toMatchObject({ '@type': 'Organization', name: 'Way2b1' });
+});
+
+test('a topic page is shared with its own address, the large card and the site image', async ({
+  page,
+}) => {
+  await page.goto('/experience');
+  const meta = (selector: string) => page.locator(selector).getAttribute('content');
+  const canonical = String(await page.locator('link[rel="canonical"]').getAttribute('href'));
+  const description = String(await meta('meta[name="description"]'));
+
+  expect(description.length).toBeLessThanOrEqual(160);
+  expect(await meta('meta[property="og:type"]')).toBe('website');
+  expect(await meta('meta[property="og:url"]')).toBe(canonical);
+  expect(new URL(String(await meta('meta[property="og:image"]'))).pathname).toBe(
+    '/opengraph-image',
+  );
+  expect(await meta('meta[name="twitter:card"]')).toBe('summary_large_image');
+
+  const json = await page.locator('script[type="application/ld+json"]').textContent();
+  const crumbs = JSON.parse(String(json)) as { '@type': string; itemListElement: unknown[] };
+  expect(crumbs['@type']).toBe('BreadcrumbList');
+  expect(crumbs.itemListElement).toHaveLength(2);
+});
+
+test('phones get a home-screen icon and the page colour for the browser bar', async ({
+  page,
+  request,
+}) => {
+  await page.goto('/');
+  const touchIcon = String(await page.locator('link[rel="apple-touch-icon"]').getAttribute('href'));
+  const png = await (await request.get(touchIcon)).body();
+  expect(png.readUInt32BE(16)).toBe(180);
+  expect(await page.locator('meta[name="theme-color"]').getAttribute('content')).toMatch(
+    /^#[0-9a-f]{6}$/i,
+  );
 });
 
 test('the social image is a 1200×630 PNG', async ({ request }) => {

@@ -28,10 +28,11 @@ function TextBlock({ block, caret }: { readonly block: Block; readonly caret: bo
       );
     case 'heading':
       return (
-        <h3 className="mt-3 -mb-1 font-display text-15.5 leading-label font-semibold tracking-title">
+        // An answer sits under the page's h1: its sections, like its cards' titles, are h2.
+        <h2 className="mt-3 -mb-1 font-display text-15.5 leading-label font-semibold tracking-title">
           <InlineNodes nodes={block.content} />
           {tail}
-        </h3>
+        </h2>
       );
     case 'list': {
       const List = block.ordered ? 'ol' : 'ul';

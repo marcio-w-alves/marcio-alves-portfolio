@@ -87,7 +87,7 @@ describe('an answer’s text', () => {
         { type: 'text', id: 'p0', text: '### At Deel\n- Led **HRIS**\n- Cut load time by 50%' },
       ],
     });
-    expect(screen.getByRole('heading', { level: 3, name: 'At Deel' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'At Deel' })).toBeInTheDocument();
     const items = within(screen.getByRole('list')).getAllByRole('listitem');
     expect(items.map((item) => item.textContent)).toEqual(['Led HRIS', 'Cut load time by 50%']);
     expect(screen.getByText('HRIS').tagName).toBe('STRONG');

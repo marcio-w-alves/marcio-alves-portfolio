@@ -78,3 +78,41 @@ test.describe('on a phone', () => {
     expect(await violations(page)).toEqual([]);
   });
 });
+
+test.describe('beyond WCAG AA', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test('every page keeps its headings in order, from the h1 down', async ({ page }) => {
+    for (const path of ['/', '/experience', '/skills', '/projects', '/philosophy', '/education']) {
+      await page.goto(path);
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+      const { violations } = await new AxeBuilder({ page })
+        .withRules(['heading-order', 'page-has-heading-one', 'landmark-one-main'])
+        .analyze();
+      expect(
+        violations.map(({ id }) => id),
+        path,
+      ).toEqual([]);
+    }
+  });
+
+  test('the first Tab offers to skip past the topics, straight to the conversation', async ({
+    page,
+  }) => {
+    await page.goto('/experience');
+    await page.keyboard.press('Tab');
+    const skip = page.getByRole('link', { name: 'Skip to the conversation' });
+    await expect(skip).toBeFocused();
+    await expect(skip).toBeVisible();
+
+    await page.keyboard.press('Enter');
+
+    await expect(page.getByRole('main')).toBeFocused();
+  });
+
+  test('the contact link in the sidebar is a comfortable touch target', async ({ page }) => {
+    await page.goto('/');
+    const box = await page.getByRole('link', { name: 'Get in touch' }).boundingBox();
+    expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
+  });
+});

@@ -33,12 +33,12 @@ export function ContactCard({
           MA
         </span>
         <div>
-          <h4
+          <h2
             id={titleId}
             className="font-display text-18 leading-heading font-semibold tracking-heading"
           >
             {heading}
-          </h4>
+          </h2>
           <p className="mt-1 text-14.5 leading-reading text-ink-muted">{text}</p>
           <p className="mt-2 text-12.5 leading-label font-medium text-ink">{availability}</p>
         </div>

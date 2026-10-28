@@ -15,6 +15,7 @@ interface AppShellProps {
 }
 
 const NAVIGATION_ID = 'portfolio-navigation';
+const MAIN_ID = 'conversation';
 // Mirrors --container-compact: at this width and above there is no drawer.
 const COMPACT_BELOW_PX = 861;
 
@@ -73,6 +74,13 @@ export function AppShell({
       ref={rootRef}
       className="@container/ma relative h-dvh overflow-hidden bg-bg font-sans text-ink"
     >
+      {/* The first stop for a keyboard: past the topics, straight to the conversation. */}
+      <a
+        href={`#${MAIN_ID}`}
+        className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:top-3 focus-visible:left-3 focus-visible:z-40 focus-visible:rounded-control focus-visible:bg-surface focus-visible:px-3 focus-visible:py-2 focus-visible:text-13.5 focus-visible:font-medium focus-visible:text-ink focus-visible:shadow-ring"
+      >
+        Skip to the conversation
+      </a>
       <div className="grid h-full grid-cols-shell @max-compact/ma:grid-cols-1">
         <button
           type="button"
@@ -106,7 +114,12 @@ export function AppShell({
           {navigation}
         </div>
 
-        <main inert={drawerOpen} className="relative flex min-h-0 min-w-0 flex-col bg-bg">
+        <main
+          id={MAIN_ID}
+          tabIndex={-1}
+          inert={drawerOpen}
+          className="relative flex min-h-0 min-w-0 flex-col bg-bg outline-none"
+        >
           <header className="hidden h-14 shrink-0 items-center gap-1 bg-bg px-1.5 inset-shadow-rule-bottom @max-compact/ma:flex">
             <IconButton
               ref={menuButtonRef}

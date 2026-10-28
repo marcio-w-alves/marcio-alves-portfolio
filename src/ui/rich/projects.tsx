@@ -32,9 +32,9 @@ function ProjectPreview({ project }: { readonly project: ProjectView }) {
           <Icon name="folder" />
         </span>
         <div className="min-w-0 flex-1">
-          <h4 className="font-display text-16 leading-heading font-semibold tracking-subhead">
+          <h2 className="font-display text-16 leading-heading font-semibold tracking-subhead">
             {project.name}
-          </h4>
+          </h2>
           <p className="mt-0.5 text-12.5 leading-label text-ink-muted">{project.category}</p>
         </div>
         <div className="basis-full pl-12 @sm/project:basis-auto @sm/project:pl-0">

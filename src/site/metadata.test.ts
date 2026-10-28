@@ -47,9 +47,36 @@ describe('topicMetadata', () => {
       const metadata = topicMetadata(content, id);
 
       expect(metadata.title).toBe(`${topic.label} — ${content.knowledge.profile.name}`);
-      expect(metadata.description).toBe(topic.intro);
+      expect(metadata.description).toBe(topic.description);
       expect(metadata.alternates?.canonical).toBe(`/${id}`);
-      expect(metadata.openGraph).toMatchObject({ title: metadata.title, description: topic.intro });
+    },
+  );
+
+  it.each(TOPIC_IDS)('keeps the %s description short enough not to be cut in results', (id) => {
+    const { description } = content.topicCatalog.topicById(id);
+    expect(description.length).toBeGreaterThan(50);
+    expect(description.length).toBeLessThanOrEqual(160);
+  });
+
+  // A page's openGraph replaces the root's, so a topic page that left out the
+  // image was shared with none.
+  it.each(TOPIC_IDS.filter((id) => id !== 'overview'))(
+    'shares the %s page with the large card, its own address and the site image',
+    (id) => {
+      const metadata = topicMetadata(content, id);
+
+      expect(metadata.openGraph).toMatchObject({
+        type: 'website',
+        siteName: content.knowledge.profile.name,
+        url: `/${id}`,
+        title: metadata.title,
+        description: metadata.description,
+        images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+      });
+      expect(metadata.twitter).toMatchObject({
+        card: 'summary_large_image',
+        images: [{ url: '/opengraph-image' }],
+      });
     },
   );
 });
