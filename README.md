@@ -164,9 +164,17 @@ What it is unsure of, it escalates instead of guessing: low-confidence
 questions, definitions ("what is TypeScript?"), comparisons, questions naming
 two companies, and anything long enough to carry several asks.
 
-**System 2** is the model-backed path for the rest. Both produce the same
-response shape, so the interface never knows which one answered, and if the
-model is unavailable System 1 still answers everything it recognizes.
+**System 2** (`src/core/assistant/system2`) is `gpt-4o-mini` acting only
+through the allow-listed actions, for everything else — including any
+question not written in English, since System 1's answers are, and requests
+to do something (write code, a poem) rather than to learn about Marcio. The
+loop is bounded: four rounds at most, the last one forced to write rather than
+call another action, six actions per round run concurrently, 700 output tokens
+a round. A circuit breaker stops calling the model after three consecutive
+failures. Both paths produce the same response shape, so the interface never
+knows which one answered, and if the model is unavailable — no key, an open
+circuit, a failure before it said anything — System 1 still answers
+everything it recognizes and says plainly what it cannot.
 
 A test walks the whole suggestion graph — every topic question, then every
 follow-up each answer offers, recursively — and requires the fast path to
