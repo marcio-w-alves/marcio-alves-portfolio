@@ -39,13 +39,15 @@ export function ThemeSwitcher() {
   return (
     <fieldset className="m-0 min-w-0 border-0 p-0">
       <legend className="sr-only">{shell.theme.label}</legend>
-      <div className="flex rounded-control bg-fill p-0.5">
+      <div className="inline-flex gap-0.5 rounded-control bg-fill p-0.5">
         {THEME_CHOICES.map((option) => (
+          // Icons only: the name stays for screen readers and as the pointer's tooltip.
           <label
             key={option}
+            title={shell.theme[option]}
             className={cn(
-              'flex min-h-8 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-sm text-12.5 font-medium',
-              'transition-[background-color,color,box-shadow] duration-fast ease-standard @max-compact/ma:min-h-11 @max-compact/ma:text-14',
+              'grid size-8 cursor-pointer place-items-center rounded-sm',
+              'transition-[background-color,color,box-shadow] duration-fast ease-standard @max-compact/ma:size-11',
               'has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ink',
               'text-ink-muted hover:text-ink',
               SELECTED[option],
@@ -61,8 +63,8 @@ export function ThemeSwitcher() {
               }}
               className="sr-only"
             />
-            <Icon name={ICONS[option]} size="xs" />
-            {shell.theme[option]}
+            <Icon name={ICONS[option]} size="sm" />
+            <span className="sr-only">{shell.theme[option]}</span>
           </label>
         ))}
       </div>
