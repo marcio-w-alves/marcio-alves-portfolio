@@ -1,4 +1,5 @@
 import type { SourceId } from './ids';
+import notes from './data/notes.json';
 import { knowledgeBase } from './knowledge-base';
 import type { Project } from './types';
 
@@ -7,7 +8,9 @@ import type { Project } from './types';
  *
  * Each resume statement is its own passage, carrying its company, role and
  * period in the text, so a match is precise and still says where the fact
- * comes from. Contact details are deliberately absent: they are served by an
+ * comes from. Marcio's knowledge-base document follows as its own passages
+ * (see notes.ts): the résumé records what he did, the notes add how he works,
+ * what he studies and builds, and what he is interested in. Contact details are deliberately absent: they are served by an
  * action, never retrieved by similarity.
  */
 
@@ -20,6 +23,7 @@ export const CHUNK_CATEGORIES = [
   'certifications',
   'projects',
   'principles',
+  'notes',
 ] as const;
 export type ChunkCategory = (typeof CHUNK_CATEGORIES)[number];
 
@@ -111,6 +115,12 @@ export function buildCorpus(): KnowledgeChunk[] {
       category: 'principles',
       text: `Engineering principle — ${principle.title}: ${principle.text}`,
       source: 'principles',
+    })),
+    ...notes.map((note): KnowledgeChunk => ({
+      id: `notes:${note.id}`,
+      category: 'notes',
+      text: note.text,
+      source: 'notes',
     })),
   ];
 }

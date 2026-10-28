@@ -54,16 +54,16 @@ describe('fast path — documented answers', () => {
     expect(hasContact(answer(question, { ...FRESH, ctaShown: true }))).toBe(false);
   });
 
-  it('credits the Deel backlog reduction to the process the resume names', () => {
-    expect(plainText(answer('How did he reduce the bug backlog at Deel?'))).toContain(
-      'planned bug sprints',
-    );
+  it('answers a bug-backlog question with the quality work the resume names, and no figure', () => {
+    const text = plainText(answer('How did he reduce the bug backlog at Deel?'));
+    expect(text).toContain('error handling');
+    expect(text).not.toMatch(/two-thirds|\d+%/);
   });
 
   it('states the performance techniques the resume names instead of calling them undocumented', () => {
     const text = plainText(answer('How did he optimize performance?'));
     expect(text).toContain('targeted refactoring and optimization');
-    expect(text).toContain('bundle-size optimization');
+    expect(text).toContain('server-side rendering');
   });
 
   it("lists a company's work, leadership and recognition from the record", () => {

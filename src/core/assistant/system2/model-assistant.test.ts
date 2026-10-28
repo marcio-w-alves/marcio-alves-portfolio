@@ -63,17 +63,19 @@ describe('model assistant — answering through actions', () => {
   it('answers from action results and cites exactly the sources those actions returned', async () => {
     const { port, requests } = scriptedModel([
       { calls: [call('getExperience', { company: 'deel' })] },
-      { text: 'At Deel he cut the backlog by two-thirds with planned bug sprints.' },
+      { text: 'At Deel he halved critical page loading time through targeted refactoring.' },
     ]);
     const events = await collect(port);
 
-    expect(text(events)).toBe('At Deel he cut the backlog by two-thirds with planned bug sprints.');
+    expect(text(events)).toBe(
+      'At Deel he halved critical page loading time through targeted refactoring.',
+    );
     expect(events.at(-1)).toEqual({
       type: 'finish',
       followUps: ['Next?'],
       sources: [{ id: 'resume.deel', label: 'Resume' }],
     });
-    expect(JSON.stringify(toolReplies(requests[1]))).toContain('planned bug sprints');
+    expect(JSON.stringify(toolReplies(requests[1]))).toContain('targeted refactoring');
   });
 
   it('streams the reply as it is written, announced only once there is something to show', async () => {
@@ -92,15 +94,15 @@ describe('model assistant — answering through actions', () => {
 
   it('leaves out an offer of help, while the model still sees what it wrote', async () => {
     const reply =
-      'At Deel he cut the backlog by two-thirds.\n\nIf you need more details, feel free to ask!';
+      'At Deel he halved critical page loading time.\n\nIf you need more details, feel free to ask!';
     const { port, requests } = scriptedModel([
       { text: reply, calls: [call('getExperience', { company: 'deel' })] },
-      { text: 'He did it with planned bug sprints. Let me know if you want more.' },
+      { text: 'He did it through targeted refactoring. Let me know if you want more.' },
     ]);
     const events = await collect(port);
 
     expect(text(events)).toBe(
-      'At Deel he cut the backlog by two-thirds.He did it with planned bug sprints.',
+      'At Deel he halved critical page loading time.He did it through targeted refactoring.',
     );
     expect(requests[1]?.messages).toContainEqual(expect.objectContaining({ content: reply }));
   });
@@ -253,7 +255,7 @@ describe('model assistant — spending', () => {
 describe('model assistant — what reaches the visitor', () => {
   it('renders the blocks the model asked for after the text, with data resolved on the server', async () => {
     const { port } = scriptedModel([
-      { calls: [call('showMetrics', { ids: ['deel-backlog'] })] },
+      { calls: [call('showMetrics', { ids: ['deel-people-list'] })] },
       { text: 'Here is the result.' },
     ]);
     const events = await collect(port);
@@ -265,8 +267,8 @@ describe('model assistant — what reaches the visitor', () => {
       props: {
         items: [
           {
-            value: '~67%',
-            label: 'Of the bug and support backlog cleared through planned bug sprints',
+            value: '6s → 3s',
+            label: 'People List load time on a cold run',
             context: 'Deel',
           },
         ],

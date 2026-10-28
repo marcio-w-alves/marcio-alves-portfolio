@@ -3,7 +3,12 @@ import type { EmbeddingPort } from '@/core/assistant/ports/embedding.port';
 import { buildCorpus, type KnowledgeChunk } from '@/core/knowledge/corpus';
 import { EMBEDDING_DIMENSIONS, type KnowledgeIndex } from './index-spec';
 import committed from './knowledge-index.json';
-import { cosine, createVectorKnowledgeSearch, RELEVANCE_FLOOR } from './vector-knowledge-search';
+import {
+  cosine,
+  createVectorKnowledgeSearch,
+  NOTES_SHARE,
+  RELEVANCE_FLOOR,
+} from './vector-knowledge-search';
 
 const index: KnowledgeIndex = committed;
 const corpus = buildCorpus();
@@ -54,14 +59,16 @@ describe('vector knowledge search', () => {
     });
   });
 
-  it('returns best matches first, no more than asked', async () => {
+  it('returns best matches first, no more than asked from the résumé plus a few notes', async () => {
     const search = createVectorKnowledgeSearch({
       embeddings: embeddingsReturning(vectorOf('languages')),
       index,
       corpus,
     });
     const passages = await search.search({ query: 'languages', limit: 4 });
-    expect(passages.length).toBeLessThanOrEqual(4);
+    const notes = passages.filter((passage) => passage.category === 'notes');
+    expect(passages.length - notes.length).toBeLessThanOrEqual(4);
+    expect(notes.length).toBeLessThanOrEqual(NOTES_SHARE);
     const scores = passages.map((passage) => passage.score);
     expect(scores).toEqual([...scores].sort((a, b) => b - a));
   });
@@ -85,6 +92,36 @@ describe('vector knowledge search', () => {
       });
       expect(await search.search({ query: 'off topic', limit: 5 })).toEqual([]);
     }
+  });
+});
+
+describe('vector knowledge search — résumé and notes together', () => {
+  it('keeps the résumé passages a long Portuguese note would otherwise outscore', async () => {
+    const query = [1, 0];
+    const at = (similarity: number) => [100 * similarity, 100 * Math.sqrt(1 - similarity ** 2)];
+    const ids = { 'note-a': 0.9, 'note-b': 0.85, 'note-c': 0.8, 'note-d': 0.75, resume: 0.4 };
+    const search = createVectorKnowledgeSearch({
+      embeddings: embeddingsReturning(query),
+      index: {
+        ...index,
+        vectors: Object.fromEntries(Object.entries(ids).map(([id, s]) => [id, at(s)])),
+      },
+      corpus: Object.keys(ids).map((id): KnowledgeChunk =>
+        id === 'resume'
+          ? { id, category: 'experience', text: id, source: 'resume.toptal' }
+          : { id, category: 'notes', text: id, source: 'notes' },
+      ),
+    });
+    expect((await search.search({ query: 'acessibilidade', limit: 1 })).map((p) => p.id)).toEqual([
+      'note-a',
+      'resume',
+    ]);
+    expect((await search.search({ query: 'acessibilidade', limit: 5 })).map((p) => p.id)).toEqual([
+      'note-a',
+      'note-b',
+      'note-c',
+      'resume',
+    ]);
   });
 });
 

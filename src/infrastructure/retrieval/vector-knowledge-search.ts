@@ -17,6 +17,15 @@ import type { KnowledgeIndex } from './index-spec';
  */
 export const RELEVANCE_FLOOR = 0.22;
 
+/**
+ * The knowledge-base notes are long Portuguese passages; on a terse or
+ * Portuguese query they outscore the résumé's short English statements and
+ * would crowd them out ("acessibilidade" once returned five notes on access
+ * control and no Toptal accessibility work). So, unless a category is asked
+ * for, the résumé keeps the whole limit and the notes add at most this many.
+ */
+export const NOTES_SHARE = 3;
+
 export function cosine(a: readonly number[], b: readonly number[]): number {
   let dot = 0;
   let normA = 0;
@@ -50,7 +59,7 @@ export function createVectorKnowledgeSearch({
     async search({ query, limit, category }) {
       const [vector] = await embeddings.embed([query]);
       if (!vector) return [];
-      return corpus
+      const ranked = corpus
         .filter((chunk) => !category || chunk.category === category)
         .map((chunk): Passage => ({
           id: chunk.id,
@@ -60,8 +69,13 @@ export function createVectorKnowledgeSearch({
           score: cosine(vector, index.vectors[chunk.id] ?? []),
         }))
         .filter((passage) => passage.score >= RELEVANCE_FLOOR)
-        .sort((a, b) => b.score - a.score)
-        .slice(0, limit);
+        .sort((a, b) => b.score - a.score);
+      if (category) return ranked.slice(0, limit);
+      const record = ranked.filter((passage) => passage.category !== 'notes').slice(0, limit);
+      const notes = ranked
+        .filter((passage) => passage.category === 'notes')
+        .slice(0, Math.min(NOTES_SHARE, limit));
+      return [...record, ...notes].sort((a, b) => b.score - a.score);
     },
   };
 }

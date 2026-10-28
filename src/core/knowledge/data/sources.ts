@@ -17,4 +17,5 @@ export const sourceLabels: Readonly<Record<SourceId, string>> = {
   'resume.languages': 'Resume',
   'resume.certifications': 'Resume',
   projects: 'Product websites and notes',
+  notes: 'Knowledge base',
 };

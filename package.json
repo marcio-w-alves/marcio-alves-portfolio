@@ -28,11 +28,12 @@
     "test:e2e": "playwright test",
     "test:a11y": "playwright test --project=desktop e2e/a11y.spec.ts e2e/security.spec.ts e2e/seo.spec.ts",
     "lighthouse": "lhci autorun",
-    "rag:build": "tsx --env-file=.env.local scripts/build-knowledge-index.mts",
+    "rag:build": "pnpm notes:build && tsx --env-file=.env.local scripts/build-knowledge-index.mts",
     "eval:assistant": "tsx --env-file=.env.local scripts/evaluate-assistant.mts",
     "fidelity": "tsx scripts/fidelity/check.mts",
     "fidelity:references": "tsx scripts/fidelity/capture-references.mts",
-    "fidelity:live": "tsx scripts/fidelity/check.mts --live"
+    "fidelity:live": "tsx scripts/fidelity/check.mts --live",
+    "notes:build": "tsx scripts/build-knowledge-notes.mts"
   },
   "dependencies": {
     "@fontsource/inter-tight": "5.3.0",

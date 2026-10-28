@@ -22,10 +22,7 @@ export const METRIC_IDS = [
   'deel-critical-load',
   'deel-web-vitals',
   'deel-people-list',
-  'deel-backlog',
   'roots-team',
-  'roots-slack-bot',
-  'roots-initial-load',
   'maison-newsletter',
   'webfi-sales',
 ] as const;
@@ -58,5 +55,6 @@ export const SOURCE_IDS = [
   'resume.languages',
   'resume.certifications',
   'projects',
+  'notes',
 ] as const;
 export type SourceId = (typeof SOURCE_IDS)[number];
