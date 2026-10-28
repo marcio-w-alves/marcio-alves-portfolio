@@ -12,4 +12,16 @@ vi.stubGlobal(
   },
 );
 
+// Nor does it scroll or evaluate media queries.
+Element.prototype.scrollTo = vi.fn();
+vi.stubGlobal(
+  'matchMedia',
+  vi.fn((query: string) => ({
+    matches: false,
+    media: query,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  })),
+);
+
 afterEach(cleanup);

@@ -1,0 +1,9 @@
+/** Resolves to whether the text reached the clipboard; a refusal is an answer, not an error. */
+export async function copyText(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+}

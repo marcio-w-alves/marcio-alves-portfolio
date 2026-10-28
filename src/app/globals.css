@@ -76,6 +76,10 @@
   --text-code: 0.875em;
   --text-code--line-height: normal;
 
+  /* The assistant's mark: an outlined monogram, smaller still inline on a phone. */
+  --text-8\.5: 8.5px;
+  --text-10: 10px;
+
   --leading-display: 1.02;
   --leading-heading: 1.3;
   --leading-compact: 1.35;
@@ -89,6 +93,7 @@
   --leading-figure: 1.05;
   --leading-caption: 1.45;
   --leading-reading: 1.6;
+  --leading-answer: 1.7;
 
   --tracking-display: -0.045em;
   --tracking-subhead: -0.02em;
@@ -106,6 +111,7 @@
   --font-weight-book: 450;
 
   /* Shape */
+  --radius-hairline: 1px;
   --radius-kbd: 4px;
   --radius-mark: 9px;
   --radius-control: 10px;
@@ -146,7 +152,9 @@
   --animate-rise: rise var(--duration-medium) var(--ease-standard) both;
   --animate-fade: fade var(--duration-medium) var(--ease-standard) both;
   --animate-blink: blink 1s steps(1, end) infinite;
-  --animate-pulse-dot: pulse-dot 1.4s var(--ease-standard) infinite;
+  /* The thinking dots stagger through --dot-delay, set per dot. */
+  --animate-pulse-dot: pulse-dot 1.2s ease-in-out var(--dot-delay, 0ms) infinite;
+  --animate-turn: rise 320ms var(--ease-standard) both;
 
   /* The welcome state settles in more slowly than a message does. */
   --animate-fade-slow: fade 450ms var(--ease-standard);
@@ -215,6 +223,9 @@
 
   --container-welcome: 760px;
   --container-measure: 62ch;
+  --container-bubble: min(78%, 560px);
+  --container-bubble-phone: 88%;
+  --grid-template-columns-answer: 28px minmax(0, 1fr);
   --grid-template-columns-suggestions: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
 
   /*
@@ -256,6 +267,17 @@
 }
 
 /* A row that scrolls sideways without showing a scrollbar. */
+/* The streaming caret sits on the text's baseline, a line tall. */
+@utility caret-line {
+  height: 1.05em;
+  vertical-align: -2px;
+}
+
+/* Code in an answer indents by two columns. */
+@utility tab-2 {
+  tab-size: 2;
+}
+
 @utility scrollbar-none {
   scrollbar-width: none;
 

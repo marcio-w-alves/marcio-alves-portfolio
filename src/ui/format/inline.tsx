@@ -3,7 +3,12 @@ import { parseInline, type InlineNode } from './parse-inline';
 
 /** Text with the inline Markdown subset rendered — as elements, never as an HTML string. */
 export function InlineText({ text }: { readonly text: string }) {
-  return parseInline(text).map((node, index) => <InlineElement key={index} node={node} />);
+  return <InlineNodes nodes={parseInline(text)} />;
+}
+
+/** Already-parsed inline nodes, as block-level Markdown hands them over. */
+export function InlineNodes({ nodes }: { readonly nodes: readonly InlineNode[] }) {
+  return nodes.map((node, index) => <InlineElement key={index} node={node} />);
 }
 
 function InlineElement({ node }: { readonly node: InlineNode }) {
