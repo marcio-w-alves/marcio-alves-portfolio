@@ -1,5 +1,4 @@
 export { Chip } from './chip';
-export { SuggestedQuestions } from './suggested-questions';
-export { TopicChips, type TopicChoice } from './topic-chips';
+export { SuggestedQuestions, type QuestionChoice } from './suggested-questions';
 export { WelcomeLayout } from './welcome-layout';
 export { WelcomeScreen } from './welcome-screen';

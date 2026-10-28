@@ -37,16 +37,26 @@ export interface SkillGroup {
   readonly items: readonly string[];
 }
 
+export interface ProjectLink {
+  readonly label: string;
+  readonly url: string;
+}
+
 export interface Project {
   readonly id: ProjectId;
   readonly name: string;
   readonly category: string;
   readonly status: string;
+  /** Whether the product has a public site; a concept has none. */
+  readonly live: boolean;
   readonly description: string;
+  /** "Key features" for a live product, "Planned scope" for a concept. */
+  readonly scopeLabel: string;
   readonly scope: readonly string[];
+  readonly platforms: readonly string[];
   readonly technologies: readonly string[];
   readonly considerations: readonly string[];
-  readonly links: readonly string[];
+  readonly links: readonly ProjectLink[];
   readonly source: SourceId;
 }
 
@@ -96,13 +106,16 @@ export interface Profile {
 }
 
 export interface Welcome {
-  readonly eyebrow: string;
   readonly heading: string;
-  readonly subheading: string;
   readonly description: string;
-  readonly invitation: string;
   readonly placeholder: string;
   readonly helper: string;
+}
+
+/** How the assistant presents itself beside its answers. */
+export interface AssistantIdentity {
+  readonly name: string;
+  readonly initials: string;
 }
 
 export interface Contact {

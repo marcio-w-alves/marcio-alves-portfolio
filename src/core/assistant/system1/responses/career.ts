@@ -33,8 +33,8 @@ export function career(): AssistantResponse {
     'career',
     [
       text(
-        `Marcio is a frontend engineer with **over 10 years** of professional experience. He started in ${String(knowledgeBase.profile.careerStartYear)} as a freelance web developer and grew into senior and lead frontend roles at product companies — most recently **Deel** (2022 — 2026) and **Toptal**, where he has worked since March 2026.\n\n` +
-          'Across those roles the thread is consistent: React and TypeScript architecture, performance, and technical leadership, with engineering decisions tied to product impact.',
+        `Marcio is a frontend engineer with **over 10 years** of professional experience. He started in ${String(knowledgeBase.profile.careerStartYear)} as a freelance web developer and grew into senior and lead frontend roles — leading the HRIS frontend team at **Deel** (2022 — 2026) and, since March 2026, building component architecture at **Toptal**.\n\n` +
+          'Across those roles the thread is consistent: React and Next.js architecture, performance, developer experience and technical leadership, with engineering work tied to product needs and user impact.',
       ),
       timeline(),
       text('A few documented outcomes along the way:'),
@@ -44,7 +44,7 @@ export function career(): AssistantResponse {
       followUps: [
         'What has he built at Deel?',
         'Has he led engineering teams?',
-        'What are his strongest technical skills?',
+        'What projects is he working on?',
       ],
       sources: ['profile', ...allRoleSources()],
       related: 'deel',
@@ -57,43 +57,39 @@ export function staffFit(context: ConversationContext): AssistantResponse {
     'staffFit',
     [
       text(
-        'His documented experience shows several signals associated with Staff-level frontend engineering: architecture ownership, standards set across product areas, measurable product improvements, and mentoring and hiring.\n\n' +
-          `At **Deel**, for example, he led the HRIS team responsible for the company's core HR tools product and standardized its frontend architecture, while improving Web Vitals by at least 30% and reducing critical page loading time by ${metricValue('deel-critical-load')}. At **Roots**, he led frontend technical development and grew the team from a solo setup to four developers.`,
+        'Marcio has several characteristics associated with Staff-level frontend engineering: deep technical expertise, ownership of architectural decisions, measurable product improvements and a track record of mentoring engineers.\n\n' +
+          `At **Deel**, he led the HRIS frontend team, standardized architecture across its interfaces and led the migration of Roots into the platform — while improving Web Vitals by at least 30% and cutting critical page loading time by ${metricValue('deel-critical-load')}. At **Roots**, he directed frontend strategy and grew the frontend team from one developer to four.`,
       ),
       table(
         ['Signal', 'Evidence', 'Where'],
         [
           [
             'Architecture ownership',
-            'Planned the initial architecture for a new product and architected a modular React/TypeScript component library',
+            'Architected a React/TypeScript component library used across multiple product teams; planned the initial architecture for a new product',
             'Toptal',
           ],
           [
             'Standards at scale',
-            'Standardized frontend architecture across HRIS interfaces',
+            'Standardized HRIS frontend architecture: structure, state management, error handling',
             'Deel',
           ],
           [
             'Measurable impact',
-            'Web Vitals improved by 30%+ and critical page loading time cut by 50%',
+            'Web Vitals +30%, critical page load −50%, two-thirds of the bug backlog cleared',
             'Deel',
           ],
-          ['Team building', 'Grew the frontend team from one to four developers', 'Roots'],
+          ['Team building', 'Grew the frontend team from a solo setup to four developers', 'Roots'],
           [
-            'Organizational reach',
-            'Mentoring, hiring, onboarding, technical trade-offs and OKRs',
+            'Delivery leadership',
+            'Technical trade-offs, delivery plans, OKRs and quarterly goals with Product',
             'Deel',
           ],
-          [
-            'Product partnership',
-            'Coordinated product decisions with the Director and CEO',
-            'Toptal',
-          ],
+          ['Product partnership', 'Works with the Director and CEO on product decisions', 'Toptal'],
         ],
-        'Staff-level signals in his documented experience',
+        'Staff-level signals in his experience',
       ),
       text(
-        'Together, these provide evidence of technical leadership and product impact beyond individual feature delivery.',
+        'Together, these show technical leadership and product impact well beyond individual feature delivery.',
       ),
       note(
         'inference',
@@ -115,16 +111,18 @@ export function staffFit(context: ConversationContext): AssistantResponse {
 
 const COMPANY_INTROS: Partial<Record<RoleId, string>> = {
   toptal:
-    'Marcio joined **Toptal** in March 2026 as a Senior Frontend Engineer. His work there combines hands-on architecture with product leadership.',
-  deel: "Marcio worked at **Deel** from 2022 to 2026 as a Senior Frontend Engineer. He led and maintained the HRIS team responsible for the company's core HR tools product, and led the migration and scaling of the Roots platform into Deel.",
+    'Marcio joined **Toptal** in March 2026 as a Senior Frontend Engineer, working directly with the Director and CEO on product decisions.',
+  deel: "Marcio worked at **Deel** from 2022 to 2026 as a Senior Frontend Engineer, leading the HRIS team behind the company's core HR tools and the migration of Roots into Deel.",
   roots:
-    'At **Roots** (2020 — 2022), Marcio was the Lead Frontend Engineer and built the product frontend from the ground up for a startup specializing in Slack bots for HR. Roots was later migrated into Deel, where he led its scaling.',
+    "At **Roots** (2020 — 2022), a startup building Slack bots for HR, Marcio was the Lead Frontend Engineer. He built the product frontend end to end, grew the frontend team from one to four, and later led the platform's migration into Deel.",
+  shall:
+    'At **Shall And Partners** (2018 — 2020), Marcio worked as a Full Stack Developer on an HR platform for an American company, where he was promoted from mid-level to Principal Frontend Developer.',
 };
 
 const COMPANY_FOLLOW_UPS: Partial<Record<RoleId, readonly string[]>> = {
   toptal: [
     'How does he approach frontend architecture?',
-    'What has he built at Deel?',
+    'How does he approach accessibility?',
     'Would he fit a technical leadership position?',
   ],
   deel: [
@@ -133,14 +131,14 @@ const COMPANY_FOLLOW_UPS: Partial<Record<RoleId, readonly string[]>> = {
     'What was his role in the HRIS team?',
   ],
   roots: [
-    'Has he led engineering teams?',
+    'How did he grow the team at Roots?',
     'What has he built at Deel?',
     'Has he ever built something from scratch?',
   ],
   shall: [
     'Has he worked with backend systems?',
+    'Has he built mobile apps?',
     'Has he received any awards?',
-    "Tell me about Marcio's career.",
   ],
   maison: [
     'Does he have Next.js and SSR experience?',
@@ -148,6 +146,10 @@ const COMPANY_FOLLOW_UPS: Partial<Record<RoleId, readonly string[]>> = {
     'What are his biggest technical achievements?',
   ],
 };
+
+function section(heading: string, items: readonly string[]) {
+  return items.length > 0 ? text(`### ${heading}\n${bullets(items)}`) : null;
+}
 
 export function company(roleId: RoleId): AssistantResponse {
   const role = roleById(roleId);
@@ -160,17 +162,19 @@ export function company(roleId: RoleId): AssistantResponse {
       text(intro),
       role.metrics.length > 0 ? text('### Impact') : null,
       role.metrics.length > 0 ? metrics(role.metrics) : null,
-      text(`### What the work involved\n${bullets(role.highlights)}`),
+      text(`### What the work involved\n${bullets(role.responsibilities)}`),
+      section('Leadership', role.leadership),
+      section('Recognition', role.achievements),
       roleId === 'deel'
         ? details(
             'How were the performance gains achieved?',
-            "His resume credits the 50% cut in critical page loading time to **targeted refactoring and optimization** — the People List page went from six seconds to three on a cold run — and the two-thirds smaller bug and support backlog to **planned bug sprints**. It does not break each result down further, so I won't speculate beyond that.",
+            "Through targeted refactoring and optimization of critical pages. The People List page went from six seconds to three on a cold run, critical-page loading time fell by 50% overall, and Web Vitals improved by at least 30%. The specific tooling behind each change isn't documented.",
           )
         : null,
       role.current
         ? note(
             'gap',
-            'This is his current role, and no measurable outcomes are documented for it yet.',
+            'This is his current role, so no measurable outcomes are documented for it yet.',
           )
         : null,
     ],
@@ -191,18 +195,18 @@ export function hrisRole(): AssistantResponse {
     'hrisRole',
     [
       text(
-        "At **Deel**, Marcio was a Senior Frontend Engineer who **led and maintained the HRIS team** responsible for the company's core HR tools product. His documented responsibilities:\n\n" +
-          '- **Technical ownership** — standardized frontend architecture for HRIS interfaces, covering structure, state management, error handling and scalability.\n' +
-          '- **Integration** — led the migration and scaling of the Roots platform into Deel, mitigating rollout risks.\n' +
-          '- **People** — mentored junior engineers through knowledge-sharing sessions and code walkthroughs, and took part in hiring and onboarding.\n' +
-          '- **Planning** — defined technical trade-offs and delivery plans with Product and Engineering, and planned OKRs and quarterly goals with Product Managers.',
+        "At **Deel**, Marcio led and maintained the HRIS team responsible for the company's core HR tools product. His role covered four areas:\n\n" +
+          '- **Architecture** — standardized the HRIS frontend: structure, state management, error handling and scalability.\n' +
+          '- **Integration** — led the migration and scaling of Roots into Deel, mitigating rollout risks.\n' +
+          '- **Planning** — defined technical trade-offs and delivery plans, and documented deliveries for OKRs and quarterly goals with Product Managers.\n' +
+          '- **People** — mentored junior engineers through knowledge-sharing sessions and code walkthroughs, ran code reviews and pair programming, and helped hire and onboard engineers.',
       ),
-      note('gap', "The HRIS team's size isn't documented."),
+      metrics(['deel-critical-load', 'deel-backlog']),
     ],
     {
       followUps: [
         'How did he optimize performance?',
-        'What architecture improvements did he introduce?',
+        'How did he reduce the bug backlog at Deel?',
         'Tell me more about his leadership.',
       ],
       sources: ['resume.deel'],
@@ -216,19 +220,19 @@ export function leadership(): AssistantResponse {
     'leadership',
     [
       text(
-        "Yes. Marcio's leadership is documented across team building, technical direction and people development.\n\n" +
+        "Yes. Marcio's leadership spans team building, technical direction, delivery and people development.\n\n" +
           '### Team building\n' +
-          '- At **Roots**, he grew the frontend team from a solo setup by recruiting and integrating three additional developers, then led it for nearly two years, coordinating sprint planning with managers and stakeholders.\n' +
-          '- At **Deel**, he led and maintained the HRIS team and contributed to hiring and onboarding.\n\n' +
+          '- At **Roots**, he grew the frontend team from a solo setup by recruiting and integrating three developers, then led it for nearly two years.\n' +
+          '- At **Deel**, he led the HRIS team and contributed to hiring and onboarding.\n\n' +
           '### Technical direction\n' +
-          '- Directed frontend technical strategy and architecture at **Roots**.\n' +
-          '- Standardized frontend architecture for HRIS interfaces at **Deel**.\n' +
+          '- Directed frontend strategy and architecture at **Roots**.\n' +
+          '- Standardized HRIS frontend architecture and led the Roots migration at **Deel**.\n' +
           '- Planned the initial architecture for a new product at **Toptal**.\n\n' +
-          '### People and product\n' +
-          '- Mentored junior engineers and facilitated pair programming and code reviews at **Deel**.\n' +
-          '- Led code reviews and established coding standards at **Maison Modern**.\n' +
-          '- Coordinates product decisions with the Director and CEO at **Toptal**.\n' +
-          '- Was promoted from Mid-level to Principal Frontend Developer at **Shall And Partners**.',
+          '### Delivery and people\n' +
+          '- Defined technical trade-offs, delivery plans, OKRs and quarterly goals with Product at **Deel**.\n' +
+          '- Coordinated sprint planning with managers and stakeholders at **Roots**.\n' +
+          '- Mentored junior engineers, ran code reviews and pair programming at **Deel**, and set coding standards at **Maison Modern**.\n' +
+          '- Was promoted to Principal Frontend Developer at **Shall And Partners**.',
       ),
       metrics(['roots-team']),
     ],
@@ -248,13 +252,10 @@ export function teamGrowth(): AssistantResponse {
     'teamGrowth',
     [
       text(
-        'As Lead Frontend Engineer at **Roots** (2020 — 2022), Marcio expanded the frontend team from a solo developer setup by recruiting and integrating three additional developers. He then led frontend development within that four-developer team for nearly two years, delegating and organizing tasks and coordinating sprint planning with managers and stakeholders.',
+        'As Lead Frontend Engineer at **Roots** (2020 — 2022), Marcio grew the frontend team from a solo setup by recruiting and integrating three developers. He then led frontend development for nearly two years within that four-developer team, organizing and delegating work and coordinating sprint planning and deliverables with managers and stakeholders.\n\n' +
+          'At Deel he also contributed to hiring and onboarding engineers.',
       ),
       metrics(['roots-team']),
-      note(
-        'gap',
-        "How the candidates were sourced or interviewed isn't documented. At Deel he also contributed to hiring and onboarding.",
-      ),
     ],
     {
       followUps: [
@@ -286,15 +287,15 @@ export function achievements(): AssistantResponse {
       ]),
       text(
         '### Other recognition\n' +
-          '- Contributed to a web and mobile application that received the **2019 Golden Award** at Shall And Partners.\n' +
-          '- Contributed to a newsletter project at Maison Modern that achieved a **20% increase in income**.\n' +
-          '- Helped smaller WEBFI clients grow sales by **over 30%**.',
+          '- Contributed to a web and mobile application that received the **Golden Award in 2019** at Shall And Partners.\n' +
+          '- Contributed to the newsletter project at Maison Modern, which achieved a **20% increase in income**.\n' +
+          '- Helped smaller industry clients at WEBFI grow sales by **over 30%**.',
       ),
     ],
     {
       followUps: [
         'How did he optimize performance?',
-        'Has he ever built something from scratch?',
+        'How did he reduce the bug backlog at Deel?',
         'Tell me about his leadership experience.',
       ],
       sources: ['resume.deel', 'resume.roots', 'resume.shall', 'resume.maison', 'resume.webfi'],
@@ -308,7 +309,7 @@ export function quality(): AssistantResponse {
     'quality',
     [
       text(
-        'At **Deel**, Marcio reduced the bug and support ticket backlog by two-thirds by **implementing planned bug sprints**. Alongside that he raised quality standards through pair programming, code reviews and onboarding support, and standardized the frontend architecture for HRIS interfaces, including error handling.',
+        'At **Deel**, Marcio cleared two-thirds of the bug and support backlog by introducing **planned bug sprints**. Alongside that, he standardized the HRIS frontend architecture — including error handling — and raised quality standards through code reviews and pair programming.',
       ),
       metrics(['deel-backlog']),
     ],
@@ -329,8 +330,8 @@ export function awards(): AssistantResponse {
     'awards',
     [
       text(
-        'One formal award is documented: at **Shall And Partners**, Marcio contributed to a web and mobile application that received the **Golden Award in 2019**.\n\n' +
-          'Other documented business results include a newsletter project at Maison Modern that achieved a 20% increase in income, and helping smaller WEBFI clients grow sales by over 30%.',
+        'At **Shall And Partners**, Marcio contributed to a web and mobile application that received the **Golden Award in 2019**.\n\n' +
+          'Other documented business results include the Maison Modern newsletter project, which achieved a 20% increase in income, and helping smaller WEBFI clients grow sales by over 30%.',
       ),
     ],
     {
@@ -350,10 +351,10 @@ export function scaling(): AssistantResponse {
     'scaling',
     [
       text(
-        "Scaling shows up in Marcio's work in three ways — product, codebase and team:\n\n" +
-          '- **Product scale** — at Deel he led the migration and scaling of the Roots platform into Deel, mitigating rollout risks.\n' +
-          '- **Codebase scale** — he standardized frontend architecture for HRIS interfaces at Deel, and implemented advanced state management at Roots for scalability and maintainability.\n' +
-          '- **Team scale** — at Roots he grew the frontend team from one to four developers and established CI pipelines on GitLab deploying to Amazon S3.',
+        "Scaling shows up in Marcio's work at three levels — product, codebase and team:\n\n" +
+          '- **Product** — at Deel he led the migration and scaling of the Roots platform into Deel, mitigating rollout risks; at Roots he shaped frontend architecture to support user base growth.\n' +
+          '- **Codebase** — he standardized HRIS frontend architecture at Deel, introduced advanced state management at Roots and built a component library shared by multiple product teams at Toptal.\n' +
+          '- **Team** — at Roots he grew the frontend team from one to four and set up GitLab CI pipelines deploying to Amazon S3.',
       ),
       metrics(['deel-critical-load', 'deel-backlog', 'roots-team']),
     ],
@@ -363,7 +364,7 @@ export function scaling(): AssistantResponse {
         'How does he approach frontend architecture?',
         'How did he optimize performance?',
       ],
-      sources: ['resume.deel', 'resume.roots'],
+      sources: ['resume.deel', 'resume.roots', 'resume.toptal'],
       related: 'deel',
     },
   );
@@ -374,18 +375,21 @@ export function scratch(): AssistantResponse {
     'scratch',
     [
       text(
-        'Yes. At **Roots**, Marcio developed an end-to-end frontend application with React.js for a startup specializing in Slack bots for HR. As Lead Frontend Engineer he set the technical strategy and architecture, implemented advanced state management and established CI pipelines on GitLab deploying to Amazon S3, while growing the team from one to four developers.\n\n' +
-          'More recently at **Toptal**, he planned the initial architecture for a new company product. Earlier, as a freelancer, he progressed from small frontend tasks to independently developing complete web applications.',
+        'Yes, several times:\n\n' +
+          '- At **Roots**, he built an end-to-end React frontend for a startup creating Slack bots for HR, with its architecture, state management and CI pipelines.\n' +
+          '- At **Toptal**, he planned the initial architecture for a new company product.\n' +
+          '- At **Shall And Partners**, he led development of a progressive web app.\n' +
+          '- On his own, he builds products such as **EvCopilot**, **FormDaily** and **TargUp**.',
       ),
       metrics(['roots-team', 'roots-initial-load', 'roots-slack-bot']),
     ],
     {
       followUps: [
+        'What projects is he working on?',
         'What did he do at Roots?',
         'How does he approach frontend architecture?',
-        'What projects is he working on?',
       ],
-      sources: ['resume.roots', 'resume.toptal', 'resume.freelance'],
+      sources: ['resume.roots', 'resume.toptal', 'resume.shall', 'projects'],
       related: 'roots',
     },
   );
@@ -396,8 +400,8 @@ export function enterprise(context: ConversationContext): AssistantResponse {
     'enterprise',
     [
       text(
-        `Yes. ${knowledgeBase.profile.context} The most substantial enterprise example is **Deel** (2022 — 2026), where he led and maintained the HRIS team responsible for the company's core HR tools product, standardized its frontend architecture, and led the migration and scaling of the Roots platform into Deel.\n\n` +
-          'At **Toptal** he architected a modular React and TypeScript component library used to keep the UI consistent across multiple product teams.',
+        `Yes. ${knowledgeBase.profile.context} The most substantial enterprise example is **Deel** (2022 — 2026), where he led the HRIS team behind the company's core HR tools, standardized its frontend architecture and led the migration of Roots into the platform.\n\n` +
+          'At **Toptal** he architected a React/TypeScript component library used across multiple product teams and led accessibility standards.',
       ),
       metrics(['deel-web-vitals', 'deel-people-list', 'deel-backlog']),
       contactOnce(context),
@@ -419,14 +423,13 @@ export function product(): AssistantResponse {
     'product',
     [
       text(
-        'Product collaboration is a recurring part of his roles:\n\n' +
-          '- At **Toptal**, he coordinates product decisions with the Director and CEO and planned the initial architecture for a new product.\n' +
-          '- At **Deel**, he defined technical trade-offs and delivery plans with Product and Engineering teams, and planned OKRs and quarterly goals with Product Managers.\n' +
-          '- At **Roots**, he coordinated sprint planning with managers and stakeholders, and boosted Slack bot usage and adoption by over 50%.\n' +
-          '- At **Maison Modern**, he contributed to a newsletter project that achieved a 20% increase in income.\n\n' +
+        'Close collaboration with product, design and leadership runs through his roles:\n\n' +
+          '- At **Toptal**, he works with the Director and CEO to coordinate product decisions and implement new features.\n' +
+          '- At **Deel**, he defined technical trade-offs and delivery plans with Product and Engineering, and planned OKRs and quarterly goals with Product Managers.\n' +
+          '- At **Roots**, he coordinated sprint planning with managers and stakeholders and built accessibility in with UX designers.\n' +
+          '- At **Maison Modern**, he turned complex requirements into accessible interfaces with UX designers.\n\n' +
           knowledgeBase.profile.focus.replace(/^He/, 'Marcio'),
       ),
-      note('gap', "His day-to-day product rituals and tools aren't documented."),
     ],
     {
       followUps: [

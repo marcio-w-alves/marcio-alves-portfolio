@@ -1,4 +1,5 @@
 import type { AssistantMessage as Message, Feedback } from '@/core/conversation/messages';
+import { knowledgeBase } from '@/core/knowledge/knowledge-base';
 import { cn } from '../cn';
 import { Button, Eyebrow, Icon, Tag } from '../primitives';
 import { SuggestedQuestions } from '../welcome';
@@ -52,17 +53,17 @@ export function AssistantMessage({
       <div className="@max-phone/ma:hidden">
         <AssistantAvatar />
       </div>
-      <div className="flex min-w-0 flex-col gap-3.5">
+      <div className="flex min-w-0 flex-col gap-4">
         <div
           className={cn(
             'flex min-h-7 items-center gap-2 text-13 text-ink-muted',
-            isIntro && 'mb-0.5 gap-2.5 after:h-px after:flex-1 after:bg-border',
+            isIntro && 'gap-2.5 after:h-px after:flex-1 after:bg-border',
           )}
         >
           <span className="hidden @max-phone/ma:grid">
             <AssistantAvatar inline />
           </span>
-          <strong className="font-medium text-ink">Portfolio assistant</strong>
+          <strong className="font-medium text-ink">{knowledgeBase.assistant.name}</strong>
           {topicLabel && <Tag tone="accent">{topicLabel}</Tag>}
         </div>
 
@@ -78,19 +79,19 @@ export function AssistantMessage({
         )}
 
         {message.status === 'stopped' && (
-          <p className="m-0 font-mono text-12 leading-label text-ink-muted">Response stopped</p>
+          <p className="m-0 text-12.5 text-ink-muted">Response stopped</p>
         )}
 
         {message.status === 'error' && (
           <div
             role="alert"
-            className="flex flex-col gap-3 rounded-md bg-danger-bg px-4 py-3.5 text-danger"
+            className="flex flex-col gap-3 rounded-md bg-danger-soft px-4.5 py-4 text-danger shadow-danger-ring"
           >
             <p className="m-0 flex items-center gap-2 text-14.5 font-semibold">
               <Icon name="alert" size="sm" />
               Couldn&apos;t load this answer
             </p>
-            <p className="m-0 text-14 leading-body text-ink">
+            <p className="m-0 text-14 leading-reading text-ink">
               {message.error?.message ?? 'Something went wrong.'} Your question is saved, so you can
               try again or edit it first.
             </p>
@@ -122,13 +123,15 @@ export function AssistantMessage({
 
         {done && !isIntro && message.sources.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5">
-            <Eyebrow as="span">Sources</Eyebrow>
+            <Eyebrow as="span" className="mr-0.5 text-12 leading-label">
+              Sources
+            </Eyebrow>
             {message.sources.map((source) => (
               <span
                 key={source.id}
-                className="inline-flex h-6 items-center gap-1.5 rounded-xs bg-sidebar px-2 font-mono text-11.5 leading-none whitespace-nowrap text-ink-muted"
+                className="inline-flex h-6 items-center gap-1.5 rounded-pill bg-ice px-2.25 text-11.5 whitespace-nowrap text-ink-muted shadow-ring"
               >
-                <Icon name="file" size="xs" />
+                <Icon name="file" size="xs" className="text-ink-faint" />
                 {source.label}
               </span>
             ))}
@@ -159,9 +162,8 @@ export function AssistantMessage({
         {done && isLatest && message.followUps.length > 0 && (
           <div className="flex flex-col gap-2.5 pt-0.5">
             <SuggestedQuestions
-              variant="chips"
               title={isIntro ? 'Suggested questions' : 'Ask a follow-up'}
-              questions={message.followUps}
+              questions={message.followUps.map((question) => ({ question }))}
               onPick={onFollowUp}
             />
           </div>

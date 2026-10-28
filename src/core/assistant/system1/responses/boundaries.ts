@@ -19,7 +19,7 @@ export function greeting(): AssistantResponse {
     'greeting',
     [
       text(
-        "Hi! I'm the assistant for Marcio's portfolio. I answer questions using his documented professional experience — career, skills, projects and how he works.",
+        "Hi! I'm the assistant for Marcio's portfolio. I answer questions using his documented professional experience — career, skills, products and how he works.",
       ),
     ],
     { followUps: CORE_FOLLOW_UPS, sources: [] },
@@ -50,7 +50,7 @@ export function privateInfo(): AssistantResponse {
     'privateInfo',
     [
       text(
-        "That's outside what this portfolio covers. I only share professional information Marcio has chosen to document: his experience, skills, projects, education and how to contact him.",
+        "That's outside what this portfolio covers. I only share professional information Marcio has chosen to document: his experience, skills, products, education and how to contact him.",
       ),
     ],
     {
@@ -94,11 +94,15 @@ function describe(evidence: TechnologyEvidence): string {
     ];
     return `**${technology.name}** appears in his documented experience:\n\n${lines.join('\n')}`;
   }
-  if (coursework.length > 0) {
-    return `**${technology.name}** appears only as coursework — ${coursework.join('; ')} — and not in his professional roles, so I can't speak to hands-on experience with it.`;
-  }
-  return `I don't have documented information about Marcio working with **${technology.name}**, so I can't say how experienced he is with it.`;
+  const study =
+    coursework.length > 0
+      ? ` He has completed coursework on it — ${coursework.join(' and ')} — but no professional use is documented.`
+      : '';
+  return `I don't have documented information about Marcio working with **${technology.name}** in his roles, so I can't say how experienced he is with it.${study}`;
 }
+
+const DOCUMENTED_STACK =
+  'His documented stack is React, TypeScript and Next.js on the frontend, and Node.js and REST APIs on the backend.';
 
 /**
  * Reports exactly where each technology appears in the record — work, listed
@@ -109,19 +113,15 @@ export function technology(evidence: readonly TechnologyEvidence[]): AssistantRe
   const sources = new Set(
     evidence.flatMap((item) => [
       ...item.work.map((entry) => `resume.${entry.role}` as const),
-      ...(item.skills.length > 0 ? ['resume.skills' as const] : []),
+      ...(item.skills.length > 0 || !documented ? ['resume.skills' as const] : []),
       ...(item.coursework.length > 0 ? ['resume.certifications' as const] : []),
     ]),
   );
+  const answer = evidence.map(describe).join('\n\n');
   return response(
     'technology',
     [
-      text(evidence.map(describe).join('\n\n')),
-      documented
-        ? null
-        : text(
-            'His documented frontend stack is React, TypeScript, Next.js and JavaScript, and on the backend Node.js and REST APIs.',
-          ),
+      text(documented ? answer : `${answer} ${DOCUMENTED_STACK}`),
       documented ? null : skills(['frontend', 'backend']),
     ],
     {
@@ -145,7 +145,7 @@ export function unknown(): AssistantResponse {
         "I don't have enough documented information to answer that accurately, and I'd rather not guess. Here is what I can cover instead:\n\n" +
           '- His career and the companies he worked for\n' +
           '- Measurable results, architecture and performance work\n' +
-          '- Technical skills, leadership and independent projects\n' +
+          '- Technical skills, leadership and his own products\n' +
           '- Education, languages and how to contact him',
       ),
       note(

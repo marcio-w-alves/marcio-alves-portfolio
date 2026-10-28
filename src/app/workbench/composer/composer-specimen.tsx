@@ -18,6 +18,7 @@ interface ComposerSpecimenProps {
   readonly maxLength: number;
   readonly initialValue?: string | undefined;
   readonly focusOnMount?: boolean | undefined;
+  readonly looksFocused?: boolean | undefined;
 }
 
 /** A composer with a parent that owns its draft, as the app shell will. */

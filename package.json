@@ -24,11 +24,12 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "rag:build": "tsx --env-file=.env.local scripts/build-knowledge-index.mts",
-    "eval:assistant": "tsx --env-file=.env.local scripts/evaluate-assistant.mts"
+    "eval:assistant": "tsx --env-file=.env.local scripts/evaluate-assistant.mts",
+    "fidelity": "tsx scripts/fidelity/check.mts",
+    "fidelity:references": "tsx scripts/fidelity/capture-references.mts"
   },
   "dependencies": {
     "clsx": "2.1.1",
-    "geist": "1.8.2",
     "next": "16.4.3",
     "openai": "7.45.1",
     "react": "19.3.0",
@@ -39,6 +40,7 @@
   "devDependencies": {
     "@commitlint/cli": "21.2.4",
     "@commitlint/config-conventional": "21.2.4",
+    "@playwright/test": "1.64.1",
     "@semantic-release/commit-analyzer": "13.0.1",
     "@semantic-release/github": "12.0.10",
     "@semantic-release/release-notes-generator": "14.1.1",
@@ -48,6 +50,7 @@
     "@testing-library/react": "16.3.3",
     "@testing-library/user-event": "14.6.8",
     "@types/node": "24.19.2",
+    "@types/pngjs": "6.0.5",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.2",
@@ -58,6 +61,8 @@
     "jsdom": "30.1.3",
     "lefthook": "2.2.2",
     "msw": "3.0.3",
+    "pixelmatch": "8.0.0",
+    "pngjs": "7.0.0",
     "prettier": "3.9.10",
     "prettier-plugin-tailwindcss": "0.8.1",
     "semantic-release": "25.0.9",

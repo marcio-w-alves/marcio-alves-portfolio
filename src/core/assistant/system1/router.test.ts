@@ -34,7 +34,11 @@ describe('router — the questions the interface itself suggests', () => {
     ['How did he optimize performance?', 'performance'],
     ['Does he have Next.js and SSR experience?', 'nextjs'],
     ['What does he know about design systems?', 'designSystems'],
+    ['How does he approach accessibility?', 'accessibility'],
+    ['How does he approach testing?', 'testing'],
     ['Tell me more about EvCopilot.', 'project:evcopilot'],
+    ['Tell me more about FormDaily.', 'project:formdaily'],
+    ['Has he built mobile apps?', 'mobile'],
     ['What is FictionDraft?', 'project:fictiondraft'],
     ['What is TargUp?', 'project:targup'],
     ['What measurable improvements has he delivered?', 'achievements'],
@@ -48,6 +52,7 @@ describe('router — the questions the interface itself suggests', () => {
     ['Where did he study?', 'education'],
     ['What languages does he speak?', 'languages'],
     ['Does he speak French?', 'languages'],
+    ['What courses and certifications does he have?', 'education'],
     ['Can I see his resume?', 'resume'],
     ['What was his role in the HRIS team?', 'hrisRole'],
     ['Would he fit a technical leadership position?', 'staffFit'],
@@ -102,10 +107,19 @@ describe('router — technologies are weighed against the record', () => {
     ['Has he worked with GraphQL?', 'technology:GraphQL'],
     ['Has he worked with Kotlin?', 'technology:Kotlin'],
     ['Does he know Angular?', 'technology:Angular'],
-    ['Has he done automated testing?', 'technology:automated testing'],
-    ['Has he used Jest for testing?', 'technology:Jest+automated testing'],
-    ['Does he care about accessibility?', 'technology:accessibility'],
+    ['Has he used Jest for testing?', 'technology:Jest'],
+    ['Has he used Jest or Kotlin?', 'technology:Kotlin+Jest'],
   ])('routes %j to %s', (question, expected) => {
+    expect(intentOf(question)).toBe(expected);
+  });
+
+  it.each([
+    ['Has he done automated testing?', 'testing'],
+    ['Does he do TDD?', 'testing'],
+    ['Does he care about accessibility?', 'accessibility'],
+    ['Has he worked on WCAG compliance?', 'accessibility'],
+    ['Has he worked on iPhone apps?', 'mobile'],
+  ])('gives the practice in %j its own answer, as %s', (question, expected) => {
     expect(intentOf(question)).toBe(expected);
   });
 

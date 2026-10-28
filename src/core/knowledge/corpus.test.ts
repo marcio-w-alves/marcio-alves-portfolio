@@ -32,6 +32,17 @@ describe('knowledge corpus', () => {
     expect(everything).not.toContain('linkedin.com');
   });
 
+  it('tells a live product from a concept in the passage itself', () => {
+    const live = corpus.find((chunk) => chunk.id === 'project:evcopilot')?.text;
+    const concept = corpus.find((chunk) => chunk.id === 'project:fictiondraft')?.text;
+    expect(live).toContain('with a public site');
+    expect(live).toContain('https://evcopilotapp.io');
+    expect(live).toContain('Key features:');
+    expect(concept).toContain('product concepts');
+    expect(concept).toContain('Planned scope:');
+    expect(concept).not.toContain('public site');
+  });
+
   it('labels certifications as coursework in the passage itself', () => {
     expect(corpus.find((chunk) => chunk.id === 'certifications')?.text).toContain(
       'not professional experience',

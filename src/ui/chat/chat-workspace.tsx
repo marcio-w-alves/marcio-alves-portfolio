@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { suggestions, topicById, type TopicId } from '@/core/assistant/topics';
+import { suggestedQuestions, topicById, type TopicId } from '@/core/assistant/topics';
 import { latestAnswerId } from '@/core/conversation/conversation';
-import type { AssistantMessage as Answer } from '@/core/conversation/messages';
+import type { AssistantMessage as Answer, Conversation } from '@/core/conversation/messages';
 import { toPlainText } from '@/core/conversation/plain-text';
 import { roleById } from '@/core/knowledge/knowledge-base';
 import type { Welcome } from '@/core/knowledge/types';
@@ -16,7 +16,7 @@ import {
   type SidebarProfile,
   type SidebarTopic,
 } from '../shell/sidebar';
-import { SuggestedQuestions, TopicChips, WelcomeLayout, WelcomeScreen } from '../welcome';
+import { SuggestedQuestions, WelcomeLayout, WelcomeScreen } from '../welcome';
 import { AssistantMessage } from './assistant-message';
 import { copyText } from './copy-text';
 import { useChat } from './use-chat';
@@ -28,6 +28,9 @@ interface ChatWorkspaceProps {
   readonly welcome: Welcome;
   /** The longest question the API accepts. */
   readonly maxQuestionLength: number;
+  /** A conversation to open on, to show a known state; a visitor starts empty. */
+  readonly initialConversation?: Conversation | undefined;
+  readonly initialDrawerOpen?: boolean | undefined;
 }
 
 const SUGGESTION_COUNT = 4;
@@ -45,12 +48,13 @@ export function ChatWorkspace({
   topics,
   welcome,
   maxQuestionLength,
+  initialConversation,
+  initialDrawerOpen,
 }: ChatWorkspaceProps) {
-  const chat = useChat();
+  const chat = useChat(initialConversation);
   const { conversation } = chat;
   const [draft, setDraft] = useState('');
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [suggestionPage, setSuggestionPage] = useState(0);
+  const [drawerOpen, setDrawerOpen] = useState(initialDrawerOpen ?? false);
   const [showJump, setShowJump] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<ChatComposerHandle>(null);
@@ -61,9 +65,12 @@ export function ChatWorkspace({
   const inConversation = conversation.messages.length > 0;
   const latestId = latestAnswerId(conversation);
 
-  // New content is followed only while the visitor is already at the bottom.
+  // New content is followed only while the visitor is already at the bottom;
+  // a conversation the page opens with is read from its start.
+  const openedWith = useRef(conversation);
   useLayoutEffect(() => {
     const scroller = scrollRef.current;
+    if (conversation === openedWith.current) return;
     if (scroller && pinned.current && inConversation) scroller.scrollTop = scroller.scrollHeight;
   }, [conversation, inConversation]);
 
@@ -107,7 +114,6 @@ export function ChatWorkspace({
   function pickTopic(topic: TopicId) {
     pinned.current = true;
     chat.pickTopic(topic);
-    setSuggestionPage(0);
     setDrawerOpen(false);
   }
 
@@ -115,7 +121,6 @@ export function ChatWorkspace({
     chat.startOver();
     setDrawerOpen(false);
     setShowJump(false);
-    setSuggestionPage(0);
     pinned.current = true;
     scrollRef.current?.scrollTo({ top: 0 });
   }
@@ -177,13 +182,13 @@ export function ChatWorkspace({
           <ol
             aria-label="Conversation"
             aria-busy={chat.streaming}
-            className="mx-auto flex max-w-column list-none flex-col gap-8 px-8 pt-3 pb-8 @max-phone/ma:gap-6.5 @max-phone/ma:px-4 @max-phone/ma:pt-4 @max-phone/ma:pb-6"
+            className="mx-auto flex max-w-column list-none flex-col gap-10 px-8 pt-3 pb-8 @max-phone/ma:gap-7.5 @max-phone/ma:px-4 @max-phone/ma:pt-4 @max-phone/ma:pb-6"
           >
             {conversation.messages.map((message) => {
               if (message.role === 'user') {
                 return (
                   <li key={message.id} className="flex animate-turn justify-end">
-                    <p className="m-0 max-w-bubble rounded-xl rounded-br-xs bg-accent-bg px-3.5 py-2.5 text-15 leading-body wrap-anywhere whitespace-pre-wrap text-ink @max-phone/ma:max-w-bubble-phone">
+                    <p className="m-0 max-w-bubble rounded-bubble bg-fill px-4 py-2.5 text-15 leading-reading wrap-anywhere whitespace-pre-wrap text-ink @max-phone/ma:max-w-bubble-phone">
                       <span className="sr-only">You asked: </span>
                       {message.text}
                     </p>
@@ -219,15 +224,15 @@ export function ChatWorkspace({
         ) : (
           <WelcomeLayout>
             <WelcomeScreen welcome={welcome} />
-            <TopicChips topics={topics} onPick={pickTopic} />
             {composer('hero')}
             <SuggestedQuestions
               title="Suggested questions"
-              questions={suggestions(conversation.topic, suggestionPage, SUGGESTION_COUNT)}
+              hideTitle
+              align="center"
+              questions={suggestedQuestions(conversation.topic, 0, SUGGESTION_COUNT).map(
+                ({ question, short }) => ({ question, label: short }),
+              )}
               onPick={ask}
-              onShuffle={() => {
-                setSuggestionPage((page) => page + 1);
-              }}
             />
           </WelcomeLayout>
         )}

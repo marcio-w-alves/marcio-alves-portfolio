@@ -16,13 +16,13 @@ export function DataTable({ columns, rows, caption }: DataTableProps) {
       aria-labelledby={caption ? captionId : undefined}
       aria-label={caption ? undefined : 'Table'}
       tabIndex={0}
-      className="animate-block-enter overflow-x-auto rounded-md bg-surface shadow-raised"
+      className="animate-block-enter overflow-x-auto rounded-md bg-surface shadow-ring"
     >
-      <table className="w-full border-collapse text-14 leading-normal">
+      <table className="w-full border-collapse text-14 leading-body">
         {caption ? (
           <caption
             id={captionId}
-            className="caption-top px-4 pt-3.5 pb-1.5 text-left font-mono text-11 leading-label font-medium tracking-label text-ink-muted uppercase"
+            className="caption-top px-4.5 pt-3.5 pb-2.5 text-left font-display text-14 leading-label font-semibold tracking-name text-ink"
           >
             {caption}
           </caption>
@@ -33,7 +33,7 @@ export function DataTable({ columns, rows, caption }: DataTableProps) {
               <th
                 key={column}
                 scope="col"
-                className="border-b border-border px-4 py-2 text-left text-12.5 font-medium whitespace-nowrap text-ink-muted"
+                className="bg-ice px-4.5 py-2.25 text-left text-12 font-medium whitespace-nowrap text-ink-muted inset-shadow-rule-y"
               >
                 {column}
               </th>
@@ -47,8 +47,8 @@ export function DataTable({ columns, rows, caption }: DataTableProps) {
                 <td
                   key={cellIndex}
                   className={cn(
-                    'border-b border-border px-4 py-2.75 align-top',
-                    rowIndex === rows.length - 1 && 'border-b-0',
+                    'border-t border-border px-4.5 py-3 align-top',
+                    rowIndex === 0 && 'border-t-0',
                     cellIndex === 0 && 'font-medium whitespace-nowrap',
                     cellIndex > 0 &&
                       cellIndex === cells.length - 1 &&

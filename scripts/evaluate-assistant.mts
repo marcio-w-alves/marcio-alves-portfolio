@@ -64,7 +64,7 @@ Today is ${new Date().toISOString().slice(0, 10)}. The EVIDENCE is Marcio's own 
 
 Go through the ANSWER statement by statement. Split compound sentences: every fact and every characterization is its own claim, so a true fact never carries an unsupported one along with it.
 
-Label a statement "not_a_claim" when it asserts nothing about Marcio: saying something is not documented, does not appear in his record, or a field is not specified, declining, explaining what the assistant can help with, offers to help, and suggestions of what to ask.
+Label a statement "not_a_claim" when it asserts nothing about Marcio: saying something is not documented, does not appear in his record, or a field is not specified, declining, explaining what the assistant can help with, offers to help, suggestions of what to ask, and remarks about the answer's own structure ("his role covered four areas", "here are three examples") that introduce what follows.
 
 Label every other statement "fact": names, titles, dates, numbers, technologies, companies, what he did — and qualitative characterizations ("innovative", "a solid background", "a strong focus on technical excellence", "a diverse career"), which are claims too.
 
@@ -116,7 +116,7 @@ function quoteIsInEvidence(quote: string | null, haystack: string): boolean {
   return fragments.length > 0 && fragments.every((fragment) => isInEvidence(fragment, haystack));
 }
 
-const RECHECK_INSTRUCTIONS = `You receive one CLAIM about Marcio and the EVIDENCE an assistant had. Find the passage of the EVIDENCE that supports the CLAIM and copy it character for character. A faithful paraphrase or translation is supported by the passage it restates; when the claim rests on several passages, join them with " ... ". A characterization ("brilliant", "an innovative leader", "a solid background") is supported only if the EVIDENCE makes that same characterization, not merely facts one could admire. If nothing in the EVIDENCE supports the claim, the quote is null.
+const RECHECK_INSTRUCTIONS = `You receive one CLAIM about Marcio and the EVIDENCE an assistant had. The EVIDENCE is Marcio's own record: the roles, projects and achievements in it are his, so the passage describing a project supports a claim that it is his. Find the passage of the EVIDENCE that supports the CLAIM and copy it character for character. A faithful paraphrase or translation is supported by the passage it restates; when the claim rests on several passages, join them with " ... ". A characterization ("brilliant", "an innovative leader", "a solid background") is supported only if the EVIDENCE makes that same characterization, not merely facts one could admire. If nothing in the EVIDENCE supports the claim, the quote is null.
 
 Reply with JSON only: {"quote": string | null}`;
 

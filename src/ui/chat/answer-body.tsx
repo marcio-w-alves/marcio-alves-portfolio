@@ -11,7 +11,7 @@ function StreamingCaret() {
   return (
     <span
       aria-hidden="true"
-      className="ml-0.75 inline-block caret-line w-1.75 animate-blink rounded-hairline bg-accent"
+      className="ml-1.5 inline-block size-1.75 animate-blink rounded-full bg-ink align-caret"
     />
   );
 }
@@ -28,7 +28,7 @@ function TextBlock({ block, caret }: { readonly block: Block; readonly caret: bo
       );
     case 'heading':
       return (
-        <h3 className="mt-2 -mb-1.5 text-15 leading-label font-semibold tracking-name">
+        <h3 className="mt-3 -mb-1 font-display text-15.5 leading-label font-semibold tracking-title">
           <InlineNodes nodes={block.content} />
           {tail}
         </h3>
@@ -38,12 +38,12 @@ function TextBlock({ block, caret }: { readonly block: Block; readonly caret: bo
       return (
         <List
           className={cn(
-            'm-0 flex flex-col gap-1.5 pl-5 marker:text-ink-faint',
+            'm-0 flex flex-col gap-2 pl-4.5 marker:text-ink-faint',
             block.ordered ? 'list-decimal' : 'list-disc',
           )}
         >
           {block.items.map((item, index) => (
-            <li key={index} className="pl-0.5">
+            <li key={index} className="pl-1">
               <InlineNodes nodes={item} />
               {index === block.items.length - 1 && tail}
             </li>

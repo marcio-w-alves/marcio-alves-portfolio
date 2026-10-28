@@ -209,7 +209,11 @@ describe('model assistant — what reaches the visitor', () => {
       component: 'metrics',
       props: {
         items: [
-          { value: '~67%', label: 'Reduction in bug and support ticket backlog', context: 'Deel' },
+          {
+            value: '~67%',
+            label: 'Of the bug and support backlog cleared through planned bug sprints',
+            context: 'Deel',
+          },
         ],
       },
     });

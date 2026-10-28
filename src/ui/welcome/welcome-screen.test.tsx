@@ -17,12 +17,11 @@ describe('WelcomeScreen', () => {
   it('introduces Marcio with the documented copy', () => {
     render(<WelcomeScreen welcome={welcome} />);
 
-    expect(screen.getByText('Welcome to my portfolio')).toBeInTheDocument();
     expect(
-      screen.getByText('Frontend engineer, architect, and problem solver'),
+      screen.getByText(
+        'Staff-level frontend engineer with 10+ years in React, TypeScript and frontend architecture. Ask anything about my work.',
+      ),
     ).toBeInTheDocument();
-    expect(screen.getByText(welcome.description)).toBeInTheDocument();
-    expect(screen.getByText(welcome.invitation)).toBeInTheDocument();
   });
 });
 

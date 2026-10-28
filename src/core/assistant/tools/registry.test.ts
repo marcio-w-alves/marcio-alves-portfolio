@@ -128,7 +128,7 @@ describe('display actions', () => {
           items: [
             {
               value: '~67%',
-              label: 'Reduction in bug and support ticket backlog',
+              label: 'Of the bug and support backlog cleared through planned bug sprints',
               context: 'Deel',
             },
           ],

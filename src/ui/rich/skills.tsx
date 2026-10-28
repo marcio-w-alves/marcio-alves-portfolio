@@ -8,12 +8,12 @@ interface SkillGroup {
 export function Skills({ groups }: { readonly groups: readonly SkillGroup[] }) {
   return (
     <section aria-label="Technical skills" className="@container/skills animate-block-enter">
-      <ul className="grid grid-cols-skills gap-x-7 gap-y-5">
+      <ul className="grid grid-cols-skills gap-x-7 gap-y-5.5">
         {groups.map((group) => (
-          <li key={group.title}>
-            <p className="mb-2.5 flex items-baseline gap-2 text-13.5 font-semibold">
+          <li key={group.title} className="pt-3.5 inset-shadow-rule-top">
+            <p className="mb-3 flex items-baseline justify-between gap-2 font-display text-14 leading-label font-semibold tracking-name">
               {group.title}
-              <span className="font-mono text-11 leading-none font-medium text-ink-muted">
+              <span className="font-sans text-12 leading-none font-normal text-ink-muted">
                 {group.items.length}
                 <VisuallyHidden> skills</VisuallyHidden>
               </span>
@@ -22,7 +22,7 @@ export function Skills({ groups }: { readonly groups: readonly SkillGroup[] }) {
               {group.items.map((skill) => (
                 <li
                   key={skill}
-                  className="inline-flex h-7 items-center rounded-pill bg-surface px-2.75 text-13 whitespace-nowrap text-ink inset-shadow-ring"
+                  className="inline-flex h-7 items-center rounded-pill bg-surface px-2.75 text-13 whitespace-nowrap shadow-ring-strong"
                 >
                   {skill}
                 </li>

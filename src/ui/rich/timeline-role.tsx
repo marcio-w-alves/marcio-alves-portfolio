@@ -26,7 +26,7 @@ export function TimelineRole({
 
   return (
     <li className="grid grid-cols-timeline gap-x-3 @max-timeline-narrow/timeline:grid-cols-timeline-narrow">
-      <p className="pt-3.25 font-mono text-12 leading-label font-medium whitespace-nowrap text-ink-muted tabular-nums @max-timeline-narrow/timeline:col-start-2 @max-timeline-narrow/timeline:row-start-1 @max-timeline-narrow/timeline:pt-2.5">
+      <p className="pt-3 text-12.5 leading-label whitespace-nowrap text-ink-muted tabular-nums @max-timeline-narrow/timeline:col-start-2 @max-timeline-narrow/timeline:row-start-1 @max-timeline-narrow/timeline:pt-2.5">
         {role.period}
       </p>
       <Rail isFirst={isFirst} isLast={isLast} isCurrent={role.current} />
@@ -38,9 +38,11 @@ export function TimelineRole({
           onClick={() => {
             setIsOpen((open) => !open);
           }}
-          className="-mx-2 flex w-bleed cursor-pointer flex-wrap items-center gap-x-2.5 gap-y-1 rounded-sm bg-transparent px-2 py-1.5 text-left transition-[background-color] duration-fast ease-standard hover:bg-hover @max-phone/ma:min-h-11"
+          className="-mx-2.5 flex w-bleed cursor-pointer flex-wrap items-center gap-x-2.5 gap-y-1 rounded-sm bg-transparent px-2.5 py-1.5 text-left transition-[background-color] duration-fast ease-standard hover:bg-ice @max-phone/ma:min-h-11"
         >
-          <span className="text-15 font-semibold tracking-name">{role.company}</span>
+          <span className="font-display text-15 leading-label font-semibold tracking-title">
+            {role.company}
+          </span>
           <span className="text-14 text-ink-muted">{role.role}</span>
           {role.current ? <Tag tone="accent">Current</Tag> : null}
           {role.concurrent && !role.current ? <Tag>Concurrent</Tag> : null}
@@ -49,15 +51,15 @@ export function TimelineRole({
             size="sm"
             className={cn(
               'ml-auto text-ink-faint transition-[rotate] duration-medium ease-standard',
-              isOpen && 'rotate-180',
+              isOpen && 'rotate-180 text-ink',
             )}
           />
         </button>
-        <p className="mt-0.5 text-14 leading-body text-ink-muted">{role.summary}</p>
+        <p className="mt-0.5 text-14 leading-reading text-ink-muted">{role.summary}</p>
         {isOpen ? (
           <div
             id={panelId}
-            className="mt-3 flex animate-rise flex-col gap-4 rounded-md bg-surface p-4 shadow-raised"
+            className="mt-3 flex animate-panel-rise flex-col gap-4.5 rounded-md bg-ice p-4.5 shadow-ring"
           >
             {children}
           </div>
@@ -88,7 +90,7 @@ function Rail({ isFirst, isLast, isCurrent }: RailProps) {
       <span
         className={cn(
           'relative mt-3.5 size-2.25 rounded-full @max-timeline-narrow/timeline:mt-3.25',
-          isCurrent ? 'bg-accent shadow-dot-current' : 'bg-bg inset-shadow-dot',
+          isCurrent ? 'bg-ink shadow-dot-current' : 'bg-surface inset-shadow-dot',
         )}
       />
     </div>

@@ -9,38 +9,41 @@
  * a stylesheet.
  */
 @theme {
-  /* Surfaces */
-  --color-bg: #fafaf8;
-  --color-sidebar: #f5f5f2;
+  /*
+   * "White & Ice": white surfaces, cool ice neutrals, and ink as the only
+   * accent. `ink-faint` is for icons, rules and decoration only; text uses
+   * `ink-muted`, which holds 5.5:1 or better on every surface.
+   */
+  --color-bg: #ffffff;
+  --color-ice: #f9fafb;
   --color-surface: #ffffff;
-  --color-hover: #eff0ec;
-  --color-code-bg: #f7f7f4;
+  --color-fill: #f4f6f8;
+  --color-fill-hover: #eef1f4;
+  --color-selection: #e2e8f0;
+
+  --color-ink: #0f1115;
+  --color-ink-muted: #5b616b;
+  --color-ink-faint: #a3a9b1;
+
+  --color-border: #eceff2;
+  --color-border-strong: #dfe3e8;
+
+  --color-accent: #0f1115;
+  --color-accent-hover: #2b2f36;
+  --color-accent-soft: #eef2f6;
+
+  --color-danger: #b42318;
+  --color-danger-soft: #fef5f4;
 
   /*
-   * Ink. `faint` is reserved for icons, rules and decoration: it does not
-   * reach WCAG AA as body text, which is what `muted` is for. The prototype
-   * darkened the brief's #767b77 to #686d69 for exactly that reason, and the
-   * corrected value is the one that ships — contrast outranks fidelity when
-   * the two disagree.
+   * Type: Inter for text, Inter Tight for display, Geist Mono for code, all
+   * self-hosted by next/font. Inter's character variants come with the stack.
    */
-  --color-ink: #202420;
-  --color-ink-muted: #686d69;
-  --color-ink-faint: #767b77;
-
-  /* Lines */
-  --color-border: #e8eae6;
-  --color-border-strong: #d6d9d3;
-
-  /* Accent and alert */
-  --color-accent: #376b56;
-  --color-accent-hover: #285440;
-  --color-accent-bg: #eaf2ec;
-  --color-danger: #9b3b2e;
-  --color-danger-bg: #faeeeb;
-
-  /* Type. The two stacks are self-hosted by the `geist` package. */
   --font-sans:
-    var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    var(--font-inter), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-sans--font-feature-settings: 'cv11', 'ss01', 'ss03';
+  --font-display:
+    var(--font-inter-tight), var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
   /*
@@ -69,15 +72,14 @@
   --text-subhead: clamp(20px, 2.8cqi, 26px);
 
   /* Rich answer blocks. `code` is relative to the text it sits in. */
-  --text-17: 17px;
   --text-18: 18px;
-  --text-26: 26px;
   --text-30: 30px;
-  --text-code: 0.875em;
+  --text-code: 0.86em;
   --text-code--line-height: normal;
 
   /* The assistant's mark: an outlined monogram, smaller still inline on a phone. */
   --text-8\.5: 8.5px;
+  --text-9\.5: 9.5px;
   --text-10: 10px;
 
   --leading-display: 1.02;
@@ -93,71 +95,62 @@
   --leading-figure: 1.05;
   --leading-caption: 1.45;
   --leading-reading: 1.6;
-  --leading-answer: 1.7;
+  --leading-answer: 1.75;
 
   --tracking-display: -0.045em;
   --tracking-subhead: -0.02em;
   --tracking-name: -0.01em;
   --tracking-mono: 0.01em;
-  --tracking-avatar: 0.02em;
-  --tracking-monogram: 0.03em;
+  --tracking-avatar: 0.06em;
+  --tracking-monogram: 0.04em;
   --tracking-label: 0.08em;
 
   /* Rich answer blocks */
   --tracking-figure: -0.035em;
   --tracking-title: -0.015em;
-  --tracking-caps: 0.06em;
 
   --font-weight-book: 450;
 
   /* Shape */
-  --radius-hairline: 1px;
-  --radius-kbd: 4px;
-  --radius-mark: 9px;
+  --radius-bubble: 18px;
+  --radius-kbd: 5px;
   --radius-control: 10px;
-  --radius-mark-lg: 11px;
-  --radius-xs: 6px;
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
-  --radius-xl: 18px;
+  --radius-xl: 20px;
   --radius-pill: 999px;
 
   /* Rich answer blocks */
   --radius-code: 5px;
   --radius-card: 14px;
 
-  /* Depth */
-  --inset-shadow-ring: inset 0 0 0 1px var(--color-border);
-  --inset-shadow-ring-strong: inset 0 0 0 1px var(--color-border-strong);
-  --shadow-raised: 0 1px 2px rgb(32 36 32 / 0.05), 0 0 0 1px var(--color-border);
-  --shadow-composer: 0 1px 2px rgb(32 36 32 / 0.04), 0 12px 32px -20px rgb(32 36 32 / 0.24);
-  --shadow-drawer: 0 0 48px rgb(32 36 32 / 0.18);
-  --shadow-focus: 0 0 0 3px rgb(55 107 86 / 0.22);
-
-  /* The "Jump to latest" pill floats over the conversation. */
-  --shadow-floating:
-    0 1px 2px rgb(32 36 32 / 0.05), 0 0 0 1px var(--color-border),
-    0 8px 20px -12px rgb(32 36 32 / 0.3);
+  /* Depth: hairlines first, a shadow only where something floats. */
+  --shadow-ring: 0 0 0 1px var(--color-border);
+  --shadow-ring-strong: 0 0 0 1px var(--color-border-strong);
+  --shadow-float:
+    0 0 0 1px var(--color-border), 0 1px 2px rgb(15 17 21 / 0.03),
+    0 10px 30px -18px rgb(15 17 21 / 0.16);
+  --shadow-drawer: 0 0 0 1px var(--color-border), 0 24px 60px rgb(15 17 21 / 0.12);
+  --shadow-focus: 0 0 0 4px rgb(15 17 21 / 0.05);
 
   /* Timeline and planned-scope markers */
   --inset-shadow-dot: inset 0 0 0 1.5px var(--color-ink-faint);
-  --shadow-dot-current: 0 0 0 3px var(--color-accent-bg);
+  --shadow-dot-current: 0 0 0 4px var(--color-fill);
 
   /* Motion. One easing curve, two durations — anything else is improvisation. */
   --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --duration-fast: 140ms;
-  --duration-medium: 220ms;
+  --duration-fast: 150ms;
+  --duration-medium: 260ms;
 
   --animate-rise: rise var(--duration-medium) var(--ease-standard) both;
-  --animate-fade: fade var(--duration-medium) var(--ease-standard) both;
   --animate-blink: blink 1s steps(1, end) infinite;
   /* The thinking dots stagger through --dot-delay, set per dot. */
   --animate-pulse-dot: pulse-dot 1.2s ease-in-out var(--dot-delay, 0ms) infinite;
-  --animate-turn: rise 320ms var(--ease-standard) both;
+  --animate-turn: rise 360ms var(--ease-standard) both;
 
   /* The welcome state settles in more slowly than a message does. */
-  --animate-fade-slow: fade 450ms var(--ease-standard);
+  --animate-fade-slow: fade 600ms var(--ease-standard);
   /* The "Jump to latest" pill rises a little faster than the default. */
   --animate-rise-short: rise 200ms var(--ease-standard);
 
@@ -165,8 +158,8 @@
    * A rich block rises a little slower than a message; metrics
    * stagger through --metric-delay, set per item; a disclosure body fades in.
    */
-  --animate-block-enter: rise 280ms var(--ease-standard) both;
-  --animate-metric-rise: rise 300ms var(--ease-standard) var(--metric-delay, 0ms) both;
+  --animate-block-enter: rise 320ms var(--ease-standard) both;
+  --animate-metric-rise: rise 340ms var(--ease-standard) var(--metric-delay, 0ms) both;
   --animate-reveal: fade 200ms var(--ease-standard);
 
   @keyframes rise {
@@ -200,7 +193,7 @@
     80%,
     100% {
       opacity: 0.25;
-      transform: scale(0.8);
+      transform: scale(0.75);
     }
     40% {
       opacity: 1;
@@ -209,8 +202,8 @@
   }
 
   /* Layout */
-  --container-column: 820px;
-  --container-sidebar: 260px;
+  --container-column: 720px;
+  --container-sidebar: 248px;
 
   /*
    * The app's two container breakpoints, read off the root named \`ma\`:
@@ -221,12 +214,10 @@
   --container-compact: 861px;
   --container-phone: 601px;
 
-  --container-welcome: 760px;
-  --container-measure: 62ch;
-  --container-bubble: min(78%, 560px);
+  --container-welcome: 680px;
+  --container-bubble: min(78%, 520px);
   --container-bubble-phone: 88%;
   --grid-template-columns-answer: 28px minmax(0, 1fr);
-  --grid-template-columns-suggestions: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
 
   /*
    * Rich answer blocks. Each block is its own size container, so it
@@ -237,17 +228,67 @@
   --container-contact-narrow: 441px;
   --container-timeline-narrow: 541px;
 
-  --width-bleed: calc(100% + 16px);
+  --width-bleed: calc(100% + 20px);
 
   --grid-template-columns-metrics: repeat(auto-fill, minmax(min(150px, 100%), 1fr));
-  --grid-template-columns-skills: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  --grid-template-columns-skills: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
   --grid-template-columns-projects: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
-  --grid-template-columns-scope: repeat(auto-fit, minmax(min(170px, 100%), 1fr));
-  --grid-template-columns-timeline: 136px 20px minmax(0, 1fr);
+  --grid-template-columns-timeline: 132px 20px minmax(0, 1fr);
   --grid-template-columns-timeline-narrow: 16px minmax(0, 1fr);
   --grid-template-columns-impact: 84px minmax(0, 1fr);
 
   --list-style-type-circle: circle;
+
+  /*
+   * The app shell: the sidebar column beside the conversation, the drawer it
+   * becomes in the compact layout, the hairlines that separate the regions
+   * without taking up layout space, and Marcio's name in the sidebar and the
+   * mobile bar.
+   */
+  --grid-template-columns-shell: var(--container-sidebar) minmax(0, 1fr);
+  --width-drawer: min(300px, calc(100% - 56px));
+  --inset-shadow-rule-top: inset 0 1px 0 var(--color-border);
+  --inset-shadow-rule-right: inset -1px 0 0 var(--color-border);
+  --inset-shadow-rule-bottom: inset 0 -1px 0 var(--color-border);
+  --tracking-identity: -0.02em;
+
+  /*
+   * The welcome hero, the composer and the suggestion chips. The hero title
+   * scales with the app's width like the old display size did; the welcome
+   * column keeps a tenth of the viewport free below it; the cooler hairline
+   * is what a composer or a chip turns to under focus or the pointer.
+   */
+  --text-hero: clamp(38px, 4.2cqi, 52px);
+  --leading-hero: 1.05;
+  --tracking-hero: -0.04em;
+  --container-hero-text: 46ch;
+  --spacing-welcome-end: 10vh;
+  --color-border-hover: #c7ced6;
+  --shadow-ring-hover: 0 0 0 1px var(--color-border-hover);
+  --shadow-composer-focus:
+    0 0 0 1px var(--color-border-hover), 0 0 0 4px rgb(15 17 21 / 0.05),
+    0 10px 30px -18px rgb(15 17 21 / 0.2);
+
+  /*
+   * The revised answer and its rich blocks: the inline avatar's 8px mark, the
+   * headline figures, a code block's and an open disclosure's 1.7 line, a
+   * card title's tighter tracking, the hairline over a metric or a table
+   * head, a failed answer's rose hairline, and the timeline panel's quicker
+   * rise. A code block's text is the browser's own monospace face: the
+   * design sets its font on the <pre>, and the browser's style for the
+   * <code> inside it replaces the family with `monospace`.
+   */
+  --text-8: 8px;
+  --text-27: 27px;
+  --text-32: 32px;
+  --leading-airy: 1.7;
+  --tracking-heading: -0.025em;
+  --inset-shadow-rule-top-strong: inset 0 1px 0 var(--color-border-strong);
+  --inset-shadow-rule-y: inset 0 1px 0 var(--color-border), inset 0 -1px 0 var(--color-border);
+  --color-danger-ring: #f9dcd8;
+  --shadow-danger-ring: 0 0 0 1px var(--color-danger-ring);
+  --animate-panel-rise: rise 240ms var(--ease-standard);
+  --font-code-block: monospace;
 }
 
 /* The two named durations, so a component writes the token and not a number. */
@@ -259,31 +300,14 @@
   transition-duration: var(--duration-medium);
 }
 
-/* A suggestion's arrow moves at the medium pace but recolours at the fast one. */
-@utility transition-nudge {
-  transition:
-    translate var(--duration-medium) var(--ease-standard),
-    color var(--duration-fast) var(--ease-standard);
-}
-
-/* A row that scrolls sideways without showing a scrollbar. */
-/* The streaming caret sits on the text's baseline, a line tall. */
-@utility caret-line {
-  height: 1.05em;
-  vertical-align: -2px;
+/* The streaming caret, a dot, sits just above the text's baseline. */
+@utility align-caret {
+  vertical-align: 1px;
 }
 
 /* Code in an answer indents by two columns. */
 @utility tab-2 {
   tab-size: 2;
-}
-
-@utility scrollbar-none {
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
 }
 
 /*
@@ -302,7 +326,7 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-accent);
+    outline: 2px solid var(--color-ink);
     outline-offset: 2px;
   }
 

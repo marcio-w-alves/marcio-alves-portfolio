@@ -1,4 +1,4 @@
-import type { Contact, Principle, Profile, Welcome } from '../types';
+import type { AssistantIdentity, Contact, Principle, Profile, Welcome } from '../types';
 
 export const profile: Profile = {
   name: 'Marcio Alves',
@@ -20,10 +20,10 @@ export const profile: Profile = {
     'Product Engineering',
   ],
   summary:
-    'Staff Frontend Engineer with deep expertise in React.js and Next.js, focused on scalable architecture, performance optimization, and developer experience. Experienced in designing, implementing, and maintaining scalable applications end-to-end, while driving technical strategy, mentoring engineers, and collaborating cross-functionally with product and design teams. Strong background in planning OKRs, quarterly goals, and engineering deliverables aligned with product needs and user impact.',
+    'Marcio is a Staff-level frontend engineer with deep expertise in React and Next.js, focused on scalable architecture, performance optimization and developer experience.',
   context: 'Marcio has experience working across startups and large, complex software products.',
   focus:
-    'He focuses on building maintainable applications, making sound architectural decisions, improving engineering processes, and aligning technical work with product impact.',
+    'He focuses on building maintainable applications, making sound architectural decisions, raising engineering standards and aligning technical work with product needs and user impact.',
   location: { country: 'Brazil', city: null },
   source: 'profile',
 };
@@ -31,16 +31,14 @@ export const profile: Profile = {
 // The landing screen speaks as Marcio, in the first person. The assistant
 // always speaks about him in the third person.
 export const welcome: Welcome = {
-  eyebrow: 'Welcome to my portfolio',
   heading: "Hi, I'm Marcio",
-  subheading: 'Frontend engineer, architect, and problem solver',
   description:
-    "I've spent over a decade building scalable web applications, improving performance, and helping engineering teams deliver better products.",
-  invitation:
-    'Explore my experience, dive into technical decisions, or ask my AI assistant anything about my work.',
-  placeholder: 'Ask anything about my experience, skills, or projects...',
-  helper: 'Powered by AI · Grounded in my professional experience',
+    'Staff-level frontend engineer with 10+ years in React, TypeScript and frontend architecture. Ask anything about my work.',
+  placeholder: 'Ask about my experience, skills or projects…',
+  helper: 'AI answers grounded in my professional experience',
 };
+
+export const assistant: AssistantIdentity = { name: "Marcio's assistant", initials: 'MA' };
 
 export const contact: Contact = {
   email: 'marcio.welben@gmail.com',

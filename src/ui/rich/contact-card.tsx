@@ -8,7 +8,7 @@ const EMAIL_SUBJECT = 'Engineering opportunity';
 
 // Every action takes a full row once the card is too narrow to fit them side by side.
 const ACTION_CLASSES =
-  '@max-contact-narrow/contact:h-11 @max-contact-narrow/contact:grow @max-contact-narrow/contact:basis-full';
+  '@max-contact-narrow/contact:h-11.5 @max-contact-narrow/contact:grow @max-contact-narrow/contact:basis-full';
 
 export function ContactCard({
   heading,
@@ -22,17 +22,20 @@ export function ContactCard({
   return (
     <section
       aria-labelledby={titleId}
-      className="@container/contact flex animate-block-enter flex-col gap-4 rounded-lg bg-surface px-5.5 py-5 shadow-raised"
+      className="@container/contact flex animate-block-enter flex-col gap-4.5 rounded-lg bg-ice p-5.5 shadow-ring"
     >
       <div className="flex items-start gap-3.5">
         <span
           aria-hidden="true"
-          className="grid size-10 shrink-0 place-items-center rounded-mark-lg bg-accent text-14 leading-none font-semibold tracking-monogram text-white"
+          className="grid size-11 shrink-0 place-items-center rounded-full bg-ink font-display text-14 leading-none font-semibold tracking-monogram text-white"
         >
           MA
         </span>
         <div>
-          <h4 id={titleId} className="text-18 leading-heading font-semibold tracking-subhead">
+          <h4
+            id={titleId}
+            className="font-display text-18 leading-heading font-semibold tracking-heading"
+          >
             {heading}
           </h4>
           <p className="mt-1 text-14.5 leading-reading text-ink-muted">{text}</p>
@@ -58,9 +61,16 @@ export function ContactCard({
           <VisuallyHidden> (opens in a new tab)</VisuallyHidden>
         </ButtonLink>
         {resumeUrl ? (
-          <ButtonLink variant="ghost" href={resumeUrl} download className={ACTION_CLASSES}>
-            <Icon name="download" size="sm" />
-            Download resume
+          <ButtonLink
+            variant="ghost"
+            href={resumeUrl}
+            target="_blank"
+            rel="noopener"
+            className={ACTION_CLASSES}
+          >
+            <Icon name="file" size="sm" />
+            View resume
+            <VisuallyHidden> (PDF, opens in a new tab)</VisuallyHidden>
           </ButtonLink>
         ) : null}
         {github ? (
@@ -77,7 +87,7 @@ export function ContactCard({
           </ButtonLink>
         ) : null}
       </div>
-      <p className="font-mono text-12 leading-normal wrap-anywhere text-ink-muted">{email}</p>
+      <p className="text-12.5 wrap-anywhere text-ink-muted">{email}</p>
     </section>
   );
 }
