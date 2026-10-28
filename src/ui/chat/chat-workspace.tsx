@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { suggestions, topicById, type TopicId } from '@/core/assistant/topics';
 import { latestAnswerId } from '@/core/conversation/conversation';
-import type { AssistantMessage as Answer } from '@/core/conversation/messages';
+import type { AssistantMessage as Answer, Conversation } from '@/core/conversation/messages';
 import { toPlainText } from '@/core/conversation/plain-text';
 import { roleById } from '@/core/knowledge/knowledge-base';
 import type { Welcome } from '@/core/knowledge/types';
@@ -28,6 +28,9 @@ interface ChatWorkspaceProps {
   readonly welcome: Welcome;
   /** The longest question the API accepts. */
   readonly maxQuestionLength: number;
+  /** A conversation to open on, to show a known state; a visitor starts empty. */
+  readonly initialConversation?: Conversation | undefined;
+  readonly initialDrawerOpen?: boolean | undefined;
 }
 
 const SUGGESTION_COUNT = 4;
@@ -45,11 +48,13 @@ export function ChatWorkspace({
   topics,
   welcome,
   maxQuestionLength,
+  initialConversation,
+  initialDrawerOpen,
 }: ChatWorkspaceProps) {
-  const chat = useChat();
+  const chat = useChat(initialConversation);
   const { conversation } = chat;
   const [draft, setDraft] = useState('');
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(initialDrawerOpen ?? false);
   const [suggestionPage, setSuggestionPage] = useState(0);
   const [showJump, setShowJump] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);

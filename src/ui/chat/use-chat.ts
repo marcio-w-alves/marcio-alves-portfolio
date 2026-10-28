@@ -22,8 +22,8 @@ import { streamAnswer } from './chat-client';
  * answer stream from `/api/chat`. One answer streams at a time; starting
  * over, retrying or editing cancels the one in flight.
  */
-export function useChat() {
-  const [conversation, setConversation] = useState<Conversation>(() => createConversation());
+export function useChat(initial: Conversation = createConversation()) {
+  const [conversation, setConversation] = useState<Conversation>(initial);
   const [announcement, setAnnouncement] = useState('');
   const inFlight = useRef<AbortController | null>(null);
 
