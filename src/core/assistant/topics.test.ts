@@ -21,7 +21,7 @@ describe('topics — suggested questions', () => {
   });
 
   it('labels a chip with its tag where no shorter label is written', () => {
-    expect(suggestedQuestions('skills', 1, 4).at(-1)).toEqual({
+    expect(suggestedQuestions('skills', 0, 8).find((item) => item.tag === 'Testing')).toEqual({
       question: 'How does he approach testing?',
       tag: 'Testing',
       short: 'Testing',
@@ -31,7 +31,7 @@ describe('topics — suggested questions', () => {
   it('rotates through the pool a page at a time, wrapping around at the end', () => {
     const pool = topicById('projects').questions.map((item) => item.question);
     expect(suggestions('projects', 0, 4)).toEqual(pool.slice(0, 4));
-    expect(suggestions('projects', 1, 4)).toEqual([...pool.slice(4), ...pool.slice(0, 2)]);
+    expect(suggestions('projects', 1, 4)).toEqual([...pool.slice(4), ...pool.slice(0, 3)]);
   });
 
   it('falls back to the overview for a topic it does not know', () => {

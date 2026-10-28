@@ -1,6 +1,8 @@
 import type { Knowledge } from '@/core/knowledge/schema';
-import type { AssistantResponse, ConversationContext } from '../response';
+import type { AssistantResponse, ConversationContext, ResponsePart } from '../response';
 import { createResponseKit } from '../response-kit';
+import { createTopicIntro } from '../topic-pages';
+import { createTopicCatalog, isTopicId } from '../topics';
 import { createBoundaryAnswers } from './responses/boundaries';
 import { createCareerAnswers } from './responses/career';
 import { createExpertiseAnswers } from './responses/expertise';
@@ -42,6 +44,10 @@ type ScoredAnswers = Readonly<
 function answered(response: AssistantResponse): FastPathResult {
   return { kind: 'answered', response };
 }
+
+const FOLLOW_UPS = 3;
+
+const partKey = (part: ResponsePart): string => JSON.stringify(part);
 
 export function createFastPath(knowledge: Knowledge): FastPath {
   const kit = createResponseKit(knowledge);
@@ -85,7 +91,92 @@ export function createFastPath(knowledge: Knowledge): FastPath {
     career: career.career,
   };
 
+  const catalog = createTopicCatalog(kit);
+  const topicIntro = createTopicIntro(kit, catalog);
+
+  // What the visitor already sees: a topic page opens on its part of the
+  // record, so an answer there leaves that part out. The overview opens on
+  // the welcome screen, which shows none of it.
+  function shownOnPage(context: ConversationContext): ReadonlySet<string> {
+    if (context.topic === 'overview' || !isTopicId(context.topic)) return new Set();
+    return new Set(topicIntro(context.topic).parts.map(partKey));
+  }
+
+  // A lead-in sentence goes with the card it introduces: "He works in four
+  // languages:" means nothing once the page's languages table is left out.
+  function newParts(response: AssistantResponse, shown: ReadonlySet<string>): ResponsePart[] {
+    const { parts } = response;
+    const isShown = (index: number) => {
+      const part = parts[index];
+      return part !== undefined && shown.has(partKey(part));
+    };
+    const introducesShownCard = (index: number) => {
+      const part = parts[index];
+      const next = parts[index + 1];
+      return (
+        part?.type === 'text' &&
+        !part.text.startsWith('#') &&
+        next?.type === 'component' &&
+        isShown(index + 1)
+      );
+    };
+    return parts.filter((_part, index) => !isShown(index) && !introducesShownCard(index));
+  }
+
+  // A follow-up is worth suggesting only when it leads somewhere: not back to
+  // the answer just given, and not to an answer the page already holds.
+  function leadsSomewhereNew(
+    question: string,
+    current: AssistantResponse,
+    context: ConversationContext,
+    shown: ReadonlySet<string>,
+  ): boolean {
+    const result = tryRespond(question, { ...context, lastIntent: current.intent });
+    if (result?.kind !== 'answered') return true;
+    return result.response.intent !== current.intent && newParts(result.response, shown).length > 0;
+  }
+
+  function followUpsAfter(
+    response: AssistantResponse,
+    context: ConversationContext,
+    shown: ReadonlySet<string>,
+  ): string[] {
+    const own = response.followUps.filter((question) =>
+      leadsSomewhereNew(question, response, context, shown),
+    );
+    if (own.length > 0) return own;
+    return catalog
+      .topicById(context.topic)
+      .questions.map((item) => item.question)
+      .filter((question) => leadsSomewhereNew(question, response, context, shown))
+      .slice(0, FOLLOW_UPS);
+  }
+
+  // Some ready answers still name records of Marcio's own (POR-54 moves them
+  // into the profile), so with another profile they cannot be built. Judging a
+  // follow-up must not break the answer it follows: such a follow-up is kept,
+  // and fails, as before, only if the visitor asks it.
+  function tryRespond(question: string, context: ConversationContext): FastPathResult | null {
+    try {
+      return respond(question, context);
+    } catch {
+      return null;
+    }
+  }
+
   function answer(question: string, context: ConversationContext): FastPathResult {
+    const result = respond(question, context);
+    if (result.kind !== 'answered') return result;
+    const shown = shownOnPage(context);
+    const parts = newParts(result.response, shown);
+    return answered({
+      ...result.response,
+      parts: parts.length > 0 ? parts : result.response.parts,
+      followUps: followUpsAfter(result.response, context, shown),
+    });
+  }
+
+  function respond(question: string, context: ConversationContext): FastPathResult {
     const routed = route(question, context);
     switch (routed.intent) {
       case 'escalate':

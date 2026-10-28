@@ -23,14 +23,7 @@ export function createTopicIntro(kit: ResponseKit, catalog: TopicCatalog) {
  * built locally from the knowledge base, never by the model. The overview has
  * none, because its page is the welcome screen.
  */
-function createTopicData({
-  knowledge,
-  metrics,
-  projects,
-  skills,
-  timeline,
-  productDepth,
-}: ResponseKit) {
+function createTopicData({ knowledge, projects, skills, timeline, productDepth }: ResponseKit) {
   const { practice } = knowledge;
   return (topic: TopicId): readonly ResponsePart[] => {
     switch (topic) {
@@ -54,15 +47,6 @@ function createTopicData({
           projects(),
           text(
             `### The engineering behind them\n${bullets(knowledge.projects.map((project) => `**${project.name}** — ${productDepth(project.id)}`))}`,
-          ),
-        ];
-      case 'achievements':
-        return [
-          metrics(Object.keys(knowledge.metrics)),
-          text(
-            '### Other recognition\n' +
-              '- Contributed to a web and mobile application that received the **Golden Award in 2019** at Shall And Partners.\n' +
-              '- Built a frontend team from one developer to four at Roots.',
           ),
         ];
       case 'philosophy':

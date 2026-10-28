@@ -76,15 +76,7 @@ test('the sitemap lists the home page and every topic page at their canonical ad
   request,
 }) => {
   const canonicals: string[] = [];
-  for (const path of [
-    '/',
-    '/experience',
-    '/skills',
-    '/projects',
-    '/achievements',
-    '/philosophy',
-    '/education',
-  ]) {
+  for (const path of ['/', '/experience', '/skills', '/projects', '/philosophy', '/education']) {
     await page.goto(path);
     canonicals.push(String(await page.locator('link[rel="canonical"]').getAttribute('href')));
   }

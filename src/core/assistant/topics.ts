@@ -10,7 +10,6 @@ export const TOPIC_IDS = [
   'experience',
   'skills',
   'projects',
-  'achievements',
   'philosophy',
   'education',
 ] as const;
@@ -93,7 +92,7 @@ export function createTopicCatalog(kit: ResponseKit): TopicCatalog {
 }
 
 // A tuple, so the first topic is a known fallback rather than a possibly-undefined index.
-function topicsFrom({ knowledge, metricValue }: ResponseKit): readonly [Topic, ...Topic[]] {
+function topicsFrom({ knowledge }: ResponseKit): readonly [Topic, ...Topic[]] {
   const { profile, experience, projects, languages, education } = knowledge;
   const liveProducts = joinNames(
     projects.filter((project) => project.live).map((project) => project.name),
@@ -155,7 +154,6 @@ function topicsFrom({ knowledge, metricValue }: ResponseKit): readonly [Topic, .
         "Marcio's core stack is React, TypeScript and Next.js, backed by architecture, performance and leadership skills. Ask about any area and you'll get the evidence behind it, not a self-rated score.",
       questions: [
         { question: 'How experienced is he with React and TypeScript?', tag: 'React & TypeScript' },
-        { question: 'What are his strongest technical skills?', tag: 'Strengths' },
         { question: 'How did he optimize performance?', tag: 'Performance' },
         { question: 'Has he worked with backend systems?', tag: 'Full stack' },
         { question: 'Does he have Next.js and SSR experience?', tag: 'Next.js' },
@@ -171,26 +169,11 @@ function topicsFrom({ knowledge, metricValue }: ResponseKit): readonly [Topic, .
       icon: 'folder',
       intro: `Beyond his day job, Marcio builds his own products. ${liveProducts} already have public sites, and FictionDraft is still a concept. Ask about any of them — I'll be clear about what's live versus planned.`,
       questions: [
-        { question: 'What projects is he working on?', tag: 'All products' },
         { question: 'Tell me more about EvCopilot.', tag: 'EvCopilot' },
         { question: 'Tell me more about FormDaily.', tag: 'FormDaily' },
         { question: 'What is TargUp?', tag: 'TargUp' },
         { question: 'What is FictionDraft?', tag: 'FictionDraft' },
         { question: 'Has he built mobile apps?', tag: 'Mobile' },
-      ],
-    },
-    {
-      id: 'achievements',
-      label: 'Achievements',
-      icon: 'award',
-      intro: `Highlights include a ${metricValue('deel-critical-load')} cut in critical page loading time and Web Vitals improved by ${metricValue('deel-web-vitals')} at Deel, plus growing the Roots engineering team from one to four developers. Ask for the context behind any of them.`,
-      questions: [
-        { question: 'What are his biggest technical achievements?', tag: 'Impact' },
-        { question: 'What measurable improvements has he delivered?', tag: 'Metrics' },
-        { question: 'How did he optimize performance?', tag: 'Performance' },
-        { question: 'How does he raise code quality?', tag: 'Quality' },
-        { question: 'How did he grow the team at Roots?', tag: 'Team growth' },
-        { question: 'Has he received any awards?', tag: 'Recognition' },
       ],
     },
     {
@@ -203,7 +186,7 @@ function topicsFrom({ knowledge, metricValue }: ResponseKit): readonly [Topic, .
         { question: "What's his engineering philosophy?", tag: 'Principles' },
         { question: 'How does he use AI in engineering?', tag: 'AI engineering' },
         { question: 'How does he approach frontend architecture?', tag: 'Architecture' },
-        { question: 'Show me examples of architectural decisions.', tag: 'Decisions' },
+        { question: 'How does he approach testing?', tag: 'Testing' },
         { question: 'How does he work with product teams?', tag: 'Product' },
         { question: 'How does he think about code quality?', tag: 'Quality' },
       ],
@@ -214,10 +197,8 @@ function topicsFrom({ knowledge, metricValue }: ResponseKit): readonly [Topic, .
       icon: 'graduation',
       intro: `Marcio holds a ${education.degree.replace("Bachelor's Degree", "Bachelor's degree")} from ${education.school} (${String(education.year)}) and works in ${joinNames(languages.map((language) => language.name))}.`,
       questions: [
-        { question: 'Where did he study?', tag: 'Education' },
-        { question: 'What languages does he speak?', tag: 'Languages' },
-        { question: 'Does he speak French?', tag: 'Languages' },
-        { question: 'What courses and certifications does he have?', tag: 'Certifications' },
+        { question: 'How does he use AI in engineering?', tag: 'AI engineering' },
+        { question: 'Has he worked with backend systems?', tag: 'Full stack' },
         { question: 'Can I see his resume?', tag: 'Resume' },
       ],
     },

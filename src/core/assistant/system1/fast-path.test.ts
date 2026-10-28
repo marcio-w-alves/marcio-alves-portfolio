@@ -4,11 +4,15 @@ import { profile } from '@/profile';
 import type { AssistantResponse, ConversationContext } from '../response';
 import { toEvents } from '../response';
 import { createResponseKit } from '../response-kit';
+import { createTopicIntro } from '../topic-pages';
 import { createTopicCatalog } from '../topics';
 import { createFastPath } from './fast-path';
 
 const knowledge = localize(profile.knowledge, 'en');
-const { topics } = createTopicCatalog(createResponseKit(knowledge));
+const kit = createResponseKit(knowledge);
+const catalog = createTopicCatalog(kit);
+const { topics } = catalog;
+const topicIntro = createTopicIntro(kit, catalog);
 const fastPath = createFastPath(knowledge).answer;
 
 const FRESH: ConversationContext = { topic: 'overview', lastIntent: null, ctaShown: false };
@@ -245,5 +249,53 @@ describe('toEvents', () => {
       label: 'Reduction in loading time on critical pages',
       context: 'Deel',
     });
+  });
+});
+
+describe('fast path — a topic page never repeats itself', () => {
+  const pages = topics.filter((topic) => topic.id !== 'overview');
+  const onPage = (topic: string): ConversationContext => ({ ...FRESH, topic });
+  const key = (part: unknown) => JSON.stringify(part);
+
+  it.each(pages.map((topic) => [topic.id, topic] as const))(
+    'answers each question suggested on /%s with something the page does not show',
+    (_id, topic) => {
+      const shown = new Set(topicIntro(topic.id).parts.map(key));
+      for (const { question } of topic.questions) {
+        const response = answer(question, onPage(topic.id));
+        expect(
+          response.parts.some((part) => !shown.has(key(part))),
+          `"${question}" only repeats the page`,
+        ).toBe(true);
+        expect(
+          response.parts.filter((part) => shown.has(key(part))),
+          `"${question}" repeats part of the page`,
+        ).toEqual([]);
+      }
+    },
+  );
+
+  it.each(pages.map((topic) => [topic.id, topic] as const))(
+    'gives each question suggested on /%s its own answer',
+    (_id, topic) => {
+      const intents = topic.questions.map(
+        ({ question }) => answer(question, onPage(topic.id)).intent,
+      );
+      expect(new Set(intents).size, intents.join(', ')).toBe(intents.length);
+    },
+  );
+
+  it('never suggests, after an answer, a question that leads back to that answer', () => {
+    for (const topic of topics) {
+      for (const { question } of topic.questions) {
+        const response = answer(question, onPage(topic.id));
+        for (const followUp of response.followUps) {
+          const next = fastPath(followUp, { ...onPage(topic.id), lastIntent: response.intent });
+          if (next.kind === 'answered') {
+            expect(next.response.intent, `"${question}" → "${followUp}"`).not.toBe(response.intent);
+          }
+        }
+      }
+    }
   });
 });
