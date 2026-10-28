@@ -27,6 +27,33 @@ export const brand: Brand = {
     danger: '#b42318',
     'danger-soft': '#fef5f4',
     'danger-ring': '#f9dcd8',
+    'on-accent': '#ffffff',
+    shadow: '#0f1115',
+  },
+  // The same structure at night: cool graphite surfaces stepping up in
+  // lightness, ink turned to a soft white, and that white as the accent.
+  // `ink-muted` holds 7:1 or better on every surface.
+  darkColors: {
+    bg: '#0e1013',
+    ice: '#13161a',
+    surface: '#171a1f',
+    fill: '#1d2127',
+    'fill-hover': '#242930',
+    selection: '#2e3744',
+    ink: '#e9ecf0',
+    'ink-muted': '#a3aab4',
+    'ink-faint': '#636a74',
+    border: '#22262c',
+    'border-strong': '#2b3037',
+    'border-hover': '#3b414a',
+    accent: '#e9ecf0',
+    'accent-hover': '#cdd2d8',
+    'accent-soft': '#1f242b',
+    danger: '#f97066',
+    'danger-soft': '#2a1715',
+    'danger-ring': '#5b2621',
+    'on-accent': '#0e1013',
+    shadow: '#000000',
   },
   // After the faces in fonts.ts: Inter for text, Inter Tight for display,
   // Geist Mono for code. Inter's character variants come with the stack.

@@ -16,8 +16,16 @@ const BANNER = [
   ' */',
 ];
 
-function colorTokens({ colors }: Brand): string[] {
+function colorTokens(colors: Brand['colors']): string[] {
   return Object.entries(colors).map(([token, hex]) => `  --color-${token}: ${hex};`);
+}
+
+/**
+ * The dark theme overrides the same variables on the root element, so every
+ * utility over a colour follows the theme without a variant of its own.
+ */
+function darkTheme({ darkColors }: Brand): string[] {
+  return [":root[data-theme='dark'] {", '  color-scheme: dark;', ...colorTokens(darkColors), '}'];
 }
 
 function fontTokens({ fonts }: Brand): string[] {
@@ -36,7 +44,19 @@ function fontTokens({ fonts }: Brand): string[] {
  * `--font-*` per family, so every utility over them follows the profile.
  */
 export function renderBrandCss(brand: Brand): string {
-  return [...BANNER, '@theme {', ...colorTokens(brand), '', ...fontTokens(brand), '}', ''].join(
-    '\n',
-  );
+  return [
+    ...BANNER,
+    '@theme {',
+    ...colorTokens(brand.colors),
+    '',
+    ...fontTokens(brand),
+    '}',
+    '',
+    ':root {',
+    '  color-scheme: light;',
+    '}',
+    '',
+    ...darkTheme(brand),
+    '',
+  ].join('\n');
 }

@@ -91,7 +91,7 @@ export function AppShell({
           onClick={close}
           className={cn(
             'hidden @max-compact/ma:absolute @max-compact/ma:inset-0 @max-compact/ma:z-20 @max-compact/ma:block',
-            'bg-ink/18 p-0 transition-opacity duration-medium ease-standard',
+            'bg-shadow/18 p-0 transition-opacity duration-medium ease-standard',
             drawerOpen ? 'opacity-100' : 'pointer-events-none opacity-0',
           )}
         />

@@ -174,7 +174,7 @@ function Key({ children }: { readonly children: string }) {
 }
 
 const SEND_CONTROL = cn(
-  'grid size-9 shrink-0 cursor-pointer place-items-center rounded-full border-0 bg-accent p-0 text-white',
+  'grid size-9 shrink-0 cursor-pointer place-items-center rounded-full border-0 bg-accent p-0 text-on-accent',
   'transition-[background-color,scale] duration-fast ease-standard hover:not-disabled:bg-accent-hover active:not-disabled:scale-93',
   '@max-phone/ma:size-10.5',
 );

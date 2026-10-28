@@ -8,8 +8,15 @@ function declarations(css: string): Record<string, string> {
   return Object.fromEntries([...found].map(([, name = '', value = '']) => [name, value]));
 }
 
+/** The declarations inside the block a selector opens, and only those. */
+function block(css: string, selector: string): Record<string, string> {
+  const start = css.indexOf(`${selector} {`);
+  if (start < 0) throw new Error(`No "${selector}" block.`);
+  return declarations(css.slice(start, css.indexOf('\n}', start)));
+}
+
 describe('renderBrandCss', () => {
-  const tokens = declarations(renderBrandCss(fixtureBrand));
+  const tokens = block(renderBrandCss(fixtureBrand), '@theme');
 
   it('declares a colour token for every colour of the brand, with its value', () => {
     for (const [token, hex] of Object.entries(fixtureBrand.colors)) {
@@ -39,8 +46,21 @@ describe('renderBrandCss', () => {
       ...fixtureBrand,
       colors: { ...fixtureBrand.colors, ink: '#123456' },
     };
-    expect(declarations(renderBrandCss(recoloured))['--color-ink']).toBe('#123456');
+    expect(block(renderBrandCss(recoloured), '@theme')['--color-ink']).toBe('#123456');
     expect(tokens['--color-ink']).not.toBe('#123456');
+  });
+
+  it('overrides every colour token on the root element for the dark theme', () => {
+    const dark = block(renderBrandCss(fixtureBrand), ":root[data-theme='dark']");
+    for (const [token, hex] of Object.entries(fixtureBrand.darkColors)) {
+      expect(dark[`--color-${token}`]).toBe(hex);
+    }
+  });
+
+  it('tells the browser which scheme each theme is, for its own controls and scrollbars', () => {
+    const css = renderBrandCss(fixtureBrand);
+    expect(css).toMatch(/:root \{\n {2}color-scheme: light;/);
+    expect(css).toMatch(/:root\[data-theme='dark'\] \{\n {2}color-scheme: dark;/);
   });
 
   it('is a Tailwind theme block', () => {

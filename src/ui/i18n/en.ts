@@ -14,6 +14,7 @@ export const englishUiMessages: UiMessages = {
     github: 'GitHub',
     resume: 'Resume',
     resumeSoon: 'Soon',
+    theme: { label: 'Theme', light: 'Light', dark: 'Dark', system: 'Auto' },
   },
   links: {
     opensInNewTab: '(opens in a new tab)',
