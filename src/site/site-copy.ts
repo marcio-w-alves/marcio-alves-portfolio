@@ -37,3 +37,19 @@ export const englishSiteCopy: SiteCopy = {
     home: 'Go to the home page',
   },
 };
+
+/** The pages' copy in Brazilian Portuguese, for anyone's portfolio. A profile overrides what it words differently. */
+export const portugueseSiteCopy: SiteCopy = {
+  title: '{name} — {title}',
+  description:
+    'Portfólio de {name}, {title}. Pergunte ao assistente de IA sobre a experiência documentada.',
+  topicTitle: '{topic} — {name}',
+  shareImageAlt: '{name}, {title}',
+  openGraphLocale: 'pt_BR',
+  notFound: {
+    title: 'Página não encontrada',
+    description:
+      'Não há nada neste endereço. O link pode estar digitado errado, ou a página pode ter mudado de lugar.',
+    home: 'Ir para a página inicial',
+  },
+};

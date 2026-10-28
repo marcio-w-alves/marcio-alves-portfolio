@@ -1,4 +1,7 @@
 import type { NextConfig } from 'next';
+import { locales } from './src/profile/locales';
+import { localeRedirects, localeRewrites } from './src/site/locale-routing';
+import { publishedLocales } from './src/site/published-locales';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
@@ -41,6 +44,12 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   headers() {
     return Promise.resolve([{ source: '/:path*', headers: securityHeaders }]);
+  },
+  redirects() {
+    return Promise.resolve(localeRedirects());
+  },
+  rewrites() {
+    return Promise.resolve(localeRewrites(publishedLocales(locales, process.env)));
   },
   partialPrefetching: true,
   turbopack: {

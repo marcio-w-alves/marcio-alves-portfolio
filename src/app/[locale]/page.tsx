@@ -1,5 +1,5 @@
 import { site } from '@/site-root';
 
-export const metadata = site.homeMetadata;
+export const generateMetadata = site.homeMetadata;
 
 export default site.HomePage;

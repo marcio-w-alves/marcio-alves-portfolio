@@ -47,12 +47,10 @@ export function createFacts({ knowledge, roleById, projectById, metricValue }: R
   const employer = (roleId: string) => roleById(roleId).company;
   const title = (roleId: string) => roleById(roleId).role;
   const period = (roleId: string) => roleById(roleId).period;
-  // A role's start is a fractional year: March 2026 is 2026 plus two twelfths.
+  // A start the record gives as a year alone reads as its January.
   const startMonth = (roleId: string) => {
-    const { start } = roleById(roleId);
-    const year = Math.floor(start);
-    const month = Math.round((start - year) * 12);
-    const date = new Date(Date.UTC(year, month));
+    const [year = '', month = '01'] = roleById(roleId).start.split('-');
+    const date = new Date(Date.UTC(Number(year), Number(month) - 1));
     return date.toLocaleDateString('en', { month: 'long', year: 'numeric', timeZone: 'UTC' });
   };
   const years = (roleId: string) => {

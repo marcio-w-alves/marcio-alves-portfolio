@@ -20,7 +20,7 @@ vi.mock('@/core/chat/request', async (original) => ({
   MAX_QUESTION_LENGTH: 7,
 }));
 
-const content = createSiteContent(fixtureKnowledge, fixtureAnswers);
+const content = createSiteContent(fixtureKnowledge, fixtureAnswers, 'en');
 
 const handle = createChatHandler({
   assistant: createAssistant({

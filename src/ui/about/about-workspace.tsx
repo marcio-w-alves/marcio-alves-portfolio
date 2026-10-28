@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
 import { AppShell } from '../shell/app-shell';
+import type { LocaleLink } from '../shell/locale-switch';
 import {
   Sidebar,
   type SidebarLinks,
@@ -18,6 +19,10 @@ interface AboutWorkspaceProps {
   readonly pages: readonly SidebarPage[];
   /** The page shown, among `pages`. */
   readonly activePage: string;
+  /** The home page of this page's language, where conversations live. */
+  readonly home: string;
+  /** This page in each language that has it; empty while only one does. */
+  readonly languages: readonly LocaleLink[];
   readonly children: ReactNode;
 }
 
@@ -32,12 +37,14 @@ export function AboutWorkspace({
   topics,
   pages,
   activePage,
+  home,
+  languages,
   children,
 }: AboutWorkspaceProps) {
   const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const startConversation = () => {
-    router.push('/');
+    router.push(home);
   };
   return (
     <AppShell
@@ -53,6 +60,7 @@ export function AboutWorkspace({
           pages={pages}
           activePage={activePage}
           links={links}
+          languages={languages}
           onNewConversation={startConversation}
           onClose={() => {
             setDrawerOpen(false);

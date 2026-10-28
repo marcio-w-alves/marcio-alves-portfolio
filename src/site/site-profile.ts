@@ -1,5 +1,6 @@
 import type { AboutPageCopy } from './about-page';
 import type { AnswerSet } from '@/core/assistant/answer-set';
+import type { Locale, Translations } from '@/core/i18n/locale';
 import type { KnowledgeSource } from '@/core/knowledge/schema';
 import type { CopyOverrides } from './site-messages';
 
@@ -72,5 +73,14 @@ export interface LocaleCopy extends CopyOverrides {
 export interface SiteProfile {
   readonly knowledge: KnowledgeSource;
   readonly brand: Brand;
-  readonly copy: { readonly en: LocaleCopy };
+  readonly copy: Translations<LocaleCopy>;
+}
+
+/**
+ * A language the profile has not written yet — only ever previewed, never
+ * published (its validation sees to that) — reads the English answers and
+ * record inside that language's default interface.
+ */
+export function copyIn({ copy }: SiteProfile, locale: Locale): LocaleCopy {
+  return copy[locale] ?? { answers: copy.en.answers, ui: {}, site: {} };
 }

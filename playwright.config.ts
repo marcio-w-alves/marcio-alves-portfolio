@@ -52,6 +52,13 @@ export default defineConfig({
     // An empty key is "not set" to the app and, being defined, is not filled
     // in from .env.local: the assistant answers from the fast path alone, so a
     // run never reaches OpenAI.
-    env: { OPENAI_API_KEY: '', GITHUB_TOKEN: '', NEXT_TELEMETRY_DISABLED: '1' },
+    // A language the profile does not publish yet is built only when the run
+    // asks for it (`pnpm test:e2e:preview`); the plain run proves it is off.
+    env: {
+      OPENAI_API_KEY: '',
+      GITHUB_TOKEN: '',
+      NEXT_TELEMETRY_DISABLED: '1',
+      PREVIEW_LOCALES: process.env.PREVIEW_LOCALES ?? '',
+    },
   },
 });

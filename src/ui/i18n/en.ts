@@ -1,7 +1,9 @@
+import { PAGE_FAILED } from './page-failed';
 import type { UiMessages } from './ui-messages';
 
 /** The interface in English, for anyone's portfolio. A profile overrides what it words differently. */
 export const englishUiMessages: UiMessages = {
+  language: { short: 'EN', name: 'English' },
   shell: {
     navigation: 'Portfolio navigation',
     skipToConversation: 'Skip to the conversation',
@@ -15,6 +17,7 @@ export const englishUiMessages: UiMessages = {
     resume: 'Resume',
     resumeSoon: 'Soon',
     theme: { label: 'Theme', light: 'Light', dark: 'Dark', system: 'Auto' },
+    language: 'Language',
   },
   links: {
     opensInNewTab: '(opens in a new tab)',
@@ -120,13 +123,5 @@ export const englishUiMessages: UiMessages = {
       github: 'GitHub',
     },
   },
-  pageFailed: {
-    failure: 'Error',
-    title: 'This page failed to load',
-    description:
-      'Something broke on our side while showing it. Try again; if it keeps failing, come back in a few minutes.',
-    retry: 'Try again',
-    reference: 'Reference {digest}',
-    documentTitle: 'Something went wrong — {name}',
-  },
+  pageFailed: PAGE_FAILED.en,
 };

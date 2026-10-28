@@ -111,11 +111,9 @@ export function recordFigures(knowledge: KnowledgeSource): string[] {
   const years = [
     profile.careerStartYear,
     education.year,
-    ...experience.flatMap(({ start, end, period }) => [
-      Math.floor(start),
-      ...(end === null ? [] : [Math.floor(end)]),
-      ...(period.match(/\d{4}/g) ?? []).map(Number),
-    ]),
+    ...experience.flatMap(({ start, end }) =>
+      [start, end ?? start].map((date) => date.slice(0, 4)),
+    ),
   ].map(String);
   return [...new Set([...Object.values(metrics).map((metric) => metric.value), ...years])];
 }

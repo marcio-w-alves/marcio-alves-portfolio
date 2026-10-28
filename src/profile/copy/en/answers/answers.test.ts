@@ -309,11 +309,9 @@ describe('what a topic page tells the model it already shows', () => {
 
 describe('the answers follow the record they are given', () => {
   const changed = withMetric(
-    withMetric(
-      withRole(source, 'deel', { period: '2023 — 2027', start: 2023, end: 2027 }),
-      'deel-critical-load',
-      { value: '73%' },
-    ),
+    withMetric(withRole(source, 'deel', { start: '2023', end: '2027' }), 'deel-critical-load', {
+      value: '73%',
+    }),
     'roots-team',
     { value: '1 → 6' },
   );

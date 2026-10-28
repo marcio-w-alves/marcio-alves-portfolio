@@ -47,7 +47,7 @@ function catalogProblems(resolved: SiteMessages): string[] {
 }
 
 function resolvedFor(source: typeof fixtureSiteProfile, overrides: CopyOverrides) {
-  return siteMessages(localize(source.knowledge, 'en'), overrides);
+  return siteMessages(localize(source.knowledge, 'en'), overrides, 'en');
 }
 
 describe('the catalogs a profile renders with', () => {

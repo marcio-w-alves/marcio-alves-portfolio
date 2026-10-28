@@ -4,6 +4,7 @@ import { localize } from '@/core/knowledge/localize';
 import { rootMetadata } from '@/site/metadata';
 import { siteMessages } from '@/site/site-messages';
 import { createSiteContent } from '@/site/site-content';
+import { publishedLocales } from '@/site/published-locales';
 import { profile } from '.';
 
 /**
@@ -101,12 +102,13 @@ describe("the owner's record", () => {
 
 describe("the owner's headline", () => {
   const HEADLINE = 'Senior Frontend Engineer with tech-lead responsibilities';
-  const site = createSiteContent(profile.knowledge, profile.copy.en.answers);
-  const copy = siteMessages(site.knowledge, profile.copy.en).site;
+  const site = createSiteContent(profile.knowledge, profile.copy.en.answers, 'en');
+  const copy = siteMessages(site.knowledge, profile.copy.en, 'en').site;
   const metadata = rootMetadata(
     site.knowledge,
     copy,
     new URL(`https://${profile.identity.siteHost}`),
+    'en',
   );
   const overview = site.topicCatalog.topicById('overview');
 
@@ -132,5 +134,13 @@ describe("the owner's headline", () => {
       ...overview.questions.flatMap(({ question, tag, short }) => [question, tag, short ?? '']),
     ];
     for (const text of introductions) expect(text).not.toMatch(/staff/i);
+  });
+});
+
+// D30: Portuguese is switched on only with the bilingual fast path (POR-66).
+describe('the published site, until Portuguese is switched on', () => {
+  it('speaks English only', () => {
+    expect(profile.locales).toEqual(['en']);
+    expect(publishedLocales(profile.locales, {})).toEqual(['en']);
   });
 });

@@ -1,5 +1,11 @@
 import { z } from 'zod';
-import type { KnowledgeSource, Locale, SiteSubject } from '@/core/knowledge/schema';
+import {
+  DEFAULT_LOCALE,
+  SUPPORTED_LOCALES,
+  type Locale,
+  type Translations,
+} from '@/core/i18n/locale';
+import type { KnowledgeSource, SiteSubject } from '@/core/knowledge/schema';
 import { excludePattern } from '@/core/knowledge/product-sites';
 import { knowledgeRecordSchema } from '@/core/knowledge/validate';
 import type { Brand, LocaleCopy } from '@/site/site-profile';
@@ -46,7 +52,10 @@ export interface SiteEntry {
 
 export interface Profile {
   readonly identity: Identity;
-  /** The languages the site is published in. */
+  /**
+   * The languages the site is published in: English, and each other language
+   * once its copy and every text of the record are written in it.
+   */
   readonly locales: readonly Locale[];
   readonly knowledge: KnowledgeSource;
   /** The public pages the record's `productSites` passages are read from. */
@@ -54,7 +63,7 @@ export interface Profile {
   /** The colours and image face the pages, the share image and the tab icon are drawn in. */
   readonly brand: Brand;
   /** What the site writes around the record's facts, per language. */
-  readonly copy: Readonly<Record<Locale, LocaleCopy>>;
+  readonly copy: Translations<LocaleCopy>;
   /** The conversations `pnpm eval:assistant` holds the assistant to. */
   readonly evaluation: readonly EvaluationCase[];
 }
@@ -130,25 +139,74 @@ function checkSitePassagesAllowed(
   });
 }
 
+interface Publication {
+  readonly locales: readonly Locale[];
+  readonly knowledge: unknown;
+  readonly copy: Partial<Record<Locale, unknown>>;
+}
+
+/** The path of every text the record has not written in `locale`. */
+function untranslated(value: unknown, locale: Locale, path: PropertyKey[] = []): PropertyKey[][] {
+  if (value === null || typeof value !== 'object') return [];
+  if (Array.isArray(value)) {
+    return value.flatMap((item, index) => untranslated(item, locale, [...path, index]));
+  }
+  if ('en' in value && typeof value.en === 'string') {
+    return locale in value ? [] : [[...path, locale]];
+  }
+  return Object.entries(value).flatMap(([key, field]) =>
+    untranslated(field, locale, [...path, key]),
+  );
+}
+
+/** A language is published only once the copy and the whole record are written in it. */
+function checkPublishedLocalesWritten(
+  { locales, knowledge, copy }: Publication,
+  context: z.RefinementCtx,
+) {
+  for (const locale of locales) {
+    if (locale === DEFAULT_LOCALE) continue;
+    if (!copy[locale]) {
+      context.addIssue({
+        code: 'custom',
+        message: `Publishing ${locale} needs its copy`,
+        path: ['copy', locale],
+      });
+    }
+    for (const path of untranslated(knowledge, locale)) {
+      context.addIssue({
+        code: 'custom',
+        message: `Publishing ${locale} needs this text in ${locale}`,
+        path: ['knowledge', ...path],
+      });
+    }
+  }
+}
+
+const copySchema = z.strictObject({
+  answers: z.looseObject({}),
+  ui: z.looseObject({}),
+  site: z.looseObject({}),
+  about: z.looseObject({}).optional(),
+});
+
 const profileSchema = z
   .strictObject({
     identity: identitySchema,
-    locales: z.array(z.enum(['en'])).min(1),
+    locales: z
+      .array(z.enum(SUPPORTED_LOCALES))
+      .refine((locales) => locales.includes(DEFAULT_LOCALE), {
+        message: `Must include "${DEFAULT_LOCALE}", the language of the unprefixed addresses`,
+      }),
     knowledge: knowledgeRecordSchema,
     siteAllowList: z.array(siteEntrySchema),
     brand: brandSchema,
     // Its shape is the type's to check: copy is code, written against the record.
-    copy: z.strictObject({
-      en: z.strictObject({
-        answers: z.looseObject({}),
-        ui: z.looseObject({}),
-        site: z.looseObject({}),
-        about: z.looseObject({}).optional(),
-      }),
-    }),
+    copy: z.strictObject({ en: copySchema, 'pt-BR': copySchema.optional() }),
     evaluation: z.array(z.looseObject({ id: z.string().regex(/\S/) })),
   })
-  .superRefine(checkSitePassagesAllowed);
+  .superRefine(checkSitePassagesAllowed)
+  .superRefine(checkPublishedLocalesWritten);
 
 /**
  * Fails, listing every problem by its path, when the profile is not one the

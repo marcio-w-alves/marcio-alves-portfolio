@@ -2,7 +2,7 @@ import { gzipSync } from 'node:zlib';
 import { expect, test, type Page } from '@playwright/test';
 import { TOPIC_IDS } from '@/core/chat/topic-id';
 import { profile } from '@/profile';
-import { topicPath } from '@/site/routes';
+import { pagePath } from '@/site/routes';
 import budget from './budgets/client-js.json' with { type: 'json' };
 
 /**
@@ -11,7 +11,7 @@ import budget from './budgets/client-js.json' with { type: 'json' };
  * scripts the home page needs stay within the budget POR-59 set.
  */
 
-const PAGES = TOPIC_IDS.map(topicPath);
+const PAGES = TOPIC_IDS.map((topic) => pagePath('en', topic));
 const { experience, notes } = profile.knowledge;
 
 // A probe is a sentence's longest run free of anything a bundler escapes or markdown restyles,

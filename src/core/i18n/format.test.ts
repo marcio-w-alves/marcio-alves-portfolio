@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { interpolate, mapMessages, overrideMessages, plural, type Plural } from './format';
+import {
+  formatCalendarDate,
+  formatNumber,
+  formatPeriod,
+  interpolate,
+  isCalendarDate,
+  mapMessages,
+  overrideMessages,
+  plural,
+  type Plural,
+} from './format';
 
 describe('interpolate', () => {
   it('fills every placeholder it has a value for', () => {
@@ -67,5 +77,38 @@ describe('overrideMessages', () => {
 
   it('leaves the catalog as it is for no overrides', () => {
     expect(overrideMessages(catalog, {})).toEqual(catalog);
+  });
+});
+
+describe('formatCalendarDate', () => {
+  it('writes a month the way the language abbreviates it, with no connective', () => {
+    expect(formatCalendarDate('2026-03', 'en')).toBe('Mar 2026');
+    expect(formatCalendarDate('2026-03', 'pt-BR')).toBe('mar. 2026');
+  });
+
+  it('writes a year alone as the year', () => {
+    expect(formatCalendarDate('2022', 'pt-BR')).toBe('2022');
+  });
+});
+
+describe('formatPeriod', () => {
+  it('runs from the start to the end, or to the present while it is held', () => {
+    expect(formatPeriod('2022', '2026-03', 'en', 'Present')).toBe('2022 — Mar 2026');
+    expect(formatPeriod('2026-06', null, 'pt-BR', 'atual')).toBe('jun. 2026 — atual');
+  });
+});
+
+describe('formatNumber', () => {
+  it("groups digits the language's way, which plural counts follow", () => {
+    expect(formatNumber(1500, 'en')).toBe('1,500');
+    expect(formatNumber(1500, 'pt-BR')).toBe('1.500');
+    expect(plural('pt-BR', { other: '{count} minutos' }, 1500)).toBe('1.500 minutos');
+  });
+});
+
+describe('isCalendarDate', () => {
+  it('takes a year or a year and month, and nothing else', () => {
+    expect(['2026', '2026-01', '2026-12'].every(isCalendarDate)).toBe(true);
+    expect(['2026-13', '2026-1', 'Mar 2026', '26'].some(isCalendarDate)).toBe(false);
   });
 });

@@ -6,7 +6,7 @@ import { withMetric, withRole } from '@/testing/fixture-profile/variants';
 import { createSiteContent } from './site-content';
 import { workspaceView } from './workspace-view';
 
-const content = createSiteContent(fixtureKnowledge, fixtureAnswers);
+const content = createSiteContent(fixtureKnowledge, fixtureAnswers, 'en');
 
 describe('workspaceView', () => {
   it('links every topic to its own page, the overview to the home page', () => {
@@ -23,8 +23,14 @@ describe('workspaceView', () => {
 
   it('links the page about the site when the profile writes one', () => {
     const about = { label: 'About', title: 'How it works', description: 'd', markdown: '## x' };
-    const { pages } = workspaceView(createSiteContent(fixtureKnowledge, fixtureAnswers, about));
-    expect(pages).toEqual([{ label: 'About', icon: 'layers', href: '/about-this-site' }]);
+    const english = workspaceView(createSiteContent(fixtureKnowledge, fixtureAnswers, 'en', about));
+    const portuguese = workspaceView(
+      createSiteContent(fixtureKnowledge, fixtureAnswers, 'pt-BR', about),
+    );
+    expect(english.pages).toEqual([{ label: 'About', icon: 'layers', href: '/about-this-site' }]);
+    expect(portuguese.pages).toEqual([
+      { label: 'About', icon: 'layers', href: '/pt/about-this-site' },
+    ]);
   });
 
   it.each(TOPIC_IDS)('opens the %s page on its own conversation and four suggestions', (topic) => {
@@ -72,7 +78,7 @@ describe('workspaceView', () => {
       { company: 'Acme Labs' },
     );
 
-    const { evidence } = workspaceView(createSiteContent(changed, fixtureAnswers)).welcome;
+    const { evidence } = workspaceView(createSiteContent(changed, fixtureAnswers, 'en')).welcome;
 
     expect(evidence.companies).toEqual(['Acme Labs', 'Globex']);
     expect(evidence.metrics).toContainEqual({ value: '2 → 9', label: 'Team tripled' });

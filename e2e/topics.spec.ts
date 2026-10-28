@@ -58,4 +58,13 @@ test('a topic page opens directly from its address, and any other address is not
   const missing = await page.goto('/not-a-topic');
   expect(missing?.status()).toBe(404);
   await expect(page.getByRole('heading', { name: site.notFound.title })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+});
+
+test("an address under the API or Next's assets is not found, not an error", async ({
+  request,
+}) => {
+  for (const path of ['/api', '/api/nope', '/_next/nope']) {
+    expect((await request.get(path)).status(), path).toBe(404);
+  }
 });

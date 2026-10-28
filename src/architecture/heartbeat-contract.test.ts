@@ -71,6 +71,7 @@ async function ask({
         message: 'Compare Globex and Acme.',
         history: [],
         context: { topic: 'overview', lastIntent: null, ctaShown: false },
+        locale: 'en',
       },
       { endpoint: ENDPOINT, signal: new AbortController().signal },
     ),

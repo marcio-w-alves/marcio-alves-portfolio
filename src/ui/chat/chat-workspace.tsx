@@ -8,6 +8,7 @@ import { interpolate } from '@/core/i18n/format';
 import { ChatComposer, ComposerDock, JumpToLatest, type ChatComposerHandle } from '../composer';
 import { AppShell } from '../shell/app-shell';
 import { ConversationTopBar } from '../shell/conversation-top-bar';
+import type { LocaleLink } from '../shell/locale-switch';
 import {
   Sidebar,
   type SidebarLinks,
@@ -40,6 +41,8 @@ interface ChatWorkspaceProps {
   readonly topics: readonly SidebarTopic[];
   /** Pages beside the topics, without a conversation. */
   readonly pages?: readonly SidebarPage[] | undefined;
+  /** This page in each language the site speaks; empty while it speaks one. */
+  readonly languages?: readonly LocaleLink[];
   readonly welcome: WelcomeCopy;
   /** How the assistant appears beside its answers. */
   readonly assistant: AssistantIdentity;
@@ -72,6 +75,7 @@ export function ChatWorkspace({
   links,
   topics,
   pages,
+  languages = [],
   welcome,
   assistant,
   suggestions,
@@ -193,6 +197,7 @@ export function ChatWorkspace({
           activeTopic={topic}
           pages={pages}
           links={links}
+          languages={languages}
           onNewConversation={startOver}
           onClose={() => {
             setDrawerOpen(false);
