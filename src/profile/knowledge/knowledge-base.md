@@ -27,7 +27,7 @@ source_policy: distinguir fatos curriculares, relatos e ideias ainda em desenvol
 | Nome público | Marcio Alves |
 | Base profissional | Brasil; mora em João Pessoa, Paraíba (relato de 28/10/2026) |
 | Área principal | Engenharia de software, com especialização em frontend |
-| Posicionamento | Senior Frontend Engineer com responsabilidade de tech lead; títulos formais recentes: Senior Frontend Engineer e Lead Frontend Engineer |
+| Posicionamento | Senior Frontend Engineer; títulos formais recentes: Senior Frontend Engineer e Lead Frontend Engineer |
 | Tempo de experiência | Mais de 10 anos de experiência em software, conforme currículo |
 | Especialidades | React, TypeScript, Next.js, arquitetura frontend, performance, design systems, Developer Experience e liderança técnica |
 | Áreas complementares | Engenharia full-stack, Software Engineering, System Design, Node.js e APIs, arquitetura backend, sistemas distribuídos, dados, cloud, produto e UX |
