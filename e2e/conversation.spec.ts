@@ -28,7 +28,7 @@ test('a suggested question streams in as a rich answer, and a follow-up continue
   await expect(deel).toHaveAttribute('aria-expanded', 'false');
   await deel.click();
   await expect(deel).toHaveAttribute('aria-expanded', 'true');
-  await expect(timeline.getByText('Led and maintained the HRIS team')).toBeVisible();
+  await expect(timeline.getByText('Helped lead and maintain the HRIS team')).toBeVisible();
 
   const metrics = careerAnswer.getByRole('region', { name: 'Key metrics' });
   await expect(metrics.getByText('Reduction in loading time on critical pages')).toBeVisible();

@@ -3,7 +3,8 @@ import { notFound } from 'next/navigation';
 import { metrics } from '@/core/assistant/response-kit';
 import { Metrics } from '@/ui/rich/metrics';
 
-// The design's AchievementMetrics artboard: the six figures it lists, from Deel and Roots.
+// The design's AchievementMetrics artboard: six figures. Two of the design's own are no
+// longer on the résumé (POR-37), so the WEBFI and Maison Modern ones take their place.
 // A development tool, so production answers 404.
 export const metadata: Metadata = { robots: { index: false } };
 
@@ -14,9 +15,9 @@ export default function AchievementMetricsFidelityPage() {
     'deel-critical-load',
     'deel-web-vitals',
     'deel-people-list',
-    'deel-backlog',
     'roots-team',
-    'roots-slack-bot',
+    'maison-newsletter',
+    'webfi-sales',
   ]);
   if (block.component !== 'metrics') throw new Error('metrics() built another block.');
   return (

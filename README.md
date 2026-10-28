@@ -35,6 +35,7 @@ pnpm dev
 | `pnpm test:a11y`           | Axe, security headers and SEO (part of `test:e2e`)   |
 | `pnpm lighthouse`          | Lighthouse budgets on a production build             |
 | `pnpm rag:build`           | Re-embed the knowledge corpus (needs the key)        |
+| `pnpm notes:build`         | Split the knowledge-base document into passages      |
 | `pnpm eval:assistant`      | Grade the assistant end to end (needs the key)       |
 | `pnpm fidelity`            | Compare every artboard with its page, pixel by pixel |
 | `pnpm fidelity:references` | Re-render the design's artboards as references       |
@@ -154,6 +155,17 @@ The index is built offline with `pnpm rag:build`, never during a build, because
 the build must not need a secret; at runtime only the question is embedded.
 The index records a hash of the corpus it came from, and a test fails the
 moment the knowledge base changes without the index being rebuilt.
+
+Marcio's knowledge-base document, `src/core/knowledge/data/knowledge-base.md`,
+adds a `notes` category: how he works, system design, AI-assisted engineering,
+studies, his own products, goals and interests. `pnpm notes:build` (run first
+by `pnpm rag:build`) splits it into `notes.json`, one passage per subsection
+and per FAQ question; its closing sections about the document itself are left
+out. Its evidence tags (`[CV-2026]`, `[RELATO]`, `[RELATO/ESTUDO]`) stay in the
+text, and the system prompt tells the model what each one allows it to claim.
+A search with no category keeps its whole limit for résumé passages and adds
+at most three notes, so the long Portuguese notes never crowd the résumé out.
+To update the base, replace the document and run `pnpm rag:build`.
 
 ## Chat endpoint
 

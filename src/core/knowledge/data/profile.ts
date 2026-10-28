@@ -21,9 +21,10 @@ export const profile: Profile = {
   ],
   summary:
     'Marcio is a Staff-level frontend engineer with deep expertise in React and Next.js, focused on scalable architecture, performance optimization and developer experience.',
-  context: 'Marcio has experience working across startups and large, complex software products.',
+  context:
+    'He designs, implements and maintains scalable applications end to end, while driving technical strategy, mentoring engineers and collaborating with product and design teams.',
   focus:
-    'He focuses on building maintainable applications, making sound architectural decisions, raising engineering standards and aligning technical work with product needs and user impact.',
+    'He plans OKRs, quarterly goals and engineering deliverables aligned with product needs and user impact, raising engineering standards and improving team execution across complex frontend systems.',
   location: { country: 'Brazil', city: null },
   source: 'profile',
 };

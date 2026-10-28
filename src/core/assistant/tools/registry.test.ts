@@ -98,7 +98,7 @@ describe('knowledge actions', () => {
       expect.objectContaining({
         company: 'Deel',
         statements: expect.arrayContaining([
-          'Reduced bug and support backlog tickets by two-thirds through implementing planned bug sprints.',
+          'Reduced loading time on critical pages by 50% through targeted refactoring and optimization, decreasing People List page load time from six seconds to three seconds on cold run.',
         ]) as unknown,
       }),
     ]);
@@ -107,11 +107,7 @@ describe('knowledge actions', () => {
 
   it('returns only the metrics produced at the company asked about', async () => {
     const metrics = (await data('getAchievementMetrics', { company: 'roots' })) as { id: string }[];
-    expect(metrics.map((metric) => metric.id)).toEqual([
-      'roots-team',
-      'roots-slack-bot',
-      'roots-initial-load',
-    ]);
+    expect(metrics.map((metric) => metric.id)).toEqual(['roots-team']);
   });
 
   it('says the city is not documented instead of supplying one', async () => {
@@ -171,7 +167,7 @@ describe('getTechnologyEvidence', () => {
 
 describe('display actions', () => {
   it('resolves metric ids into cards on the server', async () => {
-    const result = succeeded(await registry.run('showMetrics', { ids: ['deel-backlog'] }));
+    const result = succeeded(await registry.run('showMetrics', { ids: ['deel-people-list'] }));
     expect(result.effect).toEqual({
       kind: 'display',
       component: {
@@ -179,8 +175,8 @@ describe('display actions', () => {
         props: {
           items: [
             {
-              value: '~67%',
-              label: 'Of the bug and support backlog cleared through planned bug sprints',
+              value: '6s → 3s',
+              label: 'People List load time on a cold run',
               context: 'Deel',
             },
           ],
@@ -191,7 +187,7 @@ describe('display actions', () => {
 
   it('cites the facts a card shows, since a card is an answer too', async () => {
     const metrics = succeeded(
-      await registry.run('showMetrics', { ids: ['deel-backlog', 'roots-team'] }),
+      await registry.run('showMetrics', { ids: ['deel-people-list', 'roots-team'] }),
     );
     expect(metrics.sources.map((source) => source.id)).toEqual(['resume.deel', 'resume.roots']);
     const timeline = succeeded(await registry.run('showTimeline', { companies: ['toptal'] }));
@@ -214,12 +210,12 @@ describe('display actions', () => {
   });
 
   it('shows up to eight metrics on one card', async () => {
-    const eight = Array.from({ length: 8 }, () => 'deel-backlog');
+    const eight = Array.from({ length: 8 }, () => 'deel-people-list');
     expect((await registry.run('showMetrics', { ids: eight })).ok).toBe(true);
   });
 
   it('bounds how much a single card can show', async () => {
-    const many = Array.from({ length: 9 }, () => 'deel-backlog');
+    const many = Array.from({ length: 9 }, () => 'deel-people-list');
     expect((await registry.run('showMetrics', { ids: many })).ok).toBe(false);
   });
 });
