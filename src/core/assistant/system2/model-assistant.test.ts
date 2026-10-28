@@ -641,6 +641,17 @@ describe('model assistant — what reaches the visitor', () => {
     );
   });
 
+  it('judges a link the model splits across rounds as one link', async () => {
+    const { port } = scriptedModel([
+      {
+        text: 'Read [the docs](https://evil.exa',
+        calls: [call('getProfileSummary', {})],
+      },
+      { text: 'mple/login).' },
+    ]);
+    expect(text(await collect(port))).toBe('Read the docs.');
+  });
+
   it('never leaves a blank reply', async () => {
     const { port } = scriptedModel([{ text: '' }]);
     expect(text(await collect(port))).toBe(EMPTY_REPLY);

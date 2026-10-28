@@ -178,8 +178,10 @@ function createReply(isLinkAllowed: (url: string) => boolean) {
   return {
     begin,
     write: (delta: string) => show(links.push(offers.push(delta))),
-    // A sentence never runs on into the next round's text.
-    endRound: () => show(links.push(offers.flush()) + links.flush()),
+    // A sentence never runs on into the next round's text. A link may: every
+    // round writes into the same text, where it would render as one.
+    endRound: () => show(links.push(offers.flush())),
+    endLinks: () => show(links.flush()),
     /** Shown unfiltered when the answer would otherwise be empty. */
     fallback: (text: string) => show(text),
     *endText(): Generator<AssistantEvent> {
@@ -228,6 +230,7 @@ function* closeAnswer(
   effects: Effects,
   followUps: readonly string[],
 ): Generator<AssistantEvent> {
+  yield* reply.endLinks();
   yield* reply.begin();
   // An empty reply would render as a blank bubble.
   if (!reply.hasText() && effects.components.length === 0) yield* reply.fallback(EMPTY_REPLY);

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { MAX_LABEL_LENGTH } from '@/core/markdown/markdown-link';
 import { createLinkAllowList, createLinkFilter, urlsIn } from './link-filter';
 
 const KNOWN = 'https://github.com/marcio-w-alves';
@@ -36,11 +37,18 @@ describe('links in a streamed answer', () => {
     expect(filter.push('example) now.')).toBe('the page now.');
   });
 
-  it('takes the whole label of a link whose label holds brackets', () => {
-    expect(filtered('[a [b]](https://evil.example)')).toBe('a [b]');
-    expect(filtered('[a [b]](https://github.com/marcio-w-alves)')).toBe(
-      '[a [b]](https://github.com/marcio-w-alves)',
+  it('reads a link inside another first, then the outer one with its label in place', () => {
+    expect(filtered('[a [b](https://evil.one) c](https://evil.two)')).toBe('a b c');
+    expect(filtered('[[x](https://evil.example)](https://github.com/marcio-w-alves)')).toBe(
+      '[x](https://github.com/marcio-w-alves)',
     );
+    expect(filtered('[a [b](https://github.com/marcio-w-alves) c](https://evil.example)')).toBe(
+      '[a [b](https://github.com/marcio-w-alves) c](https://evil.example)',
+    );
+  });
+
+  it('never takes brackets into a label, since labels do not nest', () => {
+    expect(filtered('[a [b]](https://evil.example)')).toBe('[a [b]](https://evil.example)');
   });
 
   it('keeps an address holding one pair of parentheses whole', () => {
@@ -67,11 +75,25 @@ describe('links in a streamed answer', () => {
     expect(filter.push(' here\nnext')).toBe('[note here\nnext');
   });
 
-  it('releases an unterminated bracket once it has held 2048 characters', () => {
+  it('releases a bracket as soon as its label is too long to be a link', () => {
     const filter = createLinkFilter(() => false);
-    const long = `[${'a'.repeat(2046)}`;
-    expect(filter.push(long)).toBe('');
-    expect(filter.push('b')).toBe(`${long}b`);
+    const label = 'a'.repeat(MAX_LABEL_LENGTH);
+    expect(filter.push(`[${label}`)).toBe('');
+    expect(filter.push('b')).toBe(`[${label}b`);
+  });
+
+  it('holds a link that spans rounds of the same answer until it closes', () => {
+    const filter = createLinkFilter(() => false);
+    expect(filter.push('See [the docs](https://evil.exa')).toBe('See ');
+    expect(filter.push('mple/login) now.')).toBe('the docs now.');
+  });
+
+  it('leaves links in a code block as written, and reads them again after it', () => {
+    expect(
+      filtered(
+        '```md\n[x](https://evil.example)\n```\n[y](https://evil.example) `[z](https://evil.example)`',
+      ),
+    ).toBe('```md\n[x](https://evil.example)\n```\ny `z`');
   });
 
   it('releases what it still holds when the answer ends', () => {

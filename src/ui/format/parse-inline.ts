@@ -1,3 +1,5 @@
+import { scanLink } from '@/core/markdown/markdown-link';
+
 /**
  * The inline Markdown subset an answer may use — `**bold**`, `` `code` `` and
  * `[label](https://…)` — parsed into plain data. Nothing here produces markup:
@@ -17,10 +19,8 @@ export type InlineNode =
       readonly external: boolean;
     };
 
-// A link address may hold one balanced pair of parentheses, as in
-// https://en.wikipedia.org/wiki/Angular_(web_framework).
-const INLINE_TOKEN = /(\*\*[^*\n]+\*\*|`[^`\n]+`|\[[^\]\n]+\]\((?:[^()\s]|\([^()\s]*\))+\))/g;
-const LINK = /^\[([^\]]+)\]\(((?:[^()\s]|\([^()\s]*\))+)\)$/;
+const STRONG = /\*\*[^*\n]+\*\*/y;
+const CODE = /`[^`\n]+`/y;
 const SAFE_HREF = /^(https?:\/\/|mailto:)/i;
 const WEB_HREF = /^https?:/i;
 
@@ -28,28 +28,57 @@ export function isSafeHref(href: string): boolean {
   return SAFE_HREF.test(href);
 }
 
+/**
+ * Reads left to right; at each position bold, then code, then a link may
+ * start. Links follow the grammar the answer's link filter applies.
+ */
 export function parseInline(source: string): InlineNode[] {
-  return source
-    .split(INLINE_TOKEN)
-    .filter((chunk) => chunk !== '')
-    .map(toNode);
+  const nodes: InlineNode[] = [];
+  let text = '';
+  let index = 0;
+  const keepText = () => {
+    if (text) nodes.push(plainText(text));
+    text = '';
+  };
+  while (index < source.length) {
+    const token = tokenAt(source, index);
+    if (token) {
+      if (token.node.kind === 'text') {
+        text += token.node.text;
+      } else {
+        keepText();
+        nodes.push(token.node);
+      }
+      index = token.end;
+    } else {
+      text += source.charAt(index);
+      index += 1;
+    }
+  }
+  keepText();
+  return nodes;
 }
 
-function toNode(chunk: string): InlineNode {
-  if (chunk.length > 4 && chunk.startsWith('**') && chunk.endsWith('**')) {
-    return { kind: 'strong', text: chunk.slice(2, -2) };
-  }
-  if (chunk.length > 2 && chunk.startsWith('`') && chunk.endsWith('`')) {
-    return { kind: 'code', text: chunk.slice(1, -1) };
-  }
-  const link = LINK.exec(chunk);
-  if (link?.[1] && link[2] && isSafeHref(link[2])) {
-    return { kind: 'link', text: link[1], href: link[2], external: WEB_HREF.test(link[2]) };
-  }
-  return plainText(chunk);
+function tokenAt(source: string, index: number): { node: InlineNode; end: number } | null {
+  const strong = matchAt(STRONG, source, index);
+  if (strong) return { node: { kind: 'strong', text: strong.slice(2, -2) }, end: STRONG.lastIndex };
+  const code = matchAt(CODE, source, index);
+  if (code) return { node: { kind: 'code', text: code.slice(1, -1) }, end: CODE.lastIndex };
+  if (source[index] !== '[') return null;
+  const link = scanLink(source, index);
+  if (link.kind !== 'link') return null;
+  const node: InlineNode = isSafeHref(link.url)
+    ? { kind: 'link', text: link.label, href: link.url, external: WEB_HREF.test(link.url) }
+    : { kind: 'text', text: source.slice(index, link.end) };
+  return { node, end: link.end };
+}
+
+function matchAt(pattern: RegExp, source: string, index: number): string | null {
+  pattern.lastIndex = index;
+  return pattern.exec(source)?.[0] ?? null;
 }
 
 // A stray `**` that did not pair up is noise, not content.
-function plainText(chunk: string): InlineNode {
-  return { kind: 'text', text: chunk.replace(/\*\*/g, '') };
+function plainText(text: string): InlineNode {
+  return { kind: 'text', text: text.replace(/\*\*/g, '') };
 }

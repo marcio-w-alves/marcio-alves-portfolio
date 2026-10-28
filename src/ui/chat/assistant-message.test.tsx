@@ -124,6 +124,12 @@ describe('an answer’s text', () => {
     expect(screen.getByRole('link')).toHaveAttribute('href', 'https://github.com/marcio-w-alves');
     expect(screen.getByText(/not https:\/\/evil\.example\/login\./)).toBeInTheDocument();
   });
+
+  it('refuses a link with a script address, showing it as text', () => {
+    renderMessage({ parts: [{ type: 'text', id: 'p0', text: '[click](javascript:alert(1))' }] });
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    expect(screen.getByText('[click](javascript:alert(1))')).toBeInTheDocument();
+  });
 });
 
 describe('while an answer arrives', () => {
