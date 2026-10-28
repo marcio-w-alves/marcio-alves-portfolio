@@ -18,19 +18,20 @@ pnpm dev
 
 ## Scripts
 
-| Command             | Purpose                                       |
-| ------------------- | --------------------------------------------- |
-| `pnpm dev`          | Development server                            |
-| `pnpm build`        | Production build                              |
-| `pnpm typecheck`    | Route types, then TypeScript, no emit         |
-| `pnpm lint`         | ESLint, warnings treated as failures          |
-| `pnpm lint:fix`     | ESLint with autofix                           |
-| `pnpm format`       | Prettier, write                               |
-| `pnpm format:check` | Prettier, verify only                         |
-| `pnpm boundaries`   | Module-boundary rules                         |
-| `pnpm test`         | Unit and integration tests (Vitest)           |
-| `pnpm rag:build`    | Re-embed the knowledge corpus (needs the key) |
-| `pnpm verify`       | Every gate, in the order CI runs them         |
+| Command               | Purpose                                        |
+| --------------------- | ---------------------------------------------- |
+| `pnpm dev`            | Development server                             |
+| `pnpm build`          | Production build                               |
+| `pnpm typecheck`      | Route types, then TypeScript, no emit          |
+| `pnpm lint`           | ESLint, warnings treated as failures           |
+| `pnpm lint:fix`       | ESLint with autofix                            |
+| `pnpm format`         | Prettier, write                                |
+| `pnpm format:check`   | Prettier, verify only                          |
+| `pnpm boundaries`     | Module-boundary rules                          |
+| `pnpm test`           | Unit and integration tests (Vitest)            |
+| `pnpm rag:build`      | Re-embed the knowledge corpus (needs the key)  |
+| `pnpm eval:assistant` | Grade the assistant end to end (needs the key) |
+| `pnpm verify`         | Every gate, in the order CI runs them          |
 
 ## Quality gates
 
@@ -206,6 +207,24 @@ A test walks the whole suggestion graph — every topic question, then every
 follow-up each answer offers, recursively — and requires the fast path to
 answer all of it, so the interface can never suggest a question the assistant
 cannot handle.
+
+### Evaluation
+
+`pnpm eval:assistant` runs a corpus of conversations
+(`scripts/evaluation/cases.ts`) — career facts, technologies, companies,
+profiles, location, undocumented details, off-topic requests, injection
+attempts, follow-ups and other languages — through the production wiring. Each
+answer's prose goes to an independent judge, a stronger model than the one
+answering, together with the exact evidence the assistant had: the actions the
+model ran and what they returned, or the knowledge base for the fast path. The
+judge must back every claim with a passage it copies from that evidence, and
+the script checks that the passage is really there; a claim without one is
+re-checked once with only the evidence in view, then reported. Before grading,
+the judge is calibrated on answers with planted fabrications and the run
+aborts if it misses one. Deterministic checks cover the rest: which path
+answered, refusals citing no source, the reply language, required and
+forbidden phrases. It spends real tokens and needs the key, so it runs
+locally rather than in CI.
 
 ## Deployment
 

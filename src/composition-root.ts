@@ -2,6 +2,7 @@ import { createAssistant, type Assistant } from '@/core/assistant/assistant';
 import {
   createModelAssistant,
   type ModelAssistant,
+  type ToolTrace,
 } from '@/core/assistant/system2/model-assistant';
 import { createExternalTools } from '@/core/assistant/tools/external-tools';
 import { createToolRegistry } from '@/core/assistant/tools/registry';
@@ -37,7 +38,7 @@ import { createWikipediaReferences } from '@/infrastructure/wikipedia/wikipedia-
 const CHAT_MODEL = 'gpt-4o-mini';
 // Low but not zero: answers stay close to the action results without reading
 // like a form letter.
-const TEMPERATURE = 0.2;
+const TEMPERATURE = 0;
 
 const TEN_MINUTES = 10 * 60 * 1000;
 /** Any request, fast path included: enough for a curious visitor, not for a script. */
@@ -67,7 +68,16 @@ const budget = createModelBudget({
   dailyTokens: DAILY_MODEL_TOKENS,
 });
 
-function buildModelAssistant(apiKey: string, githubToken: string | undefined): ModelAssistant {
+export interface Observers {
+  /** Every action the model ran; the evaluation reads the evidence from here. */
+  readonly onToolResult?: (result: ToolTrace) => void;
+}
+
+function buildModelAssistant(
+  apiKey: string,
+  githubToken: string | undefined,
+  observers: Observers,
+): ModelAssistant {
   const client = createOpenAIClient(apiKey);
   const search = createVectorKnowledgeSearch({
     embeddings: createOpenAIEmbeddings({
@@ -97,31 +107,35 @@ function buildModelAssistant(apiKey: string, githubToken: string | undefined): M
     onUsage: (usage) => {
       budget.record(usage);
     },
+    ...(observers.onToolResult ? { onToolResult: observers.onToolResult } : {}),
   });
+}
+
+/** Builds the wiring. The site uses the shared instance below; the evaluation builds its own, observed. */
+export function buildContainer(observers: Observers = {}): Container {
+  const env = serverEnv();
+  return {
+    assistant: createAssistant({
+      // Without a credential the site still answers everything the fast
+      // path recognizes, and says plainly what it cannot.
+      modelAssistant: env.OPENAI_API_KEY
+        ? buildModelAssistant(env.OPENAI_API_KEY, env.GITHUB_TOKEN, observers)
+        : null,
+      budget,
+      answerCache: createAnswerCache({ ttlMs: 60 * 60 * 1000, maxEntries: 500 }),
+      reportError,
+    }),
+    reportError,
+    requestLimiter: createSlidingWindowLimiter({
+      limit: REQUESTS_PER_TEN_MINUTES,
+      windowMs: TEN_MINUTES,
+    }),
+  };
 }
 
 let container: Container | undefined;
 
 export function getContainer(): Container {
-  if (!container) {
-    const env = serverEnv();
-    container = {
-      assistant: createAssistant({
-        // Without a credential the site still answers everything the fast
-        // path recognizes, and says plainly what it cannot.
-        modelAssistant: env.OPENAI_API_KEY
-          ? buildModelAssistant(env.OPENAI_API_KEY, env.GITHUB_TOKEN)
-          : null,
-        budget,
-        answerCache: createAnswerCache({ ttlMs: 60 * 60 * 1000, maxEntries: 500 }),
-        reportError,
-      }),
-      reportError,
-      requestLimiter: createSlidingWindowLimiter({
-        limit: REQUESTS_PER_TEN_MINUTES,
-        windowMs: TEN_MINUTES,
-      }),
-    };
-  }
+  container ??= buildContainer();
   return container;
 }
