@@ -36,6 +36,120 @@ async function run(port: KnowledgeSearchPort, args: unknown) {
   return outcome.result;
 }
 
+const DEEL = { id: 'resume.deel', label: 'Resume' };
+const ROOTS = { id: 'resume.roots', label: 'Resume' };
+
+function passage(id: string, text: string, source: Passage['source'], score = 0.4): Passage {
+  return { id, category: id.startsWith('role:') ? 'experience' : 'skills', text, source, score };
+}
+
+const HRIS_LEAD = passage(
+  'role:deel:1',
+  "Deel (Senior Frontend Engineer, 2022 — 2026): Helped lead and maintain the HRIS team responsible for the company's core HR tools product.",
+  DEEL,
+);
+const ROOTS_TEAM = passage(
+  'role:roots:1',
+  'Roots (Lead Frontend Engineer, 2020 — 2022): Expanded the frontend team from a solo developer setup by recruiting and integrating three additional developers.',
+  ROOTS,
+);
+const SKILL_LIST = passage(
+  'skills:leadership',
+  'Skills — Leadership: Technical Strategy, Mentoring, Code Reviews, Hiring.',
+  { id: 'resume.skills', label: 'Resume' },
+  0.5,
+);
+const EDUCATION = passage(
+  'education',
+  'Education: Bachelor of Computer Science.',
+  { id: 'resume.education', label: 'Resume' },
+  0.3,
+);
+const CERTIFICATIONS = passage(
+  'certifications',
+  'Certifications, which are courses and not professional experience.',
+  { id: 'resume.certifications', label: 'Resume' },
+  0.25,
+);
+
+/** Ranks the whole record the way it went wrong: the skill list above the roles. */
+function recordRankingSkillsFirst() {
+  const queries: KnowledgeSearchQuery[] = [];
+  const port: KnowledgeSearchPort = {
+    search: (query) => {
+      queries.push(query);
+      return Promise.resolve(
+        query.category === 'experience'
+          ? [HRIS_LEAD, ROOTS_TEAM]
+          : [SKILL_LIST, EDUCATION, HRIS_LEAD, CERTIFICATIONS],
+      );
+    },
+  };
+  return { port, queries };
+}
+
+function passageTexts(data: unknown): string[] {
+  return (data as { passages: { text: string }[] }).passages.map((item) => item.text);
+}
+
+describe('searchKnowledge — questions about leading teams', () => {
+  it.each([
+    'Has he led teams?',
+    'Ele já liderou equipes?',
+    'Did he manage or mentor engineers?',
+    'Ele já foi gestor de alguém?',
+    '¿Ha sido líder de un equipo?',
+  ])(
+    'puts the roles where he led first for "%s", displacing the weakest passage',
+    async (question) => {
+      const { port, queries } = recordRankingSkillsFirst();
+
+      const result = await run(port, { query: question });
+
+      expect(queries).toContainEqual({ query: question, limit: 5, category: 'experience' });
+      expect(passageTexts(result.data)).toEqual([
+        HRIS_LEAD.text,
+        ROOTS_TEAM.text,
+        SKILL_LIST.text,
+        EDUCATION.text,
+      ]);
+      expect(result.sources.map((source) => source.id)).toEqual([
+        'resume.deel',
+        'resume.roots',
+        'resume.skills',
+        'resume.education',
+      ]);
+    },
+  );
+
+  it('keeps the ranking as it is for any other question', async () => {
+    const { port, queries } = recordRankingSkillsFirst();
+
+    const result = await run(port, { query: 'What did he study?' });
+
+    expect(queries).toEqual([{ query: 'What did he study?', limit: 5 }]);
+    expect(passageTexts(result.data)).toEqual([
+      SKILL_LIST.text,
+      EDUCATION.text,
+      HRIS_LEAD.text,
+      CERTIFICATIONS.text,
+    ]);
+  });
+
+  it('tells which passages back each source, so an answer cites only what it used', async () => {
+    const { port } = recordRankingSkillsFirst();
+
+    const result = await run(port, { query: 'Has he led teams?' });
+
+    expect(result.evidence).toEqual({
+      'resume.deel': HRIS_LEAD.text,
+      'resume.roots': ROOTS_TEAM.text,
+      'resume.skills': SKILL_LIST.text,
+      'resume.education': EDUCATION.text,
+    });
+  });
+});
+
 describe('searchKnowledge', () => {
   it('returns matching passages with their relevance, citing each source once', async () => {
     const passage = (id: string, score: number): Passage => ({
@@ -68,8 +182,8 @@ describe('searchKnowledge', () => {
 
   it('searches his whole record for the five best passages', async () => {
     const { port, queries } = searchReturning([]);
-    await run(port, { query: 'leadership' });
-    expect(queries).toEqual([{ query: 'leadership', limit: 5 }]);
+    await run(port, { query: 'accessibility' });
+    expect(queries).toEqual([{ query: 'accessibility', limit: 5 }]);
   });
 
   it('refuses an empty or oversized query', async () => {
@@ -80,15 +194,15 @@ describe('searchKnowledge', () => {
 
   it('searches for the query without the spaces around it', async () => {
     const { port, queries } = searchReturning([]);
-    await run(port, { query: '  leadership \n' });
-    expect(queries.map((query) => query.query)).toEqual(['leadership']);
+    await run(port, { query: '  accessibility \n' });
+    expect(queries.map((query) => query.query)).toEqual(['accessibility']);
   });
 
   it('accepts a query at either length limit, in any script', async () => {
     const { port, queries } = searchReturning([]);
     await run(port, { query: 'ux' });
     await run(port, { query: 'é'.repeat(300) });
-    await run(port, { query: 'liderança de equipes 🚀' });
+    await run(port, { query: 'acessibilidade na Deel 🚀' });
     expect(queries).toHaveLength(3);
   });
 

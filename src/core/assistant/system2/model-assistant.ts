@@ -12,6 +12,7 @@ import type { ToolRegistry } from '../tools/registry';
 import type { ToolOutcome } from '../tools/tool';
 import { createLinkAllowList, createLinkFilter, urlsIn, type LinkAllowList } from './link-filter';
 import { createOfferFilter } from './offer-filter';
+import { distinct, evidenceOf, usedSources, type SourceEvidence } from './sources';
 import { systemPrompt } from './system-prompt';
 import { createUsageMeter } from './usage';
 
@@ -197,25 +198,41 @@ type Reply = ReturnType<typeof createReply>;
 interface Effects {
   readonly components: readonly RichComponent[];
   add(outcome: ToolOutcome): void;
-  citedSources(): AnswerSource[];
+  citedSources(answer: string): AnswerSource[];
 }
 
 function collectEffects(): Effects {
-  const sources = new Map<string, AnswerSource>();
+  const shown: AnswerSource[] = [];
+  const evidence: SourceEvidence[] = [];
   const components: RichComponent[] = [];
   let declined = false;
+
+  // A card is part of the answer, so what it shows is always cited. When the
+  // text echoes none of the evidence closely enough to tell, every source
+  // stays: a grounded answer must never look unsourced.
+  function retrievedSourcesUsedBy(answer: string): AnswerSource[] {
+    const used = usedSources(answer, evidence);
+    return used.length > 0 || shown.length > 0
+      ? used
+      : distinct(evidence.map(({ source }) => source));
+  }
 
   return {
     components,
     add(outcome: ToolOutcome): void {
       if (!outcome.ok) return;
-      for (const source of outcome.result.sources) sources.set(source.id, source);
       const effect = outcome.result.effect;
-      if (effect?.kind === 'display') components.push(effect.component);
+      if (effect?.kind === 'display') {
+        components.push(effect.component);
+        shown.push(...outcome.result.sources);
+      } else {
+        evidence.push(...evidenceOf(outcome.result));
+      }
       if (effect?.kind === 'decline') declined = true;
     },
     // A declined answer cites nothing, so it can never look grounded.
-    citedSources: (): AnswerSource[] => (declined ? [] : [...sources.values()]),
+    citedSources: (answer: string): AnswerSource[] =>
+      declined ? [] : distinct([...shown, ...retrievedSourcesUsedBy(answer)]),
   };
 }
 
@@ -228,7 +245,7 @@ function allowLinksFrom(outcome: ToolOutcome, linkable: LinkAllowList): void {
 function* closeAnswer(
   reply: Reply,
   effects: Effects,
-  followUps: readonly string[],
+  { answer, followUps }: { readonly answer: string; readonly followUps: readonly string[] },
 ): Generator<AssistantEvent> {
   yield* reply.endLinks();
   yield* reply.begin();
@@ -238,7 +255,7 @@ function* closeAnswer(
   for (const [index, component] of effects.components.entries()) {
     yield { type: 'component', id: `p${String(index + 1)}`, ...component };
   }
-  yield { type: 'finish', followUps, sources: effects.citedSources() };
+  yield { type: 'finish', followUps, sources: effects.citedSources(answer) };
 }
 
 export function createModelAssistant({
@@ -353,9 +370,11 @@ export function createModelAssistant({
       const reply = createReply((url) => linkable.allows(url));
       const effects = collectEffects();
       let searched = false;
+      let answer = '';
 
       for (let round = 1; round <= MAX_ROUNDS; round += 1) {
         const turn = yield* streamRound(messages, round, reply, signal);
+        answer += turn.text;
         if (turn.calls.length === 0) break;
 
         const searchedBefore: boolean = searched || turn.calls.some((call) => call.name === SEARCH);
@@ -375,7 +394,7 @@ export function createModelAssistant({
         }
       }
 
-      yield* closeAnswer(reply, effects, followUps);
+      yield* closeAnswer(reply, effects, { answer, followUps });
     },
   };
 }

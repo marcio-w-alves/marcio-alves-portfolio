@@ -1,17 +1,44 @@
 import { z } from 'zod';
 import type { AnswerSource } from '../assistant-event';
-import type {
-  KnowledgeSearchPort,
-  KnowledgeSearchQuery,
-  Passage,
-} from '../ports/knowledge-search.port';
+import type { KnowledgeSearchPort, Passage } from '../ports/knowledge-search.port';
 import { defineTool, type Tool, type ToolFailure, type ToolResult } from './tool';
 
 const LIMIT = 5;
 const SEARCH_KNOWLEDGE = 'searchKnowledge';
 
+/**
+ * Questions about leading, managing or mentoring people, in the languages
+ * visitors write in. "Ele já liderou equipes?" once retrieved the leadership
+ * skill list, his education and his certifications above the roles where he
+ * led a team, and the answer listed skill names instead of what he did.
+ */
+const ABOUT_LEADING =
+  /(?<!\p{L})(lead(s|er|ers|ership|ing)?|led|manag\p{L}*|mentor\p{L}*|teams?|l[ií]der\p{L}*|equip[eo]s?|gerenc\p{L}*|gest(ão|or|ora|ores)|coorden\p{L}*|chefi\p{L}*)(?!\p{L})/iu;
+
 function distinct(sources: readonly AnswerSource[]): AnswerSource[] {
   return [...new Map(sources.map((source) => [source.id, source])).values()];
+}
+
+/** The roles' own statements come first, displacing the weakest of the rest. */
+function rolesFirst(ranked: readonly Passage[], roles: readonly Passage[]): Passage[] {
+  const placed = new Set(roles.map((passage) => passage.id));
+  return [...roles, ...ranked.filter((passage) => !placed.has(passage.id))].slice(
+    0,
+    Math.max(ranked.length, roles.length),
+  );
+}
+
+function evidenceBySource(passages: readonly Passage[]): Record<string, string> {
+  const ids = new Set(passages.map(({ source }) => source.id));
+  return Object.fromEntries(
+    [...ids].map((id) => [
+      id,
+      passages
+        .filter(({ source }) => source.id === id)
+        .map(({ text }) => text)
+        .join('\n'),
+    ]),
+  );
 }
 
 export const SEARCH_UNAVAILABLE =
@@ -27,11 +54,22 @@ export function createSearchTools(
   search: KnowledgeSearchPort,
   reportError: (failure: ToolFailure) => void,
 ): Tool[] {
-  async function find(query: KnowledgeSearchQuery): Promise<Passage[] | null> {
+  async function ranked(query: string, signal?: AbortSignal): Promise<Passage[]> {
+    const scope = signal ? { signal } : {};
+    const [passages, roles] = await Promise.all([
+      search.search({ query, limit: LIMIT, ...scope }),
+      ABOUT_LEADING.test(query)
+        ? search.search({ query, limit: LIMIT, category: 'experience', ...scope })
+        : [],
+    ]);
+    return rolesFirst(passages, roles);
+  }
+
+  async function find(query: string, signal?: AbortSignal): Promise<Passage[] | null> {
     try {
-      return await search.search(query);
+      return await ranked(query, signal);
     } catch (error) {
-      if (query.signal?.aborted) throw error;
+      if (signal?.aborted) throw error;
       reportError({ tool: SEARCH_KNOWLEDGE, error });
       return null;
     }
@@ -48,7 +86,7 @@ export function createSearchTools(
     // badly, and "what job is he looking for" searched under profile, or with
     // a limit of one, never reached the answer in his notes.
     execute: async ({ query }, signal) => {
-      const passages = await find({ query, limit: LIMIT, ...(signal ? { signal } : {}) });
+      const passages = await find(query, signal);
       if (!passages) return UNAVAILABLE;
       return {
         data:
@@ -65,6 +103,7 @@ export function createSearchTools(
                 note: 'Nothing in the documented record matches. Do not answer from general knowledge.',
               },
         sources: distinct(passages.map((passage) => passage.source)),
+        evidence: evidenceBySource(passages),
       };
     },
   });
