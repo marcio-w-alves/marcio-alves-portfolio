@@ -6,26 +6,44 @@ import { defineTool, type Tool, type ToolFailure, type ToolResult } from './tool
 const LIMIT = 5;
 const SEARCH_KNOWLEDGE = 'searchKnowledge';
 
+const ROLE_PASSAGES = 3;
+
 /**
  * Questions about leading, managing or mentoring people, in the languages
  * visitors write in. "Ele já liderou equipes?" once retrieved the leadership
  * skill list, his education and his certifications above the roles where he
  * led a team, and the answer listed skill names instead of what he did.
  */
-const ABOUT_LEADING =
-  /(?<!\p{L})(lead(s|er|ers|ership|ing)?|led|manag\p{L}*|mentor\p{L}*|teams?|l[ií]der\p{L}*|equip[eo]s?|gerenc\p{L}*|gest(ão|or|ora|ores)|coorden\p{L}*|chefi\p{L}*)(?!\p{L})/iu;
+const LEADING_WORD =
+  /(?<!\p{L})(leaders?|leadership|l[ií]der\p{L}*|mentor\p{L}*|supervis\p{L}*|chefi\p{L}*|gestor(a|as|es)?)(?!\p{L})/iu;
+// These also manage state or measure lead time: only about people when people are named.
+const MANAGING_WORD =
+  /(?<!\p{L})(lead(s|ing)?|led|manag\p{L}*|gerenc\p{L}*|gest[ãa]o|gestion\p{L}*|coorden\p{L}*)(?!\p{L})/iu;
+const PEOPLE_WORD =
+  /(?<!\p{L})(teams?|people|engineers?|developers?|devs?|juniors?|squads?|staff|reports|pessoas|equipes?|engenheiros|desenvolvedores|personas|equipos?|gente)(?!\p{L})/iu;
+
+function isAboutLeading(query: string): boolean {
+  return LEADING_WORD.test(query) || (MANAGING_WORD.test(query) && PEOPLE_WORD.test(query));
+}
 
 function distinct(sources: readonly AnswerSource[]): AnswerSource[] {
   return [...new Map(sources.map((source) => [source.id, source])).values()];
 }
 
-/** The roles' own statements come first, displacing the weakest of the rest. */
+/**
+ * The roles' own statements come first. Each one added displaces the weakest
+ * résumé passage, never a note: the notes keep the share retrieval gave them.
+ */
 function rolesFirst(ranked: readonly Passage[], roles: readonly Passage[]): Passage[] {
   const placed = new Set(roles.map((passage) => passage.id));
-  return [...roles, ...ranked.filter((passage) => !placed.has(passage.id))].slice(
-    0,
-    Math.max(ranked.length, roles.length),
-  );
+  const rest = ranked.filter((passage) => !placed.has(passage.id));
+  const added = roles.length + rest.length - ranked.length;
+  const weakestRecord = rest
+    .filter((passage) => passage.category !== 'notes')
+    .reverse()
+    .slice(0, added);
+  const displaced = new Set(weakestRecord.map((passage) => passage.id));
+  return [...roles, ...rest.filter((passage) => !displaced.has(passage.id))];
 }
 
 function evidenceBySource(passages: readonly Passage[]): Record<string, string> {
@@ -58,11 +76,11 @@ export function createSearchTools(
     const scope = signal ? { signal } : {};
     const [passages, roles] = await Promise.all([
       search.search({ query, limit: LIMIT, ...scope }),
-      ABOUT_LEADING.test(query)
+      isAboutLeading(query)
         ? search.search({ query, limit: LIMIT, category: 'experience', ...scope })
         : [],
     ]);
-    return rolesFirst(passages, roles);
+    return rolesFirst(passages, roles.slice(0, ROLE_PASSAGES));
   }
 
   async function find(query: string, signal?: AbortSignal): Promise<Passage[] | null> {

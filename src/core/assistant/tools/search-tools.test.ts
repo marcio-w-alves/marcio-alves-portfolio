@@ -4,6 +4,8 @@ import type {
   KnowledgeSearchQuery,
   Passage,
 } from '../ports/knowledge-search.port';
+import { buildCorpus } from '@/core/knowledge/corpus';
+import { citation } from '../citations';
 import { createSearchTools, SEARCH_UNAVAILABLE } from './search-tools';
 
 const SHALL = { id: 'resume.shall', label: 'Resume' };
@@ -36,116 +38,118 @@ async function run(port: KnowledgeSearchPort, args: unknown) {
   return outcome.result;
 }
 
-const DEEL = { id: 'resume.deel', label: 'Resume' };
-const ROOTS = { id: 'resume.roots', label: 'Resume' };
-
-function passage(id: string, text: string, source: Passage['source'], score = 0.4): Passage {
-  return { id, category: id.startsWith('role:') ? 'experience' : 'skills', text, source, score };
+/** A passage of the real corpus, as the vector search hands it back. */
+function corpusPassage(id: string, score: number): Passage {
+  const chunk = buildCorpus().find((candidate) => candidate.id === id);
+  if (!chunk) throw new Error(`${id} is not in the corpus`);
+  return { id, category: chunk.category, text: chunk.text, source: citation(chunk.source), score };
 }
 
-const HRIS_LEAD = passage(
-  'role:deel:1',
-  "Deel (Senior Frontend Engineer, 2022 — 2026): Helped lead and maintain the HRIS team responsible for the company's core HR tools product.",
-  DEEL,
-);
-const ROOTS_TEAM = passage(
-  'role:roots:1',
-  'Roots (Lead Frontend Engineer, 2020 — 2022): Expanded the frontend team from a solo developer setup by recruiting and integrating three additional developers.',
-  ROOTS,
-);
-const SKILL_LIST = passage(
-  'skills:leadership',
-  'Skills — Leadership: Technical Strategy, Mentoring, Code Reviews, Hiring.',
-  { id: 'resume.skills', label: 'Resume' },
-  0.5,
-);
-const EDUCATION = passage(
-  'education',
-  'Education: Bachelor of Computer Science.',
-  { id: 'resume.education', label: 'Resume' },
-  0.3,
-);
-const CERTIFICATIONS = passage(
-  'certifications',
-  'Certifications, which are courses and not professional experience.',
-  { id: 'resume.certifications', label: 'Resume' },
-  0.25,
-);
+// Ranked as the Portuguese leadership question was: the skill list, education
+// and certifications above the roles, his notes on leadership alongside.
+const WHOLE_RECORD = [
+  corpusPassage('notes:14.q6', 0.61),
+  corpusPassage('skills:leadership', 0.48),
+  corpusPassage('notes:8.1', 0.47),
+  corpusPassage('role:deel:1', 0.41),
+  corpusPassage('notes:8', 0.4),
+  corpusPassage('education', 0.33),
+  corpusPassage('profile', 0.31),
+  corpusPassage('certifications', 0.29),
+];
+// The experience-only search always fills its limit on the real corpus.
+const EXPERIENCE = [
+  corpusPassage('role:deel:1', 0.41),
+  corpusPassage('role:roots:1', 0.39),
+  corpusPassage('role:roots:2', 0.36),
+  corpusPassage('role:deel:7', 0.34),
+  corpusPassage('role:roots:3', 0.33),
+];
 
-/** Ranks the whole record the way it went wrong: the skill list above the roles. */
-function recordRankingSkillsFirst() {
+function rankedRecord() {
   const queries: KnowledgeSearchQuery[] = [];
   const port: KnowledgeSearchPort = {
     search: (query) => {
       queries.push(query);
-      return Promise.resolve(
-        query.category === 'experience'
-          ? [HRIS_LEAD, ROOTS_TEAM]
-          : [SKILL_LIST, EDUCATION, HRIS_LEAD, CERTIFICATIONS],
-      );
+      return Promise.resolve(query.category === 'experience' ? EXPERIENCE : WHOLE_RECORD);
     },
   };
   return { port, queries };
 }
 
-function passageTexts(data: unknown): string[] {
-  return (data as { passages: { text: string }[] }).passages.map((item) => item.text);
+function passageIds(data: unknown): string[] {
+  const shown = (data as { passages: { text: string }[] }).passages;
+  return shown.map(
+    ({ text }) => [...WHOLE_RECORD, ...EXPERIENCE].find((item) => item.text === text)?.id ?? text,
+  );
 }
 
-describe('searchKnowledge — questions about leading teams', () => {
+describe('searchKnowledge — questions about leading people', () => {
   it.each([
     'Has he led teams?',
     'Ele já liderou equipes?',
-    'Did he manage or mentor engineers?',
+    'Did he mentor engineers?',
+    'Has he managed a team of developers?',
     'Ele já foi gestor de alguém?',
+    'Ele gerenciou pessoas?',
     '¿Ha sido líder de un equipo?',
-  ])(
-    'puts the roles where he led first for "%s", displacing the weakest passage',
-    async (question) => {
-      const { port, queries } = recordRankingSkillsFirst();
+    '¿Gestionó personas?',
+    'Did he supervise anyone?',
+  ])('puts three roles where he led first for "%s"', async (question) => {
+    const { port, queries } = rankedRecord();
 
-      const result = await run(port, { query: question });
+    const result = await run(port, { query: question });
 
-      expect(queries).toContainEqual({ query: question, limit: 5, category: 'experience' });
-      expect(passageTexts(result.data)).toEqual([
-        HRIS_LEAD.text,
-        ROOTS_TEAM.text,
-        SKILL_LIST.text,
-        EDUCATION.text,
-      ]);
-      expect(result.sources.map((source) => source.id)).toEqual([
-        'resume.deel',
-        'resume.roots',
-        'resume.skills',
-        'resume.education',
-      ]);
-    },
-  );
-
-  it('keeps the ranking as it is for any other question', async () => {
-    const { port, queries } = recordRankingSkillsFirst();
-
-    const result = await run(port, { query: 'What did he study?' });
-
-    expect(queries).toEqual([{ query: 'What did he study?', limit: 5 }]);
-    expect(passageTexts(result.data)).toEqual([
-      SKILL_LIST.text,
-      EDUCATION.text,
-      HRIS_LEAD.text,
-      CERTIFICATIONS.text,
+    expect(queries).toContainEqual({ query: question, limit: 5, category: 'experience' });
+    expect(passageIds(result.data).slice(0, 3)).toEqual([
+      'role:deel:1',
+      'role:roots:1',
+      'role:roots:2',
     ]);
   });
 
-  it('tells which passages back each source, so an answer cites only what it used', async () => {
-    const { port } = recordRankingSkillsFirst();
+  it('keeps every note and displaces only the weakest résumé passages', async () => {
+    const { port } = rankedRecord();
 
-    const result = await run(port, { query: 'Has he led teams?' });
+    const result = await run(port, { query: 'Ele já liderou equipes?' });
+
+    expect(passageIds(result.data)).toEqual([
+      'role:deel:1',
+      'role:roots:1',
+      'role:roots:2',
+      'notes:14.q6',
+      'skills:leadership',
+      'notes:8.1',
+      'notes:8',
+      'education',
+    ]);
+  });
+
+  it.each([
+    'What is his lead time to production?',
+    'How does he manage state in React?',
+    'Como é o gerenciamento de estado no frontend?',
+    'Ele usa gestão de estado no frontend?',
+    'Does he like working in remote teams?',
+    'Ele trabalha bem em equipe?',
+  ])('keeps the ranking as it is for "%s"', async (question) => {
+    const { port, queries } = rankedRecord();
+
+    const result = await run(port, { query: question });
+
+    expect(queries).toEqual([{ query: question, limit: 5 }]);
+    expect(passageIds(result.data)).toEqual(WHOLE_RECORD.map(({ id }) => id));
+  });
+
+  it('tells which passages back each source, so an answer cites only what it used', async () => {
+    const passages = [corpusPassage('role:deel:1', 0.4), corpusPassage('role:deel:7', 0.3)];
+    const { port } = searchReturning([...passages, corpusPassage('education', 0.2)]);
+
+    const result = await run(port, { query: 'Deel' });
 
     expect(result.evidence).toEqual({
-      'resume.deel': HRIS_LEAD.text,
-      'resume.roots': ROOTS_TEAM.text,
-      'resume.skills': SKILL_LIST.text,
-      'resume.education': EDUCATION.text,
+      'resume.deel': `${passages[0]?.text ?? ''}\n${passages[1]?.text ?? ''}`,
+      'resume.education': corpusPassage('education', 0).text,
     });
   });
 });
