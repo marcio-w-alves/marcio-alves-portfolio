@@ -1,11 +1,21 @@
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import { expect, test, type JSHandle, type Locator, type Page } from '@playwright/test';
+import { answers, holdNextAnswer } from './support/assistant';
 
 // A phone, where the navigation is a drawer that slides over the conversation.
 test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 
-// Every animation runs ten times slower, so a frame sampled right after an
-// action lands well inside the motion it started.
+/*
+ * Motion is observed through recordings: a loop in the page reads a value on
+ * every animation frame until the motion settles, and the test asserts on the
+ * whole recording. What the runner happens to see when its next command lands
+ * never decides a result.
+ */
+
+// Every animation runs ten times slower, so each one spans many recorded frames.
 const SLOW_MOTION = 0.1;
+const DRAWER_OPEN_AT = 0;
+const DRAWER_WIDTH = 300;
+const DRAWER_CLOSED_AT = -DRAWER_WIDTH;
 
 async function slowDownAnimations(page: Page) {
   const devtools = await page.context().newCDPSession(page);
@@ -17,42 +27,167 @@ function drawer(page: Page) {
   return page.getByRole('complementary', { name: 'Portfolio navigation', includeHidden: true });
 }
 
-/** Where the drawer's left edge is on the next painted frame. */
-function leftEdgeNextFrame(element: Locator) {
-  return element.evaluate(
-    (node) =>
-      new Promise<number>((resolve) => {
-        requestAnimationFrame(() => {
-          resolve(node.getBoundingClientRect().left);
-        });
-      }),
-  );
+function menuButton(page: Page) {
+  return page.getByRole('button', { name: 'Open navigation' });
+}
+
+function conversation(page: Page) {
+  return page.getByRole('list', { name: 'Conversation' });
+}
+
+/** A recording in progress; `settled` waits for its last frame and returns every reading. */
+interface Recording<Reading> {
+  readonly settled: () => Promise<Reading[]>;
+}
+
+function recording<Reading>(handle: JSHandle<{ done: Promise<Reading[]> }>): Recording<Reading> {
+  return { settled: () => handle.evaluate((running) => running.done) };
+}
+
+/** Records the element's left edge on every frame until it rests at `restsAt`. */
+async function recordLeftEdge(element: Locator, restsAt: number): Promise<Recording<number>> {
+  const handle = await element.evaluateHandle((node, target) => {
+    const readings: number[] = [];
+    const done = new Promise<number[]>((resolve) => {
+      const read = () => {
+        const left = node.getBoundingClientRect().left;
+        readings.push(left);
+        if (left === target) resolve(readings);
+        else requestAnimationFrame(read);
+      };
+      requestAnimationFrame(read);
+    });
+    return { done };
+  }, restsAt);
+  return recording(handle);
+}
+
+/**
+ * Records the element's left edge on every frame until its slide crosses
+ * `holdAt`, and pauses the slide right there, so the visitor's next action
+ * lands mid-slide however fast or slow the runner is. The slide is the one
+ * running `translate` transition.
+ */
+async function recordLeftEdgeHoldingAt(
+  element: Locator,
+  holdAt: number,
+): Promise<Recording<number>> {
+  const handle = await element.evaluateHandle((node, target) => {
+    const readings: number[] = [];
+    const done = new Promise<number[]>((resolve) => {
+      const read = () => {
+        const left = node.getBoundingClientRect().left;
+        readings.push(left);
+        const [first = left] = readings;
+        const slide = document
+          .getAnimations()
+          .find((animation) => (animation as CSSTransition).transitionProperty === 'translate');
+        if (slide && Math.sign(left - target) !== Math.sign(first - target)) {
+          slide.pause();
+          resolve(readings);
+        } else requestAnimationFrame(read);
+      };
+      requestAnimationFrame(read);
+    });
+    return { done };
+  }, holdAt);
+  return recording(handle);
+}
+
+/**
+ * Records every metric's opacity on each frame they are on screen, from the
+ * first frame they render until all of them are fully shown.
+ */
+async function recordMetricOpacities(page: Page): Promise<Recording<number[]>> {
+  const handle = await page.evaluateHandle(() => {
+    const frames: number[][] = [];
+    const done = new Promise<number[][]>((resolve) => {
+      const read = () => {
+        const metrics = [...document.querySelectorAll('[aria-label="Key metrics"] li')];
+        const opacities = metrics.map((metric) => Number(getComputedStyle(metric).opacity));
+        if (opacities.length > 0) frames.push(opacities);
+        if (opacities.length > 1 && opacities.every((opacity) => opacity === 1)) resolve(frames);
+        else requestAnimationFrame(read);
+      };
+      requestAnimationFrame(read);
+    });
+    return { done };
+  });
+  return recording(handle);
+}
+
+/** Records how far the element is scrolled, on every frame, until it reaches the bottom. */
+async function recordScrollTop(scroller: Locator): Promise<Recording<number>> {
+  const handle = await scroller.evaluateHandle((node) => {
+    const readings: number[] = [];
+    const bottom = () => node.scrollHeight - node.clientHeight;
+    const done = new Promise<number[]>((resolve) => {
+      const read = () => {
+        readings.push(node.scrollTop);
+        if (bottom() - node.scrollTop < 1) resolve(readings);
+        else requestAnimationFrame(read);
+      };
+      requestAnimationFrame(read);
+    });
+    return { done };
+  });
+  return recording(handle);
+}
+
+interface AnswerFrame {
+  readonly thinking: boolean;
+  readonly length: number;
+}
+
+/**
+ * Records, on every frame until the conversation is no longer busy, whether
+ * the answer is still thinking (its shimmer runs) and how much text it shows.
+ */
+async function recordAnswer(answer: Locator): Promise<Recording<AnswerFrame>> {
+  const handle = await answer.evaluateHandle((article) => {
+    const frames: AnswerFrame[] = [];
+    const list = article.closest('[aria-busy]');
+    const shimmering = () =>
+      article
+        .getAnimations({ subtree: true })
+        .some((animation) => (animation as CSSAnimation).animationName === 'shimmer');
+    const done = new Promise<AnswerFrame[]>((resolve) => {
+      const read = () => {
+        frames.push({ thinking: shimmering(), length: article.textContent.length });
+        if (list?.getAttribute('aria-busy') === 'false') resolve(frames);
+        else requestAnimationFrame(read);
+      };
+      requestAnimationFrame(read);
+    });
+    return { done };
+  });
+  return recording(handle);
+}
+
+function isNonDecreasing(readings: readonly number[]) {
+  return readings.every((reading, index) => reading >= (readings[index - 1] ?? reading));
+}
+
+function isNonIncreasing(readings: readonly number[]) {
+  return isNonDecreasing(readings.map((reading) => -reading));
+}
+
+function between(low: number, high: number) {
+  return (reading: number) => reading > low && reading < high;
 }
 
 async function openDrawer(page: Page) {
-  await page.getByRole('button', { name: 'Open navigation' }).click();
+  await menuButton(page).click();
+}
+
+async function ask(page: Page, question: string) {
+  await page.getByLabel('Ask the portfolio assistant a question').fill(question);
+  await page.keyboard.press('Enter');
 }
 
 // A fast-path answer whose metrics stagger in.
 async function askAboutAchievements(page: Page) {
-  await page
-    .getByLabel('Ask the portfolio assistant a question')
-    .fill('What are his biggest technical achievements?');
-  await page.keyboard.press('Enter');
-}
-
-/** Each metric's opacity on the first frame painted after the metrics appear. */
-async function metricOpacitiesNextFrame(page: Page) {
-  const metrics = page.getByRole('region', { name: 'Key metrics' }).getByRole('listitem');
-  await expect(metrics.first()).toBeAttached();
-  return metrics.evaluateAll(
-    (items) =>
-      new Promise<string[]>((resolve) => {
-        requestAnimationFrame(() => {
-          resolve(items.map((item) => getComputedStyle(item).opacity));
-        });
-      }),
-  );
+  await ask(page, 'What are his biggest technical achievements?');
 }
 
 test.describe('with motion', () => {
@@ -62,26 +197,68 @@ test.describe('with motion', () => {
   });
 
   test('the drawer slides in from the left edge', async ({ page }) => {
+    const slide = await recordLeftEdge(drawer(page), DRAWER_OPEN_AT);
     await openDrawer(page);
+    const readings = await slide.settled();
 
-    expect(await leftEdgeNextFrame(drawer(page))).toBeLessThan(0);
-    await expect.poll(() => leftEdgeNextFrame(drawer(page)), { timeout: 10_000 }).toBe(0);
+    expect(readings[0]).toBe(DRAWER_CLOSED_AT);
+    expect(readings.some(between(DRAWER_CLOSED_AT, DRAWER_OPEN_AT))).toBe(true);
+    expect(isNonDecreasing(readings)).toBe(true);
   });
 
   test('a visitor reverses the drawer mid-slide, both ways', async ({ page }) => {
-    await openDrawer(page);
-    await expect.poll(() => leftEdgeNextFrame(drawer(page))).toBeGreaterThan(-200);
+    const halfway = (from: number, to: number) => (from + to) / 2;
 
+    const opening = await recordLeftEdgeHoldingAt(
+      drawer(page),
+      halfway(DRAWER_CLOSED_AT, DRAWER_OPEN_AT),
+    );
+    await openDrawer(page);
+    const openingReadings = await opening.settled();
+    const heldOpening = openingReadings.at(-1) ?? DRAWER_CLOSED_AT;
+    expect(heldOpening).toBeGreaterThan(DRAWER_CLOSED_AT);
+    expect(heldOpening).toBeLessThan(DRAWER_OPEN_AT);
+
+    const closing = await recordLeftEdgeHoldingAt(
+      drawer(page),
+      halfway(heldOpening, DRAWER_CLOSED_AT),
+    );
     await page.keyboard.press('Escape');
-    const whenEscaped = await leftEdgeNextFrame(drawer(page));
-    await expect.poll(() => leftEdgeNextFrame(drawer(page))).toBeLessThan(whenEscaped - 20);
-    const whenReopened = await leftEdgeNextFrame(drawer(page));
-    expect(whenReopened).toBeGreaterThan(-300);
+    const closingReadings = await closing.settled();
+    const heldClosing = closingReadings.at(-1) ?? DRAWER_CLOSED_AT;
+    expect(closingReadings[0]).toBe(heldOpening);
+    expect(isNonIncreasing(closingReadings)).toBe(true);
+    expect(heldClosing).toBeGreaterThan(DRAWER_CLOSED_AT);
+    expect(heldClosing).toBeLessThan(heldOpening);
 
-    await openDrawer(page);
-    await expect.poll(() => leftEdgeNextFrame(drawer(page))).toBeGreaterThan(whenReopened + 20);
+    // The drawer now covers the menu button, which closing gave focus to.
+    await expect(menuButton(page)).toBeFocused();
+    const reopening = await recordLeftEdge(drawer(page), DRAWER_OPEN_AT);
+    await page.keyboard.press('Enter');
+    const reopeningReadings = await reopening.settled();
+    expect(reopeningReadings[0]).toBe(heldClosing);
+    expect(reopeningReadings.some(between(heldClosing, DRAWER_OPEN_AT))).toBe(true);
+    expect(isNonDecreasing(reopeningReadings)).toBe(true);
     await expect(drawer(page)).toBeVisible();
-    await expect.poll(() => leftEdgeNextFrame(drawer(page)), { timeout: 10_000 }).toBe(0);
+  });
+
+  test('an answer thinks, then types itself out', async ({ page }) => {
+    const releaseAnswer = await holdNextAnswer(page);
+    await ask(page, 'What are his strongest technical skills?');
+    const answer = answers(page).last();
+    await expect(conversation(page)).toHaveAttribute('aria-busy', 'true');
+
+    const reveal = await recordAnswer(answer);
+    releaseAnswer();
+    const frames = await reveal.settled();
+
+    const typed = frames.filter((frame) => !frame.thinking).map((frame) => frame.length);
+    const fullLength = typed.at(-1) ?? 0;
+    expect(frames[0]?.thinking).toBe(true);
+    expect(typed.some(between(0, fullLength))).toBe(true);
+    expect(new Set(typed).size).toBeGreaterThan(2);
+    expect(isNonDecreasing(typed)).toBe(true);
+    await expect(conversation(page)).toHaveAttribute('aria-busy', 'false');
   });
 });
 
@@ -90,10 +267,14 @@ test.describe('with motion, in a rich answer', () => {
     await page.goto('/');
     await slowDownAnimations(page);
 
+    const rise = await recordMetricOpacities(page);
     await askAboutAchievements(page);
-    const opacities = await metricOpacitiesNextFrame(page);
+    const frames = await rise.settled();
 
-    expect(Number(opacities.at(-1))).toBeLessThan(Number(opacities[0]));
+    const firstShownAt = frames.findIndex((opacities) => opacities[0] === 1);
+    const lastShownAt = frames.findIndex((opacities) => opacities.at(-1) === 1);
+    expect(firstShownAt).toBeGreaterThanOrEqual(0);
+    expect(lastShownAt).toBeGreaterThan(firstShownAt);
   });
 });
 
@@ -105,49 +286,50 @@ test.describe('with prefers-reduced-motion: reduce', () => {
   });
 
   test('the drawer is in place on the first frame after opening', async ({ page }) => {
+    const slide = await recordLeftEdge(drawer(page), DRAWER_OPEN_AT);
     await openDrawer(page);
+    const readings = await slide.settled();
 
-    expect(await leftEdgeNextFrame(drawer(page))).toBe(0);
+    expect(readings.filter((left) => left !== DRAWER_CLOSED_AT)).toEqual([DRAWER_OPEN_AT]);
     await expect(drawer(page)).toBeVisible();
   });
 
   test('the drawer is gone on the first frame after closing', async ({ page }) => {
+    const opening = await recordLeftEdge(drawer(page), DRAWER_OPEN_AT);
     await openDrawer(page);
-    await expect.poll(() => leftEdgeNextFrame(drawer(page))).toBe(0);
+    await opening.settled();
 
+    const slide = await recordLeftEdge(drawer(page), DRAWER_CLOSED_AT);
     await page.keyboard.press('Escape');
+    const readings = await slide.settled();
 
-    expect(await leftEdgeNextFrame(drawer(page))).toBeLessThanOrEqual(-300);
+    expect(readings.filter((left) => left !== DRAWER_OPEN_AT)).toEqual([DRAWER_CLOSED_AT]);
     await expect(drawer(page)).toBeHidden();
   });
 
   test('staggered metrics all show on the first frame they render', async ({ page }) => {
+    const rise = await recordMetricOpacities(page);
     await askAboutAchievements(page);
-    const opacities = await metricOpacitiesNextFrame(page);
+    const [firstFrame] = await rise.settled();
 
-    expect(opacities.length).toBeGreaterThan(1);
-    expect(opacities).toEqual(opacities.map(() => '1'));
+    expect(firstFrame?.length).toBeGreaterThan(1);
+    expect(firstFrame).toEqual(firstFrame?.map(() => 1));
   });
 
   test('"Jump to latest" lands on the newest message at once', async ({ page }) => {
-    const conversation = page.getByRole('list', { name: 'Conversation' });
     await page.getByRole('button', { name: 'His career' }).click();
-    await expect(conversation).toHaveAttribute('aria-busy', 'false');
-    await page
-      .getByLabel('Ask the portfolio assistant a question')
-      .fill('What are his strongest technical skills?');
-    await page.keyboard.press('Enter');
-    await expect(conversation).toHaveAttribute('aria-busy', 'false');
+    await expect(conversation(page)).toHaveAttribute('aria-busy', 'false');
+    await ask(page, 'What are his strongest technical skills?');
+    await expect(conversation(page)).toHaveAttribute('aria-busy', 'false');
 
-    const scroller = conversation.locator('..');
+    const scroller = conversation(page).locator('..');
     await scroller.evaluate((node) => {
       node.scrollTop = 0;
     });
+    const jump = await recordScrollTop(scroller);
     await page.getByRole('button', { name: 'Jump to latest' }).click();
+    const readings = await jump.settled();
 
-    const distanceFromBottom = await scroller.evaluate(
-      (node) => node.scrollHeight - node.scrollTop - node.clientHeight,
-    );
-    expect(distanceFromBottom).toBeLessThan(1);
+    expect(readings.filter((scrollTop) => scrollTop !== 0)).toHaveLength(1);
   });
 });
