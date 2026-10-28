@@ -177,7 +177,7 @@ adds a `notes` category: how he works, system design, AI-assisted engineering,
 studies, his own products, goals and interests. `pnpm notes:build` (run first
 by `pnpm rag:build`) splits it into `notes.json`, one passage per subsection
 and per FAQ question; its closing sections about the document itself are left
-out. Its evidence tags (`[CV-2026]`, `[RELATO]`, `[RELATO/ESTUDO]`) stay in the
+out. Its evidence tags (`[CV-2026]`, `[RELATO]`, `[RELATO/ESTUDO]`, `[PORTFÓLIO]`) stay in the
 text, and the system prompt tells the model what each one allows it to claim.
 A search with no category keeps its whole limit for résumé passages and adds
 at most three notes, so the long Portuguese notes never crowd the résumé out.

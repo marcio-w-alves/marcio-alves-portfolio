@@ -73,7 +73,7 @@ export const BOARDS: readonly Board[] = [
   {
     ...board('AchievementMetrics', 780, 380),
     departure:
-      "POR-37: two of the design's figures are no longer on the résumé; WEBFI and Maison Modern fill their cards.",
+      "POR-37: two of the design's figures are no longer on the résumé; WEBFI and Maison Moderne fill their cards.",
   },
   {
     ...board('SkillCollection', 780, 500),

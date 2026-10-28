@@ -435,6 +435,25 @@ export const CASES: readonly EvaluationCase[] = [
     expect: { path: 'model', language: 'pt', mentions: ['cachorros'] },
   },
   {
+    id: 'notes-job-search',
+    category: 'notes',
+    question: 'What kind of role is he looking for?',
+    expect: { path: 'model', mentions: ['remote'] },
+  },
+  {
+    id: 'notes-dog-names-pt',
+    category: 'notes',
+    question: 'Como se chamam os cachorros dele?',
+    expect: { path: 'model', language: 'pt', mentions: ['Sky', 'Oreo'] },
+  },
+  {
+    id: 'notes-portfolio-rag',
+    category: 'notes',
+    // POR-73: this site is his production RAG work, no longer only a study.
+    question: 'Has he built a RAG system in production?',
+    expect: { path: 'model', mentions: ['portfolio'] },
+  },
+  {
     id: 'pt-accessibility',
     category: 'language',
     // Once answered with "se precisar de mais informações, estou à disposição".

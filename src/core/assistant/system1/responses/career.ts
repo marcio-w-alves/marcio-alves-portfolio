@@ -234,7 +234,7 @@ export function leadership(): AssistantResponse {
           '### Delivery and people\n' +
           '- Defined technical trade-offs, delivery plans, OKRs and quarterly goals with Product at **Deel**.\n' +
           '- Coordinated sprint planning with managers and stakeholders at **Roots**.\n' +
-          '- Guided junior and mid-level engineers, ran code reviews and pair programming at **Deel**, and set coding standards at **Maison Modern**.\n' +
+          '- Guided junior and mid-level engineers, ran code reviews and pair programming at **Deel**, and set coding standards at **Maison Moderne**.\n' +
           '- Was promoted to Principal Frontend Developer at **Shall And Partners**.',
       ),
       text(
@@ -296,7 +296,7 @@ export function achievements(): AssistantResponse {
       text(
         '### Other recognition\n' +
           '- Contributed to a web and mobile application that received the **Golden Award in 2019** at Shall And Partners.\n' +
-          '- Contributed to the newsletter project at Maison Modern, which achieved a **20% increase in income**.\n' +
+          '- Contributed to the newsletter project at Maison Moderne, which achieved a **20% increase in income**.\n' +
           '- Helped smaller industry clients at WEBFI grow sales by **over 30%**.',
       ),
       details(
@@ -332,7 +332,7 @@ export function quality(): AssistantResponse {
     'quality',
     [
       text(
-        'At **Deel**, Marcio standardized the HRIS frontend architecture — including state management and error handling — and raised quality standards through code reviews, pair programming and onboarding. At **Maison Modern**, he led code reviews and established coding standards to reduce bugs and improve maintainability.',
+        'At **Deel**, Marcio standardized the HRIS frontend architecture — including state management and error handling — and raised quality standards through code reviews, pair programming and onboarding. At **Maison Moderne**, he led code reviews and established coding standards to reduce bugs and improve maintainability.',
       ),
       text(`### What a healthy codebase means to him\n${bullets(practice.qualityPractices)}`),
     ],
@@ -354,7 +354,7 @@ export function awards(): AssistantResponse {
     [
       text(
         'At **Shall And Partners**, Marcio contributed to a web and mobile application that received the **Golden Award in 2019**.\n\n' +
-          'Other documented business results include the Maison Modern newsletter project, which achieved a 20% increase in income, and helping smaller WEBFI clients grow sales by over 30%.',
+          'Other documented business results include the Maison Moderne newsletter project, which achieved a 20% increase in income, and helping smaller WEBFI clients grow sales by over 30%.',
       ),
       note(
         'inference',
@@ -461,7 +461,7 @@ export function product(): AssistantResponse {
           '- At **Toptal**, he works with the Director and CEO to coordinate product decisions and implement new features.\n' +
           '- At **Deel**, he defined technical trade-offs and delivery plans with Product and Engineering, and planned OKRs and quarterly goals with Product Managers.\n' +
           '- At **Roots**, he coordinated sprint planning with managers and stakeholders and built accessibility in with UX designers.\n' +
-          '- At **Maison Modern**, he turned complex requirements into accessible interfaces with UX designers.\n\n' +
+          '- At **Maison Moderne**, he turned complex requirements into accessible interfaces with UX designers.\n\n' +
           knowledgeBase.profile.focus.replace(/^He/, 'Marcio'),
       ),
       text(
