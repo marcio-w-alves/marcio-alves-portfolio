@@ -53,11 +53,10 @@ export function sourceOf(id: SourceId): AnswerSource {
 }
 
 /** Whether a role overlapped in time with any other. An open end means "still running". */
-export function isConcurrent(target: Role, now: Date): boolean {
-  const ongoing = now.getFullYear() + 1;
-  const targetEnd = target.end ?? ongoing;
+export function isConcurrent(target: Role): boolean {
+  const targetEnd = target.end ?? Infinity;
   return experience.some(
     (other) =>
-      other.id !== target.id && target.start < (other.end ?? ongoing) && other.start < targetEnd,
+      other.id !== target.id && target.start < (other.end ?? Infinity) && other.start < targetEnd,
   );
 }

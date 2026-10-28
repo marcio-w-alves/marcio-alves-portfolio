@@ -1,3 +1,6 @@
+import type { RoleId } from '@/core/knowledge/ids';
+import type { RichComponent } from './components';
+
 /**
  * The streaming contract between the chat endpoint and the UI.
  *
@@ -5,16 +8,6 @@
  * so the interface and the server can evolve independently as long as both
  * keep emitting and reading this shape.
  */
-
-export const RICH_COMPONENTS = [
-  'ExperienceTimeline',
-  'AchievementMetrics',
-  'SkillCollection',
-  'ProjectPreview',
-  'ContactCard',
-] as const;
-
-export type RichComponent = (typeof RICH_COMPONENTS)[number];
 
 export interface AnswerSource {
   readonly id: string;
@@ -30,16 +23,11 @@ export interface AssistantError {
 }
 
 export type AssistantEvent =
-  | { readonly type: 'start'; readonly intent: string; readonly related: readonly string[] }
+  | { readonly type: 'start'; readonly intent: string; readonly related: RoleId | null }
   | { readonly type: 'text-start'; readonly id: string }
   | { readonly type: 'text-delta'; readonly id: string; readonly delta: string }
   | { readonly type: 'text-end'; readonly id: string }
-  | {
-      readonly type: 'component';
-      readonly id: string;
-      readonly component: RichComponent;
-      readonly props: Readonly<Record<string, unknown>>;
-    }
+  | ({ readonly type: 'component'; readonly id: string } & RichComponent)
   | {
       readonly type: 'finish';
       readonly followUps: readonly string[];

@@ -140,6 +140,25 @@ The assistant reaches data only through an allow-list of named actions. It is
 never handed the knowledge base itself, and a question no action covers is
 answered as undocumented rather than guessed.
 
+### Two paths to an answer
+
+**System 1** (`src/core/assistant/system1`) is a deterministic router over the
+question. What it recognizes with certainty — every question the interface
+suggests, the refusals, and technologies weighed against the record — it
+answers straight from the knowledge base, instantly and without a model call.
+What it is unsure of, it escalates instead of guessing: low-confidence
+questions, definitions ("what is TypeScript?"), comparisons, questions naming
+two companies, and anything long enough to carry several asks.
+
+**System 2** is the model-backed path for the rest. Both produce the same
+response shape, so the interface never knows which one answered, and if the
+model is unavailable System 1 still answers everything it recognizes.
+
+A test walks the whole suggestion graph — every topic question, then every
+follow-up each answer offers, recursively — and requires the fast path to
+answer all of it, so the interface can never suggest a question the assistant
+cannot handle.
+
 ## Deployment
 
 Hosted on Vercel at **[marciomariani.dev](https://marciomariani.dev)**, built

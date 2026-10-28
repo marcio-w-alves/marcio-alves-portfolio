@@ -24,6 +24,11 @@ export default defineConfig([
         tsconfigRootDir: import.meta.dirname,
       },
     },
+    rules: {
+      // `const { source: _source, ...rest } = record` is how a property is
+      // omitted; the named sibling exists only to be left out.
+      '@typescript-eslint/no-unused-vars': ['error', { ignoreRestSiblings: true }],
+    },
   },
 
   // Config and tooling files run in Node, outside the app's type program.

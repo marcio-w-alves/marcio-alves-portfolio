@@ -2,8 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { METRIC_IDS, PROJECT_IDS, ROLE_IDS } from './ids';
 import { isConcurrent, knowledgeBase, projectById, roleById } from './knowledge-base';
 
-const NOW = new Date('2026-10-28T00:00:00Z');
-
 describe('knowledge base', () => {
   it('has exactly one role for every role id', () => {
     const ids = knowledgeBase.experience.map((role) => role.id);
@@ -60,13 +58,13 @@ describe('knowledge base', () => {
 
 describe('isConcurrent', () => {
   it('detects roles held at the same time', () => {
-    expect(isConcurrent(roleById('roots'), NOW)).toBe(true);
-    expect(isConcurrent(roleById('maison'), NOW)).toBe(true);
-    expect(isConcurrent(roleById('webfi'), NOW)).toBe(true);
+    expect(isConcurrent(roleById('roots'))).toBe(true);
+    expect(isConcurrent(roleById('maison'))).toBe(true);
+    expect(isConcurrent(roleById('webfi'))).toBe(true);
   });
 
   it('treats a role that ends as another begins as sequential, not concurrent', () => {
-    expect(isConcurrent(roleById('toptal'), NOW)).toBe(false);
-    expect(isConcurrent(roleById('shall'), NOW)).toBe(false);
+    expect(isConcurrent(roleById('toptal'))).toBe(false);
+    expect(isConcurrent(roleById('shall'))).toBe(false);
   });
 });
