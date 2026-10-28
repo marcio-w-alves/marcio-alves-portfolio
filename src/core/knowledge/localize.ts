@@ -1,6 +1,7 @@
 import { formatPeriod } from '../i18n/format';
 import type { Locale } from '../i18n/locale';
-import type { Knowledge, KnowledgeSource, Localized, Role, RoleSource } from './schema';
+import type { Knowledge, KnowledgeSource, Role, RoleSource } from './schema';
+import { isLocalized } from './translations';
 
 /** How each language says a role is still held, after its start date. */
 const ONGOING: Readonly<Record<Locale, string>> = { en: 'Present', 'pt-BR': 'atual' };
@@ -24,10 +25,6 @@ export function localize(source: KnowledgeSource, locale: Locale): Knowledge {
 
 function periodOf({ start, end }: RoleSource, locale: Locale): string {
   return formatPeriod(start, end, locale, ONGOING[locale]);
-}
-
-function isLocalized(value: object): value is Localized {
-  return 'en' in value && typeof value.en === 'string';
 }
 
 function localizeValue(value: unknown, locale: Locale): unknown {

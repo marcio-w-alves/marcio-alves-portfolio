@@ -53,6 +53,17 @@ export function cosine(a: readonly number[], b: readonly number[]): number {
   return normA === 0 || normB === 0 ? 0 : dot / Math.sqrt(normA * normB);
 }
 
+/**
+ * Each fact once, in the language that matched best: the record says the same
+ * thing in every language it is written in, so a second version would only
+ * repeat a source and take another passage's place.
+ */
+function bestVersions(ranked: readonly Passage[]): Passage[] {
+  const best = new Map<string, Passage>();
+  for (const passage of ranked) if (!best.has(passage.id)) best.set(passage.id, passage);
+  return [...best.values()];
+}
+
 interface Options {
   readonly embeddings: EmbeddingPort;
   readonly index: KnowledgeIndex;
@@ -64,8 +75,8 @@ interface Options {
 }
 
 /**
- * Exhaustive similarity over the committed index. Seventy vectors make an
- * approximate-nearest-neighbour structure pure overhead.
+ * Exhaustive similarity over the committed index. A few hundred vectors make
+ * an approximate-nearest-neighbour structure pure overhead.
  */
 export function createVectorKnowledgeSearch({
   embeddings,
@@ -78,17 +89,19 @@ export function createVectorKnowledgeSearch({
     async search({ query, limit, category, signal }) {
       const [vector] = await guard(breaker, () => embeddings.embed([query], signal));
       if (!vector) return [];
-      const ranked = corpus
-        .filter((chunk) => !category || chunk.category === category)
-        .map((chunk): Passage => ({
-          id: chunk.id,
-          category: chunk.category,
-          text: chunk.text,
-          source: citation(chunk.source),
-          score: cosine(vector, index.vectors[chunk.id] ?? []),
-        }))
-        .filter((passage) => passage.score >= RELEVANCE_FLOOR)
-        .sort((a, b) => b.score - a.score);
+      const ranked = bestVersions(
+        corpus
+          .filter((chunk) => !category || chunk.category === category)
+          .map((chunk): Passage => ({
+            id: chunk.baseId,
+            category: chunk.category,
+            text: chunk.text,
+            source: citation(chunk.source),
+            score: cosine(vector, index.vectors[chunk.id] ?? []),
+          }))
+          .filter((passage) => passage.score >= RELEVANCE_FLOOR)
+          .sort((a, b) => b.score - a.score),
+      );
       if (category) return ranked.slice(0, limit);
       const record = ranked.filter((passage) => !(passage.category in SHARES)).slice(0, limit);
       const supplements = Object.entries(SHARES).flatMap(([shared, share]) =>

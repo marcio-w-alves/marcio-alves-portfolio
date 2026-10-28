@@ -1,7 +1,6 @@
 import { validateProfile, type SiteEntry } from '@/profile/schema';
-import { fixtureAnswers } from './answers';
 import { fixtureBrand } from './brand';
-import { fixtureSiteCopy, fixtureUiCopy } from './copy';
+import { fixtureCopy } from './copy';
 import { fixtureIdentity } from './identity';
 import { fixtureKnowledge } from './knowledge';
 
@@ -29,6 +28,6 @@ export const profile = validateProfile({
   knowledge: fixtureKnowledge,
   siteAllowList: fixtureSiteAllowList,
   brand: fixtureBrand,
-  copy: { en: { answers: fixtureAnswers, ui: fixtureUiCopy, site: fixtureSiteCopy } },
+  copy: fixtureCopy,
   evaluation: [],
 });

@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import type { Locale } from '@/core/i18n/locale';
 import { localize } from '@/core/knowledge/localize';
 import { profile } from '@/profile';
 import { fixtureSiteProfile } from '@/testing/fixture-profile';
 import { englishUiMessages } from '@/ui/i18n/en';
 import { englishSiteCopy } from './site-copy';
 import { siteMessages, type CopyOverrides, type SiteMessages } from './site-messages';
+import { copyIn } from './site-profile';
 
 const SUBJECT = new Set(['name', 'firstName', 'title']);
 const DEFAULTS: SiteMessages = { ui: englishUiMessages, site: englishSiteCopy };
@@ -46,8 +48,12 @@ function catalogProblems(resolved: SiteMessages): string[] {
   });
 }
 
-function resolvedFor(source: typeof fixtureSiteProfile, overrides: CopyOverrides) {
-  return siteMessages(localize(source.knowledge, 'en'), overrides, 'en');
+function resolvedFor(
+  source: typeof fixtureSiteProfile,
+  overrides: CopyOverrides,
+  locale: Locale = 'en',
+) {
+  return siteMessages(localize(source.knowledge, locale), overrides, locale);
 }
 
 describe('the catalogs a profile renders with', () => {
@@ -59,6 +65,18 @@ describe('the catalogs a profile renders with', () => {
     expect(catalogProblems(resolvedFor(fixtureSiteProfile, fixtureSiteProfile.copy.en))).toEqual(
       [],
     );
+  });
+
+  it.each([
+    ["the owner's profile", profile],
+    ['the fixture', fixtureSiteProfile],
+  ])('has every message in Portuguese, with the same placeholders, for %s', (_name, source) => {
+    expect(catalogProblems(resolvedFor(source, copyIn(source, 'pt-BR'), 'pt-BR'))).toEqual([]);
+  });
+
+  it('has every message in the Portuguese defaults alone, for a profile that rewords none', () => {
+    const none = { ui: {}, site: {} };
+    expect(catalogProblems(resolvedFor(fixtureSiteProfile, none, 'pt-BR'))).toEqual([]);
   });
 
   it('accepts a list of its own length, but not a blank item in it', () => {

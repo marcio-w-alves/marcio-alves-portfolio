@@ -7,6 +7,7 @@ import {
 } from '@/core/i18n/locale';
 import type { KnowledgeSource, SiteSubject } from '@/core/knowledge/schema';
 import { excludePattern } from '@/core/knowledge/product-sites';
+import { addedFigures, untranslated } from '@/core/knowledge/translations';
 import { knowledgeRecordSchema } from '@/core/knowledge/validate';
 import type { Brand, LocaleCopy } from '@/site/site-profile';
 import type { EvaluationCase } from './evaluation/cases';
@@ -145,21 +146,11 @@ interface Publication {
   readonly copy: Partial<Record<Locale, unknown>>;
 }
 
-/** The path of every text the record has not written in `locale`. */
-function untranslated(value: unknown, locale: Locale, path: PropertyKey[] = []): PropertyKey[][] {
-  if (value === null || typeof value !== 'object') return [];
-  if (Array.isArray(value)) {
-    return value.flatMap((item, index) => untranslated(item, locale, [...path, index]));
-  }
-  if ('en' in value && typeof value.en === 'string') {
-    return locale in value ? [] : [[...path, locale]];
-  }
-  return Object.entries(value).flatMap(([key, field]) =>
-    untranslated(field, locale, [...path, key]),
-  );
-}
-
-/** A language is published only once the copy and the whole record are written in it. */
+/**
+ * A language is published only once the copy and the whole record are written
+ * in it, each text saying what its English one says: no number, date or link
+ * of its own.
+ */
 function checkPublishedLocalesWritten(
   { locales, knowledge, copy }: Publication,
   context: z.RefinementCtx,
@@ -177,6 +168,13 @@ function checkPublishedLocalesWritten(
       context.addIssue({
         code: 'custom',
         message: `Publishing ${locale} needs this text in ${locale}`,
+        path: ['knowledge', ...path],
+      });
+    }
+    for (const { path, figures } of addedFigures(knowledge, locale)) {
+      context.addIssue({
+        code: 'custom',
+        message: `A translation states only what its English text does, not ${figures.join(', ')}`,
         path: ['knowledge', ...path],
       });
     }

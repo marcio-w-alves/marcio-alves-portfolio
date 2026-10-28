@@ -4,12 +4,14 @@ import type { KnowledgeSource } from '@/core/knowledge/schema';
 import {
   fixtureAnswers,
   fixtureBrand,
+  fixtureCopy,
   fixtureIdentity,
   fixtureKnowledge,
   fixtureSiteAllowList,
   fixtureSiteCopy,
   fixtureUiCopy,
 } from '@/testing/fixture-profile';
+import { withMetric, withRole } from '@/testing/fixture-profile/variants';
 import { validateProfile, type Identity, type Profile, type SiteEntry } from './schema';
 
 const [pipewrightEntry, acmeEntry] = fixtureSiteAllowList as [SiteEntry, SiteEntry];
@@ -24,17 +26,29 @@ const valid: Profile = {
   evaluation: [],
 };
 
-/** The record with a stand-in Portuguese text beside every English one. */
-function translateEveryText(knowledge: KnowledgeSource): KnowledgeSource {
+/** The record as it was before any of it was translated. */
+function inEnglishOnly(knowledge: KnowledgeSource): KnowledgeSource {
   const visit = (value: unknown): unknown => {
     if (Array.isArray(value)) return value.map(visit);
     if (value === null || typeof value !== 'object') return value;
-    if ('en' in value && typeof value.en === 'string')
-      return { ...value, 'pt-BR': `(pt) ${value.en}` };
+    if ('en' in value && typeof value.en === 'string') return { en: value.en };
     return Object.fromEntries(Object.entries(value).map(([key, field]) => [key, visit(field)]));
   };
   return visit(knowledge) as KnowledgeSource;
 }
+
+/** The fixture's record with the Portuguese of one highlight of its third role replaced. */
+function withThirdRoleHighlight(portuguese: string | undefined): KnowledgeSource {
+  return withRole(fixtureKnowledge, 'initech', {
+    highlights: [
+      portuguese === undefined
+        ? { en: 'Audited and simplified the build scripts.' }
+        : { en: 'Audited and simplified the build scripts.', 'pt-BR': portuguese },
+    ],
+  });
+}
+
+const bilingual: Profile = { ...valid, locales: ['en', 'pt-BR'], copy: fixtureCopy };
 
 function issuePaths(profile: Profile): PropertyKey[][] {
   try {
@@ -96,7 +110,11 @@ describe('validating a profile', () => {
   });
 
   it('rejects publishing Portuguese before its copy and the record are written in it', () => {
-    const paths = issuePaths({ ...valid, locales: ['en', 'pt-BR'] });
+    const paths = issuePaths({
+      ...valid,
+      locales: ['en', 'pt-BR'],
+      knowledge: inEnglishOnly(fixtureKnowledge),
+    });
 
     expect(paths).toContainEqual(['copy', 'pt-BR']);
     expect(paths).toContainEqual(['knowledge', 'profile', 'title', 'pt-BR']);
@@ -104,24 +122,39 @@ describe('validating a profile', () => {
   });
 
   it('publishes Portuguese once the copy and every text of the record are written in it', () => {
-    const translated = translateEveryText(fixtureKnowledge);
+    expect(issuePaths(bilingual)).toEqual([]);
+  });
 
-    expect(
-      issuePaths({
-        ...valid,
-        locales: ['en', 'pt-BR'],
-        knowledge: translated,
-        copy: { ...valid.copy, 'pt-BR': valid.copy.en },
-      }),
-    ).toEqual([]);
-    expect(
-      issuePaths({
-        ...valid,
-        locales: ['en', 'pt-BR'],
-        knowledge: { ...translated, profile: { ...translated.profile, title: { en: 'Engineer' } } },
-        copy: { ...valid.copy, 'pt-BR': valid.copy.en },
-      }),
-    ).toEqual([['knowledge', 'profile', 'title', 'pt-BR']]);
+  it('names the one text a Portuguese publication still lacks', () => {
+    const missing = { ...bilingual, knowledge: withThirdRoleHighlight(undefined) };
+
+    expect(issuePaths(missing)).toEqual([['knowledge', 'experience', 2, 'highlights', 0, 'pt-BR']]);
+  });
+
+  it('rejects a translation that states a figure its English text does not', () => {
+    const embellished = {
+      ...bilingual,
+      knowledge: withThirdRoleHighlight('Auditou e simplificou 70% dos scripts de build.'),
+    };
+
+    expect(() => validateProfile(embellished)).toThrow(/not 70/);
+    expect(issuePaths(embellished)).toEqual([
+      ['knowledge', 'experience', 2, 'highlights', 0, 'pt-BR'],
+    ]);
+  });
+
+  it('accepts a translation that writes the same figure the way its language does', () => {
+    const knowledge = withMetric(fixtureKnowledge, 'acme-build-time', {
+      label: { en: 'Builds 1.5x faster', 'pt-BR': 'Builds 1,5x mais rápidos' },
+    });
+
+    expect(issuePaths({ ...bilingual, knowledge })).toEqual([]);
+  });
+
+  it('checks the translations only of a language the profile publishes', () => {
+    const embellished = withThirdRoleHighlight('Auditou e simplificou 70% dos scripts de build.');
+
+    expect(issuePaths({ ...valid, knowledge: embellished })).toEqual([]);
   });
 
   it('rejects a brand colour that is not #rrggbb, naming the token', () => {
