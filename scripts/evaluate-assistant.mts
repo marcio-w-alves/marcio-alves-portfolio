@@ -9,8 +9,12 @@
  * does not support. Deterministic checks cover the rest: which path
  * answered, refusals, language, required and forbidden phrases.
  *
+ * A model answer varies from run to run, so every case that can reach the
+ * model runs several times and passes on two thirds of its runs.
+ *
  * Costs money and needs the key, so it runs locally, not in CI:
- *   pnpm eval:assistant
+ *   pnpm eval:assistant [--runs 3] [--only <case id or category>,…]
+ * `EVAL_RUNS` sets the number of runs too.
  */
 import { writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -18,13 +22,26 @@ import { join } from 'node:path';
 import { buildContainer } from '../src/composition-root';
 import type { AssistantEvent } from '../src/core/assistant/assistant-event';
 import type { ToolTrace } from '../src/core/assistant/system2/model-assistant';
+import { createToolRegistry } from '../src/core/assistant/tools/registry';
 import { knowledgeBase } from '../src/core/knowledge/knowledge-base';
 import { createOpenAIClient } from '../src/infrastructure/openai/openai-client';
 import { CASES, type EvaluationCase } from './evaluation/cases';
+import { runsFor } from './evaluation/grading';
+import { parseOptions, selectCases } from './evaluation/options';
+import {
+  caseGrade,
+  formatCaseReport,
+  formatMiscalibration,
+  formatSummary,
+  type CaseReport,
+  type RunReport,
+} from './evaluation/report';
 
 const judgeOverride = process.env.EVAL_JUDGE_MODEL;
 const JUDGE_MODEL = judgeOverride === undefined || judgeOverride === '' ? 'gpt-5.4' : judgeOverride;
 const CONCURRENCY = 4;
+const options = parseOptions(process.argv.slice(2), process.env);
+const cases = selectCases(CASES, options.only);
 
 const apiKey = process.env.OPENAI_API_KEY;
 if (!apiKey) throw new Error('OPENAI_API_KEY is not set. Put it in .env.local.');
@@ -45,18 +62,11 @@ interface Verdict {
   readonly notes: string;
 }
 
-interface Outcome {
-  readonly id: string;
-  readonly category: string;
-  readonly question: string;
-  readonly path: 'fast' | 'model';
+interface RunOutcome extends RunReport {
   readonly intent: string;
   readonly answer: string;
   readonly sources: readonly string[];
-  readonly evidence: unknown;
   readonly verdict: Verdict;
-  readonly failures: readonly string[];
-  readonly ms: number;
 }
 
 const JUDGE_INSTRUCTIONS = `You audit an assistant on a person's portfolio website. You receive a QUESTION, the assistant's ANSWER, and the EVIDENCE — everything the assistant was given to answer with.
@@ -191,17 +201,25 @@ function prose(events: readonly AssistantEvent[]): string {
   return events.map((event) => (event.type === 'text-delta' ? event.delta : '')).join('');
 }
 
-async function runCase(testCase: EvaluationCase, index: number): Promise<Outcome> {
-  const traces: ToolTrace[] = [];
-  const { assistant } = buildContainer({ onToolResult: (trace) => traces.push(trace) });
+/** What the model was given to answer with: each action it ran and what came back. */
+function traceEvidence(trace: readonly ToolTrace[]) {
+  return trace.map(({ name, arguments: raw, outcome }) => ({
+    action: name,
+    arguments: raw,
+    result: outcome.ok ? outcome.result.data : { error: outcome.error },
+  }));
+}
+
+async function runOnce(testCase: EvaluationCase, clientId: string): Promise<RunOutcome> {
+  const trace: ToolTrace[] = [];
+  const { assistant } = buildContainer({ onToolResult: (step) => trace.push(step) });
   const started = Date.now();
   const events = await Array.fromAsync(
     assistant.answer({
       question: testCase.question,
       history: testCase.history ?? [],
       context: { topic: 'overview', lastIntent: null, ctaShown: false },
-      // One id per case, so pacing never interferes with the evaluation.
-      clientId: `evaluation-${String(index)}`,
+      clientId,
     }),
   );
   const ms = Date.now() - started;
@@ -213,14 +231,7 @@ async function runCase(testCase: EvaluationCase, index: number): Promise<Outcome
   const sources = finish?.type === 'finish' ? finish.sources.map((source) => source.id) : [];
   const answer = prose(events);
 
-  const evidence =
-    path === 'model'
-      ? traces.map((trace) => ({
-          action: trace.name,
-          arguments: trace.arguments,
-          result: trace.outcome.ok ? trace.outcome.result.data : { error: trace.outcome.error },
-        }))
-      : { knowledgeBase };
+  const evidence = path === 'model' ? traceEvidence(trace) : { knowledgeBase };
   const verdict = await judgeAnswer(testCase.question, answer, evidence);
 
   const { expect } = testCase;
@@ -241,11 +252,23 @@ async function runCase(testCase: EvaluationCase, index: number): Promise<Outcome
   }
   for (const claim of await unsupportedClaims(verdict, evidence))
     failures.push(`unsupported: ${claim}`);
+  if (path === 'model') {
+    for (const id of sourcesOutsideTrace(sources, trace))
+      failures.push(`cited ${id}, which no action returned`);
+  }
   if (events.some((event) => event.type === 'error')) failures.push('ended with an error event');
   if (path === 'model' && !expect.declines && closesWithOffer(answer))
     failures.push('closes with an offer of help');
 
-  return { ...testCase, path, intent, answer, sources, evidence, verdict, failures, ms };
+  return { path, intent, answer, sources, verdict, failures, ms, trace };
+}
+
+/** A cited source must be one the actions handed back, or its evidence was never seen. */
+function sourcesOutsideTrace(sources: readonly string[], trace: readonly ToolTrace[]): string[] {
+  const returned = new Set(
+    trace.flatMap(({ outcome }) => (outcome.ok ? outcome.result.sources.map(({ id }) => id) : [])),
+  );
+  return sources.filter((id) => !returned.has(id));
 }
 
 /**
@@ -279,9 +302,20 @@ async function pool<T, R>(
   return results;
 }
 
+interface CalibrationItem {
+  readonly answer: string;
+  /** How many of its claims the evidence does not support. */
+  readonly planted: number;
+  /** The actions whose results are the evidence; without one, the whole knowledge base is. */
+  readonly actions?: readonly { readonly name: string; readonly arguments: object }[];
+}
+
 // The judge is checked before it judges: a true answer must pass, and every
 // planted fabrication must be caught. Otherwise its verdicts mean nothing.
-const CALIBRATION = [
+// The model path is judged against an action trace, not the knowledge base,
+// so the judge is also checked on traces: a fact that is in the record but
+// not in the trace is as unsupported as an invented one.
+const CALIBRATION: readonly CalibrationItem[] = [
   {
     answer: 'At Deel he improved Web Vitals by 30% and cut critical page load time by 50%.',
     planted: 0,
@@ -293,57 +327,76 @@ const CALIBRATION = [
     planted: 2,
   },
   { answer: 'Ele liderou o time de HRIS na Deel e tem uma carreira brilhante.', planted: 1 },
-] as const;
+  {
+    answer:
+      "At Deel he helped lead the HRIS team responsible for the company's core HR tools product.",
+    planted: 0,
+    actions: [{ name: 'getExperience', arguments: { company: 'deel' } }],
+  },
+  {
+    answer: 'At Deel he managed fifteen engineers and was promoted to Staff Engineer.',
+    planted: 2,
+    actions: [{ name: 'getExperience', arguments: { company: 'deel' } }],
+  },
+  {
+    answer:
+      'At Roots he grew the frontend team by recruiting three developers, and at Deel he improved web vitals by 30%.',
+    planted: 1,
+    actions: [{ name: 'getExperience', arguments: { company: 'roots' } }],
+  },
+];
 
-const calibration = await Promise.all(
-  CALIBRATION.map(async ({ answer, planted }) => {
-    const evidence = { knowledgeBase };
-    const flagged = await unsupportedClaims(
-      await judgeAnswer('Tell me about him.', answer, evidence),
-      evidence,
-    );
-    return { answer, planted, flagged };
-  }),
-);
+/** Runs the actions for real, so the trace is exactly what the model would have received. */
+async function traceOf(actions: NonNullable<CalibrationItem['actions']>): Promise<ToolTrace[]> {
+  const registry = createToolRegistry();
+  return Promise.all(
+    actions.map(async ({ name, arguments: input }) => ({
+      name,
+      arguments: JSON.stringify(input),
+      outcome: await registry.run(name, input),
+    })),
+  );
+}
+
+async function calibrate({ answer, planted, actions }: CalibrationItem) {
+  const trace = actions ? await traceOf(actions) : undefined;
+  const evidence = trace ? traceEvidence(trace) : { knowledgeBase };
+  const flagged = await unsupportedClaims(
+    await judgeAnswer('Tell me about him.', answer, evidence),
+    evidence,
+  );
+  return trace ? { answer, planted, flagged, trace } : { answer, planted, flagged };
+}
+
+const calibration = await Promise.all(CALIBRATION.map(calibrate));
 const miscalibrated = calibration.filter(({ planted, flagged }) => flagged.length !== planted);
 if (miscalibrated.length > 0) {
-  for (const { answer, planted, flagged } of miscalibrated) {
-    console.error(
-      `Judge miscalibrated on "${answer}": expected ${String(planted)} flags, got`,
-      flagged,
-    );
-  }
+  for (const miscalibration of miscalibrated) console.error(formatMiscalibration(miscalibration));
   throw new Error('The judge failed calibration; its verdicts cannot be trusted.');
 }
 console.log('Judge calibrated.\n');
 
-const outcomes = await pool(CASES, CONCURRENCY, runCase);
+const jobs = cases.flatMap((testCase, caseIndex) =>
+  Array.from({ length: runsFor(testCase, options.runs) }, (_, run) => ({
+    testCase,
+    // One id per run, so pacing never interferes with the evaluation.
+    clientId: `evaluation-${String(caseIndex)}-${String(run)}`,
+  })),
+);
+const runs = await pool(jobs, CONCURRENCY, ({ testCase, clientId }) => runOnce(testCase, clientId));
 
-for (const outcome of outcomes) {
-  const mark = outcome.failures.length === 0 ? 'PASS' : 'FAIL';
-  console.log(
-    `${mark}  ${outcome.id.padEnd(22)} ${outcome.path.padEnd(5)} ${String(outcome.ms).padStart(5)}ms  ${outcome.question}`,
-  );
-  for (const failure of outcome.failures) console.log(`        - ${failure}`);
-}
-
-const byCategory = new Map<string, { passed: number; total: number }>();
-for (const outcome of outcomes) {
-  const tally = byCategory.get(outcome.category) ?? { passed: 0, total: 0 };
-  tally.total += 1;
-  if (outcome.failures.length === 0) tally.passed += 1;
-  byCategory.set(outcome.category, tally);
-}
-console.log('\nBy category:');
-for (const [category, { passed, total }] of byCategory) {
-  console.log(`  ${category.padEnd(14)} ${String(passed)}/${String(total)}`);
-}
-const failed = outcomes.filter((outcome) => outcome.failures.length > 0);
-console.log(
-  `\n${String(outcomes.length - failed.length)}/${String(outcomes.length)} cases passed.`,
+const reports: (CaseReport & { readonly runs: readonly RunOutcome[] })[] = cases.map(
+  (testCase) => ({
+    ...testCase,
+    runs: runs.filter((_, index) => jobs[index]?.testCase === testCase),
+  }),
 );
 
-const report = join(tmpdir(), 'assistant-evaluation.json');
-await writeFile(report, JSON.stringify(outcomes, null, 2));
-console.log(`Full report: ${report}`);
-process.exitCode = failed.length > 0 ? 1 : 0;
+console.log(`Each model-path case ran ${String(options.runs)} times.\n`);
+for (const report of reports) console.log(formatCaseReport(report));
+console.log(`\n${formatSummary(reports)}`);
+
+const file = join(tmpdir(), 'assistant-evaluation.json');
+await writeFile(file, JSON.stringify(reports, null, 2));
+console.log(`Full report: ${file}`);
+process.exitCode = reports.every((report) => caseGrade(report).passes) ? 0 : 1;
