@@ -98,7 +98,7 @@
   --shadow-drawer: 0 0 48px rgb(32 36 32 / 0.18);
   --shadow-focus: 0 0 0 3px rgb(55 107 86 / 0.22);
 
-  /* POR-10: the "Jump to latest" pill floats over the conversation. */
+  /* The "Jump to latest" pill floats over the conversation. */
   --shadow-floating:
     0 1px 2px rgb(32 36 32 / 0.05), 0 0 0 1px var(--color-border),
     0 8px 20px -12px rgb(32 36 32 / 0.3);
@@ -113,7 +113,7 @@
   --animate-blink: blink 1s steps(1, end) infinite;
   --animate-pulse-dot: pulse-dot 1.4s var(--ease-standard) infinite;
 
-  /* POR-10: the "Jump to latest" pill rises a little faster than the default. */
+  /* The "Jump to latest" pill rises a little faster than the default. */
   --animate-rise-short: rise 200ms var(--ease-standard);
 
   @keyframes rise {
