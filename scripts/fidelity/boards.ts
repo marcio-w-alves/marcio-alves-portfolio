@@ -11,6 +11,11 @@ export interface Board {
   readonly route: string;
   /** Where production renders the same state, for checking a deployment. */
   readonly liveRoute?: string;
+  /**
+   * Why production deliberately no longer looks like this artboard. The board
+   * is still measured and reported, but it does not fail the gate.
+   */
+  readonly departure?: string;
 }
 
 const board = (name: string, width: number, height: number): Board => ({
@@ -23,7 +28,11 @@ const board = (name: string, width: number, height: number): Board => ({
 export const BOARDS: readonly Board[] = [
   { ...board('Main', 1440, 900), liveRoute: '/' },
   { ...board('Mobile', 390, 844), liveRoute: '/' },
-  board('StateTopic', 1280, 800),
+  {
+    ...board('StateTopic', 1280, 800),
+    departure:
+      'POR-34: a topic is its own page, so its record (here the timeline) follows the introduction.',
+  },
   board('StateStreaming', 1280, 800),
   board('StateRichAnswer', 1280, 800),
   board('StateFollowUp', 1280, 800),

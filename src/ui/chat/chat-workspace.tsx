@@ -28,6 +28,8 @@ interface ChatWorkspaceProps {
   readonly welcome: Welcome;
   /** The longest question the API accepts. */
   readonly maxQuestionLength: number;
+  /** The page this workspace is: the overview is the welcome screen, every other topic its own page. */
+  readonly topic?: TopicId;
   /** A conversation to open on, to show a known state; a visitor starts empty. */
   readonly initialConversation?: Conversation | undefined;
   readonly initialDrawerOpen?: boolean | undefined;
@@ -48,10 +50,11 @@ export function ChatWorkspace({
   topics,
   welcome,
   maxQuestionLength,
+  topic = 'overview',
   initialConversation,
   initialDrawerOpen,
 }: ChatWorkspaceProps) {
-  const chat = useChat(initialConversation);
+  const chat = useChat(topic, initialConversation);
   const { conversation } = chat;
   const [draft, setDraft] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(initialDrawerOpen ?? false);
@@ -111,12 +114,6 @@ export function ChatWorkspace({
     if (ask(draft)) setDraft('');
   }
 
-  function pickTopic(topic: TopicId) {
-    pinned.current = true;
-    chat.pickTopic(topic);
-    setDrawerOpen(false);
-  }
-
   function startOver() {
     chat.startOver();
     setDrawerOpen(false);
@@ -156,9 +153,8 @@ export function ChatWorkspace({
         <Sidebar
           profile={profile}
           topics={topics}
-          activeTopic={conversation.topic}
+          activeTopic={topic}
           links={links}
-          onPickTopic={pickTopic}
           onNewConversation={startOver}
           onClose={() => {
             setDrawerOpen(false);
@@ -168,7 +164,11 @@ export function ChatWorkspace({
     >
       {inConversation && (
         <>
-          <h1 className="sr-only">Conversation with Marcio&apos;s portfolio assistant</h1>
+          <h1 className="sr-only">
+            {topic === 'overview'
+              ? "Conversation with Marcio's portfolio assistant"
+              : `${topicById(topic).label} — Marcio Alves`}
+          </h1>
           <ConversationTopBar topic={topicById(conversation.topic)} onNewConversation={startOver} />
         </>
       )}

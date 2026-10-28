@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-import type { TopicId } from '@/core/assistant/topics';
 import {
   Sidebar,
   type SidebarLinks,
@@ -15,16 +13,14 @@ interface SidebarSpecimenProps {
   readonly topics: readonly SidebarTopic[];
 }
 
-/** On its own artboard the sidebar keeps a local selection, as the design's does. */
+/** The sidebar on its own artboard, as it reads on the home page. */
 export function SidebarSpecimen({ profile, links, topics }: SidebarSpecimenProps) {
-  const [activeTopic, setActiveTopic] = useState<TopicId>('overview');
   return (
     <Sidebar
       profile={profile}
       topics={topics}
-      activeTopic={activeTopic}
+      activeTopic="overview"
       links={links}
-      onPickTopic={setActiveTopic}
       onNewConversation={() => undefined}
       onClose={() => undefined}
     />

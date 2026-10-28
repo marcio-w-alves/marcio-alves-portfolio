@@ -33,6 +33,7 @@ async function Scenario({ params }: ScenarioPageProps) {
   return (
     <ChatWorkspace
       {...workspaceProps()}
+      topic={conversation.topic}
       initialConversation={conversation}
       initialDrawerOpen={drawerOpen}
     />

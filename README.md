@@ -103,7 +103,8 @@ skip.
 `pnpm test:e2e` walks the journeys a visitor cannot be let down on, in
 Chromium, against a production build: asking a suggested question and watching
 the answer stream in with its timeline, metrics, sources, actions and
-follow-ups, then following up; picking a topic; a question the record does not
+follow-ups, then following up; opening a topic page and coming back to the
+home conversation intact; a question the record does not
 document; a failed answer and its retry; and the navigation drawer on a phone.
 Everything else is proven lower, in Vitest, where it is faster and cannot
 flake.
@@ -220,6 +221,12 @@ every board. The full-screen states (a streaming answer, a failure, a long
 follow-up…) are rebuilt the way the prototype builds them: real fast-path
 answers replayed through the conversation's transitions.
 
+A board production departs from on purpose carries a `departure` in
+`scripts/fidelity/boards.ts` saying why. It is still measured and reported as
+`DEPART`, but does not fail the gate. The one today is StateTopic: a topic is
+its own page (`/experience`, `/skills`…), so its record follows the
+introduction the artboard shows alone.
+
 `pnpm fidelity:live` checks the boards production renders as they are — the
 welcome screen on a desktop and on a phone — against the live site, so a
 deployment that differs from what was built locally is caught too. It found
@@ -228,9 +235,33 @@ one: a build that reused a stale stylesheet (see `next.config.ts`).
 The references take three deliberate liberties with the prototype, each
 explained where it is made: they omit its "Preview with scripted answers"
 notice, they run its logic with the production contact data (GitHub linked,
-the résumé not yet published), and they undo two of its timing artefacts — a
+the résumé at its real address), and they undo two of its timing artefacts — a
 composer sized before its font loaded, and a conversation scrolled while
 still rendering in.
+
+A board production deliberately no longer matches carries a `departure` in
+`scripts/fidelity/boards.ts` saying why. It is still measured and reported as
+`DEPART`, but it does not fail the gate. There is one: `StateTopic`, because a
+topic is now a page of its own that shows its part of the record beneath the
+introduction (POR-34).
+
+## Topic pages
+
+The overview is the home page; every other topic in the sidebar is a page of
+its own at `/<topic>` (`/experience`, `/skills`, `/projects`, `/achievements`,
+`/philosophy`, `/education`). Each opens without the current conversation, on
+its introduction and its part of the record — the timeline, the skill groups,
+the project cards, the metrics, the principles, the languages and courses —
+built locally from `src/core/knowledge`, never by the model, and prerendered
+at build. A question asked there is answered beneath it, in that page's own
+conversation.
+
+Every page's conversation is held in `ConversationsProvider`, above the pages,
+so leaving a page and coming back finds it as it was, an answer still streaming
+included, for as long as the tab is open. "New conversation" starts the current
+page over: the welcome screen on the home page, the introduction on a topic.
+Any other address answers 404: `ensureStatic = 'navigation'` keeps an unknown
+topic from being served the prerendered shell, with its 200, while it renders.
 
 ## Accessibility, performance and search
 
@@ -286,7 +317,8 @@ utility here; style elements are not allowed. Development additionally allows
 
 The root layout sets the title, description and Open Graph and Twitter tags;
 `metadataBase` is `siteUrl()`, so every absolute URL follows the canonical
-origin. The home page adds its canonical and a JSON-LD `Person` built from
+origin. Each topic page sets its own title, description and canonical, and the
+sitemap lists them all. The home page adds its canonical and a JSON-LD `Person` built from
 `src/core/knowledge` — name, title, summary, LinkedIn and GitHub, and every
 documented skill, never the coursework. `robots.ts` keeps crawlers out of
 `/workbench` and `/api` and points to `sitemap.ts`.

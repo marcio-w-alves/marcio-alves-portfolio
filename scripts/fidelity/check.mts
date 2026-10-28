@@ -37,7 +37,7 @@ const only = new Set(process.argv.slice(2).filter((arg) => !arg.startsWith('--')
 const boards = BOARDS.filter(
   ({ name, liveRoute }) => (live ? liveRoute : true) && (only.size === 0 || only.has(name)),
 );
-const results: { name: string; ratio: number; note: string }[] = [];
+const results: { name: string; ratio: number; note: string; departure?: string }[] = [];
 
 for (const board of boards) {
   const reference = PNG.sync.read(await readFile(new URL(`${board.name}.png`, REFERENCES)));
@@ -67,13 +67,22 @@ for (const board of boards) {
   const ratio = 1 - different / (width * height);
   await writeFile(join(OUT, `${board.name}-candidate.png`), PNG.sync.write(candidate));
   await writeFile(join(OUT, `${board.name}-diff.png`), PNG.sync.write(diff));
-  results.push({ name: board.name, ratio, note: `${String(different)} px differ` });
+  results.push({
+    name: board.name,
+    ratio,
+    note: `${String(different)} px differ`,
+    ...(board.departure ? { departure: board.departure } : {}),
+  });
 }
 await browser.close();
 
-for (const { name, ratio, note } of results) {
-  const mark = ratio >= THRESHOLD ? 'PASS' : 'FAIL';
-  console.log(`${mark}  ${name.padEnd(20)} ${(ratio * 100).toFixed(3).padStart(7)}%  ${note}`);
+const passes = ({ ratio }: { ratio: number }) => ratio >= THRESHOLD;
+for (const result of results) {
+  const mark = passes(result) ? 'PASS' : result.departure ? 'DEPART' : 'FAIL';
+  const why = result.departure && !passes(result) ? ` — ${result.departure}` : '';
+  console.log(
+    `${mark.padEnd(6)} ${result.name.padEnd(20)} ${(result.ratio * 100).toFixed(3).padStart(7)}%  ${result.note}${why}`,
+  );
 }
 console.log(`\nCandidates and diffs: ${OUT}`);
-process.exitCode = results.every(({ ratio }) => ratio >= THRESHOLD) ? 0 : 1;
+process.exitCode = results.every((result) => passes(result) || result.departure) ? 0 : 1;

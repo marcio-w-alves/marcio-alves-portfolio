@@ -54,6 +54,21 @@ test.describe('on a desktop', () => {
 
     expect(await violations(page)).toEqual([]);
   });
+
+  test('every topic page has no WCAG 2.1 AA violations', async ({ page }) => {
+    for (const path of [
+      '/experience',
+      '/skills',
+      '/projects',
+      '/achievements',
+      '/philosophy',
+      '/education',
+    ]) {
+      await page.goto(path);
+      await expect(page.getByRole('list', { name: 'Conversation' })).toBeVisible();
+      expect(await violations(page), path).toEqual([]);
+    }
+  });
 });
 
 test.describe('on a phone', () => {
@@ -64,7 +79,7 @@ test.describe('on a phone', () => {
     await page.getByRole('button', { name: 'Open navigation' }).click();
     await expect(page.getByRole('navigation', { name: 'Topics' })).toBeVisible();
     await expect(
-      page.getByRole('navigation', { name: 'Topics' }).getByRole('button').first(),
+      page.getByRole('navigation', { name: 'Topics' }).getByRole('link').first(),
     ).toBeFocused();
 
     expect(await violations(page)).toEqual([]);

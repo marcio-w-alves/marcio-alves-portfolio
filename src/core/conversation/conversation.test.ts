@@ -12,7 +12,6 @@ import {
   historyOf,
   latestAnswerId,
   removeExchange,
-  selectTopic,
   setFeedback,
   stopAnswer,
 } from './conversation';
@@ -122,31 +121,25 @@ describe('stopping an answer', () => {
   });
 });
 
-describe('topics', () => {
-  it('opens a topic with its local introduction and suggestions', () => {
-    const conversation = selectTopic(createConversation(), 'experience');
-    const intro = conversation.messages.at(-1);
+describe('topic pages', () => {
+  it('opens a topic on its introduction, its part of the record and its suggestions', () => {
+    const conversation = createConversation('experience');
+    const [intro] = conversation.messages;
     expect(conversation.topic).toBe('experience');
+    expect(conversation.messages).toHaveLength(1);
     expect(intro).toMatchObject({ role: 'assistant', kind: 'intro', status: 'done' });
-    expect(intro?.role === 'assistant' && intro.parts[0]).toMatchObject({
-      text: topicById('experience').intro,
-    });
+    if (intro?.role !== 'assistant') throw new Error('no introduction');
+    expect(intro.parts[0]).toMatchObject({ text: topicById('experience').intro });
+    expect(intro.parts[1]).toMatchObject({ type: 'component', component: 'timeline' });
+    expect(intro.followUps.length).toBeGreaterThan(0);
   });
 
-  it('does not repeat an introduction already on screen', () => {
-    const once = selectTopic(createConversation(), 'skills');
-    expect(selectTopic(once, 'skills').messages).toHaveLength(1);
+  it('builds the same page every time, so the server and the browser agree', () => {
+    expect(createConversation('skills')).toEqual(createConversation('skills'));
   });
 
-  it('keeps the earlier conversation when switching topics', () => {
-    const { conversation } = ask(createConversation(), "Tell me about Marcio's career.");
-    expect(selectTopic(conversation, 'projects').messages).toHaveLength(
-      conversation.messages.length + 1,
-    );
-  });
-
-  it('adds nothing for the overview of an empty conversation, which is the welcome screen', () => {
-    expect(selectTopic(createConversation('skills'), 'overview').messages).toHaveLength(0);
+  it('opens the overview empty, as the welcome screen', () => {
+    expect(createConversation('overview').messages).toHaveLength(0);
   });
 });
 
@@ -177,7 +170,7 @@ describe('feedback', () => {
 
 describe('history sent to the server', () => {
   it('carries questions and finished answers as plain text, without introductions or failures', () => {
-    let conversation = selectTopic(createConversation(), 'experience');
+    let conversation = createConversation('experience');
     conversation = ask(conversation, 'What did he do at Roots?').conversation;
     conversation = ask(conversation, 'Broken', [
       { type: 'error', error: { code: 'network', message: 'x', retryable: true } },

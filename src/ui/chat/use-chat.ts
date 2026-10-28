@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import type { TopicId } from '@/core/assistant/topics';
 import {
   activeAnswer,
@@ -10,39 +10,38 @@ import {
   createConversation,
   historyOf,
   removeExchange,
-  selectTopic,
   setFeedback,
   stopAnswer,
 } from '@/core/conversation/conversation';
 import type { Conversation, Feedback } from '@/core/conversation/messages';
 import { streamAnswer } from './chat-client';
+import { useConversationStore } from './conversation-store';
 
 /**
- * The live conversation: the pure transitions from the core, driven by the
- * answer stream from `/api/chat`. One answer streams at a time; starting
- * over, retrying or editing cancels the one in flight.
+ * The live conversation of one page: the pure transitions from the core,
+ * driven by the answer stream from `/api/chat`. One answer streams at a time
+ * per page; starting over, retrying or editing cancels the one in flight.
+ * The conversation itself lives in the store, so it outlasts the page.
  */
-export function useChat(initial: Conversation = createConversation()) {
-  const [conversation, setConversation] = useState<Conversation>(initial);
+export function useChat(topic: TopicId, initial?: Conversation) {
+  const store = useConversationStore();
+  const [seed] = useState(() => initial ?? createConversation(topic));
+  const conversation = store.conversations.get(topic) ?? seed;
   const [announcement, setAnnouncement] = useState('');
-  const inFlight = useRef<AbortController | null>(null);
 
-  useEffect(
-    () => () => {
-      inFlight.current?.abort();
-    },
-    [],
-  );
+  function setConversation(change: Conversation | ((current: Conversation) => Conversation)) {
+    store.update(topic, change, seed);
+  }
 
   function cancel() {
-    inFlight.current?.abort();
-    inFlight.current = null;
+    store.inFlight.get(topic)?.abort();
+    store.inFlight.delete(topic);
   }
 
   async function stream(answerId: string, question: string, from: Conversation) {
     cancel();
     const controller = new AbortController();
-    inFlight.current = controller;
+    store.inFlight.set(topic, controller);
     setAnnouncement('Generating an answer');
     const request = { message: question, history: historyOf(from), context: contextOf(from) };
     for await (const event of streamAnswer(request, { signal: controller.signal })) {
@@ -52,7 +51,7 @@ export function useChat(initial: Conversation = createConversation()) {
         setAnnouncement("The answer couldn't be loaded. Retry is available.");
       }
     }
-    if (inFlight.current === controller) inFlight.current = null;
+    if (store.inFlight.get(topic) === controller) store.inFlight.delete(topic);
   }
 
   function ask(raw: string): boolean {
@@ -93,13 +92,9 @@ export function useChat(initial: Conversation = createConversation()) {
     setConversation((current) => setFeedback(current, answerId, feedback));
   }
 
-  function pickTopic(topic: TopicId) {
-    setConversation((current) => selectTopic(current, topic));
-  }
-
   function startOver() {
     cancel();
-    setConversation((current) => createConversation(current.topic));
+    setConversation(createConversation(topic));
     setAnnouncement('New conversation started');
   }
 
@@ -112,7 +107,6 @@ export function useChat(initial: Conversation = createConversation()) {
     retry,
     edit,
     rate,
-    pickTopic,
     startOver,
   };
 }
