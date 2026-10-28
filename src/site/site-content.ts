@@ -1,3 +1,4 @@
+import { ABOUT_PATH, type AboutPageCopy } from './about-page';
 import type { AnswerSet } from '@/core/assistant/answer-set';
 import { createResponseKit, type ResponseKit } from '@/core/assistant/response-kit';
 import { createTopicIntro } from '@/core/assistant/topic-pages';
@@ -13,9 +14,19 @@ export interface SiteContent {
   readonly responseKit: ResponseKit;
   readonly topicCatalog: TopicCatalog;
   readonly topicIntro: (topic: TopicId) => TopicIntro;
+  /** The pages beside the topics, as the sidebar links them. */
+  readonly pages: readonly {
+    readonly label: string;
+    readonly icon: 'layers';
+    readonly href: string;
+  }[];
 }
 
-export function createSiteContent(source: KnowledgeSource, answers: AnswerSet): SiteContent {
+export function createSiteContent(
+  source: KnowledgeSource,
+  answers: AnswerSet,
+  about?: AboutPageCopy,
+): SiteContent {
   const knowledge = localize(source, 'en');
   const responseKit = createResponseKit(knowledge);
   const topicCatalog = createTopicCatalog(answers.topics(responseKit));
@@ -24,5 +35,6 @@ export function createSiteContent(source: KnowledgeSource, answers: AnswerSet): 
     responseKit,
     topicCatalog,
     topicIntro: createTopicIntro(topicCatalog),
+    pages: about ? [{ label: about.label, icon: 'layers', href: ABOUT_PATH }] : [],
   };
 }

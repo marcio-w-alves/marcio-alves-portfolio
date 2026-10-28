@@ -11,3 +11,9 @@ it('lists every page at the canonical origin, the overview as the home page', ()
     'https://ada.example/education',
   ]);
 });
+
+it('lists the pages beside the topics too', () => {
+  expect(
+    sitemap(new URL('https://ada.example'), ['/about-this-site']).map(({ url }) => url),
+  ).toContain('https://ada.example/about-this-site');
+});

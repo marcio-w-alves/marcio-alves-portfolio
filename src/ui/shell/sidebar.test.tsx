@@ -51,6 +51,34 @@ describe('Sidebar', () => {
     expect(sidebar.querySelector('img')).toBeNull();
   });
 
+  it('lists a page beside the topics and marks it while it is shown', () => {
+    renderWithMessages(
+      <Sidebar
+        profile={{ name: profile.name, title: profile.title, photoUrl: null }}
+        topics={topicCatalog.topics.map(({ id, label, icon }) => ({
+          id,
+          label,
+          icon,
+          href: `/${id}`,
+        }))}
+        activeTopic={null}
+        pages={[{ label: 'About this site', icon: 'layers', href: '/about-this-site' }]}
+        activePage="/about-this-site"
+        links={contact}
+        onNewConversation={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+    const nav = screen.getByRole('navigation', { name: 'Topics' });
+    expect(within(nav).getByRole('link', { name: 'About this site' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    for (const link of within(nav).getAllByRole('link')) {
+      if (link.textContent !== 'About this site') expect(link).not.toHaveAttribute('aria-current');
+    }
+  });
+
   it('links every topic to its page and marks only the current one', () => {
     renderSidebar();
     const nav = screen.getByRole('navigation', { name: 'Topics' });
