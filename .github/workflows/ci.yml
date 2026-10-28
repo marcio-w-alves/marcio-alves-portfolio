@@ -97,7 +97,11 @@ jobs:
   # up in the list of checks a pull request has to satisfy.
   release:
     name: release
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # always() is required, not decorative: `commits` is skipped on a push to
+    # main, and that skip propagates down the needs graph to any job that does
+    # not opt out of it. The explicit needs.ci.result check keeps the property
+    # the implicit one was there for — a broken main is never tagged.
+    if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.ci.result == 'success' }}
     needs: [ci]
     runs-on: ubuntu-latest
     timeout-minutes: 10
