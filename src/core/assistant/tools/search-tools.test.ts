@@ -6,7 +6,7 @@ import type {
 } from '../ports/knowledge-search.port';
 import { createSearchTools } from './search-tools';
 
-const SHALL = { id: 'resume.shall', label: 'Resume · Shall And Partners experience' };
+const SHALL = { id: 'resume.shall', label: 'Resume' };
 
 function searchReturning(passages: Passage[]): {
   port: KnowledgeSearchPort;

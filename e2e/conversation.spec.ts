@@ -35,7 +35,7 @@ test('a suggested question streams in as a rich answer, and a follow-up continue
   await expect(metrics.getByText('50%', { exact: true })).toBeVisible();
 
   await expect(careerAnswer.getByText('Sources')).toBeVisible();
-  await expect(careerAnswer.getByText('Resume · Deel experience')).toBeVisible();
+  await expect(careerAnswer.getByText('Resume', { exact: true })).toHaveCount(1);
 
   const actions = careerAnswer.getByRole('group', { name: 'Answer actions' });
   await expect(actions.getByRole('button', { name: 'Copy' })).toBeVisible();
@@ -69,7 +69,7 @@ test('a question the record does not document gets an honest answer instead of a
       "I don't have documented information about Marcio working with GraphQL in his roles, so I can't say how experienced he is with it.",
     ),
   ).toBeVisible();
-  await expect(answer.getByText('Resume · Core skills')).toBeVisible();
+  await expect(answer.getByText('Resume', { exact: true })).toBeVisible();
 });
 
 test('a failed answer offers to try again, and trying again answers the same question', async ({

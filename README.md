@@ -241,9 +241,10 @@ still rendering in.
 
 A board production deliberately no longer matches carries a `departure` in
 `scripts/fidelity/boards.ts` saying why. It is still measured and reported as
-`DEPART`, but it does not fail the gate. There is one: `StateTopic`, because a
-topic is now a page of its own that shows its part of the record beneath the
-introduction (POR-34).
+`DEPART`, but it does not fail the gate. There are two: `StateTopic`, because
+a topic is now a page of its own that shows its part of the record beneath the
+introduction (POR-34), and `AssistantMessage`, because an answer cites the
+résumé once as "Resume" rather than once per section (POR-36).
 
 ## Topic pages
 

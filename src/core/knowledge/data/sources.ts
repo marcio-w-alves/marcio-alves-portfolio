@@ -1,18 +1,20 @@
 import type { SourceId } from '../ids';
 
+// Every section of the résumé is cited as the résumé itself: a visitor needs
+// to know where an answer comes from, not which part of the document.
 export const sourceLabels: Readonly<Record<SourceId, string>> = {
-  profile: 'Resume · Professional summary',
+  profile: 'Resume',
   principles: 'Engineering principles',
-  'resume.toptal': 'Resume · Toptal experience',
-  'resume.deel': 'Resume · Deel experience',
-  'resume.roots': 'Resume · Roots experience',
-  'resume.maison': 'Resume · Maison Modern experience',
-  'resume.shall': 'Resume · Shall And Partners experience',
-  'resume.webfi': 'Resume · WEBFI experience',
-  'resume.freelance': 'Resume · Freelance work',
-  'resume.skills': 'Resume · Core skills',
-  'resume.education': 'Resume · Education',
-  'resume.languages': 'Resume · Languages',
-  'resume.certifications': 'Resume · Certifications',
+  'resume.toptal': 'Resume',
+  'resume.deel': 'Resume',
+  'resume.roots': 'Resume',
+  'resume.maison': 'Resume',
+  'resume.shall': 'Resume',
+  'resume.webfi': 'Resume',
+  'resume.freelance': 'Resume',
+  'resume.skills': 'Resume',
+  'resume.education': 'Resume',
+  'resume.languages': 'Resume',
+  'resume.certifications': 'Resume',
   projects: 'Product websites and notes',
 };

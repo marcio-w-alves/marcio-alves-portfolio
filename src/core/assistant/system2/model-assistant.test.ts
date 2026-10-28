@@ -71,7 +71,7 @@ describe('model assistant — answering through actions', () => {
     expect(events.at(-1)).toEqual({
       type: 'finish',
       followUps: ['Next?'],
-      sources: [{ id: 'resume.deel', label: 'Resume · Deel experience' }],
+      sources: [{ id: 'resume.deel', label: 'Resume' }],
     });
     expect(JSON.stringify(toolReplies(requests[1]))).toContain('planned bug sprints');
   });

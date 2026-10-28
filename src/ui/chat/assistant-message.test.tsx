@@ -47,6 +47,19 @@ describe('an answer', () => {
     expect(within(answer).getByText(knowledgeBase.assistant.name).tagName).toBe('STRONG');
   });
 
+  it('cites the résumé once, however many of its sections the answer drew on', () => {
+    renderMessage({
+      parts: [{ type: 'text', id: 'p0', text: 'He led teams at Deel and Roots.' }],
+      sources: [
+        { id: 'resume.deel', label: 'Resume' },
+        { id: 'resume.roots', label: 'Resume' },
+        { id: 'principles', label: 'Engineering principles' },
+      ],
+    });
+    expect(screen.getAllByText('Resume')).toHaveLength(1);
+    expect(screen.getByText('Engineering principles')).toBeInTheDocument();
+  });
+
   it('offers its follow-ups under a heading, and asks the one picked', async () => {
     const user = userEvent.setup();
     const handlers = renderMessage({

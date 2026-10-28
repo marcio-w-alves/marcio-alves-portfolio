@@ -108,7 +108,7 @@ describe('POST /api/chat — answering', () => {
     );
     expect(events.at(-1)).toMatchObject({
       type: 'finish',
-      sources: [{ id: 'resume.roots', label: 'Resume · Roots experience' }],
+      sources: [{ id: 'resume.roots', label: 'Resume' }],
     });
   });
 
