@@ -18,17 +18,18 @@ pnpm dev
 
 ## Scripts
 
-| Command             | Purpose                                   |
-| ------------------- | ----------------------------------------- |
-| `pnpm dev`          | Development server                        |
-| `pnpm build`        | Production build                          |
-| `pnpm typecheck`    | Route types, then TypeScript, no emit     |
-| `pnpm lint`         | ESLint, warnings treated as failures      |
-| `pnpm lint:fix`     | ESLint with autofix                       |
-| `pnpm format`       | Prettier, write                           |
-| `pnpm format:check` | Prettier, verify only                     |
-| `pnpm boundaries`   | Module-boundary rules                     |
-| `pnpm verify`       | All four gates, in the order CI runs them |
+| Command             | Purpose                               |
+| ------------------- | ------------------------------------- |
+| `pnpm dev`          | Development server                    |
+| `pnpm build`        | Production build                      |
+| `pnpm typecheck`    | Route types, then TypeScript, no emit |
+| `pnpm lint`         | ESLint, warnings treated as failures  |
+| `pnpm lint:fix`     | ESLint with autofix                   |
+| `pnpm format`       | Prettier, write                       |
+| `pnpm format:check` | Prettier, verify only                 |
+| `pnpm boundaries`   | Module-boundary rules                 |
+| `pnpm test`         | Unit and integration tests (Vitest)   |
+| `pnpm verify`       | Every gate, in the order CI runs them |
 
 ## Quality gates
 
@@ -79,6 +80,21 @@ here.
 The commit-message rule is enforced twice on purpose. The `commit-msg` hook
 only protects whoever installed it; the `commits` job is the one nobody can
 skip.
+
+## Knowledge base
+
+`src/core/knowledge` is the single source of truth for every fact the site and
+the assistant present. Two layers live side by side on each role: condensed
+fields that shape the interface, and `highlights` — the resume's bullet points
+verbatim — which are the factual record retrieval searches. Where the design's
+copy and the resume disagree, the resume wins.
+
+Identifiers are literal unions, so a role citing a metric that does not exist
+fails to compile. Tests cover what the type system cannot: chronology, one
+record per id, and which roles overlapped.
+
+Nothing is inferred. The resume states a country but not a city, so the city
+is `null` and the assistant says it is not documented rather than guessing.
 
 ## Design tokens
 
