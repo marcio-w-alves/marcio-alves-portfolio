@@ -8,7 +8,6 @@ import { workspaceView } from './workspace-view';
 // The topics' copy is still written for the owner's record, so these assert
 // how the view is built from it, never what it says.
 const content = createSiteContent(profile.knowledge, profile.copy.en.answers);
-const { knowledge } = content;
 
 describe('workspaceView', () => {
   it('links every topic to its own page, the overview to the home page', () => {
@@ -19,20 +18,16 @@ describe('workspaceView', () => {
     );
   });
 
-  it('names each role’s company by the role’s id', () => {
-    const { companies } = workspaceView(content);
-
-    expect(companies).toEqual(
-      Object.fromEntries(knowledge.experience.map((role) => [role.id, role.company])),
-    );
-  });
-
   it.each(TOPIC_IDS)('opens the %s page on its own conversation and four suggestions', (topic) => {
     const view = workspaceView(content, topic);
 
     expect(view.topic).toBe(topic);
     expect(view.seed.topic).toBe(topic);
-    expect(view.suggestions).toEqual(content.topicCatalog.suggestedQuestions(topic, 0, 4));
+    expect(view.suggestions).toEqual(
+      content.topicCatalog
+        .suggestedQuestions(topic, 0, 4)
+        .map(({ question, short }) => ({ question, label: short })),
+    );
   });
 
   it('opens a topic page with its introduction, and the overview with none', () => {

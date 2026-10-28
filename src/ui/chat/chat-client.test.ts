@@ -25,7 +25,7 @@ const REQUEST: ChatRequest = {
 };
 
 const ANSWER: AssistantEvent[] = [
-  { type: 'start', intent: 'company:roots', related: 'roots' },
+  { type: 'start', intent: 'company:roots', related: { id: 'roots', company: 'Roots' } },
   { type: 'text-start', id: 'p0' },
   { type: 'text-delta', id: 'p0', delta: 'At Roots he led ' },
   { type: 'text-delta', id: 'p0', delta: 'the frontend.' },

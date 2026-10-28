@@ -10,9 +10,9 @@ afterEach(() => {
 });
 
 describe('what the assistant says while it thinks', () => {
-  it("starts on the design's line, then moves on so a slow answer never looks stuck", () => {
-    render(<ThinkingStatus />);
-    expect(screen.getByText("Reading Marcio's documented experience…")).toBeInTheDocument();
+  it("starts on the design's line, naming the owner, then moves on so a slow answer never looks stuck", () => {
+    render(<ThinkingStatus ownerFirstName="Ada" />);
+    expect(screen.getByText("Reading Ada's documented experience…")).toBeInTheDocument();
 
     act(() => {
       vi.advanceTimersByTime(1600);

@@ -1,9 +1,17 @@
 import type { Knowledge, Metric, Project, Role } from '@/core/knowledge/schema';
-import type { AnswerSource } from '../chat/events';
+import type { AnswerSource, RelatedRole } from '../chat/events';
 import { createCitation } from './citations';
-import type { MetricItem, NoteTone, ProjectView, RoleSection, RoleView } from '../chat/components';
+import type {
+  ComponentPart,
+  MetricItem,
+  NoteTone,
+  ProjectView,
+  ResponsePart,
+  RoleSection,
+  RoleView,
+} from '../chat/components';
 import type { ConversationContext } from '../chat/request';
-import type { AssistantResponse, ComponentPart, ResponsePart } from './response';
+import type { AssistantResponse } from './response';
 
 /**
  * Builders for answer parts. Components always receive resolved data, so the
@@ -41,6 +49,7 @@ export function details(summary: string, markdown: string): ComponentPart {
 interface ResponseMeta {
   readonly followUps: readonly string[];
   readonly sources: readonly string[];
+  /** The id of the role the answer is about. */
   readonly related?: string;
   readonly grounded?: boolean;
 }
@@ -100,6 +109,10 @@ export function createResponseKit(knowledge: Knowledge): ResponseKit {
   const roleById = lookup(knowledge.experience, 'role');
   const projectById = lookup(knowledge.projects, 'project');
   const citation = createCitation(knowledge.sourceLabels);
+
+  function relatedRole(id: string): RelatedRole {
+    return { id, company: roleById(id).company };
+  }
 
   function metricById(id: string): Metric {
     const metric = knowledge.metrics[id];
@@ -213,7 +226,7 @@ export function createResponseKit(knowledge: Knowledge): ResponseKit {
         parts: parts.filter((part): part is ResponsePart => part !== null),
         followUps: meta.followUps,
         sources: meta.sources.map(citation),
-        related: meta.related ?? null,
+        related: meta.related ? relatedRole(meta.related) : null,
         grounded: meta.grounded ?? true,
       };
     },

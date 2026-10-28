@@ -1,0 +1,5 @@
+{
+  "baseline": { "commit": "821abaf", "gzipBytes": 180908 },
+  "ceiling": { "task": "POR-59", "gzipBytes": 167042 },
+  "growthAllowance": 5120
+}

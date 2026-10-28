@@ -1,5 +1,4 @@
-import type { RichComponent, RichComponentName } from '@/core/chat/components';
-import type { ComponentPart } from '@/core/assistant/response';
+import type { ComponentPart, RichComponent, RichComponentName } from '@/core/chat/components';
 import type { ConversationContext } from '@/core/chat/request';
 import type { FastPath } from '@/core/assistant/system1/fast-path';
 

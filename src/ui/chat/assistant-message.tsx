@@ -12,6 +12,8 @@ interface AssistantMessageProps {
   readonly message: Message;
   /** The name the assistant goes by beside its answers. */
   readonly assistantName: string;
+  /** How the thinking status names the owner. */
+  readonly ownerFirstName: string;
   /** Follow-ups are only offered under the newest answer. */
   readonly isLatest: boolean;
   /** Shown beside the name on a topic's introduction. */
@@ -36,6 +38,7 @@ interface AssistantMessageProps {
 export function AssistantMessage({
   message,
   assistantName,
+  ownerFirstName,
   isLatest,
   topicLabel,
   relatedLabel,
@@ -73,7 +76,7 @@ export function AssistantMessage({
           {topicLabel && <Tag tone="accent">{topicLabel}</Tag>}
         </div>
 
-        {message.status === 'pending' && <ThinkingStatus />}
+        {message.status === 'pending' && <ThinkingStatus ownerFirstName={ownerFirstName} />}
 
         {message.parts.length > 0 && (
           <AnswerBody parts={message.parts} streaming={message.status === 'streaming'} />

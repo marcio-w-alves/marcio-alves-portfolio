@@ -1,5 +1,5 @@
+import type { ResponsePart } from '../chat/components';
 import { TOPIC_IDS, type TopicId } from '../chat/topic-id';
-import type { ResponsePart } from './response';
 
 /**
  * Topics are the site's pages: each opens with a curated introduction and its

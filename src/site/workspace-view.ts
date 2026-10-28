@@ -11,9 +11,10 @@ export function workspaceView(
   { knowledge, topicCatalog, topicIntro }: SiteContent,
   topic: TopicId = 'overview',
 ) {
-  const { profile, contact, welcome, assistant, experience } = knowledge;
+  const { profile, contact, welcome, assistant } = knowledge;
   return {
     profile: { name: profile.name, title: profile.title },
+    ownerFirstName: profile.firstName,
     links: contact,
     topics: topicCatalog.topics.map(({ id, label, icon }) => ({
       id,
@@ -23,8 +24,9 @@ export function workspaceView(
     })),
     welcome,
     assistantName: assistant.name,
-    companies: Object.fromEntries(experience.map((role) => [role.id, role.company])),
-    suggestions: topicCatalog.suggestedQuestions(topic, 0, SUGGESTION_COUNT),
+    suggestions: topicCatalog
+      .suggestedQuestions(topic, 0, SUGGESTION_COUNT)
+      .map(({ question, short }) => ({ question, label: short })),
     seed: createConversation(topic, topicIntro(topic)),
     maxQuestionLength: MAX_QUESTION_LENGTH,
     topic,

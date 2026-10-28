@@ -37,6 +37,7 @@ function renderMessage(fields: Partial<Message>) {
     <AssistantMessage
       message={message(fields)}
       assistantName="Ada's assistant"
+      ownerFirstName="Ada"
       isLatest
       {...handlers}
     />,
@@ -141,7 +142,7 @@ describe('an answer’s text', () => {
 describe('while an answer arrives', () => {
   it('says it is reading the record before the first words', () => {
     renderMessage({ status: 'pending' });
-    expect(screen.getByText(/Reading Marcio.s documented experience/)).toBeInTheDocument();
+    expect(screen.getByText(/Reading Ada.s documented experience/)).toBeInTheDocument();
     expect(screen.queryByRole('group', { name: 'Answer actions' })).not.toBeInTheDocument();
   });
 
@@ -184,6 +185,7 @@ describe('a topic introduction', () => {
           sources: [{ id: 'profile', label: 'Professional profile' }],
         })}
         assistantName="Ada's assistant"
+        ownerFirstName="Ada"
         isLatest
         topicLabel="Experience"
         onFollowUp={vi.fn()}

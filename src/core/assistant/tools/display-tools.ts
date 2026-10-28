@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { ComponentPart } from '../response';
+import type { ComponentPart } from '../../chat/components';
 import type { ResponseKit } from '../response-kit';
 import { defineTool, oneOf, type Tool, type ToolResult } from './tool';
 

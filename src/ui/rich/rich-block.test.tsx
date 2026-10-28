@@ -6,7 +6,7 @@ import { profile } from '@/profile';
 import { createSiteContent } from '@/site/site-content';
 import { details, note, table } from '@/core/assistant/response-kit';
 import { createFastPath } from '@/core/assistant/system1/fast-path';
-import { exampleBlocks } from './examples';
+import { exampleBlocks } from '@/testing/rich-examples';
 import { RichBlock } from './rich-block';
 
 const { knowledge } = createSiteContent(profile.knowledge, profile.copy.en.answers);

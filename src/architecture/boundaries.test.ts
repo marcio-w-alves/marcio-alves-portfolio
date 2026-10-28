@@ -53,6 +53,18 @@ const FORBIDDEN_EDGES = [
     to: 'src/core/assistant/answer.ts',
   },
   {
+    fixture: 'ui-to-knowledge',
+    rule: 'ui-reads-contracts-only',
+    from: 'src/ui/greeting.ts',
+    to: 'src/core/knowledge/schema.ts',
+  },
+  {
+    fixture: 'conversation-to-assistant',
+    rule: 'ui-reads-contracts-only',
+    from: 'src/core/conversation/conversation.ts',
+    to: 'src/core/assistant/topic-pages.ts',
+  },
+  {
     fixture: 'ui-to-request-schema',
     rule: 'ui-keeps-zod-out',
     from: 'src/ui/composer.ts',
