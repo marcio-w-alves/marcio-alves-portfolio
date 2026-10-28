@@ -39,30 +39,9 @@ const OPENERS = [
 ];
 
 const OFFER_PHRASE =
-  /feel free|let me know|just ask|happy to help|\b(?:need|want|would like|'d like|have)\b (?:any )?(?:more |further |other )?(?:details|information|questions)\b|à (?:sua )?disposição|fique à vontade|não hesite|é só perguntar|mais (?:informações|detalhes)|outras perguntas|no dudes|a (?:tu|su) disposición|más (?:información|detalles)|otras preguntas/i;
+  /feel free|let me know|\b(?:just ask|ask away)\b|happy to help|\b(?:need|want|would like|'d like|have)\b (?:any (?:more |further |other )?|more |further |other |additional )(?:details|information|questions)\b|à (?:sua )?disposição|fique à vontade|não hesite|é só perguntar|\bpergunte\b|mais (?:informações|detalhes)|outras perguntas|no dudes|a (?:tu|su) disposición|más (?:información|detalles)|otras preguntas|pregúnta(?:me)?\b|\bpregunte\b/i;
 
-const THIRD_PERSON = [
-  'he',
-  'his',
-  'him',
-  'she',
-  'her',
-  'they',
-  'their',
-  'them',
-  'ele',
-  'ela',
-  'eles',
-  'elas',
-  'dele',
-  'dela',
-  'deles',
-  'delas',
-  'él',
-  'ella',
-  'ellos',
-  'ellas',
-];
+const THIRD_PERSON = ['he', 'his', 'him', 'she', 'her', 'ele', 'ela', 'dele', 'dela', 'él', 'ella'];
 
 function wholeWords(words: readonly string[]): RegExp {
   const escaped = words.map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
@@ -89,18 +68,20 @@ function mayBeOffer(start: string): boolean {
 }
 
 /**
- * An offer's condition ("If you need more details,") may name the person;
- * only the clause after it can state something about them.
+ * An offer's condition ("If you need more details about his work,") may name
+ * the person or a number; only the clause after it can state a fact.
  */
 function mainClause(sentence: string): string {
-  const comma = sentence.indexOf(',');
-  return comma === -1 ? '' : sentence.slice(comma + 1);
+  const separator = sentence.search(/[,;:]/);
+  return separator === -1 ? '' : sentence.slice(separator + 1);
 }
 
 function offerDetector(subjectNames: readonly string[]): (sentence: string) => boolean {
   const subject = wholeWords([...THIRD_PERSON, ...subjectNames]);
-  const carriesFact = (sentence: string) =>
-    /\d/.test(sentence) || subject.test(mainClause(sentence));
+  const carriesFact = (sentence: string) => {
+    const clause = mainClause(sentence);
+    return !OFFER_PHRASE.test(clause) && (/\d/.test(clause) || subject.test(clause));
+  };
   return (sentence) =>
     mayBeOffer(sentence.trimStart()) && OFFER_PHRASE.test(sentence) && !carriesFact(sentence);
 }

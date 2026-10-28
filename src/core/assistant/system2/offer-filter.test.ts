@@ -48,15 +48,29 @@ describe('offers of help in a streamed answer', () => {
   it.each([
     'If you ask about performance, he cut load time by 50%.',
     'If you need more details on Roots, he grew the team from one to four.',
+    'Se quiser saber de desempenho, ele reduziu o tempo de carregamento em 50%.',
+    'Feel free to check his GitHub, he has 40 repos.',
+    'Let me know which project; he worked on 3.',
   ])('keeps a factual sentence that starts like an offer: %j', (answer) => {
     expect(filtered(answer).shown).toBe(answer);
   });
 
-  it('removes a closing offer that carries no fact', () => {
-    expect(
-      filtered('He led the Acme migration.\n\nFeel free to ask if you need more information.')
-        .shown,
-    ).toBe('He led the Acme migration.');
+  it.each([
+    [
+      'He led the Acme migration.\n\nFeel free to ask if you need more information.',
+      'He led the Acme migration.',
+    ],
+    ['He led HRIS. If you have more questions, I would be happy to answer them.', 'He led HRIS.'],
+    ['He led HRIS. Let me know if you want more details, and I will share them.', 'He led HRIS.'],
+    ['He led HRIS. If you want to know more, ask away!', 'He led HRIS.'],
+    [
+      'He led HRIS. If you have any other questions about his 10 years of experience, feel free to ask.',
+      'He led HRIS.',
+    ],
+    ['He led HRIS. If you need more details, feel free to ask about his work.', 'He led HRIS.'],
+    ['He led HRIS. Let me know if you need more details about his 2022 projects.', 'He led HRIS.'],
+  ])('removes a closing offer that carries no fact: %j', (answer, expected) => {
+    expect(filtered(answer).shown).toBe(expected);
   });
 
   it.each([
@@ -75,10 +89,8 @@ describe('offers of help in a streamed answer', () => {
       'Ela trabalhou na Deel.',
     ],
     ['Trabajó en Deel. Si tienes otras preguntas, estoy a tu disposición.', 'Trabajó en Deel.'],
-    [
-      'Se quiser saber de desempenho, ele reduziu o tempo de carregamento em 50%.',
-      'Se quiser saber de desempenho, ele reduziu o tempo de carregamento em 50%.',
-    ],
+    ['Ela trabalhou na Deel. Se quiser saber mais, pergunte!', 'Ela trabalhou na Deel.'],
+    ['Trabajó en Deel. Si quieres saber más, pregúntame.', 'Trabajó en Deel.'],
   ])('still removes offers in Portuguese and Spanish: %j', (answer, expected) => {
     expect(filtered(answer).shown).toBe(expected);
   });
@@ -103,6 +115,13 @@ describe('offers of help in a streamed answer', () => {
     expect(filtered('He led HRIS. Let me know if you want more details').shown).toBe(
       'He led HRIS.',
     );
+  });
+
+  it.each([
+    'If you ask me, the hardest part was the migration.',
+    'If you have questions about scope, the answer is in the README.',
+  ])('keeps a sentence that mentions asking without offering anything: %j', (answer) => {
+    expect(filtered(answer).shown).toBe(answer);
   });
 
   it('keeps a sentence that only starts like an offer', () => {
