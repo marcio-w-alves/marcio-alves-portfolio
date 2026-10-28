@@ -8,7 +8,7 @@ const fonts = await site.imageFonts();
 
 export async function GET(
   _request: Request,
-  { params }: RouteContext<'/[locale]/brand/share-image.png'>,
+  { params }: { readonly params: Promise<{ readonly locale: string }> },
 ) {
   return site.shareImage((await params).locale, fonts);
 }
