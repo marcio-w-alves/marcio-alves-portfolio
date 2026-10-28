@@ -1,0 +1,48 @@
+import { z } from 'zod';
+import { CHUNK_CATEGORIES } from '@/core/knowledge/corpus';
+import type { AnswerSource } from '../assistant-event';
+import type { KnowledgeSearchPort } from '../ports/knowledge-search.port';
+import { defineTool, type Tool } from './tool';
+
+const DEFAULT_LIMIT = 5;
+
+function distinct(sources: readonly AnswerSource[]): AnswerSource[] {
+  return [...new Map(sources.map((source) => [source.id, source])).values()];
+}
+
+export function createSearchTools(search: KnowledgeSearchPort): Tool[] {
+  const searchKnowledge = defineTool({
+    name: 'searchKnowledge',
+    description:
+      "Semantic search over Marcio's documented record, for questions no specific action covers. Returns the matching passages; an empty result means the record does not cover the question.",
+    input: {
+      query: z.string().trim().min(2).max(300),
+      category: z.enum(CHUNK_CATEGORIES).optional(),
+      limit: z.number().int().min(1).max(8).optional(),
+    },
+    execute: async ({ query, category, limit }) => {
+      const passages = await search.search({
+        query,
+        limit: limit ?? DEFAULT_LIMIT,
+        ...(category ? { category } : {}),
+      });
+      return {
+        data:
+          passages.length > 0
+            ? {
+                passages: passages.map((passage) => ({
+                  text: passage.text,
+                  category: passage.category,
+                  relevance: Math.round(passage.score * 100) / 100,
+                })),
+              }
+            : {
+                passages: [],
+                note: 'Nothing in the documented record matches. Do not answer from general knowledge.',
+              },
+        sources: distinct(passages.map((passage) => passage.source)),
+      };
+    },
+  });
+  return [searchKnowledge];
+}

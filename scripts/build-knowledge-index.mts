@@ -9,8 +9,8 @@
  *   pnpm rag:build
  */
 import { writeFile } from 'node:fs/promises';
-import OpenAI from 'openai';
 import { buildCorpus } from '../src/core/knowledge/corpus';
+import { createOpenAIClient } from '../src/infrastructure/openai/openai-client';
 import { createOpenAIEmbeddings } from '../src/infrastructure/openai/openai-embeddings';
 import {
   corpusHash,
@@ -30,7 +30,7 @@ if (!apiKey) throw new Error('OPENAI_API_KEY is not set. Put it in .env.local.')
 
 const chunks = buildCorpus();
 const embeddings = createOpenAIEmbeddings({
-  client: new OpenAI({ apiKey, timeout: 30_000, maxRetries: 2 }),
+  client: createOpenAIClient(apiKey),
   model: EMBEDDING_MODEL,
   dimensions: EMBEDDING_DIMENSIONS,
 });
