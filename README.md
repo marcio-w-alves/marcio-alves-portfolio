@@ -59,6 +59,27 @@ formats and lints what is staged, `commit-msg` validates the message, and
 `pre-push` runs typecheck, lint and the boundary rules. Never bypass them with
 `--no-verify`: fix the gate or fix what the gate found.
 
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every pull request and every push to `main`.
+The four static gates fan out from one matrix job, so adding a gate is one list
+entry rather than a copied job. `build`, and `commits` on pull requests, run
+alongside them. A final `ci` job summarises the rest, which lets branch
+protection require one check instead of a list that has to be edited whenever a
+job is added.
+
+Setup is a composite action in `.github/actions/setup`: pnpm, Node from
+`.nvmrc`, and a cached, frozen-lockfile install. Third-party actions are pinned
+to commit SHAs, not tags — a tag can be moved to point at different code.
+
+The build job is given no secrets, which is the check that environment
+variables stay lazily validated: a build that needs a runtime credential fails
+here.
+
+The commit-message rule is enforced twice on purpose. The `commit-msg` hook
+only protects whoever installed it; the `commits` job is the one nobody can
+skip.
+
 ## Architecture
 
 Source dependencies point inward. `src/core` is plain TypeScript: it never
