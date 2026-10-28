@@ -112,7 +112,7 @@ function TopicButton({
       onClick={onPick}
       className={cn(
         'group flex h-9 w-full cursor-pointer items-center gap-2.75 rounded-sm bg-transparent px-2.5 text-left font-sans text-13.5 leading-none font-book text-ink-muted',
-        'transition-[background-color,color,box-shadow] duration-fast ease-standard',
+        'transition-[background-color,color,box-shadow,scale] duration-fast ease-standard active:scale-99',
         '@max-compact/ma:h-11.5 @max-compact/ma:text-15',
         active
           ? 'bg-surface font-medium text-ink shadow-ring'

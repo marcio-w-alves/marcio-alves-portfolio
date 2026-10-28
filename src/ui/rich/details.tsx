@@ -24,7 +24,7 @@ export function Details({ summary, text }: DetailsProps) {
         onClick={() => {
           setIsOpen((open) => !open);
         }}
-        className="flex min-h-12 w-full cursor-pointer items-center justify-between gap-3 rounded-md bg-transparent px-4 py-3 text-left font-sans text-14 leading-label font-medium text-ink hover:bg-ice"
+        className="flex min-h-12 w-full cursor-pointer items-center justify-between gap-3 rounded-md bg-transparent px-4 py-3 text-left font-sans text-14 leading-label font-medium text-ink transition-[scale] duration-fast ease-standard hover:bg-ice active:scale-99"
       >
         <span>{summary}</span>
         <Icon

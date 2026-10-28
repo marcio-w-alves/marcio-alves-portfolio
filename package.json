@@ -23,6 +23,7 @@
     "release": "semantic-release",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:motion": "playwright test --config playwright.motion.config.ts",
     "rag:build": "tsx --env-file=.env.local scripts/build-knowledge-index.mts",
     "eval:assistant": "tsx --env-file=.env.local scripts/evaluate-assistant.mts",
     "fidelity": "tsx scripts/fidelity/check.mts",

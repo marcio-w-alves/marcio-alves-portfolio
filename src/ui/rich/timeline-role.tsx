@@ -38,7 +38,7 @@ export function TimelineRole({
           onClick={() => {
             setIsOpen((open) => !open);
           }}
-          className="-mx-2.5 flex w-bleed cursor-pointer flex-wrap items-center gap-x-2.5 gap-y-1 rounded-sm bg-transparent px-2.5 py-1.5 text-left transition-[background-color] duration-fast ease-standard hover:bg-ice @max-phone/ma:min-h-11"
+          className="-mx-2.5 flex w-bleed cursor-pointer flex-wrap items-center gap-x-2.5 gap-y-1 rounded-sm bg-transparent px-2.5 py-1.5 text-left transition-[background-color,scale] duration-fast ease-standard hover:bg-ice active:scale-99 @max-phone/ma:min-h-11"
         >
           <span className="font-display text-15 leading-label font-semibold tracking-title">
             {role.company}

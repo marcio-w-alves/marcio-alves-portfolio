@@ -29,6 +29,7 @@ pnpm dev
 | `pnpm format:check`        | Prettier, verify only                                |
 | `pnpm boundaries`          | Module-boundary rules                                |
 | `pnpm test`                | Unit and integration tests (Vitest)                  |
+| `pnpm test:motion`         | Motion and reduced-motion checks in Chromium         |
 | `pnpm rag:build`           | Re-embed the knowledge corpus (needs the key)        |
 | `pnpm eval:assistant`      | Grade the assistant end to end (needs the key)       |
 | `pnpm fidelity`            | Compare every artboard with its page, pixel by pixel |

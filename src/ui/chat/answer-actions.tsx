@@ -8,7 +8,7 @@ import { Icon } from '../primitives';
 /** A quiet text action under an answer. */
 export const ACTION = cn(
   'inline-flex h-7.5 min-w-7.5 cursor-pointer items-center gap-1.5 rounded-sm border-0 bg-transparent px-2 font-sans text-12.5 leading-none font-normal text-ink-muted',
-  'transition-colors duration-fast ease-standard hover:bg-fill hover:text-ink aria-pressed:bg-fill aria-pressed:text-ink',
+  'transition-[background-color,color,scale] duration-fast ease-standard hover:bg-fill hover:text-ink active:scale-97 aria-pressed:bg-fill aria-pressed:text-ink',
   '@max-phone/ma:h-10 @max-phone/ma:min-w-10',
 );
 
