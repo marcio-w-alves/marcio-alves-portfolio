@@ -2,8 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { createOfferFilter } from './offer-filter';
 
 /** Streams the text the way the model does, a few characters at a time. */
-function filtered(text: string, chunk = 3): { shown: string; asItArrived: string[] } {
-  const filter = createOfferFilter();
+function filtered(
+  text: string,
+  chunk = 3,
+  subjectNames: readonly string[] = [],
+): { shown: string; asItArrived: string[] } {
+  const filter = createOfferFilter({ subjectNames });
   const asItArrived: string[] = [];
   for (let index = 0; index < text.length; index += chunk) {
     asItArrived.push(filter.push(text.slice(index, index + chunk)));
@@ -39,6 +43,66 @@ describe('offers of help in a streamed answer', () => {
       filtered('He led HRIS.\n\nLet me know if you want more.\n\n### Roots\nHe grew the team.')
         .shown,
     ).toBe('He led HRIS.\n\n### Roots\nHe grew the team.');
+  });
+
+  it.each([
+    'If you ask about performance, he cut load time by 50%.',
+    'If you need more details on Roots, he grew the team from one to four.',
+  ])('keeps a factual sentence that starts like an offer: %j', (answer) => {
+    expect(filtered(answer).shown).toBe(answer);
+  });
+
+  it('removes a closing offer that carries no fact', () => {
+    expect(
+      filtered('He led the Acme migration.\n\nFeel free to ask if you need more information.')
+        .shown,
+    ).toBe('He led the Acme migration.');
+  });
+
+  it.each([
+    'If you need more details, he led the HRIS team.',
+    'Se precisar de mais informações, ele liderou a equipe de acessibilidade.',
+    'Se quiser mais detalhes, a experiência dela inclui React e Next.js.',
+    'If you have any questions, Ada built the payments service.',
+    'If you need more information, the team shipped 12 releases.',
+  ])('keeps an offer-shaped sentence whose subject is the person: %j', (answer) => {
+    expect(filtered(answer, 3, ['Ada']).shown).toBe(answer);
+  });
+
+  it.each([
+    [
+      'Ela trabalhou na Deel. Se tiver outras perguntas, fique à vontade para perguntar.',
+      'Ela trabalhou na Deel.',
+    ],
+    ['Trabajó en Deel. Si tienes otras preguntas, estoy a tu disposición.', 'Trabajó en Deel.'],
+    [
+      'Se quiser saber de desempenho, ele reduziu o tempo de carregamento em 50%.',
+      'Se quiser saber de desempenho, ele reduziu o tempo de carregamento em 50%.',
+    ],
+  ])('still removes offers in Portuguese and Spanish: %j', (answer, expected) => {
+    expect(filtered(answer).shown).toBe(expected);
+  });
+
+  it.each([1, 2, 3, 5, 7, 64])(
+    'gives the same output however the stream is split, in chunks of %i',
+    (chunk) => {
+      expect(
+        filtered(
+          'If you ask about performance, he cut load time by 50%. Feel free to ask if you need more information.',
+          chunk,
+        ).shown,
+      ).toBe('If you ask about performance, he cut load time by 50%.');
+    },
+  );
+
+  it('shows nothing for an empty answer', () => {
+    expect(filtered('').shown).toBe('');
+  });
+
+  it('removes an offer the stream ends on without final punctuation', () => {
+    expect(filtered('He led HRIS. Let me know if you want more details').shown).toBe(
+      'He led HRIS.',
+    );
   });
 
   it('keeps a sentence that only starts like an offer', () => {
