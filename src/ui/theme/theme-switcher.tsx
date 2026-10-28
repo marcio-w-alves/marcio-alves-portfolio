@@ -1,0 +1,71 @@
+'use client';
+
+import { useSyncExternalStore } from 'react';
+import { cn } from '../cn';
+import { useMessages } from '../i18n/i18n-provider';
+import { Icon, type IconName } from '../primitives';
+import {
+  chooseTheme,
+  storedChoice,
+  subscribeToTheme,
+  THEME_CHOICES,
+  type ThemeChoice,
+} from './theme';
+
+const ICONS: Readonly<Record<ThemeChoice, IconName>> = {
+  light: 'sun',
+  dark: 'moon',
+  system: 'monitor',
+};
+
+// The highlight reads the choice the pre-paint script wrote on <html>, so it
+// is right on the first frame, before React knows the stored choice.
+const SELECTED: Readonly<Record<ThemeChoice, string>> = {
+  light:
+    '[[data-theme-choice=light]_&]:bg-surface [[data-theme-choice=light]_&]:text-ink [[data-theme-choice=light]_&]:shadow-ring',
+  dark: '[[data-theme-choice=dark]_&]:bg-surface [[data-theme-choice=dark]_&]:text-ink [[data-theme-choice=dark]_&]:shadow-ring',
+  system:
+    '[[data-theme-choice=system]_&]:bg-surface [[data-theme-choice=system]_&]:text-ink [[data-theme-choice=system]_&]:shadow-ring',
+};
+
+/**
+ * Light, dark or the system's choice, as a native radio group: one Tab stop,
+ * arrows to move, and the choice read back by every screen reader. The server
+ * renders "system" checked; the stored choice takes over once it hydrates.
+ */
+export function ThemeSwitcher() {
+  const { shell } = useMessages();
+  const choice = useSyncExternalStore(subscribeToTheme, storedChoice, () => 'system' as const);
+  return (
+    <fieldset className="m-0 min-w-0 border-0 p-0">
+      <legend className="sr-only">{shell.theme.label}</legend>
+      <div className="flex rounded-control bg-fill p-0.5">
+        {THEME_CHOICES.map((option) => (
+          <label
+            key={option}
+            className={cn(
+              'flex min-h-8 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-sm text-12.5 font-medium',
+              'transition-[background-color,color,box-shadow] duration-fast ease-standard @max-compact/ma:min-h-11 @max-compact/ma:text-14',
+              'has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ink',
+              'text-ink-muted hover:text-ink',
+              SELECTED[option],
+            )}
+          >
+            <input
+              type="radio"
+              name="theme"
+              value={option}
+              checked={choice === option}
+              onChange={() => {
+                chooseTheme(option);
+              }}
+              className="sr-only"
+            />
+            <Icon name={ICONS[option]} size="xs" />
+            {shell.theme[option]}
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+}

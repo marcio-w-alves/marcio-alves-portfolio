@@ -79,6 +79,7 @@ const fontStackSchema = z.strictObject({
 
 const brandSchema = z.strictObject({
   colors: z.record(z.string(), z.string().regex(/^#[0-9a-f]{6}$/, 'Must be a #rrggbb colour')),
+  darkColors: z.record(z.string(), z.string().regex(/^#[0-9a-f]{6}$/, 'Must be a #rrggbb colour')),
   fonts: z.strictObject({ sans: fontStackSchema, display: fontStackSchema, mono: fontStackSchema }),
   imageFont: z.strictObject({
     family: z.string().regex(/\S/),

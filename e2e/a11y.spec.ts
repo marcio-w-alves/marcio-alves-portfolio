@@ -144,3 +144,24 @@ test.describe('beyond WCAG AA', () => {
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
   });
 });
+
+test.describe('in the dark theme', () => {
+  test.use({ viewport: { width: 1440, height: 900 }, colorScheme: 'dark' });
+
+  test('every page has no WCAG 2.1 AA violations', async ({ page }) => {
+    for (const path of [
+      '/',
+      '/experience',
+      '/skills',
+      '/projects',
+      '/philosophy',
+      '/education',
+      '/about-this-site',
+    ]) {
+      await page.goto(path);
+      await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+      await expect(page.getByRole('heading', { level: 1 })).toBeAttached();
+      expect(await violations(page), path).toEqual([]);
+    }
+  });
+});

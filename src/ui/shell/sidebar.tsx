@@ -4,6 +4,7 @@ import type { TopicId } from '@/core/chat/topic-id';
 import { cn } from '../cn';
 import { useMessages } from '../i18n/i18n-provider';
 import { Icon, IconButton, VisuallyHidden, type IconName } from '../primitives';
+import { ThemeSwitcher } from '../theme/theme-switcher';
 
 export interface SidebarProfile {
   readonly name: string;
@@ -169,6 +170,9 @@ function SidebarFooter({ links }: { links: SidebarLinks }) {
   const mailto = `mailto:${links.email}?subject=${encodeURIComponent(messages.emailSubject)}`;
   return (
     <div className="mt-auto flex flex-col gap-1 px-2.5">
+      <div className="mb-5">
+        <ThemeSwitcher />
+      </div>
       <a
         href={mailto}
         className="group -mt-3 inline-flex min-h-11 w-fit items-center gap-1.5 py-3 text-13.5 leading-label font-medium text-ink no-underline"

@@ -2,7 +2,7 @@ import type { ComponentProps } from 'react';
 import { cn } from '../cn';
 
 const VARIANTS = {
-  primary: 'bg-accent text-white hover:bg-accent-hover',
+  primary: 'bg-accent text-on-accent hover:bg-accent-hover',
   secondary: 'bg-surface text-ink shadow-ring-strong hover:bg-ice',
   ghost: 'bg-transparent text-ink-muted hover:bg-fill hover:text-ink',
 } as const;

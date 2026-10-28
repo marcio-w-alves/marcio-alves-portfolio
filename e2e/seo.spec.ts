@@ -78,9 +78,13 @@ test('phones get a home-screen icon and the page colour for the browser bar', as
   const touchIcon = String(await page.locator('link[rel="apple-touch-icon"]').getAttribute('href'));
   const png = await (await request.get(touchIcon)).body();
   expect(png.readUInt32BE(16)).toBe(180);
-  expect(await page.locator('meta[name="theme-color"]').getAttribute('content')).toMatch(
-    /^#[0-9a-f]{6}$/i,
-  );
+  const themeColors = page.locator('meta[name="theme-color"]');
+  await expect(themeColors).toHaveCount(2);
+  for (const scheme of ['light', 'dark']) {
+    await expect(
+      page.locator(`meta[name="theme-color"][media="(prefers-color-scheme: ${scheme})"]`),
+    ).toHaveAttribute('content', /^#[0-9a-f]{6}$/i);
+  }
 });
 
 test('the social image is a 1200×630 PNG', async ({ request }) => {

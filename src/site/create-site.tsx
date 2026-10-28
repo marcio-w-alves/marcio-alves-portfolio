@@ -8,6 +8,7 @@ import { I18nProvider } from '@/ui/i18n/i18n-provider';
 import { ButtonLink } from '@/ui/primitives';
 import { StatusNotice } from '@/ui/status/status-notice';
 import { ABOUT_PATH, aboutMetadata } from './about-page';
+import { THEME_SCRIPT } from '@/ui/theme/theme';
 import { iconImage } from './icon';
 import { loadImageFonts, type ImageFonts } from './image-fonts';
 import { homeMetadata, rootMetadata, topicMetadata } from './metadata';
@@ -49,7 +50,14 @@ export function createSite(profile: SiteProfile, { fontClassName, siteUrl }: Sit
 
   function RootLayout({ children }: { readonly children: ReactNode }) {
     return (
-      <html lang="en" className={fontClassName}>
+      // The theme script sets data-theme before React hydrates, so the
+      // attribute differs from the server's by design.
+      <html lang="en" className={fontClassName} suppressHydrationWarning>
+        {/* The App Router's root layout owns <head>; next/head is the Pages Router's. */}
+        {/* eslint-disable-next-line @next/next/no-head-element */}
+        <head>
+          <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        </head>
         <body className="bg-bg font-sans text-ink antialiased selection:bg-selection selection:text-ink">
           <I18nProvider locale="en" messages={messages.ui}>
             <ConversationsProvider>{children}</ConversationsProvider>
@@ -146,7 +154,12 @@ export function createSite(profile: SiteProfile, { fontClassName, siteUrl }: Sit
   return {
     rootMetadata: () => rootMetadata(knowledge, messages.site, siteUrl()),
     // The browser's own chrome, on phones, takes the page's background.
-    viewport: { themeColor: profile.brand.colors.bg },
+    viewport: {
+      themeColor: [
+        { media: '(prefers-color-scheme: light)', color: profile.brand.colors.bg },
+        { media: '(prefers-color-scheme: dark)', color: profile.brand.darkColors.bg },
+      ],
+    },
     RootLayout,
     homeMetadata,
     HomePage,

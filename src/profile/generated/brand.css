@@ -21,9 +21,39 @@
   --color-danger: #b42318;
   --color-danger-soft: #fef5f4;
   --color-danger-ring: #f9dcd8;
+  --color-on-accent: #ffffff;
+  --color-shadow: #0f1115;
 
   --font-sans: var(--font-face-text), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-sans--font-feature-settings: 'cv11', 'ss01', 'ss03';
   --font-display: var(--font-face-display), var(--font-face-text), ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: var(--font-face-code), ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+:root {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-bg: #0e1013;
+  --color-ice: #13161a;
+  --color-surface: #171a1f;
+  --color-fill: #1d2127;
+  --color-fill-hover: #242930;
+  --color-selection: #2e3744;
+  --color-ink: #e9ecf0;
+  --color-ink-muted: #a3aab4;
+  --color-ink-faint: #636a74;
+  --color-border: #22262c;
+  --color-border-strong: #2b3037;
+  --color-border-hover: #3b414a;
+  --color-accent: #e9ecf0;
+  --color-accent-hover: #cdd2d8;
+  --color-accent-soft: #1f242b;
+  --color-danger: #f97066;
+  --color-danger-soft: #2a1715;
+  --color-danger-ring: #5b2621;
+  --color-on-accent: #0e1013;
+  --color-shadow: #000000;
 }

@@ -23,6 +23,13 @@ export interface UiMessages {
     readonly resume: string;
     /** Beside "Resume" while there is no file to open. */
     readonly resumeSoon: string;
+    /** The colour-theme switcher: its name and each choice. */
+    readonly theme: {
+      readonly label: string;
+      readonly light: string;
+      readonly dark: string;
+      readonly system: string;
+    };
   };
   /** Read by screen readers after a link's own name. */
   readonly links: {

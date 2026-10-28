@@ -31,7 +31,7 @@ export function ContactCard({
       <div className="flex items-start gap-3.5">
         <span
           aria-hidden="true"
-          className="grid size-11 shrink-0 place-items-center rounded-full bg-ink font-display text-14 leading-none font-semibold tracking-monogram text-white"
+          className="grid size-11 shrink-0 place-items-center rounded-full bg-accent font-display text-14 leading-none font-semibold tracking-monogram text-on-accent"
         >
           {initials}
         </span>

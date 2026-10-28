@@ -22,7 +22,11 @@ export type ColorToken =
   | 'accent-soft'
   | 'danger'
   | 'danger-soft'
-  | 'danger-ring';
+  | 'danger-ring'
+  /** Text and icons set on the accent, such as a primary button's label. */
+  | 'on-accent'
+  /** What drop shadows and the drawer's backdrop are cast in. */
+  | 'shadow';
 
 export type Hex = `#${string}`;
 
@@ -51,6 +55,8 @@ export interface FontStack {
 /** How the site looks: its colours, its font families and the face its images are set in. */
 export interface Brand {
   readonly colors: Readonly<Record<ColorToken, Hex>>;
+  /** The same tokens for the dark theme. */
+  readonly darkColors: Readonly<Record<ColorToken, Hex>>;
   readonly fonts: Readonly<Record<FontRole, FontStack>>;
   readonly imageFont: ImageFont;
 }

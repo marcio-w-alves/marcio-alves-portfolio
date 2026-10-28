@@ -99,10 +99,12 @@
   --shadow-ring: 0 0 0 1px var(--color-border);
   --shadow-ring-strong: 0 0 0 1px var(--color-border-strong);
   --shadow-float:
-    0 0 0 1px var(--color-border), 0 1px 2px color-mix(in srgb, var(--color-ink) 3%, transparent),
-    0 10px 30px -18px color-mix(in srgb, var(--color-ink) 16%, transparent);
+    0 0 0 1px var(--color-border),
+    0 1px 2px color-mix(in srgb, var(--color-shadow) 3%, transparent),
+    0 10px 30px -18px color-mix(in srgb, var(--color-shadow) 16%, transparent);
   --shadow-drawer:
-    0 0 0 1px var(--color-border), 0 24px 60px color-mix(in srgb, var(--color-ink) 12%, transparent);
+    0 0 0 1px var(--color-border),
+    0 24px 60px color-mix(in srgb, var(--color-shadow) 12%, transparent);
   --shadow-focus: 0 0 0 4px color-mix(in srgb, var(--color-ink) 5%, transparent);
 
   /* Timeline and planned-scope markers */
@@ -243,7 +245,7 @@
   --shadow-composer-focus:
     0 0 0 1px var(--color-border-hover),
     0 0 0 4px color-mix(in srgb, var(--color-ink) 5%, transparent),
-    0 10px 30px -18px color-mix(in srgb, var(--color-ink) 20%, transparent);
+    0 10px 30px -18px color-mix(in srgb, var(--color-shadow) 20%, transparent);
 
   /*
    * The revised answer and its rich blocks: the inline avatar's 8px mark, the
