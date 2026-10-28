@@ -25,7 +25,7 @@ source_policy: distinguir fatos curriculares, relatos e ideias ainda em desenvol
 | Campo | Informação |
 | --- | --- |
 | Nome público | Marcio Alves |
-| Base profissional | Brasil; João Pessoa/PB é uma referência recorrente |
+| Base profissional | Brasil; mora em João Pessoa, Paraíba (relato de 28/10/2026) |
 | Área principal | Engenharia de software, com especialização em frontend |
 | Posicionamento | Senior Frontend Engineer, Lead Frontend Engineer e atuação de escopo staff-level |
 | Tempo de experiência | Mais de 10 anos de experiência em software, conforme currículo |
@@ -97,6 +97,10 @@ Os pilares mais evidentes de sua atuação são:
 
 **System design na Toptal:** a biblioteca React/TypeScript exige pensar em contratos, limites de composição, consistência de interface, reuso entre times e manutenção. A colaboração em APIs REST conecta esse desenho à arquitetura entre camadas. O planejamento do novo produto representa envolvimento com decisões fundacionais; não equivale a responsabilidade comprovada sobre toda a infraestrutura backend. [CV-2026]
 
+**Projetos desde março de 2026 (relato de Marcio, 28/10/2026):** desde março, Marcio trabalha em vários projetos dentro da Toptal. Um deles é o **Tech Resume**, um produto com IA que ajuda a pessoa a melhorar o próprio currículo: um builder em que ela ajusta dados, contato e experiência e baixa o resultado no final, e que também analisa o currículo e sugere melhorias para que ele se ajuste melhor às vagas. [RELATO]
+
+**Relação anterior com a Toptal:** a Toptal não é um vínculo novo. Foi como freelancer contratado pela Toptal que Marcio começou a trabalhar na Roots, anos antes (ver 3.3). [RELATO]
+
 **Limite:** não há métrica pública específica verificada para esse período nem confirmação de lançamento do novo produto.
 
 ### 3.2 Deel — Senior Frontend Engineer
@@ -116,11 +120,17 @@ Os pilares mais evidentes de sua atuação são:
 
 **O que isso demonstra:** capacidade de elevar a qualidade de uma plataforma empresarial existente, trabalhar com migrações, coordenar prioridades e conectar performance a experiência real do usuário.
 
-**System design na Deel:** os problemas reais envolveram integração de uma plataforma adquirida, arquitetura de módulos, gestão de estado, padrões de tratamento de erros, dependências entre produto e backend, controle de qualidade e latência percebida. Relatos complementares mencionam trabalho em monorepo React, consumo de serviços Node e liderança técnica sobre alguns engenheiros. As evidências documentais são de forte engenharia de aplicações e integração, sem alegação de autoria exclusiva de microserviços corporativos. [CV-2026] [RELATO]
+**System design na Deel:** os problemas reais envolveram integração de uma plataforma adquirida, arquitetura de módulos, gestão de estado, padrões de tratamento de erros, dependências entre produto e backend, controle de qualidade e latência percebida. Relatos complementares mencionam liderança técnica sobre alguns engenheiros. As evidências documentais são de forte engenharia de aplicações e integração, sem alegação de autoria exclusiva de microserviços corporativos. [CV-2026] [RELATO]
+
+**Organização do código (relato de Marcio, 28/10/2026):** na Deel havia um monorepo apenas de frontend, dividido em várias verticais de produto. O backend era de outras equipes: Marcio não chegou a trabalhar nele, além de participar de algumas decisões de arquitetura. [RELATO]
+
+**Como foi o trabalho de performance (relato de Marcio, 28/10/2026):** o último trabalho de Marcio na Deel foi otimizar a performance de algumas páginas, principalmente a People List. Ele levantou primeiro todas as métricas disponíveis — tamanho de bundle, tempo de carregamento, tempo de rede, Web Vitals e análise de cache — e atacou cada problema um a um. Fez um comparativo de antes e depois para garantir que tudo estava medido corretamente e que nada ficava de fora. [RELATO]
 
 ### 3.3 Roots — Lead Frontend Engineer
 
 **Período informado no currículo mais recente:** 2020–2022. **Domínio:** ferramentas de RH e produtos integrados ao Slack. [CV-2026]
+
+**Como começou (relato de Marcio, 28/10/2026):** Marcio foi contratado para a Roots como freelancer, pela Toptal, ao mesmo tempo em que era contratado direto da Maison Moderne (ver 3.4) — por isso os períodos se sobrepõem. Na Roots, implementou a aplicação frontend do início ao fim, liderou o time e cuidou do deploy. As pessoas que o contrataram ficaram tão satisfeitas com o resultado que, quando a Deel comprou a Roots, propuseram que ele migrasse para a Deel. [RELATO]
 
 - Desenvolvimento frontend de uma aplicação React desde uma fase inicial.
 - Definição da estratégia técnica e da arquitetura de frontend.
@@ -129,7 +139,7 @@ Os pilares mais evidentes de sua atuação são:
 - Definição de práticas de gerenciamento de estado e acessibilidade.
 - Implantação de pipelines GitLab CI com deploy para Amazon S3.
 
-**System design na Roots:** arquitetura de aplicação criada e mantida desde fase inicial; separação de componentes, estado, acesso a dados e práticas de reuso. Houve integração ao backend e gestão de entrega com GitLab CI/S3. Relatos anteriores citam serviços Python consumidos pelo frontend React e otimização de requests/cache com Axios e React Query; detalhes devem ser confirmados para divulgação técnica aprofundada. O crescimento do time tornou a consistência arquitetural e documentação ainda mais importantes. [CV-2026] [RELATO]
+**System design na Roots:** arquitetura de aplicação criada e mantida desde fase inicial; separação de componentes, estado, acesso a dados e práticas de reuso. Houve integração ao backend e gestão de entrega com GitLab CI/S3. O backend da Roots era em Python, e Marcio não trabalhou nele: sua atuação foi desenvolver toda a aplicação frontend em React, consumindo esses serviços. [RELATO] O crescimento do time tornou a consistência arquitetural e documentação ainda mais importantes. [CV-2026] [RELATO]
 
 **Contexto de carreira:** a Roots foi adquirida/integrada à Deel segundo o histórico informado. A passagem da empresa inicial para um ecossistema de maior escala é uma parte relevante de sua experiência. [CV-2026] [RELATO]
 
@@ -144,6 +154,8 @@ Os pilares mais evidentes de sua atuação são:
 - Revisões de código e estabelecimento de padrões de desenvolvimento.
 - Contribuição em iniciativa de newsletters associada a aumento de 20% de receita.
 
+**Vínculo e produtos (relato de Marcio, 28/10/2026):** Marcio era contratado direto da Maison Moderne, uma editora, e trabalhou no **Paperjam** e em outros produtos da empresa. Nesse mesmo período fazia o trabalho freelance da Roots (ver 3.3). [RELATO]
+
 **Nota:** o currículo usa a grafia “Maison Modern”; o nome oficial deve ser conferido antes de uso em logos ou materiais externos.
 
 ### 3.5 Shall And Partners — Full Stack Developer
@@ -157,6 +169,8 @@ Os pilares mais evidentes de sua atuação são:
 - Automação de rotinas operacionais, como preenchimento de apontamentos de tempo com dados prévios.
 - Progressão de responsabilidades, passando de nível intermediário para uma posição de referência em frontend dentro de um projeto de RH.
 - Contribuição para produto web/mobile reconhecido com Golden Award em 2019.
+
+**Detalhes (relato de Marcio, 28/10/2026):** foi um dos seus primeiros projetos internacionais, com atuação full-stack e bastante trabalho de backend. Também trabalhou um pouco com desenvolvimento mobile, em Kotlin e Java. O produto tinha um banco de currículos, e o **Elasticsearch** era usado para buscar muitas informações sobre as pessoas e devolvê-las em tempo hábil. [RELATO]
 
 **O que isso demonstra:** base full-stack anterior à especialização mais profunda em frontend, com experiência prática de entrega, integração de sistemas e automação.
 
@@ -193,7 +207,7 @@ Os pilares mais evidentes de sua atuação são:
 
 ### 4.1 Miniestudos de caso para entrevistas
 
-**Caso A — Performance em HRIS (Deel).** Contexto: páginas corporativas críticas e experiências com dados de pessoas. Intervenção relatada: refatoração e otimização direcionadas a problemas de desempenho. Resultado: redução de 50% no carregamento crítico, incluindo People List de 6 s para 3 s, e melhoria de pelo menos 30% em Web Vitals. **Perguntas técnicas ainda abertas:** quais indicadores, instrumentos de profiling, mudanças de arquitetura e testes de regressão foram usados?
+**Caso A — Performance em HRIS (Deel).** Contexto: páginas corporativas críticas e experiências com dados de pessoas. Intervenção relatada: refatoração e otimização direcionadas a problemas de desempenho. Resultado: redução de 50% no carregamento crítico, incluindo People List de 6 s para 3 s, e melhoria de pelo menos 30% em Web Vitals. Método relatado por Marcio: levantar todas as métricas antes de mudar algo (bundle, tempo de carregamento, rede, Web Vitals e cache), atacar os problemas um a um e comparar antes e depois para confirmar que a medição estava correta. [RELATO] **Perguntas técnicas ainda abertas:** quais mudanças específicas de código e quais testes de regressão foram usados?
 
 **Caso C — Produto e time de startup (Roots).** Contexto: frontend inicialmente concentrado em um profissional e produto em crescimento. Intervenção: construção e direcionamento técnico da aplicação, contratação e integração de novos membros, padrões e pipelines de deploy. Resultado: equipe de uma para quatro pessoas. **Questões para detalhar:** decisões que permitiram escalar o time.
 
@@ -257,11 +271,11 @@ Sua força como profissional full-stack está em **conectar decisões entre cama
 
 ### 5.5 Implementações backend na experiência profissional
 
-**Shall And Partners (2018–2020).** O currículo descreve construção de aplicações web e mobile em **arquitetura de microserviços**, com **Node.js e múltiplos bancos de dados**, desenvolvimento de **APIs RESTful**, automações internas e evolução de uma PWA antes de migração para Android nativo/Kotlin. Esse é o principal ponto documental para demonstrar implementação backend como parte do trabalho profissional, não apenas estudo de arquitetura. Versões anteriores do histórico mencionam contato com MongoDB, PostgreSQL e Elasticsearch; o currículo de 2026 não detalha esses bancos individualmente, portanto devem ser tratados como relato complementar até validação. [CV-2026] [RELATO]
+**Shall And Partners (2018–2020).** O currículo descreve construção de aplicações web e mobile em **arquitetura de microserviços**, com **Node.js e múltiplos bancos de dados**, desenvolvimento de **APIs RESTful**, automações internas e evolução de uma PWA antes de migração para Android nativo/Kotlin. Esse é o principal ponto documental para demonstrar implementação backend como parte do trabalho profissional, não apenas estudo de arquitetura. O currículo não detalha os bancos. Marcio relata (28/10/2026) que, ao longo da carreira, usou bastante **PostgreSQL**, em alguns momentos **MongoDB**, tem alguma experiência com **Cassandra** e usou bastante **Elasticsearch** para busca — principalmente na Shall And Partners, onde um banco de currículos precisava ser pesquisado e respondido em tempo hábil. [CV-2026] [RELATO]
 
-**Roots (2020–2022).** A atuação foi predominantemente frontend, mas com responsabilidade de entrega de produto em contexto de startup. O trabalho incluiu integração com serviços do produto, APIs, configuração de pipelines GitLab CI e deploy em Amazon S3. Relatos anteriores descrevem interlocução e integração com serviços Python e uso de cache no cliente para reduzir chamadas duplicadas; esse detalhe deve ser confirmado antes de virar um estudo de caso público. [CV-2026] [RELATO]
+**Roots (2020–2022).** A atuação foi predominantemente frontend, mas com responsabilidade de entrega de produto em contexto de startup. O trabalho incluiu integração com serviços do produto, APIs, configuração de pipelines GitLab CI e deploy em Amazon S3. O backend era em Python e não era de responsabilidade de Marcio: ele consumia esses serviços a partir da aplicação React que construiu. [CV-2026] [RELATO]
 
-**Deel (2022–2026).** Sua contribuição central foi frontend e HRIS; o aprendizado transversal envolve serviços, interfaces de dados, migração da Roots e dependências entre módulos. O currículo sustenta arquitetura e integração, mas **não especifica autoria de microserviços backend corporativos**. [CV-2026]
+**Deel (2022–2026).** Sua contribuição central foi frontend e HRIS; o aprendizado transversal envolve serviços, interfaces de dados, migração da Roots e dependências entre módulos. O currículo sustenta arquitetura e integração, mas **não especifica autoria de microserviços backend corporativos**; Marcio confirma que não trabalhou no backend da Deel, além de algumas decisões de arquitetura. [CV-2026] [RELATO]
 
 **Toptal (desde março/2026 no currículo).** O currículo relata colaboração com engenheiros backend para **desenhar e otimizar APIs REST** e melhorar a eficiência de fetching do frontend. É uma evidência de atuação no desenho de contratos e na fronteira entre camadas, sem afirmar que todos os endpoints foram escritos individualmente. [CV-2026]
 
@@ -405,7 +419,7 @@ Seu histórico profissional inclui desenvolvimento de APIs REST e microserviços
 - Contratos tipados e versionamento compatível em migrações, evitando acoplar o frontend a detalhes internos do banco ou de cada serviço.
 - Discussão de **BFF** quando um endpoint agregado realmente reduz complexidade de cliente ou melhora governança, sem introduzir BFF por padrão.
 
-**Na Roots**, relatos anteriores descrevem integração de React com serviços Python usando bibliotecas como Axios/React Query e estratégias de cache para reduzir buscas duplicadas; a tecnologia específica do backend é relato complementar. **Na Deel**, o histórico menciona frontend React em monorepo consumindo serviços Node. **Na Toptal**, o currículo registra participação no desenho e na otimização de APIs REST. [CV-2026] [RELATO]
+**Na Roots**, o frontend React consumia serviços de backend em Python, que eram de outra equipe. **Na Deel**, havia um monorepo só de frontend, dividido em verticais, e o backend era de outras equipes. **Na Toptal**, o currículo registra participação no desenho e na otimização de APIs REST. [CV-2026] [RELATO]
 
 ### 6.6 Backend design: organização por domínio e fronteiras de responsabilidade
 
@@ -805,7 +819,9 @@ Há evidência sólida de competências adequadas a papéis de **Senior Frontend
 
 ### 9.1 Formação acadêmica e evolução profissional
 
-A base formal é a **Engenharia da Computação na Universidade Federal da Paraíba**, conclusão em 2019 conforme currículo. Essa formação se conecta à trajetória prática em sistemas web, integração de hardware/software em projetos exploratórios, redes e aplicações com múltiplas camadas. A base documental atual não fornece histórico escolar, disciplinas, TCC detalhado ou resultados acadêmicos; não atribuir projetos de pesquisa específicos sem fonte. [CV-2026]
+A base formal é a **Engenharia da Computação na Universidade Federal da Paraíba**, conclusão em 2019 conforme currículo. Essa formação se conecta à trajetória prática em sistemas web, integração de hardware/software em projetos exploratórios, redes e aplicações com múltiplas camadas. **TCC (relato de Marcio, 28/10/2026):** no trabalho de conclusão de curso na UFPB, ele mostrou as vantagens de usar um system design completo e os benefícios que isso traz. [RELATO] A base não fornece histórico escolar, disciplinas ou notas; não atribuir outros projetos de pesquisa sem fonte. [CV-2026]
+
+**RoboCup 2014:** Marcio participou da RoboCup 2014, em João Pessoa, como tradutor e membro da equipe de organização (staff). [RELATO]
 
 O desenvolvimento profissional foi progressivo: trabalhos freelance e frontend inicial; **full-stack com Node e APIs**; construção de produto e liderança de frontend; evolução de grandes aplicações corporativas; e, mais recentemente, exploração de IA, backend modular, cloud, dados e sistemas interativos. [CV-2026] [RELATO]
 
@@ -857,6 +873,12 @@ A característica comum dos projetos independentes é o interesse em transformar
 
 **Vertente TargUp Chat:** caixa de entrada omnichannel e automações para atendimento, com múltiplas organizações, departamentos, papéis, permissões, gatilhos, condições, ações e APIs.
 
+**As três frentes, nas palavras de Marcio (28/10/2026):** a ideia do TargUp era criar bots que, usando IA e LLMs, ajudassem pessoas no dia a dia. [RELATO]
+
+- **TargUp Chat (a frente inicial):** um divulgador de links de promoções. Quem trabalha como afiliado — Shopee, Magazine Luiza, Mercado Livre e outros — criaria um perfil e traria esses links de forma rápida e dinâmica para divulgar no WhatsApp.
+- **TargUp Social (no roadmap, não implementado):** gestão completa de redes sociais — administrar contas de Instagram, Facebook e TikTok, acompanhar postagens e engajamento, responder comentários, reunir as mensagens e comentários de todas as contas num único lugar e dar permissões à equipe.
+- **Bots de atendimento para empresas:** atendimento com IA para clínicas, comércio e lojas, mais dinâmico que os bots "engessados" de hoje, que dão respostas sem contexto ou que não têm a ver com a pergunta. A ideia era o bot continuar aprendendo com cada resposta humana: depois de um handoff para uma pessoa, as mensagens trocadas virariam aprendizado para o próprio bot, até ele conseguir lidar com quase toda situação.
+
 **Problemas técnicos explorados:** aplicações multi-tenant, isolamento de domínios, mensageria, idempotência, filas, observabilidade, autenticação, RBAC, processamento de eventos e UX mobile-first. Tecnologias discutidas incluem Next.js, React, TypeScript, Node.js, Nx, PostgreSQL, Redis, S3 e NATS/JetStream.
 
 **Status:** iniciativa com planejamento e desenvolvimento discutidos. Não existem, nesta base, dados verificáveis de usuários, receita ou lançamento público.
@@ -873,6 +895,8 @@ A característica comum dos projetos independentes é o interesse em transformar
 
 **Trabalho de produto:** planos aluno/personal, precificação, experiência mobile-first, plataforma web, staff admin, identidade visual e integração de dados.
 
+**Nas palavras de Marcio (28/10/2026):** a ideia inicial era favorecer os personal trainers: gerenciar alunos, treinos, agenda e exercícios e acompanhar o progresso de cada aluno. Depois ele estendeu o app para o lado do aluno, que pode usá-lo sozinho, de forma independente, ou acompanhado pelo personal: ver o treino, iniciá-lo, registrar séries, repetições e progresso. A IA atua dos dois lados — para melhorar os exercícios, ver onde o aluno está falhando e o que precisa de adaptação — e o aprendizado com LLMs serve para melhorar a sugestão de exercícios, as adaptações e a progressão. [RELATO]
+
 **Status:** há registros de versões beta iOS distribuídas pelo TestFlight em 2026, demonstrando atividade de desenvolvimento e testes; isso não comprova lançamento público nem entrega integral de todas as funcionalidades.
 
 ### 10.3 EvCopilot — mobilidade elétrica e planejamento de recarga
@@ -886,6 +910,8 @@ A característica comum dos projetos independentes é o interesse em transformar
 **Pesquisa técnica:** Open Charge Map como ponto de partida, interoperabilidade OCPI, qualidade de dados, modelos estatísticos/previsões, RAG/LLM em funções adequadas, limites do Apple CarPlay e potencial de integrações com provedores de recarga.
 
 **Interesse de negócio:** diferenciar recursos gratuitos de um plano pago por utilidade real, como otimização de viagens, análises pessoais e qualidade de previsão, em vez de simplesmente esconder funções essenciais.
+
+**Origem e funcionamento, nas palavras de Marcio (28/10/2026):** o EvCopilot surgiu depois de uma viagem de carro elétrico em que ele teve muita dificuldade para encontrar pontos de recarga, saber quais estavam funcionando e se havia fila. No app, a pessoa traça o trajeto — por exemplo, de João Pessoa a Recife —, vê os pontos de recarga no caminho, marca onde quer chegar e informa a porcentagem atual da bateria; o app calcula até onde ela chega, usando dados da fabricante, como o consumo médio, para ter mais assertividade. Além disso, compara o previsto com o real: ao chegar, a pessoa atualiza os dados reais e o app aprende com aquele percurso — velocidade média em cada trecho, distância, tempo, bateria de saída e de chegada — para medir corretamente o consumo de cada carro. Esses dados poderiam virar analytics úteis até para as próprias fabricantes entenderem como seus carros se comportam, e para quem pensa em comprar um. [RELATO]
 
 **Status:** pesquisa, definição de produto e sinais de testes/estrutura de aplicação em 2026. Cobertura de provedores, tempo real e disponibilidade pública exigem validação.
 
@@ -901,6 +927,8 @@ A característica comum dos projetos independentes é o interesse em transformar
 
 **Identidade visual:** experiência editorial clara e contida, com foco em leitura e hierarquia tipográfica, evitando excessos de elementos de dashboard.
 
+**Nas palavras de Marcio (28/10/2026):** o FictionDraft é um aplicativo para auxiliar a escrita de tudo: começou pensado para romances e foi estendido para livros, documentos e roteiros. É parecido com o Word, mas o Word é voltado para documentos do dia a dia; o FictionDraft traz boilerplates para cada tipo de texto e uma IA preparada para atuar em cada um deles. Para quem escreve um romance, por exemplo, haveria uma base com os elementos canônicos da história, para a IA apontar que uma informação contradiz algo dito antes ou que um trecho não está bem colocado, e sugerir melhorias. [RELATO]
+
 **Status:** desenvolvimento de escopos, protótipos e arquitetura; funcionalidades finais e lançamento público não verificados nesta base.
 
 ### 10.5 MMORPG, Unreal Engine e engine especializada
@@ -914,6 +942,8 @@ A característica comum dos projetos independentes é o interesse em transformar
 **Aspecto particularmente marcante:** preocupação com log estruturado, trilhas de auditoria, reconstrução de estados e rollback parcial/em cascata de entidades, inventários, economias e mundo do jogo. O que foi discutido é uma **especificação de arquitetura**, não um sistema de rollback comercial comprovadamente implementado.
 
 **Ferramentas abordadas:** Unreal Engine 5, Rider, servidores dedicados, AWS GameLift Anywhere e modelagem de gameplay.
+
+**Nas palavras de Marcio (28/10/2026):** os projetos de jogos são um estudo pessoal. Ele gosta muito de jogar e cria coisas para ver o que pode fazer em relação aos jogos e tentar criar alguns. [RELATO]
 
 **Status:** estudos, especificações e atividades de prototipação; não apresentar como MMORPG comercial lançado.
 
@@ -934,6 +964,8 @@ A característica comum dos projetos independentes é o interesse em transformar
 
 Há interesse recorrente em MMORPGs, particularmente sistemas inspirados no universo e nas mecânicas de Ragnarok Online, no design de classes, habilidades, HUDs, progressão, entidades, servidores multiplayer e ferramentas de edição. Esse interesse une diversão, criação de mundos, game design e engenharia. Também há exploração prática de Unreal Engine e hospedagem de servidores dedicados. [RELATO]
 
+**Os jogos que ele joga (relato de 28/10/2026):** seu estilo preferido é MMORPG. Ragnarok Online é o jogo que jogou a vida toda; também jogou World of Warcraft, Lineage e Black Desert, entre vários outros MMORPGs. Até hoje continua desenvolvendo coisas para Ragnarok e tentando melhorar o que pode no jogo. [RELATO]
+
 **Como isso se relaciona à carreira:** jogos são um campo no qual Marcio exercita raciocínio sobre estados complexos, networking, integridade de dados, design de sistemas e ferramentas para criadores.
 
 ### 11.2 Tecnologia, software e experimentação — evidência forte de interesse
@@ -948,12 +980,18 @@ Demonstra interesse por UI/UX, design systems, tipografia, logos, iconografia, e
 
 Pesquisa carregamento de veículos elétricos, autonomia, rotas rodoviárias, integração de software embarcado e disponibilidade de infraestrutura, temas que também motivam o EvCopilot. Questões sobre trajetos e mobilidade indicam interesse prático no assunto, sem permitir afirmar todas as viagens realizadas ou a propriedade atual de veículos específicos. [RELATO]
 
-### 11.5 Esporte e treinamento — interesse relatado; rotina a confirmar
+### 11.5 Esporte e treinamento — confirmado por Marcio
 
-Há relatos contextualizados sobre musculação, corrida e jiu-jitsu, com foco em condicionamento, evolução física e planejamento de treino. Por haver referências de mais de uma pessoa nas conversas, **frequência, resultados, nível de prática e rotina atual precisam ser confirmados** antes de qualquer biografia pública detalhada. Não atribuir automaticamente hot yoga, pilates ou escalada a Marcio. [RELATO]
+Confirmado por Marcio em 28/10/2026: ele faz **musculação** e **corrida**, e gosta muito de **jiu-jitsu**. [RELATO]
+
+- **Jiu-jitsu:** gosta bastante e vai pelo menos de vez em quando, mas num vai e volta; por isso não se desenvolveu muito na modalidade. Não atribuir faixa ou graduação.
+- **Corrida:** não é o que ele mais gosta, mas sabe que precisa fazer e está sempre tentando melhorar. Em João Pessoa, onde mora, corre numa orla que ele considera muito bonita.
+- Não atribuir a Marcio hot yoga, pilates, escalada ou outras modalidades que ele não citou.
 
 ### 11.6 Interesses complementares ou ocasionais
 
+- **Bateria (instrumento):** começou a aprender a tocar bateria e gosta muito disso. [RELATO]
+- **Cachorros:** tem dois cachorros; gosta de passear e brincar bastante com eles, que exigem muita atenção. [RELATO]
 - **Jogos de tabuleiro e espaços de convivência:** existem referências a uma área dedicada a board games; interesse plausível, mas prática regular não confirmada.
 - **Tecnologia e equipamentos:** estações de trabalho, monitores, PCs, gadgets, dispositivos móveis, automação e organização do home office.
 - **Viagens e rotas:** análise de trajetos, planejamento logístico e adequação de tecnologia à vida cotidiana.
@@ -1235,15 +1273,15 @@ Uma IA de portfólio deve agir como **guia para informações sobre Marcio**, n�
 
 ### 19.2 Informações importantes a validar antes de divulgar
 
-1. Confirmar cargo atual e natureza das atividades na Toptal, como registrado no currículo em março–outubro/2026.
-2. Conferir os períodos precisos de Roots e outros vínculos com datas sobrepostas.
+1. Confirmar cargo atual e natureza das atividades na Toptal, como registrado no currículo em março–outubro/2026. *(Respondido em 28/10/2026: vários projetos, entre eles o Tech Resume.)*
+2. Conferir os períodos precisos de Roots e outros vínculos com datas sobrepostas. *(Respondido em 28/10/2026: Roots como freelance pela Toptal em paralelo à Maison Moderne.)*
 3. Confirmar grafia oficial de Maison Modern/Maison Moderne e Shall And Partners.
 4. Verificar as fontes e metodologias das métricas para estudos de caso públicos mais profundos.
-5. Confirmar a situação atual, versões e links de TargUp, FormDaily, EvCopilot, FictionDraft e projetos de jogos.
+5. Confirmar a situação atual, versões e links de TargUp, FormDaily, EvCopilot, FictionDraft e projetos de jogos. *(Descrições respondidas em 28/10/2026; status e links ainda pendentes.)*
 6. Verificar perfil público do GitHub, repositórios e permissão para divulgar código, marcas ou clientes.
-7. Confirmar se musculação, corrida, jiu-jitsu e outros interesses descrevem a rotina atual de Marcio, e não de outro usuário da conta.
+7. Confirmar se musculação, corrida, jiu-jitsu e outros interesses descrevem a rotina atual de Marcio, e não de outro usuário da conta. *(Confirmado em 28/10/2026.)*
 8. Revisar se e-mail, LinkedIn e região profissional devem constar em sites públicos.
-9. Validar eventuais estudos acadêmicos, pesquisas e certificados não detalhados no currículo atual.
+9. Validar eventuais estudos acadêmicos, pesquisas e certificados não detalhados no currículo atual. *(TCC e RoboCup 2014 respondidos em 28/10/2026.)*
 10. Para estudos de caso backend, distinguir código efetivamente executado de arquitetura proposta e confirmar os serviços utilizados em cada ambiente.
 11. Para IA, confirmar quais agentes/hook automations e sistemas RAG/tool calling têm implementação real, como foram avaliados e quais benefícios foram medidos.
 12. Revisar exemplos públicos de arquitetura para evitar exposição de código privado, credenciais e dados de provedores.

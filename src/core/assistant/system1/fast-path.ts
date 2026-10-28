@@ -72,8 +72,21 @@ export function fastPath(question: string, context: ConversationContext): FastPa
       return answered(career.company(routed.role));
     case 'project':
       return answered(expertise.project(routed.project));
-    case 'technology':
-      return answered(boundaries.technology(routed.technologies.map(findEvidence)));
+    case 'technology': {
+      const evidence = routed.technologies.map(findEvidence);
+      // Only the résumé is answered here; a technology his notes report needs
+      // the model, which reads the note's evidence tag.
+      const onlyInNotes = evidence.some(
+        (item) =>
+          item.work.length === 0 &&
+          item.skills.length === 0 &&
+          item.coursework.length === 0 &&
+          item.notes.length > 0,
+      );
+      return onlyInNotes
+        ? { kind: 'escalate', nearest: null }
+        : answered(boundaries.technology(evidence));
+    }
     default:
       return answered(SCORED_ANSWERS[routed.intent](context, question));
   }

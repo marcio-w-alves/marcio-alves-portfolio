@@ -110,9 +110,9 @@ describe('knowledge actions', () => {
     expect(metrics.map((metric) => metric.id)).toEqual(['roots-team']);
   });
 
-  it('says the city is not documented instead of supplying one', async () => {
+  it('gives the city he says he lives in', async () => {
     expect(await data('getProfileSummary')).toMatchObject({
-      location: { country: 'Brazil', city: 'not documented' },
+      location: { country: 'Brazil', city: 'João Pessoa, Paraíba' },
     });
   });
 
@@ -130,10 +130,21 @@ describe('getTechnologyEvidence', () => {
     ['automated testing', 'documented'],
     ['Angular', 'coursework only'],
     ['Redux', 'coursework only'],
-    ['GraphQL', 'not documented'],
+    ['MongoDB', 'reported in his notes'],
+    ['Elasticsearch', 'reported in his notes'],
     ['Rust', 'not documented'],
   ])('classifies %s as %s', async (technology, verdict) => {
     expect(await data('getTechnologyEvidence', { technology })).toMatchObject({ verdict });
+  });
+
+  it('hands over the note that reports a technology, with its tag, and cites the notes', async () => {
+    const result = succeeded(
+      await registry.run('getTechnologyEvidence', { technology: 'Cassandra' }),
+    );
+    expect(result.data).toMatchObject({ professionalWork: [], listedSkills: [] });
+    const { reportedInNotes } = result.data as { reportedInNotes: string[] };
+    expect(reportedInNotes.join('\n')).toMatch(/Cassandra[\s\S]*\[RELATO\]/);
+    expect(result.sources).toEqual([{ id: 'notes', label: 'Knowledge base' }]);
   });
 
   it('reads the technology without the spaces around it', async () => {

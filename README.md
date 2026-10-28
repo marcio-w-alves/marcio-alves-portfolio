@@ -175,6 +175,12 @@ A search with no category keeps its whole limit for résumé passages and adds
 at most three notes, so the long Portuguese notes never crowd the résumé out.
 To update the base, replace the document and run `pnpm rag:build`.
 
+A technology only the notes mention comes back from `getTechnologyEvidence` as
+"reported in his notes", with the paragraphs and their tags, and the fast path
+leaves it to the model instead of answering "not documented" from the résumé
+alone; coursework still outranks it. A "not documented" decline the model makes
+before any search is sent back to it with the instruction to search first.
+
 ## Chat endpoint
 
 `POST /api/chat` takes `{ message, history, context }` and answers as

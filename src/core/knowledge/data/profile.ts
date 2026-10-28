@@ -25,7 +25,7 @@ export const profile: Profile = {
     'He designs, implements and maintains scalable applications end to end, while driving technical strategy, mentoring engineers and collaborating with product and design teams.',
   focus:
     'He plans OKRs, quarterly goals and engineering deliverables aligned with product needs and user impact, raising engineering standards and improving team execution across complex frontend systems.',
-  location: { country: 'Brazil', city: null },
+  location: { country: 'Brazil', city: 'João Pessoa, Paraíba' },
   source: 'profile',
 };
 

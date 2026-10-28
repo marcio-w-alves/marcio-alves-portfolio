@@ -137,14 +137,16 @@ describe('getCompanyBrief', () => {
 });
 
 describe('getCityBrief', () => {
-  it('says the city is not documented, without looking anything up', async () => {
-    const { port, asked } = referencesFrom({});
+  it('describes the city he says he lives in from its encyclopedia article', async () => {
+    const { port, asked } = referencesFrom({
+      'João Pessoa, Paraíba': article('João Pessoa', 'João Pessoa is the capital of Paraíba.'),
+    });
     const result = await call('getCityBrief', {}, port);
-    expect(asked).toEqual([]);
+    expect(asked).toEqual(['João Pessoa, Paraíba']);
     expect(result.data).toEqual({
+      city: 'João Pessoa, Paraíba',
       country: 'Brazil',
-      city: 'not documented',
-      note: 'Do not guess or infer the city.',
+      reference: 'João Pessoa is the capital of Paraíba.',
     });
   });
 });

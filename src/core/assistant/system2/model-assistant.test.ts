@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { AssistantEvent } from '../assistant-event';
 import type { LanguageModelPort, ModelRequest, ToolCall } from '../ports/language-model.port';
 import { createToolRegistry } from '../tools/registry';
+import { createSearchTools } from '../tools/search-tools';
 import {
   createModelAssistant,
   EMPTY_REPLY,
@@ -290,6 +291,64 @@ describe('model assistant — what reaches the visitor', () => {
       { text: "That isn't documented." },
     ]);
     expect((await collect(port)).at(-1)).toMatchObject({ type: 'finish', sources: [] });
+  });
+
+  it('sends a "not documented" decline back until the record has been searched', async () => {
+    const { port, requests } = scriptedModel([
+      { calls: [call('declineToAnswer', { reason: 'not_documented' })] },
+      { calls: [call('searchKnowledge', { query: 'Roots backend' })] },
+      { text: 'The Roots backend was in Python, owned by another team.' },
+    ]);
+    const search = createSearchTools({
+      search: () =>
+        Promise.resolve([
+          {
+            id: 'notes:3.3',
+            category: 'notes',
+            text: 'O backend da Roots era em Python, e Marcio não trabalhou nele.',
+            source: { id: 'notes', label: 'Knowledge base' },
+            score: 0.6,
+          },
+        ]),
+    });
+    const assistant = createModelAssistant({
+      model: port,
+      tools: createToolRegistry(search),
+      clock,
+    });
+    const events: AssistantEvent[] = [];
+    for await (const event of assistant.answer({ question: 'q', history: [], followUps: [] })) {
+      events.push(event);
+    }
+
+    expect(JSON.stringify(toolReplies(requests[1]))).toContain('first call searchKnowledge');
+    expect(events.at(-1)).toMatchObject({
+      type: 'finish',
+      sources: [{ id: 'notes', label: 'Knowledge base' }],
+    });
+  });
+
+  it('accepts the decline once the search found nothing that answers', async () => {
+    const { port } = scriptedModel([
+      {
+        calls: [
+          call('searchKnowledge', { query: 'why he left Deel' }),
+          call('declineToAnswer', { reason: 'not_documented' }),
+        ],
+      },
+      { text: "That isn't documented." },
+    ]);
+    const assistant = createModelAssistant({
+      model: port,
+      tools: createToolRegistry(createSearchTools({ search: () => Promise.resolve([]) })),
+      clock,
+    });
+    const events: AssistantEvent[] = [];
+    for await (const event of assistant.answer({ question: 'q', history: [], followUps: [] })) {
+      events.push(event);
+    }
+    expect(events.at(-1)).toMatchObject({ type: 'finish', sources: [] });
+    expect(text(events)).toBe("That isn't documented.");
   });
 
   it('never leaves a blank reply', async () => {
