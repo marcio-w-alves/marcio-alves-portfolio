@@ -42,3 +42,6 @@ next-env.d.ts
 
 # Keep the documented template tracked.
 !.env.example
+
+# Local agent tooling: worktrees are separate checkouts of this repo.
+.claude/
