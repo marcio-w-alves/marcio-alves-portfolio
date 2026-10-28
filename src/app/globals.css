@@ -43,7 +43,46 @@
     var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
+  /*
+   * Type scale. The prototype works in half-pixel steps, so each size is named
+   * for its value: `text-13.5` is 13.5px, and fidelity can be read off the
+   * class. Line heights are set per component with the `leading-*` roles.
+   */
+  --text-11: 11px;
+  --text-11\.5: 11.5px;
+  --text-12: 12px;
+  --text-12\.5: 12.5px;
+  --text-13: 13px;
+  --text-13\.5: 13.5px;
+  --text-14: 14px;
+  --text-14\.5: 14.5px;
+  --text-15: 15px;
+  --text-15\.5: 15.5px;
+  --text-16: 16px;
+  --text-16\.5: 16.5px;
+
+  --leading-display: 1.02;
+  --leading-heading: 1.3;
+  --leading-compact: 1.35;
+  --leading-label: 1.4;
+  --leading-body: 1.55;
+  --leading-prose: 1.65;
+
+  --tracking-display: -0.045em;
+  --tracking-subhead: -0.02em;
+  --tracking-name: -0.01em;
+  --tracking-mono: 0.01em;
+  --tracking-avatar: 0.02em;
+  --tracking-monogram: 0.03em;
+  --tracking-label: 0.08em;
+
+  --font-weight-book: 450;
+
   /* Shape */
+  --radius-kbd: 4px;
+  --radius-mark: 9px;
+  --radius-control: 10px;
+  --radius-mark-lg: 11px;
   --radius-xs: 6px;
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -53,6 +92,7 @@
 
   /* Depth */
   --inset-shadow-ring: inset 0 0 0 1px var(--color-border);
+  --inset-shadow-ring-strong: inset 0 0 0 1px var(--color-border-strong);
   --shadow-raised: 0 1px 2px rgb(32 36 32 / 0.05), 0 0 0 1px var(--color-border);
   --shadow-composer: 0 1px 2px rgb(32 36 32 / 0.04), 0 12px 32px -20px rgb(32 36 32 / 0.24);
   --shadow-drawer: 0 0 48px rgb(32 36 32 / 0.18);
