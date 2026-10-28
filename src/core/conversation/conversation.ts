@@ -1,5 +1,10 @@
 import type { AssistantEvent } from '../chat/events';
-import type { ConversationContext, HistoryTurn } from '../chat/request';
+import {
+  MAX_HISTORY_MESSAGES,
+  MAX_HISTORY_TEXT,
+  type ConversationContext,
+  type HistoryTurn,
+} from '../chat/request';
 import type { TopicIntro } from '../assistant/topic-pages';
 import type { TopicId } from '../chat/topic-id';
 import type { AssistantMessage, Conversation, Feedback, UserMessage } from './messages';
@@ -10,8 +15,6 @@ import { toPlainText } from './plain-text';
  * `Conversation` value and replaces it with what these functions return;
  * nothing here touches the DOM, timers or the network.
  */
-
-const HISTORY_LIMIT = 12;
 
 function newId(prefix: string): string {
   return `${prefix}-${crypto.randomUUID()}`;
@@ -217,10 +220,10 @@ export function historyOf(conversation: Conversation): HistoryTurn[] {
       (message) =>
         message.role === 'user' || (message.kind === 'answer' && message.status === 'done'),
     )
-    .slice(-HISTORY_LIMIT)
+    .slice(-MAX_HISTORY_MESSAGES)
     .map((message) =>
       message.role === 'user'
         ? { role: 'user', text: message.text }
-        : { role: 'assistant', text: toPlainText(message.parts) },
+        : { role: 'assistant', text: toPlainText(message.parts).slice(0, MAX_HISTORY_TEXT) },
     );
 }

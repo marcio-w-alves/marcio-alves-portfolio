@@ -2,8 +2,9 @@ import type { TopicId } from './topic-id';
 
 /** The longest question the composer takes and the endpoint accepts. */
 export const MAX_QUESTION_LENGTH = 1200;
-/** Question-and-answer exchanges of history a request may carry. */
-export const MAX_HISTORY_TURNS = 12;
+/** Earlier messages, questions and answers alike, a request may carry. */
+export const MAX_HISTORY_MESSAGES = 12;
+/** The longest earlier message a request may carry, in characters. */
 export const MAX_HISTORY_TEXT = 4000;
 
 export interface HistoryTurn {

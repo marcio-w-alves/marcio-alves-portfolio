@@ -126,6 +126,37 @@ describe('asking a question', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Answer ready');
   });
 
+  it('answers a follow-up to an answer longer than the history carries', async () => {
+    async function* longAnswer(): AsyncGenerator<AssistantEvent> {
+      yield { type: 'start', intent: 'career', related: null };
+      yield { type: 'text-start', id: 'p0' };
+      yield { type: 'text-delta', id: 'p0', delta: 'He shipped it. '.repeat(400) };
+      yield { type: 'text-end', id: 'p0' };
+      yield { type: 'finish', followUps: [], sources: [] };
+    }
+    server.use(
+      http.post(
+        CHAT_URL,
+        () =>
+          new HttpResponse(
+            eventStream(longAnswer(), () => undefined),
+            {
+              headers: EVENT_STREAM_HEADERS,
+            },
+          ),
+        { once: true },
+      ),
+    );
+    const user = renderWorkspace();
+    await user.type(composer(), "Tell me about Marcio's career.{Enter}");
+    await screen.findByRole('group', { name: 'Answer actions' });
+
+    await user.type(composer(), 'What did he do at Roots?{Enter}');
+
+    expect(await within(conversation()).findByText(/grew the frontend team/)).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
   it('empties the composer once the question is sent', async () => {
     const user = renderWorkspace();
     await user.type(composer(), "Tell me about Marcio's career.{Enter}");

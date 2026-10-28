@@ -68,6 +68,14 @@ describe('reading an event off the wire', () => {
       { type: 'error', error: { code: 'rate_limited', retryable: true, retryAfterSeconds: '90' } },
     ],
     ['an error without its error', { type: 'error' }],
+    [
+      'an error that asks to wait no time at all',
+      { type: 'error', error: { code: 'rate_limited', retryable: true, retryAfterSeconds: 0 } },
+    ],
+    [
+      'an error that asks to wait a negative time',
+      { type: 'error', error: { code: 'rate_limited', retryable: true, retryAfterSeconds: -60 } },
+    ],
   ])('rejects %s', (_, value) => {
     expect(isAssistantEvent(value)).toBe(false);
   });

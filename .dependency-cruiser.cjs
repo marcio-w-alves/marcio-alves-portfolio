@@ -79,6 +79,15 @@ module.exports = {
       to: { path: `^src/(app|http|site|infrastructure|${ROOTS})${MODULE_END}` },
     },
     {
+      name: 'ui-keeps-zod-out',
+      comment:
+        'The request schema is zod, which the browser never needs: the interface reads the ' +
+        'limits from core/chat/request, and only the endpoint validates against the schema.',
+      severity: 'error',
+      from: { path: '^src/ui/', pathNot: TESTS },
+      to: { path: '^src/core/chat/request-schema\\.ts$' },
+    },
+    {
       name: 'site-is-profile-agnostic',
       comment:
         'src/site builds the pages from whatever profile it is handed, which is how a test ' +

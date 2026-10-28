@@ -1,6 +1,6 @@
 import type { AnswerSource, AssistantEvent } from '../../chat/events';
 import type { RichComponent } from '../../chat/components';
-import type { HistoryTurn } from '../../chat/request';
+import { MAX_HISTORY_MESSAGES, type HistoryTurn } from '../../chat/request';
 import type { ClockPort } from '../ports/clock.port';
 import type {
   LanguageModelPort,
@@ -27,8 +27,11 @@ import { createUsageMeter } from './usage';
 export const MAX_ROUNDS = 4;
 export const MAX_OUTPUT_TOKENS = 700;
 export const MAX_CALLS_PER_ROUND = 6;
-const HISTORY_TURNS = 12;
-const HISTORY_CHARS = 1000;
+/**
+ * Less of each earlier message than a request carries: the model needs the
+ * gist of the conversation, and every character is paid for in each round.
+ */
+const MODEL_HISTORY_TEXT = 1000;
 export const EMPTY_REPLY =
   "I couldn't put together an answer to that. Could you rephrase it, or ask about his experience, skills or projects?";
 
@@ -104,9 +107,9 @@ function startMessages(
   return [
     { role: 'system', content: instructions },
     ...pageMessage(page),
-    ...history.slice(-HISTORY_TURNS).map((turn): ModelMessage => ({
+    ...history.slice(-MAX_HISTORY_MESSAGES).map((turn): ModelMessage => ({
       role: turn.role,
-      content: turn.text.slice(0, HISTORY_CHARS),
+      content: turn.text.slice(0, MODEL_HISTORY_TEXT),
     })),
     { role: 'user', content: question },
   ];

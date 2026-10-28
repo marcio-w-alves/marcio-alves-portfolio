@@ -60,6 +60,8 @@ const isRecord = (value: unknown): value is Fields => typeof value === 'object' 
 const isString = (value: unknown): value is string => typeof value === 'string';
 const isListOf = (value: unknown, isItem: (item: unknown) => boolean) =>
   Array.isArray(value) && value.every(isItem);
+const isPositive = (value: unknown) =>
+  typeof value === 'number' && Number.isFinite(value) && value > 0;
 const isOneOf = (value: unknown, allowed: readonly string[]) =>
   isString(value) && allowed.includes(value);
 
@@ -73,7 +75,7 @@ const isError = (value: unknown) =>
   isRecord(value) &&
   isOneOf(value.code, ASSISTANT_ERROR_CODES) &&
   typeof value.retryable === 'boolean' &&
-  (value.retryAfterSeconds === undefined || typeof value.retryAfterSeconds === 'number');
+  (value.retryAfterSeconds === undefined || isPositive(value.retryAfterSeconds));
 
 // Keyed by the union, so an event type cannot be added without saying how it is recognized.
 const HAS_SHAPE: Readonly<Record<AssistantEventType, (event: Fields) => boolean>> = {

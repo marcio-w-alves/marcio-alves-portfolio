@@ -17,6 +17,8 @@ const WIRE_CONTRACTS = {
   ConversationContext: 'src/core/chat/request.ts',
   ChatRequest: 'src/core/chat/request.ts',
   MAX_QUESTION_LENGTH: 'src/core/chat/request.ts',
+  MAX_HISTORY_MESSAGES: 'src/core/chat/request.ts',
+  MAX_HISTORY_TEXT: 'src/core/chat/request.ts',
   chatRequestSchema: 'src/core/chat/request-schema.ts',
 } as const;
 

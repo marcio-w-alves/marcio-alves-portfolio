@@ -53,6 +53,12 @@ const FORBIDDEN_EDGES = [
     to: 'src/core/assistant/answer.ts',
   },
   {
+    fixture: 'ui-to-request-schema',
+    rule: 'ui-keeps-zod-out',
+    from: 'src/ui/composer.ts',
+    to: 'src/core/chat/request-schema.ts',
+  },
+  {
     fixture: 'ui-to-testing',
     rule: 'fixtures-only-in-tests',
     from: 'src/ui/panel.ts',

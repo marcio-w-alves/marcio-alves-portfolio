@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import {
   MAX_HISTORY_TEXT,
-  MAX_HISTORY_TURNS,
+  MAX_HISTORY_MESSAGES,
   MAX_QUESTION_LENGTH,
   type ChatRequest,
 } from './request';
@@ -22,7 +22,7 @@ export const chatRequestSchema = z.strictObject({
         text: z.string().max(MAX_HISTORY_TEXT),
       }),
     )
-    .max(MAX_HISTORY_TURNS * 2)
+    .max(MAX_HISTORY_MESSAGES)
     .default([]),
   context: z
     .strictObject({
