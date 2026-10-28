@@ -3,6 +3,9 @@ pnpm-lock.yaml
 out
 build
 coverage
+test-results
+playwright-report
+blob-report
 next-env.d.ts
 
 # Agent worktrees: separate checkouts, each formatted on its own.

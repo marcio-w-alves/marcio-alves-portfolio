@@ -29,6 +29,36 @@ describe('tool registry — the allow-list', () => {
     });
   });
 
+  it.each([
+    [''],
+    ['GetExperience'],
+    [' getExperience'],
+    ['getExperience()'],
+    ['__proto__'],
+    ['constructor'],
+    ['toString'],
+  ])('refuses the name %j, which is not exactly a listed action', async (name) => {
+    expect(await registry.run(name, {})).toEqual({
+      ok: false,
+      error: `Unknown action "${name}". Use only the listed actions.`,
+    });
+  });
+
+  it.each([
+    ['no arguments at all', undefined],
+    ['null', null],
+    ['an array', []],
+    ['a string', 'deel'],
+    ['a number', 7],
+    ['a company of the wrong type', { company: 1 }],
+    ['an extra key next to a valid one', { company: 'deel', role: 'admin' }],
+    ['a smuggled prototype', JSON.parse('{"__proto__": {"admin": true}}') as unknown],
+  ])('rejects %s as arguments instead of running the action', async (_label, args) => {
+    const outcome = await registry.run('getExperience', args);
+    expect(outcome.ok).toBe(false);
+    if (!outcome.ok) expect(outcome.error.length).toBeGreaterThan(0);
+  });
+
   it('rejects a company the knowledge base does not have, so the model cannot invent one', async () => {
     const outcome = await registry.run('getExperience', { company: 'google' });
     expect(outcome.ok).toBe(false);
@@ -110,6 +140,28 @@ describe('getTechnologyEvidence', () => {
     expect(await data('getTechnologyEvidence', { technology })).toMatchObject({ verdict });
   });
 
+  it('reads the technology without the spaces around it', async () => {
+    expect(await data('getTechnologyEvidence', { technology: '  Kotlin  ' })).toMatchObject({
+      verdict: 'documented',
+    });
+  });
+
+  it.each([
+    ['empty', ''],
+    ['only spaces', '   '],
+    ['longer than sixty characters', 'x'.repeat(61)],
+  ])('refuses a technology name that is %s', async (_label, technology) => {
+    expect((await registry.run('getTechnologyEvidence', { technology })).ok).toBe(false);
+  });
+
+  it('reports a name in another script as not documented rather than failing', async () => {
+    expect(
+      await data('getTechnologyEvidence', { technology: '日本語のフレームワーク' }),
+    ).toMatchObject({
+      verdict: 'not documented',
+    });
+  });
+
   it('treats a name with regex metacharacters as text', async () => {
     expect(await data('getTechnologyEvidence', { technology: 'C++' })).toMatchObject({
       verdict: 'not documented',
@@ -150,6 +202,22 @@ describe('display actions', () => {
     expect((await registry.run('showMetrics', { ids: ['made-up-metric'] })).ok).toBe(false);
   });
 
+  it.each([
+    ['showMetrics', { ids: [] }],
+    ['showTimeline', { companies: [] }],
+    ['showTimeline', { companies: ['google'] }],
+    ['showSkills', { areas: ['cooking'] }],
+    ['showProjects', { projects: ['secret-project'] }],
+    ['showContactCard', { phone: true }],
+  ])('refuses %s with %j, so a card shows only real records', async (name, args) => {
+    expect((await registry.run(name, args)).ok).toBe(false);
+  });
+
+  it('shows up to eight metrics on one card', async () => {
+    const eight = Array.from({ length: 8 }, () => 'deel-backlog');
+    expect((await registry.run('showMetrics', { ids: eight })).ok).toBe(true);
+  });
+
   it('bounds how much a single card can show', async () => {
     const many = Array.from({ length: 9 }, () => 'deel-backlog');
     expect((await registry.run('showMetrics', { ids: many })).ok).toBe(false);
@@ -161,5 +229,12 @@ describe('declineToAnswer', () => {
     const result = succeeded(await registry.run('declineToAnswer', { reason: 'private' }));
     expect(result.effect).toEqual({ kind: 'decline', reason: 'private' });
     expect(result.sources).toEqual([]);
+  });
+
+  it.each([
+    ['no reason', {}],
+    ['a reason outside the list', { reason: 'too_hard' }],
+  ])('refuses to record a decline with %s', async (_label, args) => {
+    expect((await registry.run('declineToAnswer', args)).ok).toBe(false);
   });
 });

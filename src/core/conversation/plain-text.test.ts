@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { details, note, projects, timeline } from '../assistant/response-kit';
 import { toPlainText } from './plain-text';
 
 describe('an answer as plain text', () => {
@@ -12,6 +13,50 @@ describe('an answer as plain text', () => {
         },
       ]),
     ).toBe('He led HRIS in React — see GitHub (https://github.com/marcio-w-alves).');
+  });
+
+  it.each([
+    ['a timeline as one line per role', timeline(['deel']), /^• 2022 — 2026 · Deel · Senior/],
+    ['project cards as one line per product', projects(['evcopilot']), /^• EvCopilot — \S/],
+    ['a note without its markup', note('gap', 'Not **documented**.'), /^Not documented\.$/],
+    [
+      'details as their summary, then their text',
+      details('Why it matters', 'It cut `load` time.'),
+      /^Why it matters\nIt cut load time\.$/,
+    ],
+  ])('writes %s', (_label, part, expected) => {
+    expect(toPlainText([{ ...part, id: 'p0' }])).toMatch(expected);
+  });
+
+  it('writes skills as one line per group', () => {
+    expect(
+      toPlainText([
+        {
+          type: 'component',
+          id: 'p0',
+          component: 'skills',
+          props: {
+            groups: [
+              { title: 'Frontend', items: ['React', 'TypeScript'] },
+              { title: 'Backend', items: ['Node.js'] },
+            ],
+          },
+        },
+      ]),
+    ).toBe('Frontend: React, TypeScript\nBackend: Node.js');
+  });
+
+  it('leaves out the context of a metric that has none', () => {
+    expect(
+      toPlainText([
+        {
+          type: 'component',
+          id: 'p0',
+          component: 'metrics',
+          props: { items: [{ value: '3×', label: 'Team size' }] },
+        },
+      ]),
+    ).toBe('• 3× — Team size');
   });
 
   it('turns blocks into short readable lines, separated from the text', () => {
