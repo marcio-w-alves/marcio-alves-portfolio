@@ -61,12 +61,25 @@
   --text-16: 16px;
   --text-16\.5: 16.5px;
 
+  /* POR-12: rich answer blocks. `code` is relative to the text it sits in. */
+  --text-17: 17px;
+  --text-18: 18px;
+  --text-26: 26px;
+  --text-30: 30px;
+  --text-code: 0.875em;
+  --text-code--line-height: normal;
+
   --leading-display: 1.02;
   --leading-heading: 1.3;
   --leading-compact: 1.35;
   --leading-label: 1.4;
   --leading-body: 1.55;
   --leading-prose: 1.65;
+
+  /* POR-12: rich answer blocks */
+  --leading-figure: 1.05;
+  --leading-caption: 1.45;
+  --leading-reading: 1.6;
 
   --tracking-display: -0.045em;
   --tracking-subhead: -0.02em;
@@ -75,6 +88,11 @@
   --tracking-avatar: 0.02em;
   --tracking-monogram: 0.03em;
   --tracking-label: 0.08em;
+
+  /* POR-12: rich answer blocks */
+  --tracking-figure: -0.035em;
+  --tracking-title: -0.015em;
+  --tracking-caps: 0.06em;
 
   --font-weight-book: 450;
 
@@ -90,6 +108,10 @@
   --radius-xl: 18px;
   --radius-pill: 999px;
 
+  /* POR-12: rich answer blocks */
+  --radius-code: 5px;
+  --radius-card: 14px;
+
   /* Depth */
   --inset-shadow-ring: inset 0 0 0 1px var(--color-border);
   --inset-shadow-ring-strong: inset 0 0 0 1px var(--color-border-strong);
@@ -97,6 +119,10 @@
   --shadow-composer: 0 1px 2px rgb(32 36 32 / 0.04), 0 12px 32px -20px rgb(32 36 32 / 0.24);
   --shadow-drawer: 0 0 48px rgb(32 36 32 / 0.18);
   --shadow-focus: 0 0 0 3px rgb(55 107 86 / 0.22);
+
+  /* POR-12: timeline and planned-scope markers */
+  --inset-shadow-dot: inset 0 0 0 1.5px var(--color-ink-faint);
+  --shadow-dot-current: 0 0 0 3px var(--color-accent-bg);
 
   /* Motion. One easing curve, two durations — anything else is improvisation. */
   --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -107,6 +133,14 @@
   --animate-fade: fade var(--duration-medium) var(--ease-standard) both;
   --animate-blink: blink 1s steps(1, end) infinite;
   --animate-pulse-dot: pulse-dot 1.4s var(--ease-standard) infinite;
+
+  /*
+   * POR-12: a rich block rises a little slower than a message; metrics
+   * stagger through --metric-delay, set per item; a disclosure body fades in.
+   */
+  --animate-block-enter: rise 280ms var(--ease-standard) both;
+  --animate-metric-rise: rise 300ms var(--ease-standard) var(--metric-delay, 0ms) both;
+  --animate-reveal: fade 200ms var(--ease-standard);
 
   @keyframes rise {
     from {
@@ -159,6 +193,27 @@
    */
   --container-compact: 861px;
   --container-phone: 601px;
+
+  /*
+   * POR-12: rich answer blocks. Each block is its own size container, so it
+   * adapts to wherever it is rendered; the breakpoints are one pixel over the
+   * design's inclusive max-width for the same reason as above.
+   */
+  --container-metrics-narrow: 421px;
+  --container-contact-narrow: 441px;
+  --container-timeline-narrow: 541px;
+
+  --width-bleed: calc(100% + 16px);
+
+  --grid-template-columns-metrics: repeat(auto-fill, minmax(min(150px, 100%), 1fr));
+  --grid-template-columns-skills: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  --grid-template-columns-projects: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+  --grid-template-columns-scope: repeat(auto-fit, minmax(min(170px, 100%), 1fr));
+  --grid-template-columns-timeline: 136px 20px minmax(0, 1fr);
+  --grid-template-columns-timeline-narrow: 16px minmax(0, 1fr);
+  --grid-template-columns-impact: 84px minmax(0, 1fr);
+
+  --list-style-type-circle: circle;
 }
 
 /* The two named durations, so a component writes the token and not a number. */
