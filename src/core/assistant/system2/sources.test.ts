@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { buildCorpus } from '@/core/knowledge/corpus';
-import type { SourceId } from '@/core/knowledge/ids';
-import { knowledgeBase } from '@/core/knowledge/knowledge-base';
-import { citation } from '../citations';
+import { buildCorpus, type KnowledgeChunk } from '@/core/knowledge/corpus';
+import { localize } from '@/core/knowledge/localize';
+import type { Knowledge } from '@/core/knowledge/schema';
+import { profile } from '@/profile';
+import { fixtureKnowledge } from '@/testing/fixture-profile/knowledge';
+import { createCitation } from '../citations';
 import { evidenceOf, usedSources, type SourceEvidence } from './sources';
 
 const DEEL = { id: 'resume.deel', label: 'Resume' };
@@ -97,21 +99,23 @@ describe('evidenceOf — what each source of a result vouches for', () => {
   });
 });
 
-/** What each source vouches for when a search returns these passages of the real corpus. */
-function evidenceFromCorpus(ids: readonly string[]): SourceEvidence[] {
-  const chunks = buildCorpus().filter((chunk) => ids.includes(chunk.id));
+/** What each source vouches for when a search returns these passages of a record. */
+function evidenceFrom(knowledge: Knowledge, ids?: readonly string[]): SourceEvidence[] {
+  const citation = createCitation(knowledge.sourceLabels);
+  const chunks = buildCorpus(knowledge).filter((chunk) => !ids || ids.includes(chunk.id));
   const sources = [...new Set(chunks.map((chunk) => chunk.source))];
-  return sources.map((id: SourceId) => ({
+  return sources.map((id) => ({
     source: citation(id),
     text: chunks
-      .filter((chunk) => chunk.source === id)
+      .filter((chunk: KnowledgeChunk) => chunk.source === id)
       .map((chunk) => chunk.text)
       .join('\n'),
   }));
 }
 
-const EVERY_SOURCE = evidenceFromCorpus(buildCorpus().map((chunk) => chunk.id));
-const { firstName } = knowledgeBase.profile;
+const fixture = localize(fixtureKnowledge, 'en');
+const EVERY_SOURCE = evidenceFrom(fixture);
+const { firstName } = fixture.profile;
 
 describe('usedSources — names shared by several sources do not count', () => {
   it('keeps nothing for an answer that names only the person it is about', () => {
@@ -120,45 +124,46 @@ describe('usedSources — names shared by several sources do not count', () => {
     expect(usedSources(answer, EVERY_SOURCE)).toEqual([]);
   });
 
-  it('does not keep every role for an answer that names his job title and stack', () => {
-    const answer = `Today ${firstName} is a Senior Frontend Engineer who uses React and TypeScript.`;
+  it('does not keep every role for an answer that names the job title and stack', () => {
+    const answer = `Today ${firstName} is a Principal Platform Engineer who works with Bazel.`;
 
     expect(usedSources(answer, EVERY_SOURCE)).toEqual([]);
   });
 
   it('keeps a source by a name only it carries', () => {
-    const answer = `For a while ${firstName} worked for an American company.`;
+    const answer = `Before that ${firstName} studied at the Universidade do Porto.`;
 
-    expect(usedSources(answer, EVERY_SOURCE).map(({ id }) => id)).toEqual(['resume.shall']);
+    expect(usedSources(answer, EVERY_SOURCE).map(({ id }) => id)).toEqual(['cv.education']);
+  });
+});
+
+// The owner's own record: what a leadership search returns there is what FR-35 is about.
+describe('usedSources — for what a leadership search returns from the record', () => {
+  const retrieved = evidenceFrom(localize(profile.knowledge, 'en'), [
+    'notes:14.q6',
+    'skills:leadership',
+    'notes:8.1',
+    'role:deel:1',
+    'notes:8',
+    'education',
+    'role:roots:1',
+    'role:roots:2',
+  ]);
+
+  it('cites the roles an English answer paraphrases, not the skill list or the degree', () => {
+    const answer =
+      'Yes. At Deel he helped lead and maintain the HRIS team responsible for the core HR tools product; at Roots he expanded the frontend team from a solo developer setup by recruiting and integrating three developers.';
+
+    expect(usedSources(answer, retrieved).map(({ id }) => id)).toEqual([
+      'resume.deel',
+      'resume.roots',
+    ]);
   });
 
-  describe('for what a leadership search returns', () => {
-    const retrieved = evidenceFromCorpus([
-      'notes:14.q6',
-      'skills:leadership',
-      'notes:8.1',
-      'role:deel:1',
-      'notes:8',
-      'education',
-      'role:roots:1',
-      'role:roots:2',
-    ]);
+  it('cites the note a Portuguese answer paraphrases, not the skill list or the degree', () => {
+    const answer =
+      'Sim. Na Roots, ajudou a expandir a equipe frontend de um para quatro engenheiros e coordenou entregas. Na Deel, ajudou a liderar e manter o time de HRIS.';
 
-    it('cites the roles an English answer paraphrases, not the skill list or the degree', () => {
-      const answer =
-        'Yes. At Deel he helped lead and maintain the HRIS team responsible for the core HR tools product; at Roots he expanded the frontend team from a solo developer setup by recruiting and integrating three developers.';
-
-      expect(usedSources(answer, retrieved).map(({ id }) => id)).toEqual([
-        'resume.deel',
-        'resume.roots',
-      ]);
-    });
-
-    it('cites the note a Portuguese answer paraphrases, not the skill list or the degree', () => {
-      const answer =
-        'Sim. Na Roots, ajudou a expandir a equipe frontend de um para quatro engenheiros e coordenou entregas. Na Deel, ajudou a liderar e manter o time de HRIS.';
-
-      expect(usedSources(answer, retrieved).map(({ id }) => id)).toEqual(['notes']);
-    });
+    expect(usedSources(answer, retrieved).map(({ id }) => id)).toEqual(['notes']);
   });
 });

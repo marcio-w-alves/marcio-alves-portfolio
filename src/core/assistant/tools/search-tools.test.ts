@@ -5,7 +5,9 @@ import type {
   Passage,
 } from '../ports/knowledge-search.port';
 import { buildCorpus } from '@/core/knowledge/corpus';
-import { citation } from '../citations';
+import { localize } from '@/core/knowledge/localize';
+import { fixtureKnowledge } from '@/testing/fixture-profile/knowledge';
+import { createCitation } from '../citations';
 import { createSearchTools, SEARCH_UNAVAILABLE } from './search-tools';
 
 const SHALL = { id: 'resume.shall', label: 'Resume' };
@@ -38,32 +40,35 @@ async function run(port: KnowledgeSearchPort, args: unknown) {
   return outcome.result;
 }
 
-/** A passage of the real corpus, as the vector search hands it back. */
+const knowledge = localize(fixtureKnowledge, 'en');
+const corpus = buildCorpus(knowledge);
+const citation = createCitation(knowledge.sourceLabels);
+
+/** A passage of a corpus, as the vector search hands it back. */
 function corpusPassage(id: string, score: number): Passage {
-  const chunk = buildCorpus().find((candidate) => candidate.id === id);
+  const chunk = corpus.find((candidate) => candidate.id === id);
   if (!chunk) throw new Error(`${id} is not in the corpus`);
   return { id, category: chunk.category, text: chunk.text, source: citation(chunk.source), score };
 }
 
-// Ranked as the Portuguese leadership question was: the skill list, education
-// and certifications above the roles, his notes on leadership alongside.
+// Ranked as the Portuguese leadership question once was: a skill list,
+// education and certifications above the roles, notes alongside.
 const WHOLE_RECORD = [
-  corpusPassage('notes:14.q6', 0.61),
-  corpusPassage('skills:leadership', 0.48),
-  corpusPassage('notes:8.1', 0.47),
-  corpusPassage('role:deel:1', 0.41),
-  corpusPassage('notes:8', 0.4),
+  corpusPassage('notes:1', 0.61),
+  corpusPassage('skills:platform', 0.48),
+  corpusPassage('notes:2', 0.47),
+  corpusPassage('role:acme:0', 0.41),
   corpusPassage('education', 0.33),
   corpusPassage('profile', 0.31),
   corpusPassage('certifications', 0.29),
 ];
-// The experience-only search always fills its limit on the real corpus.
+// The experience-only search fills its limit on any real-sized record.
 const EXPERIENCE = [
-  corpusPassage('role:deel:1', 0.41),
-  corpusPassage('role:roots:1', 0.39),
-  corpusPassage('role:roots:2', 0.36),
-  corpusPassage('role:deel:7', 0.34),
-  corpusPassage('role:roots:3', 0.33),
+  corpusPassage('role:acme:0', 0.41),
+  corpusPassage('role:acme', 0.39),
+  corpusPassage('role:globex', 0.36),
+  corpusPassage('role:globex:0', 0.34),
+  corpusPassage('role:initech', 0.33),
 ];
 
 function rankedRecord() {
@@ -95,16 +100,16 @@ describe('searchKnowledge — questions about leading people', () => {
     '¿Ha sido líder de un equipo?',
     '¿Gestionó personas?',
     'Did he supervise anyone?',
-  ])('puts three roles where he led first for "%s"', async (question) => {
+  ])('puts three role passages first for "%s"', async (question) => {
     const { port, queries } = rankedRecord();
 
     const result = await run(port, { query: question });
 
     expect(queries).toContainEqual({ query: question, limit: 5, category: 'experience' });
     expect(passageIds(result.data).slice(0, 3)).toEqual([
-      'role:deel:1',
-      'role:roots:1',
-      'role:roots:2',
+      'role:acme:0',
+      'role:acme',
+      'role:globex',
     ]);
   });
 
@@ -114,13 +119,12 @@ describe('searchKnowledge — questions about leading people', () => {
     const result = await run(port, { query: 'Ele já liderou equipes?' });
 
     expect(passageIds(result.data)).toEqual([
-      'role:deel:1',
-      'role:roots:1',
-      'role:roots:2',
-      'notes:14.q6',
-      'skills:leadership',
-      'notes:8.1',
-      'notes:8',
+      'role:acme:0',
+      'role:acme',
+      'role:globex',
+      'notes:1',
+      'skills:platform',
+      'notes:2',
       'education',
     ]);
   });
@@ -142,14 +146,14 @@ describe('searchKnowledge — questions about leading people', () => {
   });
 
   it('tells which passages back each source, so an answer cites only what it used', async () => {
-    const passages = [corpusPassage('role:deel:1', 0.4), corpusPassage('role:deel:7', 0.3)];
+    const passages = [corpusPassage('role:acme:0', 0.4), corpusPassage('role:acme', 0.3)];
     const { port } = searchReturning([...passages, corpusPassage('education', 0.2)]);
 
-    const result = await run(port, { query: 'Deel' });
+    const result = await run(port, { query: 'Acme' });
 
     expect(result.evidence).toEqual({
-      'resume.deel': `${passages[0]?.text ?? ''}\n${passages[1]?.text ?? ''}`,
-      'resume.education': corpusPassage('education', 0).text,
+      'cv.acme': `${passages[0]?.text ?? ''}\n${passages[1]?.text ?? ''}`,
+      'cv.education': corpusPassage('education', 0).text,
     });
   });
 });
