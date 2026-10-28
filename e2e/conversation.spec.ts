@@ -59,14 +59,14 @@ test('a suggested question streams in as a rich answer, and a follow-up continue
 test('a question the record does not document gets an honest answer instead of a guess', async ({
   page,
 }) => {
-  await composer(page).fill('Has he worked with GraphQL?');
+  await composer(page).fill('Has he worked with Vue?');
   await composer(page).press('Enter');
 
-  await expect(page.getByText('You asked: Has he worked with GraphQL?')).toBeVisible();
+  await expect(page.getByText('You asked: Has he worked with Vue?')).toBeVisible();
   const answer = answers(page).last();
   await expect(
     answer.getByText(
-      "I don't have documented information about Marcio working with GraphQL in his roles, so I can't say how experienced he is with it.",
+      "I don't have documented information about Marcio working with Vue in his roles, so I can't say how experienced he is with it.",
     ),
   ).toBeVisible();
   await expect(answer.getByText('Resume', { exact: true })).toBeVisible();
