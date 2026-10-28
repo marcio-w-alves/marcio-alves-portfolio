@@ -38,12 +38,16 @@ function phrasesOf(text: string): Set<string> {
   return new Set(words.slice(2).map((_, index) => words.slice(index, index + 3).join(' ')));
 }
 
-/** Companies, products, people and acronyms: they read the same in any language. */
-function namesOf(text: string): Set<string> {
+/**
+ * Words written as names: capitalized, but not merely because they open a
+ * sentence or a line.
+ */
+function namesIn(answer: string): Set<string> {
   return new Set(
-    wordsOf(text).filter(
-      (word) => word.length >= MIN_NAME && /\p{Lu}/u.test(word) && !isFunctionWord(word),
-    ),
+    answer
+      .split(/(?<=[.!?])\s+|\n+/)
+      .flatMap((sentence) => wordsOf(sentence).slice(1))
+      .filter((word) => word.length >= MIN_NAME && /\p{Lu}/u.test(word) && !isFunctionWord(word)),
   );
 }
 
@@ -51,21 +55,42 @@ function countShared(a: ReadonlySet<string>, b: ReadonlySet<string>): number {
   return [...a].filter((item) => b.has(item)).length;
 }
 
+interface Vouched {
+  readonly source: AnswerSource;
+  readonly words: ReadonlySet<string>;
+  readonly phrases: ReadonlySet<string>;
+}
+
+function bySource(evidence: readonly SourceEvidence[]): Vouched[] {
+  const sources = distinct(evidence.map(({ source }) => source));
+  return sources.map((source) => {
+    const text = evidence
+      .filter((item) => item.source.id === source.id)
+      .map((item) => item.text)
+      .join('\n');
+    return { source, words: new Set(wordsOf(text)), phrases: phrasesOf(text) };
+  });
+}
+
 /**
- * The sources an answer rests on: those whose evidence it names — a company or
- * product reads the same in a Portuguese answer to an English record — or
- * paraphrases, sharing at least two runs of content words. A source the
- * actions returned but the answer never drew on is not cited.
+ * The sources an answer rests on: those it paraphrases, sharing at least two
+ * runs of content words, or names — a company or product reads the same in a
+ * Portuguese answer to an English record. A name counts only when a single
+ * source carries it: the person the record is about, his title or his main
+ * stack appear in most of them and point to none.
  */
 export function usedSources(answer: string, evidence: readonly SourceEvidence[]): AnswerSource[] {
+  const vouched = bySource(evidence);
   const phrases = phrasesOf(answer);
-  const names = namesOf(answer);
-  const used = evidence.filter(
-    ({ text }) =>
-      countShared(namesOf(text), names) > 0 ||
-      countShared(phrasesOf(text), phrases) >= SHARED_PHRASES,
+  const names = [...namesIn(answer)].filter(
+    (name) => vouched.filter(({ words }) => words.has(name)).length === 1,
   );
-  return distinct(used.map(({ source }) => source));
+  return vouched
+    .filter(
+      ({ words, phrases: own }) =>
+        names.some((name) => words.has(name)) || countShared(own, phrases) >= SHARED_PHRASES,
+    )
+    .map(({ source }) => source);
 }
 
 export function distinct(sources: readonly AnswerSource[]): AnswerSource[] {
