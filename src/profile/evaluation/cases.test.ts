@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { createRouter } from '@/core/assistant/system1/router';
+import { localize } from '@/core/knowledge/localize';
 import { siteSourceId } from '@/core/knowledge/product-sites';
+import { answers } from '../copy/en/answers';
 import { knowledge } from '../knowledge';
 import { evaluation } from './cases';
 
@@ -43,6 +46,17 @@ describe('the evaluation cases', () => {
     expect(cited.length).toBeGreaterThan(0);
     for (const id of cited.filter((source) => source.startsWith('site:'))) {
       expect(pages, id).toContain(id);
+    }
+  });
+
+  it('route every product-vs-person case to the path it declares', () => {
+    const route = createRouter(localize(knowledge, 'en'), answers.vocabulary);
+    const fresh = { topic: 'overview', lastIntent: null, ctaShown: false } as const;
+    const cases = evaluation.filter(({ category }) => category === 'product-vs-person');
+    expect(cases.some(({ expect: expectation }) => expectation.path === 'model')).toBe(true);
+    for (const { id, question, expect: expectation } of cases) {
+      const escalated = route(question, fresh).intent === 'escalate';
+      expect(escalated ? 'model' : 'fast', id).toBe(expectation.path);
     }
   });
 });

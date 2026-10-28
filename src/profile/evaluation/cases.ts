@@ -158,6 +158,28 @@ export const evaluation: readonly EvaluationCase[] = [
     expect: { path: 'model', mentions: ['free'], cites: ['site:https://formdaily.app/'] },
   },
   {
+    id: 'evcopilot-features-personally',
+    category: 'product-vs-person',
+    // POR-56: routed to the model, which reads the site's feature list; none of it is his documented work.
+    question: 'Which features of his electric-vehicle trip planner did he personally implement?',
+    expect: {
+      path: 'model',
+      avoids: [
+        'personally implemented',
+        'he implemented the plan b',
+        'he built the plan b',
+        'he implemented the backup',
+        'he built the backup',
+        'he implemented the battery prediction',
+        'he built the battery prediction',
+        'he implemented the offline',
+        'he built the offline',
+        'he implemented the 3-tap',
+        'he implemented the price',
+      ],
+    },
+  },
+  {
     id: 'evcopilot-plan-b-pt',
     category: 'product-vs-person',
     // POR-56: the site describes the feature; his part in building it is not documented.
