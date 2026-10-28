@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { Assistant } from '@/core/assistant/assistant';
 import { MAX_QUESTION_LENGTH } from '@/core/assistant/system1/router';
+import { TOPIC_IDS } from '@/core/assistant/topics';
 import type { Admission } from '@/infrastructure/rate-limit/sliding-window';
 import { EVENT_STREAM_HEADERS, eventStream } from './event-stream';
 
@@ -25,7 +26,7 @@ const chatRequestSchema = z.strictObject({
     .default([]),
   context: z
     .strictObject({
-      topic: z.string().max(40),
+      topic: z.enum(TOPIC_IDS),
       lastIntent: z.string().max(80).nullable(),
       ctaShown: z.boolean(),
     })
