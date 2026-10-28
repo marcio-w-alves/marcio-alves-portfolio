@@ -5,6 +5,7 @@ import {
   type AssistantEvent,
 } from '@/core/chat/events';
 import type { ChatRequest } from '@/core/chat/request';
+import { createSseParser } from './sse-parser';
 
 interface Options {
   readonly signal: AbortSignal;
@@ -41,28 +42,18 @@ function parseEvent(data: string): AssistantEvent | null {
   }
 }
 
-/** Splits Server-Sent Events frames out of a byte stream, `data:` lines only. */
+/** Each frame's data, from a byte stream; `onChunk` hears every read, heartbeats included. */
 async function* frames(body: ReadableStream<Uint8Array>, onChunk: () => void) {
   const reader = body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
+  const parser = createSseParser();
   try {
     for (;;) {
       const { done, value } = await reader.read();
       if (done) break;
       onChunk();
-      buffer += decoder.decode(value, { stream: true });
-      const parts = buffer.split('\n\n');
-      buffer = parts.pop() ?? '';
-      for (const part of parts) {
-        const data = part
-          .split('\n')
-          .filter((line) => line.startsWith('data:'))
-          .map((line) => line.slice(5).trimStart())
-          .join('');
-        if (data) yield data;
-      }
+      yield* parser.push(value);
     }
+    yield* parser.end();
   } finally {
     reader.releaseLock();
   }

@@ -49,6 +49,7 @@ function handlerWith(
     reportError,
     requestLimiter,
     reportRateLimited: (clientId) => rateLimited.push(clientId),
+    requestTimeoutMs: 60_000,
   });
 }
 

@@ -50,6 +50,19 @@ const assistantSettingsSchema = z
      * limit set on the OpenAI project itself.
      */
     MODEL_DAILY_TOKENS: positiveInteger(2_000_000),
+    /** The longest any answer may take; past it the visitor is told it was interrupted. */
+    CHAT_REQUEST_TIMEOUT_MS: z.preprocess(
+      unset,
+      z.coerce
+        .number()
+        .int()
+        .positive()
+        .max(
+          70_000,
+          'Keep it under the chat route maxDuration (75 s), so the limit ends an answer first.',
+        )
+        .default(60_000),
+    ),
   })
   .transform((env) => ({
     chatModel: env.OPENAI_CHAT_MODEL,
@@ -57,6 +70,7 @@ const assistantSettingsSchema = z
     requestsPerTenMinutes: env.CHAT_REQUESTS_PER_TEN_MINUTES,
     modelAnswersPerTenMinutes: env.MODEL_ANSWERS_PER_TEN_MINUTES,
     dailyModelTokens: env.MODEL_DAILY_TOKENS,
+    chatRequestTimeoutMs: env.CHAT_REQUEST_TIMEOUT_MS,
   }));
 
 export type AssistantSettings = z.output<typeof assistantSettingsSchema>;
