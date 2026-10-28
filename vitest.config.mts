@@ -2,10 +2,28 @@ import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { configDefaults, defineConfig } from 'vitest/config';
 
-const alias = {
-  '@': fileURLToPath(new URL('./src', import.meta.url)),
-  'server-only': fileURLToPath(new URL('./src/testing/empty-module.ts', import.meta.url)),
-};
+const source = (path: string) => fileURLToPath(new URL(path, import.meta.url));
+
+/**
+ * `pnpm test:fork` runs the suite as a fork would: the fictional fixture in
+ * place of the owner's profile, and without the profile's own tests, which a
+ * fork replaces along with the profile. Everything else must pass unedited.
+ */
+const asFork = process.env.PROFILE_UNDER_TEST === 'fixture';
+
+const alias = [
+  ...(asFork
+    ? [
+        { find: /^@\/profile$/, replacement: source('./src/testing/fixture-profile/index.ts') },
+        {
+          find: /^@\/profile\/generated\/knowledge-index\.json$/,
+          replacement: source('./src/testing/fixture-profile/generated/knowledge-index.json'),
+        },
+      ]
+    : []),
+  { find: '@', replacement: source('./src') },
+  { find: 'server-only', replacement: source('./src/testing/empty-module.ts') },
+];
 
 export default defineConfig({
   plugins: [react()],
@@ -13,7 +31,11 @@ export default defineConfig({
   test: {
     restoreMocks: true,
     // Boundary fixtures are source trees the architecture tests cruise, not suites to run.
-    exclude: [...configDefaults.exclude, 'src/architecture/fixtures/**'],
+    exclude: [
+      ...configDefaults.exclude,
+      'src/architecture/fixtures/**',
+      ...(asFork ? ['src/profile/**/*.test.ts'] : []),
+    ],
     // Listing every source file shows the untested ones at 0% instead of
     // leaving them out. Only the core and the adapters are gated, each a little
     // below its measured baseline so the gate catches regressions, not effort.

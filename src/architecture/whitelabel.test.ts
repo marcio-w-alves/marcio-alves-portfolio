@@ -10,7 +10,9 @@ import {
   repositoryFiles,
   type SourceFile,
 } from '@/testing/whitelabel';
-import { profile } from '@/profile';
+// The profile on disk, never the one a test run binds in its place: this
+// checks the files a fork keeps against the profile it actually ships.
+import { profile } from '../profile';
 
 /**
  * Owner literals belong in the profile alone. Everything else a fork keeps —

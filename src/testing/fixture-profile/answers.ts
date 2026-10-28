@@ -79,7 +79,7 @@ export const fixtureAnswers: AnswerSet = {
     ) => ({
       label,
       intro,
-      description: intro,
+      description: `${label}: ${intro} Ask about ${knowledge.profile.name}'s documented work here.`,
       questions,
       page: [],
     });

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createChatHandler } from '@/http/chat-handler';
 import { localize } from '@/core/knowledge/localize';
+import { profile } from '@/profile';
 import { fixtureAnswers, fixtureKnowledge } from '@/testing/fixture-profile';
 import { buildContainer } from './composition-root';
 
@@ -134,9 +135,11 @@ describe('the record the container answers from', () => {
   it("binds the profile's record when given none", async () => {
     captureLogs();
 
-    const answer = await answerText(buildContainer(), 'Tell me more about Pipewright.');
+    const [project] = profile.knowledge.projects;
+    if (!project) throw new Error('The profile documents no project.');
 
-    expect(answer).not.toContain('project:pipewright');
-    expect(answer).toContain('"intent":"unknown"');
+    const answer = await answerText(buildContainer(), `Tell me more about ${project.name}.`);
+
+    expect(answer).toContain(`"intent":"project:${project.id}"`);
   });
 });

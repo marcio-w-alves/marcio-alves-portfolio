@@ -4,3 +4,4 @@ export { fixtureSiteCopy, fixtureUiCopy } from './copy';
 export { fixtureIdentity } from './identity';
 export { fixtureKnowledge } from './knowledge';
 export { fixtureSiteProfile } from './site-profile';
+export { fixtureSiteAllowList, profile } from './profile';

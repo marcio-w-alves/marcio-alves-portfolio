@@ -5,27 +5,19 @@ import {
   fixtureBrand,
   fixtureIdentity,
   fixtureKnowledge,
+  fixtureSiteAllowList,
   fixtureSiteCopy,
   fixtureUiCopy,
 } from '@/testing/fixture-profile';
 import { validateProfile, type Identity, type Profile, type SiteEntry } from './schema';
 
-const pipewrightEntry: SiteEntry = {
-  subject: { kind: 'project', id: 'pipewright' },
-  urls: ['https://pipewright.example/'],
-  termsNote: "Ada's own product.",
-};
-const acmeEntry: SiteEntry = {
-  subject: { kind: 'company', id: 'acme' },
-  urls: ['https://www.acme.example/about'],
-  termsNote: 'Company page; robots.txt allows it.',
-};
+const [pipewrightEntry, acmeEntry] = fixtureSiteAllowList as [SiteEntry, SiteEntry];
 
 const valid: Profile = {
   identity: fixtureIdentity,
   locales: ['en'],
   knowledge: fixtureKnowledge,
-  siteAllowList: [pipewrightEntry, acmeEntry],
+  siteAllowList: fixtureSiteAllowList,
   brand: fixtureBrand,
   copy: { en: { answers: fixtureAnswers, ui: fixtureUiCopy, site: fixtureSiteCopy } },
   evaluation: [],

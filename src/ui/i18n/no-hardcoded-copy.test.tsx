@@ -8,9 +8,11 @@ import type { TopicId } from '@/core/chat/topic-id';
 import { addExchange, applyEvent } from '@/core/conversation/conversation';
 import type { Conversation, MessagePart } from '@/core/conversation/messages';
 import { mapMessages } from '@/core/i18n/format';
+import { createSite } from '@/site/create-site';
+import { englishSiteCopy } from '@/site/site-copy';
 import { createSiteContent } from '@/site/site-content';
 import { workspaceView } from '@/site/workspace-view';
-import { fixtureAnswers, fixtureKnowledge } from '@/testing/fixture-profile';
+import { fixtureAnswers, fixtureKnowledge, fixtureSiteProfile } from '@/testing/fixture-profile';
 import { fixtureUiMessages, renderWithMessages, withMessages } from '@/testing/ui-messages';
 import { ChatWorkspace } from '../chat/chat-workspace';
 import { ConversationsProvider } from '../chat/conversation-store';
@@ -189,12 +191,48 @@ describe('every text the interface shows comes from the catalog or the record', 
       </ConversationsProvider>,
     );
     const user = userEvent.setup();
-    const [helpful] = screen.getAllByRole('button', { name: pseudoMessages.actions.helpful });
-    if (helpful) await user.click(helpful);
-    const [copy] = screen.getAllByRole('button', { name: pseudoMessages.actions.copy });
-    if (copy) await user.click(copy);
+    await user.click(screen.getByRole('button', { name: pseudoMessages.actions.helpful }));
+    await user.click(screen.getByRole('button', { name: pseudoMessages.actions.copy }));
 
     expect(await screen.findAllByText(pseudoMessages.actions.thanks)).not.toHaveLength(0);
+    expect(screen.getAllByText(pseudoMessages.actions.copied)).not.toHaveLength(0);
+    expect(unmarkedText(container)).toEqual([]);
+  });
+
+  it('with no résumé published yet, and a question typed to the length limit', async () => {
+    const { container } = renderPseudo(
+      <ConversationsProvider>
+        <ChatWorkspace
+          {...view('overview')}
+          links={{ ...view('overview').links, resumeUrl: null }}
+          maxQuestionLength={data('limit').length}
+        />
+      </ConversationsProvider>,
+    );
+    const composer = screen.getByRole('textbox', { name: pseudoMessages.composer.label });
+    // The visitor's draft is theirs, so it is marked as data too.
+    await userEvent.setup().type(composer, `${data('limit')}beyond`);
+
+    expect(composer).toHaveValue(data('limit'));
+    expect(screen.getByText(pseudoMessages.shell.resumeSoon)).toBeInTheDocument();
+    expect(unmarkedText(container)).toEqual([]);
+  });
+
+  it("on the site's own not-found page", () => {
+    const pseudoSite = createSite(
+      {
+        ...fixtureSiteProfile,
+        copy: {
+          en: {
+            ...fixtureSiteProfile.copy.en,
+            site: mapMessages(englishSiteCopy, (message) => `⟦${message}⟧`),
+          },
+        },
+      },
+      { fontClassName: '', siteUrl: () => new URL('https://ada.example') },
+    );
+    const { container } = render(<pseudoSite.NotFound />);
+    expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
     expect(unmarkedText(container)).toEqual([]);
   });
 

@@ -25,6 +25,13 @@ const index: KnowledgeIndex = committed;
 const corpus = buildCorpus(knowledge);
 const citation = createCitation(knowledge);
 
+// Read from the bound profile, so the search is tested on whatever record it has.
+const highlight = corpus.find((chunk) => /^role:[^:]+:\d+$/.test(chunk.id));
+if (!highlight) throw new Error('The record has no role highlight to search for.');
+const [firstRole] = knowledge.experience;
+if (!firstRole) throw new Error('The record documents no role.');
+const roleSource = firstRole.source;
+
 function newBreaker(now: () => number = Date.now) {
   return createCircuitBreaker({ failureThreshold: 3, cooldownMs: 30_000, now });
 }
@@ -64,16 +71,16 @@ describe('vector knowledge search', () => {
     const search = createVectorKnowledgeSearch({
       citation,
       breaker: newBreaker(),
-      embeddings: embeddingsReturning(vectorOf('role:shall:4')),
+      embeddings: embeddingsReturning(vectorOf(highlight.id)),
       index,
       corpus,
     });
     const [best] = await search.search({ query: 'internal tools', limit: 3 });
-    expect(best?.id).toBe('role:shall:4');
-    expect(best?.text).toContain('timesheet');
+    expect(best?.id).toBe(highlight.id);
+    expect(best?.text).toBe(highlight.text);
     expect(best?.source).toEqual({
-      id: 'resume.shall',
-      label: 'Resume',
+      id: highlight.source,
+      label: knowledge.sourceLabels[highlight.source],
     });
   });
 
@@ -99,7 +106,7 @@ describe('vector knowledge search', () => {
     const search = createVectorKnowledgeSearch({
       citation,
       breaker: newBreaker(),
-      embeddings: embeddingsReturning(vectorOf('role:deel:7')),
+      embeddings: embeddingsReturning(vectorOf(highlight.id)),
       index,
       corpus,
     });
@@ -136,7 +143,7 @@ describe('vector knowledge search — résumé and notes together', () => {
       },
       corpus: Object.keys(ids).map((id): KnowledgeChunk =>
         id === 'resume'
-          ? { id, category: 'experience', text: id, source: 'resume.way2b1' }
+          ? { id, category: 'experience', text: id, source: roleSource }
           : { id, category: 'notes', text: id, source: 'notes' },
       ),
     });
@@ -196,7 +203,7 @@ describe('vector knowledge search — the relevance floor', () => {
   }
 
   function chunk(id: string): KnowledgeChunk {
-    return { id, category: 'experience', text: `passage ${id}`, source: 'resume.deel' };
+    return { id, category: 'experience', text: `passage ${id}`, source: roleSource };
   }
 
   function searchOver(similarities: Record<string, number>) {
@@ -287,7 +294,9 @@ describe('vector knowledge search — when embeddings fail', () => {
           : HttpResponse.json({
               object: 'list',
               model: 'text-embedding-3-small',
-              data: [{ object: 'embedding', index: 0, embedding: vectorOf('role:way2b1') }],
+              data: [
+                { object: 'embedding', index: 0, embedding: vectorOf(`role:${firstRole.id}`) },
+              ],
               usage: { prompt_tokens: 1, total_tokens: 1 },
             }),
       ),
@@ -331,7 +340,7 @@ describe('vector knowledge search — when embeddings fail', () => {
     advance(30_000);
     status = 200;
     const [best] = await search();
-    expect(best?.id).toBe('role:way2b1');
+    expect(best?.id).toBe(`role:${firstRole.id}`);
     expect(outbound).toBe(4);
     expect(breaker.state()).toBe('closed');
   });

@@ -2,13 +2,13 @@ import { createRef, useState } from 'react';
 import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { renderWithMessages } from '@/testing/ui-messages';
+import { fixtureAnswers, fixtureKnowledge } from '@/testing/fixture-profile';
+import { fixtureUiMessages, renderWithMessages } from '@/testing/ui-messages';
 import { MAX_QUESTION_LENGTH } from '@/core/chat/request';
-import { profile } from '@/profile';
 import { createSiteContent } from '@/site/site-content';
 import { ChatComposer, ComposerDock, JumpToLatest, type ChatComposerHandle } from '.';
 
-const { knowledge } = createSiteContent(profile.knowledge, profile.copy.en.answers);
+const { knowledge } = createSiteContent(fixtureKnowledge, fixtureAnswers);
 
 const { welcome } = knowledge;
 
@@ -37,8 +37,8 @@ function Harness({ initialValue = '', onChange, ...props }: HarnessProps) {
   );
 }
 
-const input = () => screen.getByRole('textbox', { name: 'Ask the portfolio assistant a question' });
-const sendButton = () => screen.getByRole('button', { name: 'Send question' });
+const input = () => screen.getByRole('textbox', { name: fixtureUiMessages.composer.label });
+const sendButton = () => screen.getByRole('button', { name: fixtureUiMessages.composer.send });
 
 describe('ChatComposer', () => {
   it('reports every keystroke to its parent', async () => {
@@ -98,9 +98,11 @@ describe('ChatComposer', () => {
     renderWithMessages(
       <Harness status="streaming" initialValue="Next" onStop={onStop} onSubmit={onSubmit} />,
     );
-    expect(screen.queryByRole('button', { name: 'Send question' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: fixtureUiMessages.composer.send }),
+    ).not.toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Stop generating' }));
+    await userEvent.click(screen.getByRole('button', { name: fixtureUiMessages.composer.stop }));
     await userEvent.type(input(), '{Enter}');
 
     expect(onStop).toHaveBeenCalledOnce();

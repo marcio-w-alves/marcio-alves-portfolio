@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { renderWithMessages } from '@/testing/ui-messages';
+import { fixtureUiMessages, renderWithMessages } from '@/testing/ui-messages';
 import { createAssistant } from '@/core/assistant/assistant';
 import { createFastPath } from '@/core/assistant/system1/fast-path';
 import { createChatHandler } from '@/http/chat-handler';
@@ -53,9 +53,7 @@ describe('one question limit', () => {
     renderWithMessages(<ChatWorkspace {...workspaceView(content)} />, {
       wrapper: ConversationsProvider,
     });
-    const composer = screen.getByRole('textbox', {
-      name: 'Ask the portfolio assistant a question',
-    });
+    const composer = screen.getByRole('textbox', { name: fixtureUiMessages.composer.label });
 
     await user.type(composer, 'abcdefgh');
 
