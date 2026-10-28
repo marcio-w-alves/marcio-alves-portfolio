@@ -30,7 +30,7 @@ describe('router — the questions the interface itself suggests', () => {
     ['What projects is he working on?', 'projects'],
     ['How does he approach frontend architecture?', 'architecture'],
     ['What did he do at Roots?', 'company:roots'],
-    ['What is he working on at Toptal?', 'company:toptal'],
+    ['What is he working on at Way2B1?', 'company:way2b1'],
     ['Tell me about his experience scaling frontend applications.', 'scaling'],
     ['Has he ever built something from scratch?', 'scratch'],
     ['Is he experienced with enterprise applications?', 'enterprise'],
@@ -272,7 +272,7 @@ describe('router — escalates what it cannot answer with certainty', () => {
     ['What is TypeScript?'],
     ['What is Deel?'],
     ['Compare his work at Deel and Roots.'],
-    ['What did he do at Deel and at Toptal?'],
+    ['What did he do at Deel and at Way2B1?'],
     ['Me conte sobre a carreira do Marcio.'],
     ['Show me his GitHub repositories.'],
     ['Ele sabe Kotlin?'],
@@ -286,7 +286,7 @@ describe('router — escalates what it cannot answer with certainty', () => {
     ['How many public repositories does he have on GitHub?'],
     ['And what did he do there before that?'],
     ['What was his GPA at university?'],
-    ['What kind of company is Toptal?'],
+    ['What kind of company is Way2B1?'],
     ['What does Deel do?'],
     ['Exactly how many years of TypeScript experience does he have?'],
     ['What is the weather in Paris?'],
@@ -312,7 +312,7 @@ describe('router — escalates what it cannot answer with certainty', () => {
 
   it('escalates a question long enough to carry several asks', () => {
     const long =
-      'I am preparing a hiring committee summary and would like to understand how his responsibilities, scope and influence changed from his first freelance work all the way to Toptal';
+      'I am preparing a hiring committee summary and would like to understand how his responsibilities, scope and influence changed from his first freelance work all the way to Way2B1';
     expect(intentOf(long)).toBe('escalate');
   });
 

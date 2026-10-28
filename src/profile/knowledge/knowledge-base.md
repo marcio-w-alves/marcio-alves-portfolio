@@ -38,7 +38,7 @@ source_policy: distinguir fatos curriculares, relatos e ideias ainda em desenvol
 
 **Apresentação curta (terceira pessoa).** Marcio Alves é engenheiro de software com mais de uma década de experiência, **especialização profunda em frontend e capacidade full-stack sólida**. Atua com React, TypeScript e Next.js, mas também possui experiência profissional em Node.js, APIs REST, microserviços e integração entre camadas. Trabalhou na construção de produtos desde o início e na evolução de plataformas empresariais complexas. Seu histórico combina arquitetura, performance, liderança, mentoria, integração de sistemas e **organização de processos de desenvolvimento com IA**. [CV-2026] [RELATO]
 
-**Apresentação ampliada.** Ao longo da carreira, Marcio transitou de entregas de desenvolvimento web e projetos completos como freelancer para posições com responsabilidade sobre arquitetura, estruturação de equipes e decisões de engenharia. Na Roots, ajudou a construir uma aplicação frontend e desenvolver o time. Na Deel, atuou em produtos centrais de HRIS, na integração da Roots e em melhorias quantificáveis de velocidade, qualidade e manutenção. No currículo de outubro de 2026, também registra uma atuação na Toptal com foco em biblioteca de componentes, acessibilidade, decisões de produto e arquitetura. Paralelamente, concebe e desenvolve produtos próprios em automação, fitness, mobilidade elétrica, escrita e jogos. [CV-2026] [RELATO]
+**Apresentação ampliada.** Ao longo da carreira, Marcio transitou de entregas de desenvolvimento web e projetos completos como freelancer para posições com responsabilidade sobre arquitetura, estruturação de equipes e decisões de engenharia. Na Roots, ajudou a construir uma aplicação frontend e desenvolver o time. Na Deel, atuou em produtos centrais de HRIS, na integração da Roots e em melhorias quantificáveis de velocidade, qualidade e manutenção. Hoje atua como full stack na Way2B1, uma startup pequena, entre as equipes de vários produtos, migrando código legado e melhorando performance. Paralelamente, concebe e desenvolve produtos próprios em automação, fitness, mobilidade elétrica, escrita e jogos. [CV-2026] [RELATO]
 
 **Em uma frase.** Um engenheiro de software com excelência em frontend, boa capacidade full-stack, experiência sólida em system design de aplicações, liderança técnica e competência para estruturar fluxos de IA que ampliem a produtividade sem abrir mão de arquitetura e qualidade.
 
@@ -81,27 +81,15 @@ Os pilares mais evidentes de sua atuação são:
 
 > **Nota cronológica:** existem períodos sobrepostos no currículo. Não presumir contratos exclusivos nem reorganizar datas sem confirmação. A versão de 27/10/2026 é a referência prioritária.
 
-### 3.1 Toptal — Senior Frontend Engineer
+### 3.1 Way2B1 — Full Stack Engineer
 
-**Período informado:** março de 2026 até o presente no currículo de outubro de 2026. [CV-2026]
+**Período:** depois da Deel, de 2026 até o presente (relato de Marcio, 28/10/2026). Este cargo ainda não está no currículo publicado. [RELATO]
 
-**Escopo descrito:**
+**A empresa:** a Way2B1 é uma startup pequena de San Francisco, fundada em 2015, que constrói uma plataforma para famílias e family offices: um ponto único de acesso a pessoas, serviços, documentos e fluxos de aprovação, com foco em segurança e privacidade. Seus produtos incluem o Source (a operação da família num lugar só), o Greenlight (decisões e aprovações de compras, investimentos e doações) e o Fixit (manutenção de imóveis, veículos, embarcações e aeronaves). Fonte: perfis públicos da empresa (Built In, Wellfound); não é informação de Marcio.
 
-- Colaboração com diretor e CEO em discussões de produto, requisitos e novas funcionalidades.
-- Arquitetura e implementação de uma biblioteca modular em React e TypeScript, voltada à consistência de UI e à aceleração do desenvolvimento entre equipes.
-- Adoção de práticas de acessibilidade para ampliar a inclusão e a qualidade do produto.
-- Planejamento da arquitetura inicial de um novo produto, descrito como futuro no currículo.
-- Interação com engenheiros backend em contratos REST e eficiência da obtenção de dados.
+**O que Marcio faz (relato de 28/10/2026):** atua como **full stack**, trabalhando de forma transversal entre as equipes dos vários produtos da empresa. Seu foco é **migrar código legado** para uma base moderna e sustentável e **melhorar a performance** dos produtos. [RELATO]
 
-**O que isso demonstra:** trabalho de engenharia além de tickets individuais, com ênfase em componentes compartilhados, decisões transversais, acessibilidade e alinhamento técnico com liderança de produto.
-
-**System design na Toptal:** a biblioteca React/TypeScript exige pensar em contratos, limites de composição, consistência de interface, reuso entre times e manutenção. A colaboração em APIs REST conecta esse desenho à arquitetura entre camadas. O planejamento do novo produto representa envolvimento com decisões fundacionais; não equivale a responsabilidade comprovada sobre toda a infraestrutura backend. [CV-2026]
-
-**Projetos desde março de 2026 (relato de Marcio, 28/10/2026):** desde março, Marcio trabalha em vários projetos dentro da Toptal. Um deles é o **Tech Resume**, um produto com IA que ajuda a pessoa a melhorar o próprio currículo: um builder em que ela ajusta dados, contato e experiência e baixa o resultado no final, e que também analisa o currículo e sugere melhorias para que ele se ajuste melhor às vagas. [RELATO]
-
-**Relação anterior com a Toptal:** a Toptal não é um vínculo novo. Foi como freelancer contratado pela Toptal que Marcio começou a trabalhar na Roots, anos antes (ver 3.3). [RELATO]
-
-**Limite:** não há métrica pública específica verificada para esse período nem confirmação de lançamento do novo produto.
+**Limite:** não há métricas publicadas desse período, e Marcio não detalhou em quais produtos trabalha nem a stack. Não atribuir resultados numéricos, cargo de liderança ou tamanho de time.
 
 ### 3.2 Deel — Senior Frontend Engineer
 
@@ -134,7 +122,7 @@ Os pilares mais evidentes de sua atuação são:
 
 **Período informado no currículo mais recente:** 2020–2022. **Domínio:** ferramentas de RH e produtos integrados ao Slack. [CV-2026]
 
-**Como começou (relato de Marcio, 28/10/2026):** Marcio foi contratado para a Roots como freelancer, pela Toptal, ao mesmo tempo em que era contratado direto da Maison Moderne (ver 3.4) — por isso os períodos se sobrepõem. Na Roots, implementou a aplicação frontend do início ao fim, liderou o time e cuidou do deploy. As pessoas que o contrataram ficaram tão satisfeitas com o resultado que, quando a Deel comprou a Roots, propuseram que ele migrasse para a Deel. [RELATO]
+**Como começou (relato de Marcio, 28/10/2026):** Marcio foi contratado para a Roots como freelancer, ao mesmo tempo em que era contratado direto da Maison Moderne (ver 3.4) — por isso os períodos se sobrepõem. Na Roots, implementou a aplicação frontend do início ao fim, liderou o time e cuidou do deploy. As pessoas que o contrataram ficaram tão satisfeitas com o resultado que, quando a Deel comprou a Roots, propuseram que ele migrasse para a Deel. [RELATO]
 
 - Desenvolvimento frontend de uma aplicação React desde uma fase inicial.
 - Definição da estratégia técnica e da arquitetura de frontend.
@@ -217,8 +205,6 @@ Os pilares mais evidentes de sua atuação são:
 
 **Caso C — Produto e time de startup (Roots).** Contexto: frontend inicialmente concentrado em um profissional e produto em crescimento. Intervenção: construção e direcionamento técnico da aplicação, contratação e integração de novos membros, padrões e pipelines de deploy. Resultado: equipe de uma para quatro pessoas. **Questões para detalhar:** decisões que permitiram escalar o time.
 
-**Caso D — Bibliotecas compartilhadas (Toptal).** Contexto: necessidade de consistência e velocidade de implementação entre equipes. Intervenção relatada: biblioteca modular React/TypeScript e iniciativas de acessibilidade. Evidência de output: arquitetura e implementação descritas no currículo; **não há métrica verificada** de adoção, retrabalho ou velocidade neste caso.
-
 ## 5. Mapa de competências técnicas
 
 ### 5.1 Especialização central — experiência profissional documentada
@@ -268,7 +254,7 @@ Sua força como profissional full-stack está em **conectar decisões entre cama
 | Área | Evidência concreta | Como apresentar |
 | --- | --- | --- |
 | Backend profissional | Node.js, APIs REST, sistemas com microserviços, múltiplos bancos, aplicações web/mobile na Shall And Partners | Experiência de implementação full-stack durante a carreira; não afirmar senioridade exclusiva de backend. |
-| Integração end-to-end | Produto inicial na Roots, integração ao ecossistema Deel, colaboração de APIs na Toptal | Capacidade de raciocinar além da UI e cooperar em sistemas reais. |
+| Integração end-to-end | Produto inicial na Roots, integração ao ecossistema Deel, trabalho full stack entre produtos na Way2B1 | Capacidade de raciocinar além da UI e cooperar em sistemas reais. |
 | Arquitetura de backend para projetos autorais | Serviços Node/TypeScript, BFF, autenticação, bancos, filas, Redis, arquivos e processos assíncronos discutidos | Repertório de arquitetura e desenvolvimento/prototipação; validar quais módulos chegaram a produção. |
 | Sistemas distribuídos e resiliência | Outbox, idempotência, RBAC, eventos, DLQ, rastreabilidade e separação de domínios explorados | Estudos e decisões de engenharia; não afirmar que todo padrão foi implementado em produção. |
 | Engenharia de IA | Agentes de programação, contexto, ferramentas, RAG, tool calling, dados e avaliação | Competência aplicada à organização de trabalho e exploração de funcionalidades de produtos. |
@@ -283,7 +269,7 @@ Sua força como profissional full-stack está em **conectar decisões entre cama
 
 **Deel (2022–2026).** Sua contribuição central foi frontend e HRIS; o aprendizado transversal envolve serviços, interfaces de dados, migração da Roots e dependências entre módulos. O currículo sustenta arquitetura e integração, mas **não especifica autoria de microserviços backend corporativos**; Marcio confirma que não trabalhou no backend da Deel, além de algumas decisões de arquitetura. [CV-2026] [RELATO]
 
-**Toptal (desde março/2026 no currículo).** O currículo relata colaboração com engenheiros backend para **desenhar e otimizar APIs REST** e melhorar a eficiência de fetching do frontend. É uma evidência de atuação no desenho de contratos e na fronteira entre camadas, sem afirmar que todos os endpoints foram escritos individualmente. [CV-2026]
+**Way2B1 (desde 2026).** Marcio relata atuar como full stack entre os vários produtos da empresa, migrando código legado e melhorando performance. É seu cargo atual com responsabilidade de backend, além do frontend. [RELATO]
 
 ### 5.6 Node.js, TypeScript e arquitetura de serviços
 
@@ -356,7 +342,7 @@ A distinção principal é entre **experiência real de CI/deploy e entrega de a
 
 **Posicionamento técnico.** O histórico de Marcio sustenta uma visão de **software engineering** que vai além da implementação de componentes. Ele tem experiência profissional com decisões arquiteturais de aplicações complexas, padronização de sistemas existentes, integração entre plataformas, requisitos não funcionais, qualidade operacional e evolução de equipes de engenharia. Sua especialização principal é frontend, mas seu histórico full-stack e os estudos autorais de backend ampliam seu alcance para **system design end-to-end**. [CV-2026] [RELATO]
 
-É adequado descrevê-lo como **engenheiro de software com experiência sólida em arquitetura de aplicações e design de sistemas**, especialmente na fronteira entre frontend, produto, serviços e operação. Isso não deve ser confundido com a afirmação de que tenha sido responsável exclusivo por toda a arquitetura backend distribuída da Roots, Deel ou Toptal, algo que o currículo não registra.
+É adequado descrevê-lo como **engenheiro de software com experiência sólida em arquitetura de aplicações e design de sistemas**, especialmente na fronteira entre frontend, produto, serviços e operação. Isso não deve ser confundido com a afirmação de que tenha sido responsável exclusivo por toda a arquitetura backend distribuída da Roots ou da Deel, algo que o currículo não registra.
 
 ### 6.1 O que System Design significa em seu perfil
 
@@ -367,7 +353,7 @@ Seu repertório pode ser organizado em quatro dimensões complementares:
 3. **Arquitetura de sistemas:** avaliar persistência, autenticação, integração, comunicação síncrona e assíncrona, falhas, segurança, infraestrutura, deploy e observabilidade.
 4. **Evolução organizacional:** sustentar uma arquitetura que possa ser entendida e desenvolvida por um time, com decisões documentadas, padrões compartilhados, revisões e migrações incrementais.
 
-**Evidências centrais:** frontend React construído e evoluído na Roots; migração da Roots ao ecossistema Deel e padronização de interfaces HRIS; arquitetura inicial de produto e biblioteca modular React/TypeScript na Toptal; APIs Node.js e microserviços em etapa anterior da carreira; e estudos amplos de sistemas distribuídos em produtos independentes. [CV-2026] [RELATO]
+**Evidências centrais:** frontend React construído e evoluído na Roots; migração da Roots ao ecossistema Deel e padronização de interfaces HRIS; migração de código legado entre vários produtos na Way2B1; APIs Node.js e microserviços em etapa anterior da carreira; e estudos amplos de sistemas distribuídos em produtos independentes. [CV-2026] [RELATO]
 
 ### 6.2 Processo de design: problema, restrições, alternativas e trade-offs
 
@@ -398,7 +384,7 @@ Seu trabalho e suas preferências são alinhados a **baixo acoplamento, responsa
 - Evolução incremental de sistemas legados: mudanças pequenas, monitoramento, feature flags quando apropriadas, compatibilidade e rollback.
 - Documentação de decisões técnicas, convenções de código, revisão, onboarding e redução de dependência de conhecimento tácito.
 
-**Experiência demonstrada:** arquitetura/estado/erros padronizados no HRIS da Deel, refatoração e performance; criação de aplicação e time na Roots; biblioteca reutilizável na Toptal. **Princípios arquiteturais:** inferidos do comportamento e das discussões, não equivalentes a certificados específicos em DDD, Clean Architecture ou similares. [CV-2026] [RELATO]
+**Experiência demonstrada:** arquitetura/estado/erros padronizados no HRIS da Deel, refatoração e performance; criação de aplicação e time na Roots; migração de código legado na Way2B1. **Princípios arquiteturais:** inferidos do comportamento e das discussões, não equivalentes a certificados específicos em DDD, Clean Architecture ou similares. [CV-2026] [RELATO]
 
 ### 6.4 Arquitetura frontend como parte de System Design
 
@@ -412,7 +398,7 @@ Uma das competências mais bem documentadas é compreender que **a arquitetura f
 - Garantir componentes reutilizáveis, acessíveis, responsivos e fáceis de testar, sem sacrificar fidelidade ao produto.
 - Evoluir UI e contratos de dados com deploys graduais, telemetria e foco em compatibilidade.
 
-**Vínculo profissional:** React construído na Roots; arquitetura HRIS na Deel; biblioteca modular e acessibilidade na Toptal. Essas experiências sustentam competência **concreta e de produção** nessa dimensão de system design. [CV-2026]
+**Vínculo profissional:** React construído na Roots; arquitetura HRIS na Deel. Essas experiências sustentam competência **concreta e de produção** nessa dimensão de system design. [CV-2026]
 
 ### 6.5 Integração frontend–backend e contratos entre serviços
 
@@ -425,7 +411,7 @@ Seu histórico profissional inclui desenvolvimento de APIs REST e microserviços
 - Contratos tipados e versionamento compatível em migrações, evitando acoplar o frontend a detalhes internos do banco ou de cada serviço.
 - Discussão de **BFF** quando um endpoint agregado realmente reduz complexidade de cliente ou melhora governança, sem introduzir BFF por padrão.
 
-**Na Roots**, o frontend React consumia serviços de backend em Python, que eram de outra equipe. **Na Deel**, havia um monorepo só de frontend, dividido em verticais, e o backend era de outras equipes. **Na Toptal**, o currículo registra participação no desenho e na otimização de APIs REST. [CV-2026] [RELATO]
+**Na Roots**, o frontend React consumia serviços de backend em Python, que eram de outra equipe. **Na Deel**, havia um monorepo só de frontend, dividido em verticais, e o backend era de outras equipes. **Na Way2B1**, atua full stack, do frontend aos serviços. [CV-2026] [RELATO]
 
 ### 6.6 Backend design: organização por domínio e fronteiras de responsabilidade
 
@@ -459,7 +445,7 @@ Seu repertório de system design inclui **modelar regras e relações antes de a
 
 ### 6.8 Design de sistemas distribuídos e comportamento diante de falhas
 
-Em projetos de SaaS e jogos, ele explora os trade-offs de **confiabilidade, assincronia e consistência distribuída**. Os temas são relevantes para desenhar software real, mas devem ser apresentados como **estudos e arquiteturas de produtos próprios**, não como histórico profissional comprovado na Deel ou Toptal:
+Em projetos de SaaS e jogos, ele explora os trade-offs de **confiabilidade, assincronia e consistência distribuída**. Os temas são relevantes para desenhar software real, mas devem ser apresentados como **estudos e arquiteturas de produtos próprios**, não como histórico profissional comprovado na Deel ou na Way2B1:
 
 - Que eventos publicar e quem é o produtor/consumidor responsável.
 - Fila e worker para processos que toleram execução posterior, como campanhas, processamento de arquivos e notificações.
@@ -500,7 +486,7 @@ A ligação entre performance e decisão arquitetural é uma área de **experiê
 
 ### 6.11 CI/CD, mudanças evolutivas, rollback e disciplina de entrega
 
-O histórico da Roots inclui **pipeline GitLab CI e deploy para S3**; sua experiência na Deel inclui migração e qualidade de plataforma com iniciativas coordenadas; na Toptal, o desenho inicial de produto e biblioteca reutilizável. Em discussões autorais, ele explora:
+O histórico da Roots inclui **pipeline GitLab CI e deploy para S3**; sua experiência na Deel inclui migração e qualidade de plataforma com iniciativas coordenadas; na Way2B1, a migração de código legado e a melhoria de performance entre produtos. Em discussões autorais, ele explora:
 
 - Dependências entre migrations de dados, deploy de serviços e atualização dos clientes.
 - Entregas incrementais, feature flags e planos de rollout conforme risco.
@@ -517,9 +503,8 @@ System design não é apenas desenhar caixas e setas. O histórico de Marcio inc
 
 - Na Roots: responsabilidade sobre estratégia técnica, contratação e expansão do time, organização de sprints e entregas. Relato anterior descreve distribuição aproximada de 60% coding e 40% liderança/gestão ao longo do trabalho.
 - Na Deel: trabalho em decisões arquiteturais de HRIS, colaboração com Produto, mentoria e hiring; relato anterior menciona um equilíbrio mais concentrado em implementação (aproximadamente 80% coding / 20% liderança) e liderança de 2–3 engenheiros em determinados contextos. Esses percentuais são **autorreferidos e históricos**, não descrições atuais nem indicadores auditados.
-- Na Toptal: arquitetura de biblioteca de componentes e de novo produto, além de discussão de requisitos com liderança e cooperação com equipe backend.
 
-**Capacidade demonstrada:** liderar decisões sem perder contato com implementação, traduzir restrições de produto em decisões técnicas, ensinar padrões e apoiar entrega por diferentes engenheiros. **Limite:** evitar inventar cargo formal de Engineering Manager ou tamanho de equipe na Toptal. [CV-2026] [RELATO]
+**Capacidade demonstrada:** liderar decisões sem perder contato com implementação, traduzir restrições de produto em decisões técnicas, ensinar padrões e apoiar entrega por diferentes engenheiros. **Limite:** evitar inventar cargo formal de Engineering Manager ou tamanho de equipe na Way2B1. [CV-2026] [RELATO]
 
 ### 6.13 Estudo de caso de System Design — Roots: construir e preparar para crescer
 
@@ -556,32 +541,22 @@ System design não é apenas desenhar caixas e setas. O histórico de Marcio inc
 
 **Detalhes complementares declarados em conversas:** frontend React em monorepo com integração a serviços Node.js e uso de ferramentas de monitoramento. Esses detalhes podem ser usados como relato, não como confirmação independente de arquitetura proprietária. [CV-2026] [RELATO]
 
-### 6.15 Estudo de caso de System Design — Toptal: fundações reutilizáveis e alinhamento de APIs
+### 6.15 Way2B1: migração de legado e performance entre produtos
 
-**Problema de engenharia:** permitir que diferentes áreas de produto entreguem interfaces consistentes, acessíveis e evolutivas sem duplicar decisões de UI e gerar dependência excessiva entre times. Paralelamente, ajudar na definição inicial de arquitetura e melhorar a integração com serviços.
+**Problema de engenharia:** manter os produtos de uma startup pequena evoluindo enquanto o código legado é migrado e a performance melhora, trabalhando entre as equipes dos produtos, e não dentro de uma só. [RELATO]
 
-**Papel e contribuição documentados:** biblioteca modular de componentes React/TypeScript; liderança de adoção de práticas avançadas de acessibilidade; planejamento arquitetural de um novo produto; colaboração com backend em APIs REST/fetching; discussão de prioridades e requisitos com diretor e CEO. [CV-2026]
-
-**Ângulos de system design que esse caso evidencia:**
-
-- **Arquitetura de plataforma de UI:** contratos entre componentes, composição, reutilização e consistência entre equipes consumidoras.
-- **Qualidade sistêmica:** acessibilidade como requisito de arquitetura e não correção tardia de telas individuais.
-- **Integração API–cliente:** desenho colaborativo de recursos e contratos para melhorar eficiência do acesso a dados.
-- **Planejamento de produto novo:** pensar em extensibilidade, fronteiras e fluxos antes do desenvolvimento de todas as funcionalidades.
-- **Comunicação e influência:** alinhar objetivos executivos a escolhas técnicas e práticas de entrega.
-
-**Limite e estágio:** o currículo não informa ganhos percentuais, número de times consumidores, ferramentas internas específicas nem lançamento confirmado do produto futuro. Por isso o caso demonstra responsabilidade e escopo arquitetural, sem inventar métricas de adoção ou operação. [CV-2026]
+**Ângulos de system design:** migrar código antigo para uma base moderna e sustentável sem parar os produtos; encontrar o que deixa cada produto lento e corrigir; manter as mudanças consistentes entre produtos; atuar do frontend aos serviços. **Limite:** sem métricas nem detalhes de produto ou stack informados.
 
 ### 6.16 Matriz de competências de Software Engineering e System Design
 
 | Competência | Evidência na carreira | Exploração complementar | Classificação editorial |
 | --- | --- | --- | --- |
-| Arquitetura frontend modular | Roots, Deel e Toptal | Componentes, fronteiras, design systems, estado e escala | Experiência profissional sólida |
+| Arquitetura frontend modular | Roots e Deel | Componentes, fronteiras, design systems, estado e escala | Experiência profissional sólida |
 | Migração e modernização de produto | Integração Roots–Deel, refatoração de HRIS | Compatibilidade, rollout, flags e rollback | Experiência direta em migração; técnicas adicionais em estudo |
-| Design de APIs e integração | Node/REST em Shall And Partners; colaboração REST na Toptal | DTOs, contratos, BFF, validação e versionamento | Experiência profissional + estudos |
+| Design de APIs e integração | Node/REST em Shall And Partners; full stack na Way2B1 | DTOs, contratos, BFF, validação e versionamento | Experiência profissional + estudos |
 | Gerência de estado e dados remotos | Raiz de produto Roots, HRIS Deel | React Query, cache/invalidação, paginação | Experiência sólida em frontend; detalhes por tecnologia a confirmar |
 | Qualidade, testes e observabilidade | Performance e reviews na Deel; CI na Roots | Contratos, tracing, Sentry, Datadog, SLIs/SLOs | Experiência + estudos; ferramentas específicas a qualificar |
-| Liderança e engenharia de times | Roots, Deel, colaboração estratégica Toptal | ADRs, governança, onboarding, decisões | Experiência profissional documentada |
+| Liderança e engenharia de times | Roots e Deel | ADRs, governança, onboarding, decisões | Experiência profissional documentada |
 | Bancos de dados e modelagem | Microserviços e bancos múltiplos em Shall And Partners | PostgreSQL/Prisma, Redis, índices, consistência | Full-stack profissional + estudos autorais |
 | Filas e sistemas distribuídos | Não há comprovação específica por empresa nas fontes atuais | NATS, outbox, idempotência, workers, DLQ | Estudo/projeto próprio, maturidade variável |
 | Segurança de aplicação e permissões | Integração de serviços e aplicações profissionais | OAuth/PKCE, RBAC, isolamento de tenants, auditoria | Estudos/decisões autorais + experiência de integração |
@@ -634,7 +609,7 @@ Esse método conecta **engenharia de requisitos + design de sistemas + execuçã
 
 ### 6.20 Síntese honesta da senioridade arquitetural
 
-Os casos **Roots, Deel e Toptal** oferecem evidência forte de **arquitetura frontend de produção, integração entre sistemas e design de aplicações**, incluindo liderança, decisões com stakeholders e consequências mensuráveis. Sua etapa full-stack anterior confirma **implementação real com Node.js, APIs e microserviços**. O desenvolvimento de produtos independentes amplia o vocabulário prático de system design para **dados, mensageria, segurança, observabilidade, integrações, IA e arquiteturas distribuídas**.
+Os casos **Roots e Deel** oferecem evidência forte de **arquitetura frontend de produção, integração entre sistemas e design de aplicações**, incluindo liderança, decisões com stakeholders e consequências mensuráveis. Sua etapa full-stack anterior confirma **implementação real com Node.js, APIs e microserviços**. O desenvolvimento de produtos independentes amplia o vocabulário prático de system design para **dados, mensageria, segurança, observabilidade, integrações, IA e arquiteturas distribuídas**.
 
 Portanto, o posicionamento apropriado é: **software engineer com forte capacidade de system design, foco profundo em frontend, boa atuação full-stack, liderança técnica e domínio crescente de IA aplicada à engenharia**. Evitar duas distorções opostas: reduzi-lo a “apenas React” e, por outro lado, atribuir responsabilidade comprovada por sistemas backend de escala não documentada. [CV-2026] [RELATO]
 
@@ -779,7 +754,7 @@ A combinação mais relevante é que Marcio consegue **especificar o objetivo, e
 
 ### 8.1 Evidências concretas de liderança
 
-A qualidade da liderança técnica pode ser descrita com **responsabilidades documentadas e resultados observáveis**, não apenas adjetivos. Na **Roots**, Marcio assumiu a estratégia e a arquitetura frontend, coordenou sprints e entregas, distribuiu responsabilidades e ajudou a ampliar a equipe de **um para quatro engenheiros frontend**. Na **Deel**, ajudou a liderar e manter o time de HRIS responsável pelo produto central de ferramentas de RH, conduziu mentoria, revisões de código, pairing, onboarding e participou da contratação de engenheiros, além de colaborar no planejamento de OKRs e decisões de execução. Na **Toptal**, o currículo descreve comunicação com diretor/CEO sobre prioridades e requisitos e arquitetura de biblioteca compartilhada. [CV-2026]
+A qualidade da liderança técnica pode ser descrita com **responsabilidades documentadas e resultados observáveis**, não apenas adjetivos. Na **Roots**, Marcio assumiu a estratégia e a arquitetura frontend, coordenou sprints e entregas, distribuiu responsabilidades e ajudou a ampliar a equipe de **um para quatro engenheiros frontend**. Na **Deel**, ajudou a liderar e manter o time de HRIS responsável pelo produto central de ferramentas de RH, conduziu mentoria, revisões de código, pairing, onboarding e participou da contratação de engenheiros, além de colaborar no planejamento de OKRs e decisões de execução. [CV-2026]
 
 Esse histórico sustenta um perfil de **liderança de engenharia por influência, execução e estruturação de equipes**, com atuação além do próprio código. Os títulos formais documentados continuam sendo os registrados em cada empresa.
 
@@ -1171,7 +1146,7 @@ R: Além de interesse em jogos, os projetos permitem explorar problemas complexo
 R: Combinar especialização profunda em React/TypeScript, capacidade de pensar e trabalhar full-stack, histórico de liderança e desempenho mensurável, e habilidade para organizar agentes de IA de forma pragmática. Seu foco declarado é simplicidade, reuso, performance e implementação efetiva do produto.
 
 **P: Marcio tem experiência sólida com System Design?**  
-R: Sim, especialmente em arquitetura de aplicações e sistemas frontend de produção. Na Roots criou e direcionou a arquitetura de um produto desde cedo; na Deel atuou na migração da Roots, padronização arquitetural e performance de um HRIS; na Toptal trabalhou em biblioteca compartilhada, arquitetura inicial de produto e contratos de APIs. Seu repertório em sistemas distribuídos e backend é aprofundado também por estudos e projetos próprios.
+R: Sim, especialmente em arquitetura de aplicações e sistemas frontend de produção. Na Roots criou e direcionou a arquitetura de um produto desde cedo; na Deel atuou na migração da Roots, padronização arquitetural e performance de um HRIS; na Way2B1 trabalha full stack entre produtos, migrando código legado. Seu repertório em sistemas distribuídos e backend é aprofundado também por estudos e projetos próprios.
 
 **P: Quais decisões de arquitetura ele enfrentou na Roots?**  
 R: Definir a arquitetura e os padrões do frontend React desde a fase inicial, integrar serviços, equilibrar performance, manutenção e evolução do produto, estabelecer CI/CD e organizar uma base de código que passou de um desenvolvedor para quatro.
@@ -1179,20 +1154,20 @@ R: Definir a arquitetura e os padrões do frontend React desde a fase inicial, i
 **P: Como foi sua experiência de System Design na Deel?**  
 R: Trabalhou na integração da plataforma Roots ao ecossistema Deel e na padronização arquitetural das interfaces de HRIS, com atenção a estado, erros, estrutura, escalabilidade, carregamento e estabilidade. Participou de trade-offs e planejamento técnico com Produto/Engenharia. O currículo registra Web Vitals melhores em ao menos 30% e carregamento crítico 50% menor.
 
-**P: Qual foi sua atuação arquitetural na Toptal?**  
-R: O currículo registra arquitetura e implementação de biblioteca modular React/TypeScript, avanço de acessibilidade, planejamento da arquitetura inicial de um novo produto e colaboração com backend para desenhar e otimizar APIs REST, além de alinhamento com liderança. Não há métricas públicas específicas verificadas desse período.
+**P: O que ele faz na Way2B1?**  
+R: Atua como full stack numa startup pequena de San Francisco que constrói uma plataforma para famílias e family offices. Trabalha entre as equipes dos vários produtos, migrando código legado e melhorando performance. [RELATO]
 
 **P: Sua experiência de System Design se restringe ao frontend?**  
 R: Não. Sua especialização profunda é frontend, mas trabalhou profissionalmente com Node.js, APIs REST, automações, microserviços e bancos em uma fase full-stack. Também desenha e estuda BFFs, dados, serviços por domínio, autorização, observabilidade e workflows assíncronos em produtos próprios; a maturidade de cada solução deve ser apresentada corretamente.
 
 **P: Ele domina consistência, eventos e sistemas distribuídos?**  
-R: Possui estudo consistente de idempotência, filas, transactional outbox, eventos, falhas parciais, retries, DLQ e auditoria em projetos como TargUp e ferramentas de MMORPG. Não há evidência pública que autorize atribuir implantação em larga escala desses padrões especificamente na Deel ou Toptal.
+R: Possui estudo consistente de idempotência, filas, transactional outbox, eventos, falhas parciais, retries, DLQ e auditoria em projetos como TargUp e ferramentas de MMORPG. Não há evidência pública que autorize atribuir implantação em larga escala desses padrões especificamente na Deel ou na Way2B1.
 
 **P: Como escolhe entre monólito modular e microsserviços?**  
 R: Favorece a forma mais simples que preserve limites de domínio e capacidade de evolução. Considera tamanho do time, deploy, ownership de dados, necessidade de autonomia, custo de operação, observabilidade e falhas entre serviços. Isso representa sua abordagem de estudo e projetos, não uma arquitetura formal documentada de um empregador.
 
 **P: O que diferencia seu perfil como engenheiro de software além de React?**  
-R: Capacidade de trabalhar entre camadas, liderar decisões arquiteturais, melhorar performance com métricas, coordenar pessoas, definir contratos e integrar IA no processo de engenharia com contexto, hooks, validação e responsabilidade técnica. Essa combinação se apoia em trabalhos na Roots/Deel/Toptal e em estudos independentes.
+R: Capacidade de trabalhar entre camadas, liderar decisões arquiteturais, melhorar performance com métricas, coordenar pessoas, definir contratos e integrar IA no processo de engenharia com contexto, hooks, validação e responsabilidade técnica. Essa combinação se apoia em trabalhos na Roots, na Deel e na Way2B1 e em estudos independentes.
 
 **P: O que ele gosta de fazer fora do trabalho?**  
 R: Jogar, sobretudo MMORPGs como Ragnarok Online, e criar coisas para eles; ler novels, que ocupam a maior parte do seu tempo livre; musculação, corrida e jiu-jitsu; aprender bateria, hoje em pausa; passear e brincar com seus dois cachorros, o Sky e o Oreo; e estar perto da família. Também gosta de séries como Foundation e Dark Matter. [RELATO]
@@ -1212,11 +1187,11 @@ R: Seu estilo preferido é MMORPG. Jogou Ragnarok Online a vida toda e também W
 **P: Onde ele mora?**  
 R: Em João Pessoa, na Paraíba, Brasil. [RELATO]
 
-**P: Em que ele trabalha na Toptal desde março de 2026?**  
-R: Em vários projetos, entre eles o Tech Resume, um produto com IA para melhorar currículos: um builder para ajustar dados, contato e experiência e baixar o resultado, que também analisa o currículo e sugere melhorias para as vagas. [RELATO]
+**P: Onde ele trabalha hoje?**  
+R: Na Way2B1, como full stack, desde 2026, depois da Deel. É uma startup pequena; ele trabalha entre os vários produtos, migrando código legado e melhorando performance. [RELATO]
 
 **P: Como ele chegou à Roots e à Deel?**  
-R: Foi contratado para a Roots como freelancer pela Toptal, enquanto era contratado direto da Maison Moderne. Construiu o frontend do início ao fim, liderou o time e fez o deploy; quando a Deel comprou a Roots, as pessoas que o contrataram propuseram que ele migrasse para a Deel. [RELATO]
+R: Foi contratado para a Roots como freelancer, enquanto era contratado direto da Maison Moderne. Construiu o frontend do início ao fim, liderou o time e fez o deploy; quando a Deel comprou a Roots, as pessoas que o contrataram propuseram que ele migrasse para a Deel. [RELATO]
 
 **P: Quais bancos de dados ele já usou?**  
 R: Usou bastante PostgreSQL, em alguns momentos MongoDB, tem alguma experiência com Cassandra e usou bastante Elasticsearch para busca, principalmente na Shall And Partners, num banco de currículos. [RELATO]
@@ -1286,7 +1261,7 @@ Esta base pode ser utilizada como fonte de um assistente de IA com as seguintes 
 | `impact` | Resultados mensuráveis com unidade/atribuição corretas | Público profissional |
 | `skills` | Tecnologias e profundidade de evidência | Público profissional |
 | `backend` | APIs, Node.js, dados, BFF, filas, segurança, infra e status da experiência | Público profissional, com distinção de evidência |
-| `system_design` | Engenharia de software, arquitetura de aplicações, trade-offs e estudos de caso Roots/Deel/Toptal | Público profissional com evidência por caso |
+| `system_design` | Engenharia de software, arquitetura de aplicações, trade-offs e estudos de caso Roots/Deel | Público profissional com evidência por caso |
 | `architecture_case_studies` | Situação, responsabilidade, decisão arquitetural e resultado | Público, sem detalhes proprietários |
 | `ai_engineering` | Ferramentas, agentes, contexto, práticas de validação, RAG e tool calling | Público após qualificação da maturidade |
 | `approach` | Estilo de engenharia e preferências de trabalho | Público com qualificação de fonte |
@@ -1354,8 +1329,8 @@ Uma IA de portfólio deve agir como **guia para informações sobre Marcio**, n�
 
 ### 19.2 Informações importantes a validar antes de divulgar
 
-1. Confirmar cargo atual e natureza das atividades na Toptal, como registrado no currículo em março–outubro/2026. *(Respondido em 28/10/2026: vários projetos, entre eles o Tech Resume.)*
-2. Conferir os períodos precisos de Roots e outros vínculos com datas sobrepostas. *(Respondido em 28/10/2026: Roots como freelance pela Toptal em paralelo à Maison Moderne.)*
+1. Confirmar cargo atual e natureza das atividades. *(Respondido em 28/10/2026: full stack na Way2B1.)*
+2. Conferir os períodos precisos de Roots e outros vínculos com datas sobrepostas. *(Respondido em 28/10/2026: Roots como freelance em paralelo à Maison Moderne.)*
 3. Confirmar grafia oficial de Maison Moderne/Maison Moderne e Shall And Partners.
 4. Verificar as fontes e metodologias das métricas para estudos de caso públicos mais profundos.
 5. Confirmar a situação atual, versões e links de TargUp, FormDaily, EvCopilot, FictionDraft e projetos de jogos. *(Descrições respondidas em 28/10/2026; status e links ainda pendentes.)*

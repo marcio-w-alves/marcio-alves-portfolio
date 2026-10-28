@@ -51,6 +51,5 @@ export const REFERENCED_TECHNOLOGIES = Object.keys(TECHNOLOGY_REFERENCES) as [
  * title. The other employers have no article.
  */
 export const COMPANY_REFERENCES: Readonly<Record<string, string>> = {
-  toptal: 'Toptal',
   deel: 'Deel (company)',
 };

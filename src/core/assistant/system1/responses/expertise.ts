@@ -33,7 +33,6 @@ export function createExpertiseAnswers(kit: ResponseKit) {
       [
         text(
           "React sits at the center of Marcio's documented work from 2018 to today. Rather than a single claim of expertise, here is the evidence by area:\n\n" +
-            '- **Component architecture** — architected a modular React and TypeScript component library used across multiple product teams at Toptal.\n' +
             '- **Complex product interfaces** — helped lead the HRIS team at Deel and standardized its architecture, state management and error handling.\n' +
             '- **Performance** — improved Web Vitals by 30%+ and halved critical page loading time at Deel.\n' +
             '- **State management** — implemented advanced state management at Roots, where he built the frontend end to end.\n' +
@@ -52,7 +51,6 @@ export function createExpertiseAnswers(kit: ResponseKit) {
           'Has he worked with backend systems?',
         ],
         sources: [
-          'resume.toptal',
           'resume.deel',
           'resume.roots',
           'resume.maison',
@@ -60,7 +58,7 @@ export function createExpertiseAnswers(kit: ResponseKit) {
           'resume.skills',
           'notes',
         ],
-        related: 'toptal',
+        related: 'deel',
       },
     );
   }
@@ -94,7 +92,7 @@ export function createExpertiseAnswers(kit: ResponseKit) {
         text(
           "Marcio's architecture work follows a consistent thread: standardize the foundations, keep components modular, and tie structural decisions to measurable product outcomes.\n\n" +
             '### Documented decisions\n' +
-            '- **Toptal** — architected a modular React/TypeScript component library for consistent UI across product teams, and planned the initial architecture for a new product.\n' +
+            '- **Way2B1** — migrates legacy code to a modern, maintainable base across several products.\n' +
             '- **Deel** — standardized HRIS frontend architecture to improve structure, state management, error handling and scalability.\n' +
             '- **Roots** — directed frontend strategy, introduced advanced state management and set up GitLab CI pipelines deploying to Amazon S3.\n' +
             '- **Maison Moderne** — implemented SSR with Next.js and integrated the frontend with external publishing platforms.\n' +
@@ -107,8 +105,8 @@ export function createExpertiseAnswers(kit: ResponseKit) {
           `### How he designs a system\n${numbered(practice.designProcess)}\n\nThe trade-offs he weighs most often: ${practice.decisionCriteria.map((criterion) => criterion.charAt(0).toLowerCase() + criterion.slice(1)).join('; ')}.`,
         ),
         details(
-          'The engineering problem at Roots, Deel and Toptal',
-          (['roots', 'deel', 'toptal'] as const)
+          'The engineering problem at Roots, Deel and Way2B1',
+          (['roots', 'deel', 'way2b1'] as const)
             .map((id) => {
               const study = practice.caseStudies[id];
               return study
@@ -130,7 +128,6 @@ export function createExpertiseAnswers(kit: ResponseKit) {
           'What does he know about design systems?',
         ],
         sources: [
-          'resume.toptal',
           'resume.deel',
           'resume.roots',
           'resume.maison',
@@ -182,7 +179,7 @@ export function createExpertiseAnswers(kit: ResponseKit) {
         skillGroups(['backend']),
         note(
           'inference',
-          'Based on his role titles, backend work in his recent positions is collaborative (API design, delivery pipelines) rather than his primary ownership.',
+          'His deepest specialization is frontend; his current role at Way2B1 is full stack, and at Roots and Deel the backend belonged to other teams.',
         ),
       ],
       {
@@ -193,7 +190,7 @@ export function createExpertiseAnswers(kit: ResponseKit) {
         ],
         sources: [
           'resume.shall',
-          'resume.toptal',
+          'notes.way2b1',
           'resume.roots',
           'resume.deel',
           'resume.skills',
@@ -284,21 +281,18 @@ export function createExpertiseAnswers(kit: ResponseKit) {
       'designSystems',
       [
         text(
-          'At **Toptal**, Marcio architected and implemented a modular React and TypeScript component library that speeds up feature development and keeps the UI consistent across multiple product teams — paired with advanced accessibility standards he led.\n\n' +
-            'Earlier, he standardized the HRIS frontend architecture at Deel and established coding standards at Maison Moderne.',
-        ),
-        text(
-          `### How he frames a shared library\n${bullets(practice.caseStudies.toptal?.angles.slice(0, 2) ?? [])}\n- **Boundaries** — module and reuse rules that keep the library from coupling every team to every change.`,
+          'His documented work on shared UI foundations is architectural: at **Deel** he standardized the HRIS frontend architecture — structure, state management and error handling — across product areas, and at **Maison Moderne** he established coding standards and led code reviews.\n\n' +
+            'Building reusable components and modules without giving up readability is part of how he works, and design systems are among the themes he follows closely.',
         ),
       ],
       {
         followUps: [
           'How does he approach accessibility?',
           'How does he approach frontend architecture?',
-          'What is he working on at Toptal?',
+          'What is he working on at Way2B1?',
         ],
-        sources: ['resume.toptal', 'resume.deel', 'resume.maison', 'notes'],
-        related: 'toptal',
+        sources: ['resume.deel', 'resume.maison', 'notes'],
+        related: 'deel',
       },
     );
   }
@@ -308,21 +302,20 @@ export function createExpertiseAnswers(kit: ResponseKit) {
       'accessibility',
       [
         text(
-          "Accessibility appears in three of Marcio's roles:\n\n" +
-            '- **Toptal** — led the integration of advanced accessibility standards, broadening the product to users with diverse accessibility needs.\n' +
+          "Accessibility appears in two of Marcio's roles:\n\n" +
             '- **Roots** — integrated accessibility standards together with UX designers.\n' +
             '- **Maison Moderne** — built intuitive, accessible interfaces from complex requirements with UX designers.\n\n' +
-            'He treats accessibility as a requirement of the foundation — in the component library itself — rather than a late fix on individual screens, and checks it alongside design, tests and performance before calling a feature done.',
+            'He treats accessibility as a requirement of the foundation rather than a late fix on individual screens, and checks it alongside design, tests and performance before calling a feature done.',
         ),
       ],
       {
         followUps: [
           'What does he know about design systems?',
-          'What is he working on at Toptal?',
+          'How does he approach frontend architecture?',
           'How does he work with product teams?',
         ],
-        sources: ['resume.toptal', 'resume.roots', 'resume.maison', 'notes'],
-        related: 'toptal',
+        sources: ['resume.roots', 'resume.maison', 'notes'],
+        related: 'roots',
       },
     );
   }
@@ -358,7 +351,7 @@ export function createExpertiseAnswers(kit: ResponseKit) {
     'Maintainability over cleverness':
       'Coding standards and code reviews at Maison Moderne; a move to React Hooks at Shall And Partners.',
     'Composition over monoliths':
-      'A modular React and TypeScript component library shared by several product teams at Toptal.',
+      'Legacy code moved to a modern, modular codebase across several products at Way2B1.',
     'Reuse before rewriting':
       'One standardized HRIS frontend architecture across product areas at Deel.',
     'Architecture sized to the problem':
@@ -366,7 +359,7 @@ export function createExpertiseAnswers(kit: ResponseKit) {
     'Performance from the design':
       'Critical pages 50% faster and People List from 6s to 3s at Deel; SSR for editorial products at Maison Moderne.',
     'UX and visual fidelity':
-      'Accessibility built in with UX designers at Roots and Maison Moderne, and led as a standard at Toptal.',
+      'Accessibility built in with UX designers at Roots and Maison Moderne.',
     'Verifiable quality':
       'Pair programming, code reviews and onboarding at Deel; GitLab CI pipelines at Roots.',
     'Explicit trade-offs':
@@ -405,7 +398,7 @@ export function createExpertiseAnswers(kit: ResponseKit) {
         ],
         sources: [
           'principles',
-          'resume.toptal',
+          'notes.way2b1',
           'resume.deel',
           'resume.roots',
           'resume.maison',

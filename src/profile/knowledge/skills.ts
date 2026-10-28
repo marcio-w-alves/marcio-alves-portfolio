@@ -19,7 +19,6 @@ export const skills: readonly SkillGroupSource[] = [
     items: [
       { en: 'Scalable Frontend Architecture' },
       { en: 'State Management' },
-      { en: 'Component Libraries' },
       { en: 'Server-Side Rendering' },
       { en: 'Developer Experience' },
     ],

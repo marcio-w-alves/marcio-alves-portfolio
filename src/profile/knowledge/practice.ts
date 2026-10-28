@@ -57,26 +57,21 @@ export const practice: PracticeSource = {
 
   /** System design read of his three most recent roles. */
   caseStudies: {
-    toptal: {
+    way2b1: {
       problem: {
-        en: 'Let several product areas ship consistent, accessible interfaces without duplicating UI decisions or coupling teams to each other — while helping define the architecture of a new product and the APIs behind it.',
+        en: "Keep the products of a small startup moving while migrating their legacy code and improving their performance — working across the products' teams rather than inside one of them.",
       },
       angles: [
         {
-          en: '**UI platform architecture** — contracts between components, composition, reuse and consistency for the teams that consume the library.',
+          en: '**Legacy migration** — moving old code to a modern, maintainable base while the products keep running.',
         },
         {
-          en: '**Accessibility as architecture** — a requirement of the foundation, not a late fix on individual screens.',
+          en: '**Performance** — finding what slows each product down and fixing it.',
         },
         {
-          en: '**API and client together** — designing resources and contracts with backend engineers for efficient data fetching.',
+          en: "**Across products** — working with each product's team so changes stay consistent between them.",
         },
-        {
-          en: '**A new product** — extensibility, boundaries and flows thought through before every feature is built.',
-        },
-        {
-          en: '**Influence** — aligning goals set with the Director and CEO with technical and delivery choices.',
-        },
+        { en: '**Full stack** — from the interfaces to the services behind them.' },
       ],
     },
     deel: {
@@ -182,7 +177,7 @@ export const practice: PracticeSource = {
       {
         en: '**Deel** — frontend and HRIS at the core, working across services, data interfaces and the Roots migration; no authorship of corporate backend services is claimed.',
       },
-      { en: '**Toptal** — designs and optimizes REST APIs together with backend engineers.' },
+      { en: "**Way2B1** — full-stack work across the startup's products, frontend and backend." },
     ],
     ownProducts: {
       en: 'In his own products he designs Node.js/TypeScript services with domain boundaries, a Backend for Frontend, authentication and RBAC, PostgreSQL with Prisma, Redis, queues, idempotency and the transactional outbox pattern. These are designs and prototypes at different stages, not production systems at an employer.',

@@ -88,7 +88,7 @@ describe('fast path — documented answers', () => {
     const response = answer("What's his engineering philosophy?");
     const text = plainText(response);
     expect(text).toContain('Each principle in practice');
-    expect(text).toContain('A modular React and TypeScript component library');
+    expect(text).toContain('Legacy code moved to a modern, modular codebase');
     expect(text).toContain('How he takes a problem to delivery');
     expect(text).toContain('Day to day');
     expect(response.sources.map((source) => source.label)).toContain('Knowledge base');

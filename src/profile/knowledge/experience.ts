@@ -3,62 +3,38 @@ import type { RoleSource } from '@/core/knowledge/schema';
 /** Newest first. */
 export const experience: readonly RoleSource[] = [
   {
-    id: 'toptal',
-    company: 'Toptal',
-    role: 'Senior Frontend Engineer',
-    period: 'Mar 2026 — Present',
+    id: 'way2b1',
+    company: 'Way2B1',
+    role: 'Full Stack Engineer',
+    period: '2026 — Present',
     start: 2026.17,
     end: null,
     current: true,
     summary: {
-      en: 'Component library architecture, accessibility leadership and the initial architecture for a new product.',
+      en: 'Full-stack work across the products of a small startup: legacy code migration and performance.',
     },
     responsibilities: [
       {
-        en: 'Architected and implemented a modular React and TypeScript component library that speeds up feature work and keeps UI consistent across multiple product teams.',
+        en: "Works across the teams of Way2B1's products as a full-stack engineer, at a small startup building a platform for families and family offices.",
       },
-      {
-        en: 'Planned the initial architecture for a new company product scheduled for an upcoming release.',
-      },
-      {
-        en: 'Led the integration of advanced accessibility standards, broadening the product to users with diverse accessibility needs.',
-      },
-      {
-        en: 'Worked with backend engineers to design and optimize RESTful APIs, making frontend data fetching more efficient.',
-      },
+      { en: 'Migrates legacy code to a modern, maintainable codebase.' },
+      { en: 'Improves performance across the products.' },
     ],
-    leadership: [
-      {
-        en: 'Collaborates with the Director and CEO to coordinate product decisions and implement new requirements and features.',
-      },
-    ],
+    leadership: [],
     achievements: [],
     focus: [
-      { en: 'React' },
-      { en: 'TypeScript' },
-      { en: 'Component library' },
-      { en: 'Accessibility' },
-      { en: 'REST APIs' },
+      { en: 'Full stack' },
+      { en: 'Legacy code migration' },
+      { en: 'Performance' },
+      { en: 'Cross-team work' },
     ],
     metrics: [],
     highlights: [
-      {
-        en: 'Collaborated with Director and CEO to coordinate product decisions and implement new requirements and features.',
-      },
-      {
-        en: 'Led integration of advanced accessibility standards, enhancing compliance and expanding the user base to accommodate diverse accessibility needs.',
-      },
-      {
-        en: 'Architected and implemented a modular React and TypeScript component library to accelerate feature development and ensure UI consistency across multiple product teams.',
-      },
-      {
-        en: 'Planned the initial architecture for a new company product scheduled for upcoming release.',
-      },
-      {
-        en: 'Collaborated with backend engineers to design and optimize RESTful APIs, enhancing frontend data fetching efficiency.',
-      },
+      { en: "Works as a full-stack engineer across the teams of Way2B1's products." },
+      { en: 'Migrates legacy code to a modern, maintainable codebase.' },
+      { en: 'Improves performance across the products.' },
     ],
-    source: 'resume.toptal',
+    source: 'notes.way2b1',
   },
   {
     id: 'deel',
