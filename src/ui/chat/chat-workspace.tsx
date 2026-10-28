@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { suggestions, topicById, type TopicId } from '@/core/assistant/topics';
+import { suggestedQuestions, topicById, type TopicId } from '@/core/assistant/topics';
 import { latestAnswerId } from '@/core/conversation/conversation';
 import type { AssistantMessage as Answer } from '@/core/conversation/messages';
 import { toPlainText } from '@/core/conversation/plain-text';
@@ -16,7 +16,7 @@ import {
   type SidebarProfile,
   type SidebarTopic,
 } from '../shell/sidebar';
-import { SuggestedQuestions, TopicChips, WelcomeLayout, WelcomeScreen } from '../welcome';
+import { SuggestedQuestions, WelcomeLayout, WelcomeScreen } from '../welcome';
 import { AssistantMessage } from './assistant-message';
 import { copyText } from './copy-text';
 import { useChat } from './use-chat';
@@ -50,7 +50,6 @@ export function ChatWorkspace({
   const { conversation } = chat;
   const [draft, setDraft] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [suggestionPage, setSuggestionPage] = useState(0);
   const [showJump, setShowJump] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<ChatComposerHandle>(null);
@@ -107,7 +106,6 @@ export function ChatWorkspace({
   function pickTopic(topic: TopicId) {
     pinned.current = true;
     chat.pickTopic(topic);
-    setSuggestionPage(0);
     setDrawerOpen(false);
   }
 
@@ -115,7 +113,6 @@ export function ChatWorkspace({
     chat.startOver();
     setDrawerOpen(false);
     setShowJump(false);
-    setSuggestionPage(0);
     pinned.current = true;
     scrollRef.current?.scrollTo({ top: 0 });
   }
@@ -219,15 +216,15 @@ export function ChatWorkspace({
         ) : (
           <WelcomeLayout>
             <WelcomeScreen welcome={welcome} />
-            <TopicChips topics={topics} onPick={pickTopic} />
             {composer('hero')}
             <SuggestedQuestions
               title="Suggested questions"
-              questions={suggestions(conversation.topic, suggestionPage, SUGGESTION_COUNT)}
+              hideTitle
+              align="center"
+              questions={suggestedQuestions(conversation.topic, 0, SUGGESTION_COUNT).map(
+                ({ question, short }) => ({ question, label: short }),
+              )}
               onPick={ask}
-              onShuffle={() => {
-                setSuggestionPage((page) => page + 1);
-              }}
             />
           </WelcomeLayout>
         )}

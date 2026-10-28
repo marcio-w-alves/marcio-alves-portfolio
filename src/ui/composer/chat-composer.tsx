@@ -43,6 +43,8 @@ interface ChatComposerProps {
   readonly inputId?: string | undefined;
   /** Call `ref.current.focus()` to put the visitor in the input, e.g. after "Ask a follow-up". */
   readonly ref?: Ref<ChatComposerHandle> | undefined;
+  /** Draws the focused look without taking focus, to show the state beside others. */
+  readonly looksFocused?: boolean | undefined;
 }
 
 export function ChatComposer({
@@ -57,6 +59,7 @@ export function ChatComposer({
   helper,
   inputId,
   ref,
+  looksFocused = false,
 }: ChatComposerProps) {
   const generatedId = useId();
   const id = inputId ?? generatedId;
@@ -93,16 +96,16 @@ export function ChatComposer({
   }
 
   return (
-    <form className="flex w-full flex-col gap-2.5" onSubmit={handleSubmit}>
+    <form className="flex w-full flex-col gap-3" onSubmit={handleSubmit}>
       <label className="sr-only" htmlFor={id}>
         Ask the portfolio assistant a question
       </label>
       <div
         className={cn(
-          'shadow-composer flex flex-col rounded-xl border border-border-strong bg-surface',
-          'transition-[border-color,box-shadow] duration-medium ease-standard',
-          'focus-within:border-accent focus-within:ring-3 focus-within:ring-accent/22',
-          isUnavailable && 'bg-sidebar shadow-none',
+          'flex flex-col rounded-xl bg-surface shadow-float',
+          'transition-shadow duration-medium ease-standard focus-within:shadow-composer-focus',
+          looksFocused && 'shadow-composer-focus',
+          isUnavailable && 'bg-ice shadow-ring',
         )}
       >
         <textarea
@@ -119,13 +122,13 @@ export function ChatComposer({
           }}
           onKeyDown={handleKeyDown}
           className={cn(
-            'block max-h-50 min-h-15 w-full resize-none overflow-y-auto border-0 bg-transparent px-4.5 pt-4 pb-1',
-            'field-sizing-content font-sans text-16 leading-body font-normal text-ink outline-0',
+            'block max-h-50 min-h-15 w-full resize-none overflow-y-auto border-0 bg-transparent px-5 pt-4.5 pb-1',
+            'field-sizing-content font-sans text-15.5 leading-body font-normal text-ink outline-0',
             'placeholder:text-ink-muted disabled:cursor-not-allowed',
-            variant === 'dock' && 'min-h-13 pt-3.5',
+            variant === 'dock' && 'min-h-13 pt-3.75',
           )}
         />
-        <div className="flex items-center justify-between gap-3 pt-1.5 pr-2 pb-2 pl-4.5 @max-phone/ma:justify-end">
+        <div className="flex items-center justify-between gap-3 pt-1.5 pr-2.5 pb-2.5 pl-5 @max-phone/ma:justify-end">
           <KeyboardHint />
           {status === 'streaming' ? (
             <StopButton onStop={onStop} />
@@ -137,7 +140,7 @@ export function ChatComposer({
       {helper ? (
         <p
           id={helperId}
-          className="flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1.5 text-center text-12.5 leading-label text-ink-muted"
+          className="m-0 flex flex-wrap items-center justify-center gap-y-1 text-center text-12 leading-label text-ink-muted"
         >
           <span>{helper}</span>
         </p>
@@ -148,23 +151,24 @@ export function ChatComposer({
 
 function KeyboardHint() {
   return (
-    <span
-      aria-hidden="true"
-      className="font-mono text-12 leading-label font-normal text-ink-muted @max-phone/ma:hidden"
-    >
+    <span aria-hidden="true" className="text-12 text-ink-muted @max-phone/ma:hidden">
       <Key>Enter</Key> to send · <Key>Shift</Key> + <Key>Enter</Key> for a new line
     </span>
   );
 }
 
 function Key({ children }: { readonly children: string }) {
-  return <kbd className="inset-shadow-ring rounded-kbd bg-bg px-1.25 py-px">{children}</kbd>;
+  return (
+    <kbd className="rounded-kbd bg-fill px-1.5 py-0.75 font-sans text-11 leading-none font-medium text-ink">
+      {children}
+    </kbd>
+  );
 }
 
 const SEND_CONTROL = cn(
-  'grid size-9 shrink-0 cursor-pointer place-items-center rounded-control border-0 p-0 text-white',
-  'transition-[background-color,scale] duration-fast ease-standard active:not-disabled:scale-94',
-  '@max-phone/ma:size-10',
+  'grid size-9 shrink-0 cursor-pointer place-items-center rounded-full border-0 bg-accent p-0 text-white',
+  'transition-[background-color,scale] duration-fast ease-standard hover:not-disabled:bg-accent-hover active:not-disabled:scale-93',
+  '@max-phone/ma:size-10.5',
 );
 
 function SendButton({ disabled }: { readonly disabled: boolean }) {
@@ -175,8 +179,7 @@ function SendButton({ disabled }: { readonly disabled: boolean }) {
       disabled={disabled}
       className={cn(
         SEND_CONTROL,
-        'bg-accent hover:not-disabled:bg-accent-hover',
-        'disabled:bg-hover disabled:cursor-not-allowed disabled:text-ink-faint',
+        'disabled:cursor-not-allowed disabled:bg-fill disabled:text-ink-faint',
       )}
     >
       <Icon name="arrowUp" />
@@ -186,12 +189,7 @@ function SendButton({ disabled }: { readonly disabled: boolean }) {
 
 function StopButton({ onStop }: { readonly onStop: () => void }) {
   return (
-    <button
-      type="button"
-      aria-label="Stop generating"
-      onClick={onStop}
-      className={cn(SEND_CONTROL, 'bg-ink hover:bg-black')}
-    >
+    <button type="button" aria-label="Stop generating" onClick={onStop} className={SEND_CONTROL}>
       <Icon name="stop" size="sm" className="fill-current" />
     </button>
   );

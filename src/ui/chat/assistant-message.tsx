@@ -160,9 +160,8 @@ export function AssistantMessage({
         {done && isLatest && message.followUps.length > 0 && (
           <div className="flex flex-col gap-2.5 pt-0.5">
             <SuggestedQuestions
-              variant="chips"
               title={isIntro ? 'Suggested questions' : 'Ask a follow-up'}
-              questions={message.followUps}
+              questions={message.followUps.map((question) => ({ question }))}
               onPick={onFollowUp}
             />
           </div>
