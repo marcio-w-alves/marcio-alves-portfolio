@@ -251,28 +251,6 @@ describe('vector knowledge search — one fact in two languages', () => {
   });
 });
 
-describe('vector knowledge search — a Portuguese question', () => {
-  const translated = corpus.filter(({ id }) => id.startsWith('pt-BR/'));
-
-  it('finds the role a Portuguese question about that company is closest to', async () => {
-    const question = present(
-      translated.find(({ baseId }) => baseId.startsWith(`role:${firstRole.id}:`)),
-      'The record has no Portuguese highlight of its first role.',
-    );
-    const search = createVectorKnowledgeSearch({
-      citation,
-      breaker: newBreaker(),
-      embeddings: embeddingsReturning(vectorOf(question.id)),
-      index,
-      corpus,
-    });
-
-    const [best] = await search.search({ query: question.text, limit: 3 });
-
-    expect(best?.id).toMatch(new RegExp(`^role:${firstRole.id}(:|$)`));
-  });
-});
-
 describe('vector knowledge search — the relevance floor', () => {
   const QUERY = [1, 0];
 

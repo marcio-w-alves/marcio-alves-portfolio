@@ -20,6 +20,7 @@ that validates.
 | `copy/`                       | What the site writes around your facts, per language (`copy/en/`, `copy/pt-BR/`): `answers/` holds the fast path's answers, the topic pages and your own words for some questions (`vocabulary`); `ui.ts` and `site.ts` reword the interface and the pages' titles where yours differs from the default; `about.ts` is the page about the site |
 | `evaluation/`                 | The conversations `pnpm eval:assistant` holds the assistant to                                                                                                                                                                                                                                                                                 |
 | `global-error-copy.ts`        | What the page shown when the whole layout fails may know of you: your name, for the tab's title                                                                                                                                                                                                                                                |
+| `retrieval-probes.ts`         | Questions whose embeddings `pnpm rag:build` commits beside the index (`pnpm rag:probes` alone), so the tests search it as a visitor would                                                                                                                                                                                                      |
 | `generated/`                  | Generated files: the retrieval index and `brand.css`, the stylesheet's colour and font tokens. Never edit them by hand                                                                                                                                                                                                                         |
 | `profile.test.ts`             | Tests of what your record says; the only tests that may name you. `translations.test.ts` beside it holds each translation to its English: every text written, no figure added, no English left                                                                                                                                                 |
 | `schema.ts`, `index.ts`       | The profile's shape and its validation. You should not need to change them                                                                                                                                                                                                                                                                     |
@@ -59,7 +60,7 @@ any message are filled from your record.
    could not read. A site's text describes the product, never your part in it:
    the assistant is told so, and a project shows technologies only where
    `technologiesSource` names the record or the site page that states them.
-3. `pnpm rag:build`, to rebuild the retrieval index (needs `OPENAI_API_KEY` in
-   `.env.local`). The tests fail while the index does not match the record.
+3. `pnpm rag:build`, to rebuild the retrieval index and the probes' embeddings
+   (needs `OPENAI_API_KEY` in `.env.local`). The tests fail while the index does not match the record.
 4. `pnpm test`. An invalid profile fails here, with the path of every problem,
    and so do the build and every script.

@@ -70,6 +70,101 @@ function englishLeftIn(texts: readonly (readonly [where: string, text: string])[
   });
 }
 
+/**
+ * Terms Portuguese writes as English does: loanwords of the trade and names
+ * of technologies. A translation identical to its English text passes only
+ * when every item of it is one of these, or a name the record keeps.
+ */
+const WRITTEN_ALIKE = new Set([
+  'AWS',
+  'Android',
+  'CI/CD',
+  'CSS',
+  'Context API',
+  'Core Web Vitals',
+  'Design systems',
+  'Developer Experience',
+  'Formik',
+  'Frontend',
+  'Full stack',
+  'HRIS',
+  'HTML',
+  'JavaScript',
+  'MUI',
+  'Mobile',
+  'Next.js',
+  'Node.js',
+  'PWA',
+  'Performance',
+  'PostgreSQL',
+  'React',
+  'React.js',
+  'Redis',
+  'Redux',
+  'SEO',
+  'SSR',
+  'SWR',
+  'Server-Side Rendering',
+  'TanStack Query',
+  'Tailwind CSS',
+  'TypeScript',
+  'Web',
+  'Web Vitals',
+  'Zustand',
+  'design tokens',
+  'iOS',
+  'iPhone (beta)',
+]);
+
+function writtenAlike(text: string): boolean {
+  return text.split(/,\s*|\s+&\s+/).every((item) => WRITTEN_ALIKE.has(item) || KEPT.includes(item));
+}
+
+/** Each translation left exactly as its English text, unless it is all loanwords and names. */
+function leftAsEnglish(pairs: readonly (readonly [where: string, en: string, pt: string])[]) {
+  return pairs
+    .filter(([, en, pt]) => pt === en && !writtenAlike(pt))
+    .map(([where, en]) => `${where}: "${en}"`);
+}
+
+/** Every text of the record with its translation, and where it sits. */
+function recordPairs(value: unknown, path = 'knowledge'): [string, string, string][] {
+  if (value === null || typeof value !== 'object') return [];
+  if (Array.isArray(value)) {
+    return value.flatMap((item, index) => recordPairs(item, `${path}[${String(index)}]`));
+  }
+  if ('en' in value && typeof value.en === 'string') {
+    const { en, 'pt-BR': pt = '' } = value as Localized;
+    return [[path, en, pt]];
+  }
+  return Object.entries(value).flatMap(([key, field]) => recordPairs(field, `${path}.${key}`));
+}
+
+/** Each topic's label, and its questions' tags and chips, beside the English ones. */
+function topicPairs(): [string, string, string][] {
+  const english = profile.copy.en.answers.topics(
+    createResponseKit(localize(profile.knowledge, 'en')),
+  );
+  return Object.entries(portuguese.answers.topics(kit)).flatMap(([id, topic]) => {
+    const theirs = english[id as keyof typeof english];
+    return [
+      [`${id}.label`, theirs.label, topic.label] as [string, string, string],
+      ...topic.questions.flatMap(({ tag, short }, index): [string, string, string][] => [
+        [`${id}.tag`, theirs.questions[index]?.tag ?? '', tag],
+        ...(short
+          ? [
+              [`${id}.short`, theirs.questions[index]?.short ?? '', short] as [
+                string,
+                string,
+                string,
+              ],
+            ]
+          : []),
+      ]),
+    ];
+  });
+}
+
 /** Every Portuguese text of the record, with where it sits. */
 function recordTexts(value: unknown, path = 'knowledge'): [string, string][] {
   if (value === null || typeof value !== 'object') return [];
@@ -157,6 +252,20 @@ function everyTopicText(): [string, string][] {
 describe("the owner's Portuguese", () => {
   it('has every text of the record and the copy, each stating only the figures its English does', () => {
     expect(() => validateProfile({ ...profile, locales: SUPPORTED_LOCALES })).not.toThrow();
+  });
+
+  it('leaves no text of the record or label of a page as its English, loanwords and names aside', () => {
+    expect(leftAsEnglish([...recordPairs(profile.knowledge), ...topicPairs()])).toEqual([]);
+  });
+
+  it('flags a translation left as its English, so the check is not a formality', () => {
+    expect(
+      leftAsEnglish([
+        ['planted', 'Legacy code migration', 'Legacy code migration'],
+        ['loanwords', 'React, Next.js', 'React, Next.js'],
+        ['translated', 'Mentoring', 'Mentoria'],
+      ]),
+    ).toEqual(['planted: "Legacy code migration"']);
   });
 
   it('leaves no English in the Portuguese record', () => {

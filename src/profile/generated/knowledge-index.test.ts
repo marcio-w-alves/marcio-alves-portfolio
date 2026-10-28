@@ -8,7 +8,13 @@ import {
 } from '@/infrastructure/retrieval/index-spec';
 import { cosine } from '@/infrastructure/retrieval/vector-knowledge-search';
 import { profile } from '..';
+import { createCitation } from '@/core/assistant/citations';
+import { localize } from '@/core/knowledge/localize';
+import { createCircuitBreaker } from '@/infrastructure/resilience/circuit-breaker';
+import { createVectorKnowledgeSearch } from '@/infrastructure/retrieval/vector-knowledge-search';
+import { RETRIEVAL_PROBES } from '../retrieval-probes';
 import committed from './knowledge-index.json';
+import probes from './retrieval-probes.json';
 
 const index: KnowledgeIndex = committed;
 const corpus = buildCorpus(profile.knowledge);
@@ -61,5 +67,39 @@ describe('committed knowledge index', () => {
       .map(({ baseId }) => baseId);
 
     expect(astray).toEqual([]);
+  });
+});
+
+describe('a Portuguese question searched in the committed index', () => {
+  const question = RETRIEVAL_PROBES.currentRoleInPortuguese;
+  const current = profile.knowledge.experience.find((role) => role.current);
+  if (!current) throw new Error('The record has no current role.');
+
+  function probeVector(): readonly number[] {
+    const vector = (probes.vectors as Readonly<Record<string, readonly number[]>>)[question];
+    if (!vector) throw new Error(`"${question}" has no embedding: run \`pnpm rag:probes\`.`);
+    return vector;
+  }
+
+  it('holds the embedding of each probe, made like the index (run `pnpm rag:probes`)', () => {
+    expect(Object.keys(probes.vectors).sort()).toEqual(Object.values(RETRIEVAL_PROBES).sort());
+    expect([probes.model, probes.dimensions]).toEqual([index.model, index.dimensions]);
+  });
+
+  it('finds the current role first, in its Portuguese words', async () => {
+    const search = createVectorKnowledgeSearch({
+      embeddings: { embed: (texts) => Promise.resolve(texts.map(() => [...probeVector()])) },
+      index,
+      corpus,
+      citation: createCitation(localize(profile.knowledge, 'en')),
+      breaker: createCircuitBreaker({ failureThreshold: 3, cooldownMs: 30_000 }),
+    });
+
+    // Among the roles: the profile and the notes also answer "where", and
+    // join the results beside them; which role comes first is what is asked.
+    const [best] = await search.search({ query: question, limit: 3, category: 'experience' });
+
+    expect(best?.id).toMatch(new RegExp(`^role:${current.id}(:|$)`));
+    expect(best?.text).toBe(corpus.find((chunk) => chunk.id === `pt-BR/${best?.id ?? ''}`)?.text);
   });
 });
