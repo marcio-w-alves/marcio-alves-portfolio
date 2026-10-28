@@ -115,6 +115,7 @@ const knowledgeSchema = z.strictObject({
     focus: localized,
     location: z.strictObject({ country: localized, city: text.nullable() }),
     availability: localized,
+    photoUrl: z.string().startsWith('/').nullable(),
     source: text,
   }),
   welcome: z.strictObject({

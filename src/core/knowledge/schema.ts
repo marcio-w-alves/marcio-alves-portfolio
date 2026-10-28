@@ -148,6 +148,8 @@ export interface ProfileSource {
   readonly location: LocationSource;
   /** Where and how they work, and whether they are open to offers, in one line. */
   readonly availability: Localized;
+  /** A square photo served by the site itself; null shows no picture. */
+  readonly photoUrl: string | null;
   readonly source: string;
 }
 

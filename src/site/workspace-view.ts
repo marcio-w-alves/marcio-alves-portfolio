@@ -15,7 +15,7 @@ export function workspaceView(
   const { profile, contact, welcome, assistant } = knowledge;
   const { heading, description, placeholder, helper } = welcome;
   return {
-    profile: { name: profile.name, title: profile.title },
+    profile: { name: profile.name, title: profile.title, photoUrl: profile.photoUrl },
     links: contact,
     topics: topicCatalog.topics.map(({ id, label, icon }) => ({
       id,
