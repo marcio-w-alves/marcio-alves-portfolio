@@ -26,13 +26,17 @@ async function drain(port: LanguageModelPort): Promise<void> {
 function setup(behaviour: () => 'ok' | Error) {
   let clock = 0;
   const inner = model(behaviour);
+  const transitions: string[] = [];
   const breaker = createCircuitBreaker({
     failureThreshold: 3,
     cooldownMs: 30_000,
     now: () => clock,
+    onTransition: (to) => transitions.push(to),
   });
   return {
     guarded: withCircuitBreaker(inner.port, breaker),
+    state: () => breaker.state(),
+    transitions,
     calls: inner.calls,
     advance: (ms: number) => {
       clock += ms;
@@ -90,5 +94,35 @@ describe('circuit breaker', () => {
     await trial.return?.();
     await drain(guarded);
     expect(calls()).toBe(5);
+  });
+
+  it('reports open while cooling down, half-open once a trial may go through, closed after it succeeds', async () => {
+    let healthy = false;
+    const { guarded, state, transitions, advance } = setup(() =>
+      healthy ? 'ok' : new Error('down'),
+    );
+    expect(state()).toBe('closed');
+    for (let i = 0; i < 2; i += 1) await expect(drain(guarded)).rejects.toThrow('down');
+    expect(state()).toBe('closed');
+    await expect(drain(guarded)).rejects.toThrow('down');
+    expect(state()).toBe('open');
+
+    advance(30_000);
+    expect(state()).toBe('half-open');
+    healthy = true;
+    await drain(guarded);
+    expect(state()).toBe('closed');
+    expect(transitions).toEqual(['open', 'closed']);
+  });
+
+  it('announces reopening when the trial fails, and stays quiet while healthy', async () => {
+    let healthy = true;
+    const { guarded, transitions, advance } = setup(() => (healthy ? 'ok' : new Error('down')));
+    await drain(guarded);
+    healthy = false;
+    for (let i = 0; i < 3; i += 1) await expect(drain(guarded)).rejects.toThrow('down');
+    advance(30_000);
+    await expect(drain(guarded)).rejects.toThrow('down');
+    expect(transitions).toEqual(['open', 'open']);
   });
 });

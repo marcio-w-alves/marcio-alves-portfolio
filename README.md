@@ -251,6 +251,58 @@ Environment variables are set in the Vercel project, never committed.
 `.env.example` is the list, and `OPENAI_API_KEY` is server-side only: a model
 credential behind a `NEXT_PUBLIC_` prefix would be readable by every visitor.
 
+## Observability
+
+Server code logs through `src/infrastructure/logging/logger.ts`: one JSON
+object per line, `level`, `event` and `time` first, then flat primitive
+fields. Information goes to stdout, warnings and errors to stderr, which is
+what Vercel's log view parses and filters on. `src/core` never logs; it reports
+through callbacks the composition root turns into log lines.
+
+| Event                    | Level | When                                                                                                                                                                  |
+| ------------------------ | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `chat.answered`          | info  | Every question answered: `path` (`fast`/`model`), `outcome` (`answered`, `cached`, `unavailable`, `paced`, `failed`, `interrupted`), `intent`, `durationMs`, `client` |
+| `chat.rate_limited`      | warn  | A request turned away with 429                                                                                                                                        |
+| `assistant.failed`       | error | The model, or the stream behind an answer, threw                                                                                                                      |
+| `model.circuit_opened`   | warn  | The circuit breaker opened (and again each time a trial call fails)                                                                                                   |
+| `model.circuit_closed`   | info  | A trial call succeeded and the model is back                                                                                                                          |
+| `model.budget_exhausted` | warn  | The instance spent its daily token budget                                                                                                                             |
+| `request.failed`         | error | Any uncaught server error (`src/instrumentation.ts`), with the `digest` the error page shows                                                                          |
+
+The visitor's question and IP address are never logged. `client` is an HMAC of
+the address under a key generated in memory per instance: it follows one
+visitor across lines of that instance, but cannot be reversed by hashing every
+IPv4 address, which an unkeyed hash could.
+
+`GET /api/health` answers `Cache-Control: no-store` JSON:
+
+```json
+{
+  "status": "ok",
+  "version": null,
+  "commit": "fa1eade",
+  "environment": "production",
+  "model": "enabled",
+  "circuit": "closed"
+}
+```
+
+`model` says only whether `OPENAI_API_KEY` is configured, never its value, and
+`circuit` is `closed`, `open` or `half-open` (`null` without a model). `status`
+stays `ok` while the circuit is open, because the site still answers from the
+fast path.
+
+`commit` is the source of truth for which build is live: Vercel sets
+`VERCEL_GIT_COMMIT_SHA` on every git deployment. The release tag cannot be
+known at build time — semantic-release cuts it in CI after the gates pass,
+while Vercel is already building the same commit, and Vercel exposes no tag
+variable. `version` is therefore `RELEASE_VERSION` when a deployment sets one
+and `null` otherwise; the tag for a commit is on the Releases page.
+
+`src/app/error.tsx`, `global-error.tsx` and `not-found.tsx` say what failed
+and what to do — try again, or go home — and show the error's digest, which
+matches the `request.failed` line.
+
 ## Versioning
 
 Versions are derived from commit history by semantic-release, which runs on

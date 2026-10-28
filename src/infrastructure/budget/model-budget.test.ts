@@ -5,8 +5,18 @@ const DAY = 24 * 60 * 60 * 1000;
 
 function budget({ answersPerWindow = 100, dailyTokens = 1000 } = {}) {
   let clock = 0;
+  let exhaustions = 0;
   return {
-    ...createModelBudget({ answersPerWindow, windowMs: 60_000, dailyTokens, now: () => clock }),
+    ...createModelBudget({
+      answersPerWindow,
+      windowMs: 60_000,
+      dailyTokens,
+      now: () => clock,
+      onExhausted: () => {
+        exhaustions += 1;
+      },
+    }),
+    exhaustions: () => exhaustions,
     at: (ms: number) => {
       clock = ms;
     },
@@ -44,5 +54,17 @@ describe('model budget', () => {
     expect(both.admit('a')).toBe(false);
     both.at(DAY);
     expect(both.admit('a')).toBe(true);
+  });
+
+  it('announces the day’s budget running out once, and again only on a later day', () => {
+    const daily = budget({ dailyTokens: 100 });
+    daily.record({ inputTokens: 60, outputTokens: 0 });
+    expect(daily.exhaustions()).toBe(0);
+    daily.record({ inputTokens: 30, outputTokens: 10 });
+    daily.record({ inputTokens: 50, outputTokens: 0 });
+    expect(daily.exhaustions()).toBe(1);
+    daily.at(DAY);
+    daily.record({ inputTokens: 100, outputTokens: 0 });
+    expect(daily.exhaustions()).toBe(2);
   });
 });

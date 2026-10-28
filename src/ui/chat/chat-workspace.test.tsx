@@ -18,12 +18,14 @@ const CHAT_URL = `${window.location.origin}/api/chat`;
 const chatHandler = createChatHandler({
   assistant: createAssistant({
     modelAssistant: null,
+    clock: { now: () => new Date() },
     reportError: () => undefined,
     budget: createModelBudget({ answersPerWindow: 100, windowMs: 60_000, dailyTokens: 1_000_000 }),
     answerCache: createAnswerCache({ ttlMs: 60_000, maxEntries: 10 }),
   }),
   reportError: () => undefined,
   requestLimiter: { admit: () => ({ allowed: true, retryAfterMs: 0 }) },
+  reportRateLimited: () => undefined,
 });
 
 const server = setupServer(http.post(CHAT_URL, ({ request }) => chatHandler(request)));

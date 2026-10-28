@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createAssistant, type AssistantRequest } from './assistant';
+import { createAssistant, type AnswerReport, type AssistantRequest } from './assistant';
 import type { AssistantEvent } from './assistant-event';
 import type { AnswerCachePort } from './ports/answer-cache.port';
 import type { ModelBudgetPort } from './ports/model-budget.port';
@@ -50,17 +50,25 @@ async function collect(
   return Array.fromAsync(assistant.answer(request(question, history)));
 }
 
+/** Time moves only when a model answer is being given, 250 ms per event. */
+let elapsedMs = 0;
+const clock = { now: () => new Date(elapsedMs) };
+
 const reported: unknown[] = [];
+const answered: AnswerReport[] = [];
 function assistantWith(
   model: ModelAssistant | null,
   { budget = budgetThat(true), answerCache = memoryCache() } = {},
 ) {
   reported.length = 0;
+  answered.length = 0;
   return createAssistant({
     modelAssistant: model,
     budget,
     answerCache,
+    clock,
     reportError: (error) => reported.push(error),
+    onAnswered: (report) => answered.push(report),
   });
 }
 
@@ -194,5 +202,71 @@ describe('assistant — spending on the model', () => {
     const budget = budgetThat(true);
     await collect(assistantWith(sentenceModel().model, { budget }), 'What is TypeScript?');
     expect(budget.admitted).toEqual(['visitor-1']);
+  });
+});
+
+describe('assistant — reporting how each question was handled', () => {
+  it('reports a fast-path answer with its intent and who asked', async () => {
+    await collect(assistantWith(sentenceModel().model), "Tell me about Marcio's career.");
+    expect(answered).toEqual([
+      { path: 'fast', outcome: 'answered', intent: 'career', clientId: 'visitor-1', durationMs: 0 },
+    ]);
+  });
+
+  it('reports a model answer, timed from the question to the last event', async () => {
+    const { model } = fakeModel(async function* (modelRequest) {
+      for (const event of [
+        { type: 'start', intent: 'model', related: null },
+        { type: 'finish', followUps: modelRequest.followUps, sources: [] },
+      ] as const) {
+        elapsedMs += 250;
+        yield event;
+      }
+    });
+    await collect(assistantWith(model), 'Compare his leadership at Deel and Roots.');
+    expect(answered).toEqual([
+      {
+        path: 'model',
+        outcome: 'answered',
+        intent: 'leadership',
+        clientId: 'visitor-1',
+        durationMs: 500,
+      },
+    ]);
+  });
+
+  it('tells a cached answer apart from one the model gave', async () => {
+    const assistant = assistantWith(sentenceModel().model);
+    await collect(assistant, 'What is TypeScript?');
+    await collect(assistant, 'What is TypeScript?');
+    expect(answered.map((report) => report.outcome)).toEqual(['answered', 'cached']);
+  });
+
+  it.each([
+    ['no model is configured', null, true, 'unavailable'],
+    ['the budget refuses', sentenceModel().model, false, 'paced'],
+  ] as const)('reports why the model did not answer when %s', async (_, model, admits, outcome) => {
+    await collect(assistantWith(model, { budget: budgetThat(admits) }), 'What is TypeScript?');
+    expect(answered).toMatchObject([{ path: 'model', outcome }]);
+  });
+
+  it('tells a failure before any answer apart from an interruption part-way', async () => {
+    const silent = fakeModel(async function* () {
+      yield* [];
+      throw new Error('provider down');
+    });
+    const partial = fakeModel(async function* () {
+      yield { type: 'start', intent: 'model', related: null };
+      throw new Error('connection reset');
+    });
+    await collect(assistantWith(silent.model), 'What is TypeScript?');
+    const failed = answered[0]?.outcome;
+    await collect(assistantWith(partial.model), 'What is TypeScript?');
+    expect([failed, answered[0]?.outcome]).toEqual(['failed', 'interrupted']);
+  });
+
+  it('never puts the question in the report', async () => {
+    await collect(assistantWith(sentenceModel().model), 'Is my secret plan any good?');
+    expect(JSON.stringify(answered)).not.toMatch(/secret plan/i);
   });
 });

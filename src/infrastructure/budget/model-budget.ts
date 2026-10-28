@@ -8,6 +8,8 @@ interface Options {
   /** Input plus output tokens this instance may spend per UTC day. */
   readonly dailyTokens: number;
   readonly now?: () => number;
+  /** Told once per day, at the answer that spends the last of the day's tokens. */
+  readonly onExhausted?: () => void;
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -22,6 +24,7 @@ export function createModelBudget({
   windowMs,
   dailyTokens,
   now = Date.now,
+  onExhausted,
 }: Options): ModelBudgetPort {
   const perClient = createSlidingWindowLimiter({ limit: answersPerWindow, windowMs, now });
   let day = Math.floor(now() / DAY_MS);
@@ -44,7 +47,9 @@ export function createModelBudget({
     },
     record({ inputTokens, outputTokens }) {
       rollOver();
+      const hadBudget = spent < dailyTokens;
       spent += inputTokens + outputTokens;
+      if (hadBudget && spent >= dailyTokens) onExhausted?.();
     },
   };
 }

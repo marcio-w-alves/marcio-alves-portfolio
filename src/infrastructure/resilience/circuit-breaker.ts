@@ -13,7 +13,12 @@ interface Options {
   /** How long it stays open before one trial call is let through. */
   readonly cooldownMs: number;
   readonly now?: () => number;
+  /** Told each time it opens or closes again — the leading indicator of a provider outage. */
+  readonly onTransition?: (to: 'open' | 'closed') => void;
 }
+
+/** Half-open: the cooldown is over and the next call is the trial that decides. */
+export type CircuitState = 'closed' | 'open' | 'half-open';
 
 /**
  * Stops calling a dependency that keeps failing, so a provider outage costs
@@ -21,26 +26,43 @@ interface Options {
  * not hammered while it recovers. After the cooldown a single trial call
  * decides whether it closes again.
  */
-export function createCircuitBreaker({ failureThreshold, cooldownMs, now = Date.now }: Options) {
+export function createCircuitBreaker({
+  failureThreshold,
+  cooldownMs,
+  now = Date.now,
+  onTransition,
+}: Options) {
   let failures = 0;
   let openUntil = 0;
   let trialInFlight = false;
 
+  function isTripped(): boolean {
+    return failures >= failureThreshold;
+  }
+
   return {
+    state(): CircuitState {
+      if (!isTripped()) return 'closed';
+      return now() < openUntil ? 'open' : 'half-open';
+    },
     /** Throws CircuitOpenError instead of letting a doomed call through. */
     admit(): void {
-      if (failures < failureThreshold) return;
+      if (!isTripped()) return;
       if (now() < openUntil || trialInFlight) throw new CircuitOpenError();
       trialInFlight = true;
     },
     succeeded(): void {
+      const wasTripped = isTripped();
       failures = 0;
       trialInFlight = false;
+      if (wasTripped) onTransition?.('closed');
     },
     failed(): void {
       failures += 1;
       trialInFlight = false;
-      if (failures >= failureThreshold) openUntil = now() + cooldownMs;
+      if (!isTripped()) return;
+      openUntil = now() + cooldownMs;
+      onTransition?.('open');
     },
     /** A call the caller cancelled says nothing about the dependency's health. */
     released(): void {
