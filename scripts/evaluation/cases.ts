@@ -224,7 +224,7 @@ export const CASES: readonly EvaluationCase[] = [
     id: 'formdaily-users',
     category: 'undocumented',
     question: 'How many users does FormDaily have?',
-    expect: { mentions: ["aren't documented"] },
+    expect: { mentions: ["aren't published"] },
   },
   {
     id: 'typescript-years',

@@ -99,11 +99,11 @@ const getTechnologyEvidence = defineTool({
 const getProjects = defineTool({
   name: 'getProjects',
   description:
-    'His independent product concepts. Only planned scope is documented: no users, revenue, status or dates.',
+    "His own products: those with a public site (live: true) and concepts (live: false). Only what each product's public site states is documented: no users, revenue or release dates.",
   input: { project: z.enum(PROJECT_IDS).optional() },
   execute: ({ project }) => ({
     data: (project ? [projectById(project)] : knowledgeBase.projects).map(
-      ({ source: _source, ...concept }) => concept,
+      ({ source: _source, ...product }) => product,
     ),
     sources: [sourceOf('projects')],
   }),

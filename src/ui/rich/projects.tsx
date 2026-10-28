@@ -14,9 +14,10 @@ export function Projects({ projects }: { readonly projects: readonly ProjectView
   );
 }
 
-// Each section renders only when documented, so planned scope never reads as shipped work.
+// Each section renders only when documented, and the scope keeps its own label, so a concept's
+// planned scope never reads as a live product's features.
 function ProjectPreview({ project }: { readonly project: ProjectView }) {
-  const links = project.links.filter(isWebUrl);
+  const links = project.links.filter((link) => isWebUrl(link.url));
   return (
     <article
       aria-label={`Project: ${project.name}`}
@@ -34,7 +35,7 @@ function ProjectPreview({ project }: { readonly project: ProjectView }) {
       <p className="text-14.5 leading-reading">{project.description}</p>
       {project.scope.length > 0 ? (
         <div>
-          <SectionTitle>Planned scope</SectionTitle>
+          <SectionTitle>{project.scopeLabel}</SectionTitle>
           <PlannedScope items={project.scope} />
         </div>
       ) : null}
@@ -52,9 +53,9 @@ function ProjectPreview({ project }: { readonly project: ProjectView }) {
       ) : null}
       {links.length > 0 ? (
         <div className="flex flex-wrap gap-2">
-          {links.map((href) => (
-            <ButtonLink key={href} href={href} size="sm" target="_blank" rel="noopener noreferrer">
-              {linkLabel(href)}
+          {links.map(({ label, url }) => (
+            <ButtonLink key={url} href={url} size="sm" target="_blank" rel="noopener noreferrer">
+              {label}
               <VisuallyHidden> (opens in a new tab)</VisuallyHidden>
             </ButtonLink>
           ))}
@@ -83,9 +84,4 @@ function PlannedScope({ items }: { readonly items: readonly string[] }) {
 // Links are opened in a new tab, so only well-formed web addresses qualify.
 function isWebUrl(href: string): boolean {
   return /^https?:\/\//i.test(href) && URL.canParse(href);
-}
-
-// A link arrives as a bare URL; its host is the most honest label for it.
-function linkLabel(href: string): string {
-  return new URL(href).host;
 }

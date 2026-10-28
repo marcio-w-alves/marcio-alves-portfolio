@@ -65,7 +65,7 @@ const showSkills = defineTool({
 
 const showProjects = defineTool({
   name: 'showProjects',
-  description: 'Show project concept cards, optionally limited to some projects.',
+  description: 'Show project cards, optionally limited to some projects.',
   input: { projects: z.array(z.enum(PROJECT_IDS)).min(1).optional() },
   execute: ({ projects: ids }) => display(projects(ids), cite(['projects'])),
 });

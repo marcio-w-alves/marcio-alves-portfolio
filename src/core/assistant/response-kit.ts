@@ -6,8 +6,8 @@ import {
   roleById,
   sourceOf,
 } from '@/core/knowledge/knowledge-base';
-import type { Role } from '@/core/knowledge/types';
-import type { MetricItem, NoteTone, RoleSection, RoleView } from './components';
+import type { Project, Role } from '@/core/knowledge/types';
+import type { MetricItem, NoteTone, ProjectView, RoleSection, RoleView } from './components';
 import type {
   AssistantResponse,
   ComponentPart,
@@ -88,14 +88,17 @@ export function skills(ids?: readonly SkillGroupId[]): ComponentPart {
   };
 }
 
+// A card shows what a product is, not whether it is live: the status says that in words.
+function projectView({ source: _source, live: _live, ...view }: Project): ProjectView {
+  return view;
+}
+
 export function projects(ids?: readonly ProjectId[]): ComponentPart {
   const list = ids ? ids.map(projectById) : knowledgeBase.projects;
   return {
     type: 'component',
     component: 'projects',
-    props: {
-      projects: list.map(({ source: _source, ...project }) => project),
-    },
+    props: { projects: list.map(projectView) },
   };
 }
 

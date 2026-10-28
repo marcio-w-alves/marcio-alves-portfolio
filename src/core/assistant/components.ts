@@ -28,16 +28,23 @@ export interface RoleView {
   readonly sections: readonly RoleSection[];
 }
 
+export interface ProjectLinkView {
+  readonly label: string;
+  readonly url: string;
+}
+
 export interface ProjectView {
   readonly id: ProjectId;
   readonly name: string;
   readonly category: string;
   readonly status: string;
   readonly description: string;
+  readonly scopeLabel: string;
   readonly scope: readonly string[];
+  readonly platforms: readonly string[];
   readonly technologies: readonly string[];
   readonly considerations: readonly string[];
-  readonly links: readonly string[];
+  readonly links: readonly ProjectLinkView[];
 }
 
 /**

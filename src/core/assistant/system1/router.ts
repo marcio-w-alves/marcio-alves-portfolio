@@ -1,7 +1,7 @@
 import type { ProjectId, RoleId } from '@/core/knowledge/ids';
 import { knowledgeBase } from '@/core/knowledge/knowledge-base';
 import type { ConversationContext } from '../response';
-import { TECHNOLOGIES, type Technology } from './technologies';
+import { ROUTED_TECHNOLOGIES, type Technology } from './technologies';
 
 /**
  * The fast path's router: deterministic pattern scoring over the question.
@@ -19,7 +19,9 @@ export const SCORED_INTENTS = [
   'resume',
   'contact',
   'location',
-  'certifications',
+  'accessibility',
+  'testing',
+  'mobile',
   'designSystems',
   'nextjs',
   'codeQuality',
@@ -125,13 +127,23 @@ const INTENT_RULES: Readonly<Record<ScoredIntent, readonly Rule[]>> = {
     [/\bcity\b/, 3],
     [/\bcountry\b/, 2],
   ],
-  certifications: [
-    [/\bcertif\w*\b/, 5],
-    [/\b(courses?|udemy)\b/, 3],
+  accessibility: [
+    [/\baccessib\w*\b/, 5],
+    [/\b(a11y|wcag)\b/, 5],
+    [/\bscreen readers?\b/, 3],
+  ],
+  testing: [
+    [/\btest(s|ing|ed)?\b/, 4],
+    [/\b(tdd|unit tests?|e2e)\b/, 4],
+  ],
+  mobile: [
+    [/\bmobile\b/, 4],
+    [/\b(pwa|ios|iphone|android|native apps?)\b/, 3],
+    [/\bapps?\b/, 0.5],
   ],
   designSystems: [
     [/\bdesign systems?\b/, 5],
-    [/\bcomponent librar\w*\b/, 3],
+    [/\bcomponent librar\w*\b/, 4],
     [/\bui kit\b/, 2],
   ],
   nextjs: [
@@ -264,6 +276,8 @@ const INTENT_RULES: Readonly<Record<ScoredIntent, readonly Rule[]>> = {
     [/\bworking on\b/, 2],
     [/\bside\b/, 2],
     [/\bconcepts?\b/, 2],
+    [/\b(his own|own) products?\b/, 3],
+    [/\bproducts?\b/, 1.5],
     [/\bbuilding\b/, 1],
   ],
   languages: [
@@ -277,6 +291,7 @@ const INTENT_RULES: Readonly<Record<ScoredIntent, readonly Rule[]>> = {
     [/\b(university|college|ufpb)\b/, 4],
     [/\bstud(y|ied)\b/, 3],
     [/\bgraduat\w*\b/, 3],
+    [/\b(certif\w*|courses?|udemy)\b/, 4],
   ],
   career: [
     [/\bcareer\b/, 3],
@@ -386,7 +401,7 @@ function matchProject(text: string): ProjectId | null {
 }
 
 function matchTechnologies(text: string): Technology[] {
-  return TECHNOLOGIES.filter((technology) => technology.detect.test(text));
+  return ROUTED_TECHNOLOGIES.filter((technology) => technology.detect.test(text));
 }
 
 function isCompound(text: string, companies: readonly RoleId[]): boolean {

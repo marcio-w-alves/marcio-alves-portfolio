@@ -35,7 +35,7 @@ describe('metrics', () => {
       if (metric.context) expect(item).toHaveTextContent(metric.context);
     });
     expect(screen.getByText('50%')).toBeInTheDocument();
-    expect(screen.getByText('Reduction in critical page loading time')).toBeInTheDocument();
+    expect(screen.getByText('Reduction in loading time on critical pages')).toBeInTheDocument();
   });
 });
 
@@ -79,7 +79,7 @@ describe('timeline', () => {
     expect(panel).not.toBeNull();
     const sections = within(present(panel));
     expect(sections.getByText('Engineering impact')).toBeInTheDocument();
-    expect(sections.getByText('Reduction in critical page loading time')).toBeInTheDocument();
+    expect(sections.getByText('Reduction in loading time on critical pages')).toBeInTheDocument();
     expect(sections.getByText('Focus areas')).toBeInTheDocument();
 
     await user.click(deel);
@@ -137,13 +137,21 @@ describe('projects', () => {
     }
   });
 
+  it("labels a concept's scope as planned and a live product's as its features", () => {
+    renderBlock(exampleBlock('projects'));
+    const concept = screen.getByRole('article', { name: 'Project: FictionDraft' });
+    const live = screen.getByRole('article', { name: 'Project: TargUp' });
+    expect(within(concept).getByText('Planned scope')).toBeInTheDocument();
+    expect(within(live).getByText('Key features')).toBeInTheDocument();
+    expect(within(live).queryByText('Planned scope')).not.toBeInTheDocument();
+  });
+
   it('leaves out sections the record does not document', () => {
     const block = exampleBlock('projects');
-    const targup = block.props.projects.find((project) => project.id === 'targup');
-    expect(targup?.technologies).toEqual([]);
+    const concept = block.props.projects.find((project) => project.id === 'fictiondraft');
+    expect(concept?.technologies).toEqual([]);
     renderBlock(block);
-    const card = screen.getByRole('article', { name: 'Project: TargUp' });
-    expect(within(card).getByText('Planned scope')).toBeInTheDocument();
+    const card = screen.getByRole('article', { name: 'Project: FictionDraft' });
     expect(within(card).queryByText('Main technologies')).not.toBeInTheDocument();
     expect(within(card).queryByRole('link')).not.toBeInTheDocument();
   });
@@ -157,15 +165,18 @@ describe('projects', () => {
         projects: [
           {
             ...project,
-            links: ['https://github.com/marcio-w-alves/targup', 'javascript:alert(1)'],
+            links: [
+              { label: 'Visit TargUp', url: 'https://dev.targup.com/' },
+              { label: 'Run it', url: 'javascript:alert(1)' },
+            ],
           },
         ],
       },
     });
     const links = screen.getAllByRole('link');
     expect(links).toHaveLength(1);
-    expect(links[0]).toHaveAccessibleName(opensInNewTab('github.com'));
-    expect(links[0]).toHaveAttribute('href', 'https://github.com/marcio-w-alves/targup');
+    expect(links[0]).toHaveAccessibleName(opensInNewTab('Visit TargUp'));
+    expect(links[0]).toHaveAttribute('href', 'https://dev.targup.com/');
     expect(links[0]).toHaveAttribute('target', '_blank');
   });
 });
@@ -226,19 +237,18 @@ describe('details', () => {
     renderBlock(block);
     const toggle = screen.getByRole('button', { name: block.props.summary });
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByText(/planned bug sprints/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/targeted refactoring/)).not.toBeInTheDocument();
 
     await user.click(toggle);
 
     expect(toggle).toHaveAttribute('aria-expanded', 'true');
     const panel = document.getElementById(toggle.getAttribute('aria-controls') ?? '');
-    expect(panel).toHaveTextContent(/targeted refactoring and optimization/);
-    expect(within(present(panel)).getByText('planned bug sprints').tagName).toBe('STRONG');
+    expect(panel).toHaveTextContent(block.props.text);
 
     await user.click(toggle);
 
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByText(/planned bug sprints/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/targeted refactoring/)).not.toBeInTheDocument();
   });
 
   it('splits its text into paragraphs at blank lines', async () => {
@@ -247,6 +257,19 @@ describe('details', () => {
     await user.click(screen.getByRole('button', { name: 'Why?' }));
     expect(screen.getByText('First paragraph continues here.')).toBeInTheDocument();
     expect(screen.getByText('Second paragraph.')).toBeInTheDocument();
+  });
+
+  it('gives every list item a paragraph of its own, without its marker', async () => {
+    const user = userEvent.setup();
+    renderBlock(details('Courses', '- React course\n- Angular course\nAll on Udemy.'));
+    const toggle = screen.getByRole('button', { name: 'Courses' });
+    await user.click(toggle);
+    const panel = present(document.getElementById(toggle.getAttribute('aria-controls') ?? ''));
+    expect(
+      within(panel)
+        .getAllByRole('paragraph')
+        .map((paragraph) => paragraph.textContent),
+    ).toEqual(['React course', 'Angular course', 'All on Udemy.']);
   });
 });
 
