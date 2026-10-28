@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { AnswerSet } from '@/core/assistant/answer-set';
 import type { KnowledgeSource, Locale, SiteSubject } from '@/core/knowledge/schema';
+import { excludePattern } from '@/core/knowledge/product-sites';
 import { knowledgeRecordSchema } from '@/core/knowledge/validate';
 import type { Brand } from '@/site/site-profile';
 import type { EvaluationCase } from './evaluation/cases';
@@ -34,6 +35,12 @@ export interface Identity {
 export interface SiteEntry {
   readonly subject: SiteSubject;
   readonly urls: readonly string[];
+  /**
+   * Paragraphs left out every time the site is read: written exactly, or as a
+   * regular expression between slashes. For text that is not about the
+   * product — a founder's biography, a client's testimonial, an error message.
+   */
+  readonly excludes?: readonly string[];
   /** Whose site it is, why reading it is fine, and when that was last checked. */
   readonly termsNote: string;
 }
@@ -74,9 +81,21 @@ const brandSchema = z.strictObject({
   }),
 });
 
+function compiles(exclude: string): boolean {
+  try {
+    excludePattern(exclude);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 const siteEntrySchema = z.strictObject({
   subject: z.strictObject({ kind: z.enum(['project', 'company']), id: z.string().regex(/\S/) }),
   urls: z.array(httpsUrl).min(1),
+  excludes: z
+    .array(z.string().regex(/\S/).refine(compiles, 'Must be a valid regular expression'))
+    .optional(),
   termsNote: z.string().regex(/\S/),
 });
 

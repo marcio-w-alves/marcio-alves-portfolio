@@ -124,6 +124,38 @@ describe('fetching an allow-listed page', () => {
     expect(waits).toEqual([2000]);
   });
 
+  it('refuses a page in a charset it cannot decode, naming the charset, without retrying', async () => {
+    let attempts = 0;
+    server.use(
+      http.get(PAGE, () => {
+        attempts += 1;
+        return new HttpResponse('<p>x</p>', {
+          headers: { 'content-type': 'text/html; charset=x-klingon' },
+        });
+      }),
+    );
+    await expect(fetchPage(PAGE, options)).rejects.toThrow(
+      'https://pipewright.example/: declares an unknown charset "x-klingon"',
+    );
+    expect(attempts).toBe(1);
+  });
+
+  it('decodes a page in the charset it declares', async () => {
+    server.use(
+      http.get(
+        PAGE,
+        () =>
+          new HttpResponse(
+            new Uint8Array([0x3c, 0x70, 0x3e, 0x4f, 0x6c, 0xe1, 0x3c, 0x2f, 0x70, 0x3e]),
+            {
+              headers: { 'content-type': 'text/html; charset=iso-8859-1' },
+            },
+          ),
+      ),
+    );
+    await expect(fetchPage(PAGE, options)).resolves.toBe('<p>Olá</p>');
+  });
+
   it('does not retry a page that timed out', async () => {
     let attempts = 0;
     server.use(

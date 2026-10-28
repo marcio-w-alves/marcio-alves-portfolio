@@ -175,6 +175,61 @@ describe('ingesting the allow-listed sites', () => {
     expect(report.skipped[2]?.reason).toMatch(/robots\.txt unavailable.*could not be read/);
   });
 
+  it('treats a robots.txt that redirects to another origin or is oversized as unreadable', async () => {
+    server.use(
+      http.get(
+        'https://pipewright.example/robots.txt',
+        () =>
+          new HttpResponse(null, {
+            status: 301,
+            headers: { location: 'https://cdn.example/robots.txt' },
+          }),
+      ),
+      http.get('https://www.acme.example/robots.txt', () =>
+        robots('#'.repeat(2 * 1024 * 1024 + 1)),
+      ),
+    );
+
+    const { snapshot, report } = await ingestSites([pipewright, acme], options().options);
+
+    expect(requested).not.toContain('https://cdn.example/robots.txt');
+    expect(snapshot.entries).toEqual([]);
+    expect(report.skipped[0]?.reason).toMatch(
+      /redirects to another origin \(https:\/\/cdn\.example\/robots\.txt\)/,
+    );
+    expect(report.skipped[2]?.reason).toMatch(/larger than 2097152 bytes/);
+  });
+
+  it('leaves out the paragraphs the allow-list excludes, exactly or by pattern, on every run', async () => {
+    server.use(
+      http.get('https://pipewright.example/robots.txt', () => robots('User-agent: *\nAllow: /')),
+      http.get('https://pipewright.example/', () =>
+        html(
+          articleHtml([
+            ...PARAGRAPHS,
+            'Our founder Ada grew up in Porto and studied at MIT before starting the company.',
+            "We couldn't load the product list right now. Please try again in a moment.",
+          ]),
+        ),
+      ),
+    );
+    const curated: SiteEntry = {
+      ...pipewright,
+      urls: ['https://pipewright.example/'],
+      excludes: [
+        '/^Our founder /',
+        "We couldn't load the product list right now. Please try again in a moment.",
+      ],
+    };
+
+    const { snapshot } = await ingestSites([curated], options().options);
+
+    const text = snapshot.entries.map((entry) => entry.text).join('\n');
+    expect(text).toContain(PARAGRAPHS[0]);
+    expect(text).not.toContain('Our founder');
+    expect(text).not.toContain("couldn't load");
+  });
+
   it('waits at least a second before each page, longer when robots.txt asks for it', async () => {
     server.use(
       http.get('https://pipewright.example/robots.txt', () =>

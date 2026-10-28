@@ -1,3 +1,4 @@
+import { excludePattern } from '../../src/core/knowledge/product-sites';
 import type { SitePassage, SiteSubject } from '../../src/core/knowledge/schema';
 import type { SiteEntry } from '../../src/profile/schema';
 import { chunkPages } from './chunk';
@@ -60,9 +61,10 @@ export async function ingestSites(
       skipped.push(...entries.map(({ url }) => ({ url, reason: reasonOf(error) })));
       continue;
     }
-    for (const { subject, url } of entries) {
+    for (const { subject, url, excludes } of entries) {
       try {
-        pages.push({ subject, url, ...(await readPage(url, robots, options)) });
+        const { language, paragraphs } = await readPage(url, robots, options);
+        pages.push({ subject, url, language, paragraphs: withoutExcluded(paragraphs, excludes) });
       } catch (error) {
         if (!(error instanceof PageError)) throw error;
         skipped.push({ url, reason: error.message });
@@ -82,12 +84,18 @@ export async function ingestSites(
   };
 }
 
+interface AllowedPage {
+  readonly subject: SiteSubject;
+  readonly url: string;
+  readonly excludes: readonly string[];
+}
+
 function byOrigin(allowList: readonly SiteEntry[]) {
-  const origins = new Map<string, { subject: SiteSubject; url: string }[]>();
-  for (const { subject, urls } of allowList) {
+  const origins = new Map<string, AllowedPage[]>();
+  for (const { subject, urls, excludes = [] } of allowList) {
     for (const url of urls) {
       const { origin } = new URL(url);
-      origins.set(origin, [...(origins.get(origin) ?? []), { subject, url }]);
+      origins.set(origin, [...(origins.get(origin) ?? []), { subject, url, excludes }]);
     }
   }
   return origins;
@@ -118,6 +126,12 @@ async function readPage(url: string, robots: RobotsPolicy, options: IngestOption
     isAllowed: (target) => robots.isAllowed(target),
   });
   return extractReadablePage(html, url, options.fallbackLanguage);
+}
+
+/** The site's curation, applied on every run so a refresh never brings back what was left out. */
+function withoutExcluded(paragraphs: readonly string[], excludes: readonly string[]): string[] {
+  const excluded = excludes.map(excludePattern);
+  return paragraphs.filter((paragraph) => !excluded.some((matches) => matches(paragraph)));
 }
 
 /** Numbered per subject in allow-list order, so an unchanged site gives an unchanged snapshot. */

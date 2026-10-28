@@ -3,15 +3,18 @@ import { PageError, reasonOf, TransientPageError } from './errors';
 export const MAX_REDIRECTS = 3;
 export const MAX_PAGE_BYTES = 2 * 1024 * 1024;
 
-export interface PageFetchOptions {
+export interface RequestOptions {
   readonly fetch: typeof fetch;
   readonly userAgent: string;
   /** For each request, redirects included, from sending it to the end of its body. */
   readonly timeoutMs: number;
-  readonly retryDelayMs: number;
-  readonly wait: (ms: number) => Promise<void>;
   /** Whether robots.txt lets a redirect's target be fetched. */
   readonly isAllowed: (url: string) => boolean;
+}
+
+export interface PageFetchOptions extends RequestOptions {
+  readonly retryDelayMs: number;
+  readonly wait: (ms: number) => Promise<void>;
 }
 
 /**
@@ -32,7 +35,7 @@ export async function fetchPage(url: string, options: PageFetchOptions): Promise
 
 async function attempt(url: string, options: PageFetchOptions): Promise<string> {
   try {
-    return await followRedirects(url, options);
+    return await readHtml(url, await requestWithinOrigin(url, options, 'text/html'));
   } catch (error) {
     if (error instanceof PageError) throw error;
     if (error instanceof DOMException && error.name === 'TimeoutError') {
@@ -42,15 +45,23 @@ async function attempt(url: string, options: PageFetchOptions): Promise<string> 
   }
 }
 
-async function followRedirects(url: string, options: PageFetchOptions): Promise<string> {
+/**
+ * The response at the end of the URL's redirects, followed only within its
+ * own origin, at most three, each target one robots.txt allows.
+ */
+export async function requestWithinOrigin(
+  url: string,
+  options: RequestOptions,
+  accept: string,
+): Promise<Response> {
   let current = url;
   for (let redirects = 0; ; redirects += 1) {
     const response = await options.fetch(current, {
       redirect: 'manual',
-      headers: { 'user-agent': options.userAgent, accept: 'text/html' },
+      headers: { 'user-agent': options.userAgent, accept },
       signal: AbortSignal.timeout(options.timeoutMs),
     });
-    if (!isRedirect(response.status)) return readHtml(url, response);
+    if (!isRedirect(response.status)) return response;
     if (redirects === MAX_REDIRECTS) {
       throw new PageError(`${url}: more than ${String(MAX_REDIRECTS)} redirects`);
     }
@@ -84,11 +95,20 @@ async function readHtml(url: string, response: Response): Promise<string> {
   if (!type.toLowerCase().startsWith('text/html')) {
     throw new PageError(`${url}: is ${type || 'of no declared type'}, not an HTML page`);
   }
-  return new TextDecoder(charsetOf(type)).decode(await cappedBody(url, response));
+  return readText(url, response);
 }
 
-function charsetOf(contentType: string): string {
-  return /charset=([^;]+)/i.exec(contentType)?.[1]?.trim() ?? 'utf-8';
+/** The body as text, in the charset it declares, cut off past the size cap. */
+export async function readText(url: string, response: Response): Promise<string> {
+  const charset =
+    /charset=([^;]+)/i.exec(response.headers.get('content-type') ?? '')?.[1]?.trim() ?? 'utf-8';
+  let decoder: TextDecoder;
+  try {
+    decoder = new TextDecoder(charset);
+  } catch {
+    throw new PageError(`${url}: declares an unknown charset "${charset}"`);
+  }
+  return decoder.decode(await cappedBody(url, response));
 }
 
 /** The body, counted as it arrives: a page that keeps sending is cut off, not buffered. */

@@ -130,6 +130,13 @@ describe('validating a profile', () => {
     ]);
   });
 
+  it('rejects an exclusion pattern that is not a valid regular expression', () => {
+    const entry = { ...pipewrightEntry, excludes: ['Exact paragraph.', '/^(unclosed/'] };
+    expect(issuePaths({ ...valid, siteAllowList: [entry, acmeEntry] })).toEqual([
+      ['siteAllowList', 0, 'excludes', 1],
+    ]);
+  });
+
   it('reports every problem at once, wherever it is', () => {
     const paths = issuePaths({
       ...valid,
