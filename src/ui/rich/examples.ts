@@ -3,8 +3,8 @@ import type { ComponentPart, ConversationContext } from '@/core/assistant/respon
 import type { FastPath } from '@/core/assistant/system1/fast-path';
 
 /**
- * Real blocks, exactly as the fast path sends them, for the workbench and the
- * tests: one question per kind whose answer contains that kind.
+ * Real blocks, exactly as the fast path sends them, for the tests: one
+ * question per kind whose answer contains that kind.
  */
 const QUESTION_FOR: Readonly<Record<RichComponentName, string>> = {
   metrics: "Tell me about Marcio's career.",

@@ -15,8 +15,8 @@ previous stylesheet. The development server showed the same symptom.
 ## Decision
 
 `turbopackFileSystemCacheForBuild` and `turbopackFileSystemCacheForDev` are
-off. `pnpm fidelity:live` compares the deployed home page with the design, so
-a deployment that differs from the code is caught.
+off. A stale stylesheet was first caught by comparing the deployed home page
+with the design.
 
 ## Consequences
 

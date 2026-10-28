@@ -52,13 +52,13 @@ describe('Sidebar', () => {
     expect(onNewConversation).toHaveBeenCalledOnce();
   });
 
-  it('invites contact by email with the subject already filled in', () => {
+  it('invites contact by email, subject filled in, without printing the address', () => {
     renderSidebar();
     expect(screen.getByRole('link', { name: 'Get in touch' })).toHaveAttribute(
       'href',
       `mailto:${contact.email}?subject=Engineering%20opportunity`,
     );
-    expect(screen.getByText(contact.email)).toBeInTheDocument();
+    expect(screen.queryByText(contact.email)).not.toBeInTheDocument();
   });
 
   it('opens LinkedIn and GitHub in a new tab and says so', () => {

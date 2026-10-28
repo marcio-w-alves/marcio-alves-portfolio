@@ -18,28 +18,26 @@ pnpm dev
 
 ## Scripts
 
-| Command                    | Purpose                                              |
-| -------------------------- | ---------------------------------------------------- |
-| `pnpm dev`                 | Development server                                   |
-| `pnpm build`               | Production build                                     |
-| `pnpm typecheck`           | Route types, then TypeScript, no emit                |
-| `pnpm lint`                | ESLint, warnings treated as failures                 |
-| `pnpm lint:fix`            | ESLint with autofix                                  |
-| `pnpm format`              | Prettier, write                                      |
-| `pnpm format:check`        | Prettier, verify only                                |
-| `pnpm boundaries`          | Module-boundary rules                                |
-| `pnpm test`                | Unit and integration tests (Vitest)                  |
-| `pnpm test:motion`         | Motion and reduced-motion checks in Chromium         |
-| `pnpm test:coverage`       | The tests, with a coverage report in `coverage/`     |
-| `pnpm test:e2e`            | Critical journeys in Chromium (Playwright)           |
-| `pnpm test:a11y`           | Axe, security headers and SEO (part of `test:e2e`)   |
-| `pnpm lighthouse`          | Lighthouse budgets on a production build             |
-| `pnpm rag:build`           | Re-embed the knowledge corpus (needs the key)        |
-| `pnpm notes:build`         | Split the knowledge-base document into passages      |
-| `pnpm eval:assistant`      | Grade the assistant end to end (needs the key)       |
-| `pnpm fidelity`            | Compare every artboard with its page, pixel by pixel |
-| `pnpm fidelity:references` | Re-render the design's artboards as references       |
-| `pnpm verify`              | Every gate, in the order CI runs them                |
+| Command               | Purpose                                            |
+| --------------------- | -------------------------------------------------- |
+| `pnpm dev`            | Development server                                 |
+| `pnpm build`          | Production build                                   |
+| `pnpm typecheck`      | Route types, then TypeScript, no emit              |
+| `pnpm lint`           | ESLint, warnings treated as failures               |
+| `pnpm lint:fix`       | ESLint with autofix                                |
+| `pnpm format`         | Prettier, write                                    |
+| `pnpm format:check`   | Prettier, verify only                              |
+| `pnpm boundaries`     | Module-boundary rules                              |
+| `pnpm test`           | Unit and integration tests (Vitest)                |
+| `pnpm test:motion`    | Motion and reduced-motion checks in Chromium       |
+| `pnpm test:coverage`  | The tests, with a coverage report in `coverage/`   |
+| `pnpm test:e2e`       | Critical journeys in Chromium (Playwright)         |
+| `pnpm test:a11y`      | Axe, security headers and SEO (part of `test:e2e`) |
+| `pnpm lighthouse`     | Lighthouse budgets on a production build           |
+| `pnpm rag:build`      | Re-embed the knowledge corpus (needs the key)      |
+| `pnpm notes:build`    | Split the knowledge-base document into passages    |
+| `pnpm eval:assistant` | Grade the assistant end to end (needs the key)     |
+| `pnpm verify`         | Every gate, in the order CI runs them              |
 
 ## Quality gates
 
@@ -140,9 +138,7 @@ in-flight state otherwise.
 Locally, install the browser once with `pnpm exec playwright install chromium`.
 In CI the `e2e` job caches the browsers keyed by the Playwright version, retries
 a failed test twice with a trace of the retry, and keeps the report and traces
-as an artifact when a run fails. There are no pixel comparisons here: fonts
-render differently on GitHub's runners, so visual fidelity stays with
-`pnpm fidelity`.
+as an artifact when a run fails. There are no pixel comparisons.
 
 ## Knowledge base
 
@@ -245,44 +241,6 @@ with the stylesheet.
 Inter, Inter Tight and Geist Mono come from `next/font/google`: the same files
 the design loads, downloaded at build and served from this site.
 
-## Design fidelity
-
-The design is the specification, and it is checked by pixels, not by eye.
-`pnpm fidelity:references` renders every artboard of the design (served
-locally with its own runtime) at its canvas size into `fidelity/reference/`.
-`pnpm fidelity`, with `pnpm dev` running, renders each board's counterpart —
-a development-only page under `/workbench/fidelity/` built from the real
-components and the real record — at the same size, compares the two pixel by
-pixel with anti-aliasing left out, and requires 99.9% of pixels to match on
-every board. The full-screen states (a streaming answer, a failure, a long
-follow-up…) are rebuilt the way the prototype builds them: real fast-path
-answers replayed through the conversation's transitions.
-
-A board production departs from on purpose carries a `departure` in
-`scripts/fidelity/boards.ts` saying why. It is still measured and reported as
-`DEPART`, but does not fail the gate. The one today is StateTopic: a topic is
-its own page (`/experience`, `/skills`…), so its record follows the
-introduction the artboard shows alone.
-
-`pnpm fidelity:live` checks the boards production renders as they are — the
-welcome screen on a desktop and on a phone — against the live site, so a
-deployment that differs from what was built locally is caught too. It found
-one: a build that reused a stale stylesheet (see `next.config.ts`).
-
-The references take three deliberate liberties with the prototype, each
-explained where it is made: they omit its "Preview with scripted answers"
-notice, they run its logic with the production contact data (GitHub linked,
-the résumé at its real address), and they undo two of its timing artefacts — a
-composer sized before its font loaded, and a conversation scrolled while
-still rendering in.
-
-A board production deliberately no longer matches carries a `departure` in
-`scripts/fidelity/boards.ts` saying why. It is still measured and reported as
-`DEPART`, but it does not fail the gate. There are two: `StateTopic`, because
-a topic is now a page of its own that shows its part of the record beneath the
-introduction (POR-34), and `AssistantMessage`, because an answer cites the
-résumé once as "Resume" rather than once per section (POR-36).
-
 ## Topic pages
 
 The overview is the home page; every other topic in the sidebar is a page of
@@ -359,7 +317,7 @@ origin. Each topic page sets its own title, description and canonical, and the
 sitemap lists them all. The home page adds its canonical and a JSON-LD `Person` built from
 `src/profile/knowledge` — name, title, summary, LinkedIn and GitHub, and every
 documented skill, never the coursework. `robots.ts` keeps crawlers out of
-`/workbench` and `/api` and points to `sitemap.ts`.
+`/api` and points to `sitemap.ts`.
 
 `opengraph-image.tsx` and `icon.tsx` are generated once at build with
 `next/og`, in the design's ink on white and Inter Tight, read as WOFF from
