@@ -1,6 +1,7 @@
 import type { ProjectId, RoleId } from '@/core/knowledge/ids';
 import { knowledgeBase } from '@/core/knowledge/knowledge-base';
 import type { ConversationContext } from '../response';
+import { isTopicId, type TopicId } from '../topics';
 import { ROUTED_TECHNOLOGIES, type Technology } from './technologies';
 
 /**
@@ -49,6 +50,10 @@ export const SCORED_INTENTS = [
   'career',
 ] as const;
 export type ScoredIntent = (typeof SCORED_INTENTS)[number];
+
+export function isScoredIntent(value: string): value is ScoredIntent {
+  return (SCORED_INTENTS as readonly string[]).includes(value);
+}
 
 export type Guard = 'offPurpose' | 'privateInfo';
 
@@ -348,23 +353,42 @@ const DEFINITION = /^(what is|what's|what are|o que é|define|explain what) (?!(
 const COMPANY_PROFILE =
   /\b(what (kind|type|sort) of (company|business|startup)|what does (the company|toptal|deel|roots|maison( modern)?|webfi) do)\b/;
 
-const NEXT_INTENT: Partial<Record<string, ScoredIntent>> = {
-  career: 'achievements',
+const NEXT_INTENT: Readonly<Record<ScoredIntent, ScoredIntent | null>> = {
+  identity: null,
+  resume: null,
+  contact: 'career',
+  location: null,
+  accessibility: null,
+  testing: null,
+  mobile: null,
+  designSystems: null,
+  nextjs: null,
+  codeQuality: null,
+  quality: null,
+  awards: null,
+  teamGrowth: null,
+  hrisRole: null,
+  product: null,
+  scratch: null,
+  scaling: null,
+  enterprise: null,
   staffFit: 'leadership',
-  achievements: 'performance',
-  leadership: 'architecture',
+  aiEngineering: null,
+  philosophy: 'codeQuality',
   architecture: 'philosophy',
   performance: 'architecture',
   backend: 'skills',
   react: 'architecture',
   skills: 'react',
+  leadership: 'architecture',
+  achievements: 'performance',
   projects: 'scratch',
-  philosophy: 'codeQuality',
+  languages: null,
   education: 'career',
-  contact: 'career',
+  career: 'achievements',
 };
 
-const TOPIC_DEFAULT: Partial<Record<string, ScoredIntent>> = {
+const TOPIC_DEFAULT: Readonly<Record<TopicId, ScoredIntent>> = {
   overview: 'career',
   experience: 'career',
   skills: 'skills',
@@ -420,10 +444,12 @@ function isCompound(text: string, companies: readonly RoleId[]): boolean {
   );
 }
 
-function fromContext(context: ConversationContext): ScoredIntent {
-  const last = context.lastIntent;
-  if (last?.startsWith('company:')) return 'achievements';
-  return (last ? NEXT_INTENT[last] : undefined) ?? TOPIC_DEFAULT[context.topic] ?? 'career';
+// The context arrives from the visitor, so only ids this router knows are
+// looked up — never a name like "constructor" that every object answers to.
+function fromContext({ lastIntent, topic }: ConversationContext): ScoredIntent {
+  if (lastIntent?.startsWith('company:')) return 'achievements';
+  const next = lastIntent && isScoredIntent(lastIntent) ? NEXT_INTENT[lastIntent] : null;
+  return next ?? (isTopicId(topic) ? TOPIC_DEFAULT[topic] : 'career');
 }
 
 export function route(question: string, context: ConversationContext): Route {

@@ -179,6 +179,27 @@ describe('fast path — boundaries', () => {
   });
 });
 
+describe('fast path — a forged context', () => {
+  const PROTOTYPE_NAMES = ['constructor', '__proto__', 'toString', 'hasOwnProperty', 'valueOf'];
+
+  it.each([...PROTOTYPE_NAMES, 'nope'])(
+    'treats the unknown or prototype-named last intent %s as no context',
+    (lastIntent) => {
+      const forged = answer('Tell me more', { ...FRESH, lastIntent });
+      expect(forged).toEqual(answer('Tell me more', FRESH));
+    },
+  );
+
+  it.each(PROTOTYPE_NAMES)('treats the prototype-named topic %s as no topic', (topic) => {
+    const forged = answer('Tell me more', { ...FRESH, topic });
+    expect(forged).toEqual(answer('Tell me more', FRESH));
+  });
+
+  it('still follows a genuine last intent', () => {
+    expect(answer('Tell me more', { ...FRESH, lastIntent: 'career' }).intent).toBe('achievements');
+  });
+});
+
 describe('toEvents', () => {
   it('streams every part in order, between a start and a finish', () => {
     const response = answer("Tell me about Marcio's career.");

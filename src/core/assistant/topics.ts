@@ -17,6 +17,10 @@ export const TOPIC_IDS = [
 ] as const;
 export type TopicId = (typeof TOPIC_IDS)[number];
 
+export function isTopicId(value: string): value is TopicId {
+  return (TOPIC_IDS as readonly string[]).includes(value);
+}
+
 export type TopicIcon =
   'home' | 'briefcase' | 'code' | 'folder' | 'award' | 'compass' | 'graduation';
 

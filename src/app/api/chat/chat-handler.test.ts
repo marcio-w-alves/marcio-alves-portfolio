@@ -156,6 +156,46 @@ describe('POST /api/chat — rejecting bad requests at the boundary', () => {
   });
 });
 
+describe('POST /api/chat — a forged context', () => {
+  const context = { topic: 'overview', lastIntent: null, ctaShown: false };
+
+  it('answers a request whose context carries a forged intent', async () => {
+    const response = await handlerWith(fastPathOnly)(
+      post({ message: 'Tell me more', context: { ...context, lastIntent: 'constructor' } }),
+    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toBe('text/event-stream; charset=utf-8');
+    const events = await readEvents(response);
+    expect(events.at(-1)?.type).toBe('finish');
+    expect(events.some((event) => event.type === 'error')).toBe(false);
+    expect(reported).toEqual([]);
+  });
+
+  it.each(['constructor', '__proto__'])(
+    'rejects the forged topic %s at the boundary',
+    async (topic) => {
+      const response = await handlerWith(fastPathOnly)(
+        post({ message: 'Tell me more', context: { ...context, topic } }),
+      );
+      expect(response.status).toBe(400);
+      expect(response.headers.get('content-type')).toContain('application/json');
+      expect(await response.json()).toMatchObject({ error: { code: 'invalid_request' } });
+    },
+  );
+
+  it.each([
+    ['a last intent of 80 characters', { ...context, lastIntent: 'x'.repeat(80) }, 200],
+    ['a last intent of 81 characters', { ...context, lastIntent: 'x'.repeat(81) }, 400],
+    ['no last intent', context, 200],
+    ['no context at all', undefined, 200],
+  ])('bounds the last intent: %s → %i', async (_label, sent, status) => {
+    const response = await handlerWith(fastPathOnly)(
+      post({ message: 'Tell me more', context: sent }),
+    );
+    expect(response.status).toBe(status);
+  });
+});
+
 describe('POST /api/chat — the stream', () => {
   it('stops generating when the visitor goes away', async () => {
     let finished = false;
