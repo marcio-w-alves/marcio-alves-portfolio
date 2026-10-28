@@ -177,6 +177,24 @@ describe('model assistant — the model is untrusted', () => {
   });
 });
 
+describe('model assistant — spending', () => {
+  it('reports what every round cost, not only the last', async () => {
+    const { port } = scriptedModel([{ calls: [call('getSkills', {})] }, { text: 'Done.' }]);
+    const usage: { inputTokens: number; outputTokens: number }[] = [];
+    const assistant = createModelAssistant({
+      model: port,
+      tools: createToolRegistry(),
+      clock,
+      onUsage: (spent) => usage.push(spent),
+    });
+    await Array.fromAsync(assistant.answer({ question: 'q', history: [], followUps: [] }));
+    expect(usage).toEqual([
+      { inputTokens: 10, outputTokens: 5 },
+      { inputTokens: 10, outputTokens: 5 },
+    ]);
+  });
+});
+
 describe('model assistant — what reaches the visitor', () => {
   it('renders the blocks the model asked for after the text, with data resolved on the server', async () => {
     const { port } = scriptedModel([

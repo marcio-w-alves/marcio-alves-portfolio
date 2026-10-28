@@ -9,6 +9,8 @@ import { createSearchTools } from '@/core/assistant/tools/search-tools';
 import { buildCorpus } from '@/core/knowledge/corpus';
 import { knowledgeBase } from '@/core/knowledge/knowledge-base';
 import { serverEnv } from '@/env';
+import { createAnswerCache } from '@/infrastructure/budget/answer-cache';
+import { createModelBudget } from '@/infrastructure/budget/model-budget';
 import { createGithubApi } from '@/infrastructure/github/github-api';
 import { createOpenAIClient } from '@/infrastructure/openai/openai-client';
 import { createOpenAIEmbeddings } from '@/infrastructure/openai/openai-embeddings';
@@ -20,6 +22,10 @@ import {
 import { EMBEDDING_DIMENSIONS, EMBEDDING_MODEL } from '@/infrastructure/retrieval/index-spec';
 import knowledgeIndex from '@/infrastructure/retrieval/knowledge-index.json';
 import { createVectorKnowledgeSearch } from '@/infrastructure/retrieval/vector-knowledge-search';
+import {
+  createSlidingWindowLimiter,
+  type SlidingWindowLimiter,
+} from '@/infrastructure/rate-limit/sliding-window';
 import { systemClock } from '@/infrastructure/system-clock';
 import { createWikipediaReferences } from '@/infrastructure/wikipedia/wikipedia-references';
 
@@ -33,14 +39,33 @@ const CHAT_MODEL = 'gpt-4o-mini';
 // like a form letter.
 const TEMPERATURE = 0.2;
 
+const TEN_MINUTES = 10 * 60 * 1000;
+/** Any request, fast path included: enough for a curious visitor, not for a script. */
+const REQUESTS_PER_TEN_MINUTES = 40;
+/** Model answers specifically, the part that costs money. */
+const MODEL_ANSWERS_PER_TEN_MINUTES = 15;
+/**
+ * Roughly two hundred model answers a day per instance — about US$0.35 at
+ * gpt-4o-mini prices. Per instance, so the hard ceiling is the spending limit
+ * set on the OpenAI project itself.
+ */
+const DAILY_MODEL_TOKENS = 2_000_000;
+
 export interface Container {
   readonly assistant: Assistant;
   readonly reportError: (error: unknown) => void;
+  readonly requestLimiter: SlidingWindowLimiter;
 }
 
 function reportError(error: unknown): void {
   console.error('[assistant]', error);
 }
+
+const budget = createModelBudget({
+  answersPerWindow: MODEL_ANSWERS_PER_TEN_MINUTES,
+  windowMs: TEN_MINUTES,
+  dailyTokens: DAILY_MODEL_TOKENS,
+});
 
 function buildModelAssistant(apiKey: string, githubToken: string | undefined): ModelAssistant {
   const client = createOpenAIClient(apiKey);
@@ -65,7 +90,14 @@ function buildModelAssistant(apiKey: string, githubToken: string | undefined): M
     createOpenAILanguageModel({ client, model: CHAT_MODEL, temperature: TEMPERATURE }),
     createCircuitBreaker({ failureThreshold: 3, cooldownMs: 30_000 }),
   );
-  return createModelAssistant({ model, tools, clock: systemClock });
+  return createModelAssistant({
+    model,
+    tools,
+    clock: systemClock,
+    onUsage: (usage) => {
+      budget.record(usage);
+    },
+  });
 }
 
 let container: Container | undefined;
@@ -80,9 +112,15 @@ export function getContainer(): Container {
         modelAssistant: env.OPENAI_API_KEY
           ? buildModelAssistant(env.OPENAI_API_KEY, env.GITHUB_TOKEN)
           : null,
+        budget,
+        answerCache: createAnswerCache({ ttlMs: 60 * 60 * 1000, maxEntries: 500 }),
         reportError,
       }),
       reportError,
+      requestLimiter: createSlidingWindowLimiter({
+        limit: REQUESTS_PER_TEN_MINUTES,
+        windowMs: TEN_MINUTES,
+      }),
     };
   }
   return container;
