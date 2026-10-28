@@ -20,13 +20,7 @@ export const skills: readonly SkillGroup[] = [
   {
     id: 'performance',
     title: 'Performance & Quality',
-    items: [
-      'Core Web Vitals',
-      'Bundle Optimization',
-      'SEO',
-      'Accessibility',
-      'Frontend Testing Strategies',
-    ],
+    items: ['Core Web Vitals', 'SEO', 'Accessibility', 'Frontend Testing Strategies'],
   },
   {
     id: 'leadership',

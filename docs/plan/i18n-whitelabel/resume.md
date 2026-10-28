@@ -36,6 +36,23 @@ The owner authorised this, and the repository works this way (memory: "Always pu
   is committed under `design/`. English boards need ≥99.9%. Masks are allowed up to 3% of a board;
   departures (with a reason) only for Main, Mobile and WelcomeScreen in POR-68.
 
+## Changes on `main` after the plan was written (fold into each task)
+
+- **POR-37 (#44), by the owner:**
+  - A new hand-made résumé `public/marcio-alves-resume.pdf`.
+  - Deel backlog, Roots Slack-bot and Roots initial-load metrics removed.
+  - A 1258-line owner document `src/core/knowledge/data/knowledge-base.md`, split by
+    `pnpm notes:build` into `notes.json` as a retrieval category with evidence tags (explained in the
+    system prompt).
+  - Résumé passages get a guaranteed share of search results.
+
+  Consequences:
+  - The document and `notes.json` belong to the profile (POR-52) and need a Portuguese counterpart or
+    an explicit English-only decision (POR-65).
+  - Metric literals and ids the plan cites may no longer exist: re-read the record before each task.
+  - **POR-67 (generated PDF) is on hold:** the owner just supplied a new hand-made PDF, so replacing
+    it with a generated one needs his confirmation. Until then, keep his PDF and route around.
+
 ## Status snapshot
 
 - Overall: **in_progress** (0/30 tasks merged). The plan docs are approved; POR-71 lands them on `main`.
@@ -72,7 +89,7 @@ The owner authorised this, and the repository works this way (memory: "Always pu
 | POR-64 | Locale routing (PT off)                                       | 63             | S12 | pending | —      | —   | starts with the routing spike |
 | POR-65 | Portuguese content (still off)                                | 64, 56         | S13 | pending | —      | —   | IDX                           |
 | POR-66 | Bilingual fast path; enables PT                               | 65, 51         | S14 | pending | —      | —   |                               |
-| POR-67 | Generated résumé PDF EN/PT                                    | 65, 55         | S14 | pending | —      | —   |                               |
+| POR-67 | Generated résumé PDF EN/PT                                    | 65, 55         | S14 | on hold | —      | —   | owner must confirm            |
 | POR-68 | Phone contact + evidence line; departures                     | 63, 55, 67     | S15 | pending | —      | —   |                               |
 | POR-69 | Fidelity in CI + design export                                | 66, 68         | S16 | pending | —      | —   |                               |
 | POR-70 | README, CONTRIBUTING, repo settings                           | 41–69          | S17 | pending | —      | —   | `gh repo edit`                |

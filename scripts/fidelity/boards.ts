@@ -25,6 +25,9 @@ const board = (name: string, width: number, height: number): Board => ({
   route: `/workbench/fidelity/${name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()}`,
 });
 
+const RESUME_CONTENT =
+  'POR-37: the design shows résumé content the new résumé no longer has (removed figures, reworded statements).';
+
 export const BOARDS: readonly Board[] = [
   { ...board('Main', 1440, 900), liveRoute: '/' },
   { ...board('Mobile', 390, 844), liveRoute: '/' },
@@ -33,14 +36,26 @@ export const BOARDS: readonly Board[] = [
     departure:
       'POR-34: a topic is its own page, so its record (here the timeline) follows the introduction.',
   },
-  board('StateStreaming', 1280, 800),
-  board('StateRichAnswer', 1280, 800),
-  board('StateFollowUp', 1280, 800),
+  {
+    ...board('StateStreaming', 1280, 800),
+    departure: RESUME_CONTENT,
+  },
+  {
+    ...board('StateRichAnswer', 1280, 800),
+    departure: RESUME_CONTENT,
+  },
+  {
+    ...board('StateFollowUp', 1280, 800),
+    departure: RESUME_CONTENT,
+  },
   board('StateNoInfo', 1280, 800),
   board('StateError', 1280, 800),
   board('StateContact', 1280, 800),
   board('MobileDrawer', 390, 844),
-  board('MobileConversation', 390, 844),
+  {
+    ...board('MobileConversation', 390, 844),
+    departure: RESUME_CONTENT,
+  },
   board('Sidebar', 248, 900),
   board('WelcomeScreen', 760, 300),
   board('Composer', 760, 220),
@@ -51,9 +66,19 @@ export const BOARDS: readonly Board[] = [
     departure:
       'POR-36: the résumé is cited once as "Resume", not once per section, so the sources fit one row.',
   },
-  board('ExperienceTimeline', 780, 1400),
-  board('AchievementMetrics', 780, 380),
-  board('SkillCollection', 780, 500),
+  {
+    ...board('ExperienceTimeline', 780, 1400),
+    departure: RESUME_CONTENT,
+  },
+  {
+    ...board('AchievementMetrics', 780, 380),
+    departure:
+      "POR-37: two of the design's figures are no longer on the résumé; WEBFI and Maison Modern fill their cards.",
+  },
+  {
+    ...board('SkillCollection', 780, 500),
+    departure: RESUME_CONTENT,
+  },
   board('ProjectPreview', 780, 660),
   board('ContactCard', 780, 320),
 ];

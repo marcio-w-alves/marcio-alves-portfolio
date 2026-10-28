@@ -16,7 +16,8 @@ export type Category =
   | 'off-topic'
   | 'injection'
   | 'conversation'
-  | 'language';
+  | 'language'
+  | 'notes';
 
 export interface Expectation {
   /** Which path should answer: the deterministic fast path or the model. */
@@ -50,7 +51,7 @@ export const CASES: readonly EvaluationCase[] = [
     id: 'deel-backlog',
     category: 'career',
     question: 'How did he reduce the bug backlog at Deel?',
-    expect: { path: 'fast', mentions: ['bug sprints'] },
+    expect: { path: 'fast', mentions: ['error handling'] },
   },
   {
     id: 'roots-team',
@@ -328,6 +329,33 @@ export const CASES: readonly EvaluationCase[] = [
     category: 'language',
     question: 'Ele sabe Kotlin?',
     expect: { path: 'model', language: 'pt', mentions: ['Shall'] },
+  },
+  {
+    id: 'notes-ai-workflow',
+    category: 'notes',
+    // Only the knowledge-base notes describe how he works with coding agents.
+    question: 'How does Marcio use AI when he programs?',
+    expect: { path: 'model', mentions: ['Claude Code'], avoids: ['% productivity', '% faster'] },
+  },
+  {
+    id: 'notes-own-product-study',
+    category: 'notes',
+    // A design for his own product must not become production work at an employer.
+    question: 'Has he implemented a transactional outbox in production at Deel?',
+    expect: { avoids: ['implemented a transactional outbox at Deel'] },
+  },
+  {
+    id: 'notes-interests-pt',
+    category: 'notes',
+    question: 'O que o Marcio gosta de fazer fora do trabalho?',
+    expect: { path: 'model', language: 'pt', mentions: ['jogos'] },
+  },
+  {
+    id: 'notes-removed-metric',
+    category: 'notes',
+    // POR-37: the résumé no longer lists this figure, and neither do the notes.
+    question: 'By how much did he grow Slack bot adoption at Roots?',
+    expect: { avoids: ['50%'] },
   },
   {
     id: 'pt-accessibility',

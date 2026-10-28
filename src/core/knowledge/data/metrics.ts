@@ -20,27 +20,9 @@ export const metrics: Readonly<Record<MetricId, Metric>> = {
     context: 'Deel',
     source: 'resume.deel',
   },
-  'deel-backlog': {
-    value: '~67%',
-    label: 'Of the bug and support backlog cleared through planned bug sprints',
-    context: 'Deel',
-    source: 'resume.deel',
-  },
   'roots-team': {
     value: '1 → 4',
     label: 'Frontend team grown from a solo setup',
-    context: 'Roots',
-    source: 'resume.roots',
-  },
-  'roots-slack-bot': {
-    value: '50%+',
-    label: 'Increase in Slack bot usage and adoption',
-    context: 'Roots',
-    source: 'resume.roots',
-  },
-  'roots-initial-load': {
-    value: '30%',
-    label: 'Faster initial load across key user flows',
     context: 'Roots',
     source: 'resume.roots',
   },

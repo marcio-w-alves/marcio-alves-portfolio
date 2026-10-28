@@ -25,8 +25,8 @@ export function react(): AssistantResponse {
       text(
         "React sits at the center of Marcio's documented work from 2018 to today. Rather than a single claim of expertise, here is the evidence by area:\n\n" +
           '- **Component architecture** — architected a modular React and TypeScript component library used across multiple product teams at Toptal.\n' +
-          '- **Complex product interfaces** — led the HRIS frontend at Deel and standardized its architecture, state management and error handling.\n' +
-          '- **Performance** — improved Web Vitals by 30%+ and halved critical page loading time at Deel; cut initial load by 30% through bundle optimization at Roots.\n' +
+          '- **Complex product interfaces** — helped lead the HRIS team at Deel and standardized its architecture, state management and error handling.\n' +
+          '- **Performance** — improved Web Vitals by 30%+ and halved critical page loading time at Deel.\n' +
           '- **State management** — implemented advanced state management at Roots, where he built the frontend end to end.\n' +
           '- **Next.js and SSR** — built responsive digital magazines with Next.js and server-side rendering at Maison Modern.\n' +
           '- **Modernization** — refactored a codebase to React Hooks at Shall And Partners.',
@@ -87,7 +87,7 @@ export function architecture(): AssistantResponse {
           '### Documented decisions\n' +
           '- **Toptal** — architected a modular React/TypeScript component library for consistent UI across product teams, and planned the initial architecture for a new product.\n' +
           '- **Deel** — standardized HRIS frontend architecture to improve structure, state management, error handling and scalability.\n' +
-          '- **Roots** — directed frontend strategy, introduced advanced state management and optimized bundle sizes.\n' +
+          '- **Roots** — directed frontend strategy, introduced advanced state management and set up GitLab CI pipelines deploying to Amazon S3.\n' +
           '- **Maison Modern** — implemented SSR with Next.js and integrated the frontend with external publishing platforms.\n' +
           '- **Shall And Partners** — moved the codebase to React Hooks and built apps within a microservices architecture.\n\n' +
           '### The principles behind them\n' +
@@ -125,11 +125,10 @@ export function performance(): AssistantResponse {
     'performance',
     [
       text("Performance is one of the most consistently documented themes in Marcio's work:"),
-      metrics(['deel-web-vitals', 'deel-critical-load', 'deel-people-list', 'roots-initial-load']),
+      metrics(['deel-web-vitals', 'deel-critical-load', 'deel-people-list']),
       text(
         '### How he got there\n' +
           '- **Deel** — targeted refactoring and optimization of critical pages; the People List page went from six seconds to three on a cold run.\n' +
-          '- **Roots** — bundle-size optimization for a 30% faster initial load across key user flows.\n' +
           '- **Maison Modern** — server-side rendering to improve SEO and initial load speed for editorial products read by thousands daily.',
       ),
       note('gap', "The specific profiling tools behind each change aren't documented."),
@@ -294,7 +293,7 @@ export function testing(): AssistantResponse {
     'testing',
     [
       text(
-        "Frontend testing strategies are listed among Marcio's core skills. In practice, his documented quality work includes planned bug sprints that cleared two-thirds of Deel's bug and support backlog, code reviews and pair programming, and coding standards he set at Maison Modern.",
+        "Frontend testing strategies are listed among Marcio's core skills. In practice, his documented quality work includes standardized error handling at Deel, code reviews and pair programming, and coding standards he set at Maison Modern to reduce bugs.",
       ),
       note(
         'gap',
@@ -304,7 +303,7 @@ export function testing(): AssistantResponse {
     {
       followUps: [
         'How does he think about code quality?',
-        'How did he reduce the bug backlog at Deel?',
+        'How does he raise code quality?',
         'What are his strongest technical skills?',
       ],
       sources: ['resume.skills', 'resume.deel', 'resume.maison'],
@@ -323,7 +322,7 @@ export function philosophy(): AssistantResponse {
         `${knowledgeBase.profile.focus.replace(/^He/, 'Marcio')}\n\n### Principles he works by\n${principles}\n\n` +
           '### Where they show up\n' +
           '- A shared component library for consistent UI across teams at Toptal.\n' +
-          '- Standardized HRIS architecture and planned bug sprints at Deel.\n' +
+          '- Standardized HRIS architecture at Deel.\n' +
           '- Code reviews, pair programming and coding standards at Deel and Maison Modern.',
       ),
     ],
@@ -344,13 +343,13 @@ export function codeQuality(): AssistantResponse {
     [
       text(
         "Marcio's engineering principles treat quality as a structural concern: readable, explicit code; small composable components; shared logic centralized instead of duplicated; and security enforced on the server.\n\n" +
-          "In practice that has meant planned bug sprints that cleared two-thirds of Deel's bug backlog, standardized error handling and state management, code reviews and pair programming, coding standards at Maison Modern, and a move to React Hooks at Shall And Partners. Frontend testing strategies are part of his core skills.",
+          'In practice that has meant standardized error handling and state management, code reviews and pair programming, coding standards at Maison Modern, and a move to React Hooks at Shall And Partners. Frontend testing strategies are part of his core skills.',
       ),
     ],
     {
       followUps: [
         "What's his engineering philosophy?",
-        'How did he reduce the bug backlog at Deel?',
+        'How did he optimize performance?',
         'How does he approach frontend architecture?',
       ],
       sources: ['principles', 'resume.deel', 'resume.maison', 'resume.shall', 'resume.skills'],
