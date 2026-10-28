@@ -11,7 +11,8 @@ export function Chip({ className, ...props }: ChipProps) {
       className={cn(
         'group inline-flex min-h-8.5 cursor-pointer items-center gap-2 px-3.5 py-1.75 text-left font-sans text-13 leading-compact font-normal',
         'rounded-pill border-0 bg-surface text-ink-muted shadow-ring-strong',
-        'transition-[box-shadow,color,background-color,scale] duration-fast ease-standard hover:bg-ice hover:text-ink hover:shadow-ring-hover active:scale-98',
+        'transition-[box-shadow,color,background-color,scale] duration-fast ease-standard hover:not-disabled:bg-ice hover:not-disabled:text-ink hover:not-disabled:shadow-ring-hover active:not-disabled:scale-98',
+        'disabled:cursor-not-allowed disabled:text-ink-faint',
         '@max-phone/ma:min-h-11 @max-phone/ma:px-4 @max-phone/ma:py-2.5',
         className,
       )}

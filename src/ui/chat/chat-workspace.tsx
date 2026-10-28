@@ -20,6 +20,7 @@ import { SuggestedQuestions, WelcomeLayout, WelcomeScreen } from '../welcome';
 import { AssistantMessage } from './assistant-message';
 import { copyText } from './copy-text';
 import { useChat } from './use-chat';
+import { useReveal } from './use-reveal';
 
 interface ChatWorkspaceProps {
   readonly profile: SidebarProfile;
@@ -56,6 +57,9 @@ export function ChatWorkspace({
 }: ChatWorkspaceProps) {
   const chat = useChat(topic, initialConversation);
   const { conversation } = chat;
+  const reveal = useReveal(conversation);
+  // The answer is still coming in, or still being typed out.
+  const busy = chat.streaming || reveal.typing;
   const [draft, setDraft] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(initialDrawerOpen ?? false);
   const [showJump, setShowJump] = useState(false);
@@ -75,7 +79,7 @@ export function ChatWorkspace({
     const scroller = scrollRef.current;
     if (conversation === openedWith.current) return;
     if (scroller && pinned.current && inConversation) scroller.scrollTop = scroller.scrollHeight;
-  }, [conversation, inConversation]);
+  }, [conversation, inConversation, reveal.shown]);
 
   useEffect(() => {
     if (focusRequest > 0) composerRef.current?.focus();
@@ -122,6 +126,11 @@ export function ChatWorkspace({
     scrollRef.current?.scrollTo({ top: 0 });
   }
 
+  function stop() {
+    chat.stop();
+    reveal.finish();
+  }
+
   function editQuestion(answerId: string) {
     setDraft(chat.edit(answerId));
     focusComposer();
@@ -135,10 +144,12 @@ export function ChatWorkspace({
       value={draft}
       onChange={setDraft}
       onSubmit={submitDraft}
-      onStop={chat.stop}
-      status={chat.streaming ? 'streaming' : 'idle'}
+      onStop={stop}
+      status={busy ? 'streaming' : chat.waiting ? 'waiting' : 'idle'}
       placeholder={variant === 'hero' ? welcome.placeholder : 'Ask a follow-up question...'}
-      helper={welcome.helper}
+      helper={
+        chat.waiting ? 'Another answer is on its way. Send this once it is done.' : welcome.helper
+      }
       maxLength={maxQuestionLength}
     />
   );
@@ -181,7 +192,7 @@ export function ChatWorkspace({
         {inConversation ? (
           <ol
             aria-label="Conversation"
-            aria-busy={chat.streaming}
+            aria-busy={busy}
             className="mx-auto flex max-w-column list-none flex-col gap-10 px-8 pt-3 pb-8 @max-phone/ma:gap-7.5 @max-phone/ma:px-4 @max-phone/ma:pt-4 @max-phone/ma:pb-6"
           >
             {conversation.messages.map((message) => {
@@ -199,7 +210,8 @@ export function ChatWorkspace({
               return (
                 <li key={message.id} className="animate-turn">
                   <AssistantMessage
-                    message={message}
+                    message={reveal.view(message)}
+                    busy={busy || chat.waiting}
                     isLatest={message.id === latestId}
                     topicLabel={
                       message.kind === 'intro' && message.topicId
@@ -233,6 +245,7 @@ export function ChatWorkspace({
                 ({ question, short }) => ({ question, label: short }),
               )}
               onPick={ask}
+              disabled={chat.waiting}
             />
           </WelcomeLayout>
         )}

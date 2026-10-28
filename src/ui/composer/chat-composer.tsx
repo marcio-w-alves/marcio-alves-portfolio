@@ -16,9 +16,10 @@ import { Icon } from '../primitives';
 /**
  * - `idle`: ready for a question.
  * - `streaming`: an answer is arriving; the send control becomes "Stop".
+ * - `waiting`: an answer is arriving elsewhere; the draft can be written, not sent.
  * - `unavailable`: the assistant cannot take questions, so the input is disabled.
  */
-export type ComposerStatus = 'idle' | 'streaming' | 'unavailable';
+export type ComposerStatus = 'idle' | 'streaming' | 'waiting' | 'unavailable';
 
 export type ComposerVariant = 'hero' | 'dock';
 

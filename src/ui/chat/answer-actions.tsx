@@ -8,7 +8,8 @@ import { Icon } from '../primitives';
 /** A quiet text action under an answer. */
 export const ACTION = cn(
   'inline-flex h-7.5 min-w-7.5 cursor-pointer items-center gap-1.5 rounded-sm border-0 bg-transparent px-2 font-sans text-12.5 leading-none font-normal text-ink-muted',
-  'transition-[background-color,color,scale] duration-fast ease-standard hover:bg-fill hover:text-ink active:scale-97 aria-pressed:bg-fill aria-pressed:text-ink',
+  'transition-[background-color,color,scale] duration-fast ease-standard hover:not-disabled:bg-fill hover:not-disabled:text-ink active:not-disabled:scale-97 aria-pressed:bg-fill aria-pressed:text-ink',
+  'disabled:cursor-not-allowed disabled:text-ink-faint',
   '@max-phone/ma:h-10 @max-phone/ma:min-w-10',
 );
 
@@ -21,6 +22,8 @@ interface AnswerActionsProps {
   readonly onAskFollowUp: () => void;
   /** The role the answer is about, offered as a way into that experience. */
   readonly related: { readonly label: string; readonly onView: () => void } | null;
+  /** While an answer is on its way, nothing that asks another question can be used. */
+  readonly busy?: boolean;
   readonly onRate: (feedback: Feedback) => void;
 }
 
@@ -30,6 +33,7 @@ export function AnswerActions({
   onAskFollowUp,
   related,
   onRate,
+  busy = false,
 }: AnswerActionsProps) {
   const [copied, setCopied] = useState(false);
 
@@ -64,7 +68,7 @@ export function AnswerActions({
         Ask follow-up
       </button>
       {related && (
-        <button type="button" className={ACTION} onClick={related.onView}>
+        <button type="button" className={ACTION} disabled={busy} onClick={related.onView}>
           <Icon name="briefcase" size="sm" />
           {related.label}
         </button>
