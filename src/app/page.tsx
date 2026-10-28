@@ -14,7 +14,7 @@ export default function HomePage() {
   const { profile, contact, welcome } = knowledgeBase;
   return (
     <ChatWorkspace
-      profile={{ name: profile.name, title: profile.title, initials: profile.initials }}
+      profile={{ name: profile.name, title: profile.title }}
       links={contact}
       topics={topics.map(({ id, label, icon }) => ({ id, label, icon }))}
       welcome={welcome}

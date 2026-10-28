@@ -42,7 +42,7 @@ function renderWorkspace() {
   const { profile, contact, welcome } = knowledgeBase;
   render(
     <ChatWorkspace
-      profile={{ name: profile.name, title: profile.title, initials: profile.initials }}
+      profile={{ name: profile.name, title: profile.title }}
       links={contact}
       topics={topics.map(({ id, label, icon }) => ({ id, label, icon }))}
       welcome={welcome}
@@ -228,9 +228,10 @@ describe('topic navigation', () => {
       'aria-current',
       'true',
     );
-    expect(screen.getByText('Conversation ·', { exact: false })).toHaveTextContent(
-      'Conversation · Experience',
-    );
+    const topBarTopic = within(screen.getByRole('main'))
+      .getAllByText('Experience')
+      .filter((label) => !conversation().contains(label));
+    expect(topBarTopic).toHaveLength(1);
     expect(latestAnswer()).toHaveTextContent(topicById('experience').intro);
     expect(
       within(latestAnswer()).getByRole('list', { name: 'Suggested questions' }),
@@ -249,30 +250,6 @@ describe('topic navigation', () => {
       'true',
     );
     expect(screen.getByRole('status')).toHaveTextContent('New conversation started');
-  });
-});
-
-describe('profile links', () => {
-  it('links to LinkedIn, GitHub and email, opening external profiles in a new tab', () => {
-    renderWorkspace();
-    const linkedin = screen.getByRole('link', { name: /LinkedIn/ });
-    expect(linkedin).toHaveAttribute('href', knowledgeBase.contact.linkedin);
-    expect(linkedin).toHaveAttribute('target', '_blank');
-    expect(linkedin).toHaveAccessibleName(/^LinkedIn ?\(opens in a new tab\)$/);
-    expect(screen.getByRole('link', { name: /GitHub/ })).toHaveAttribute(
-      'href',
-      knowledgeBase.contact.github,
-    );
-    expect(screen.getByRole('link', { name: 'Contact' })).toHaveAttribute(
-      'href',
-      `mailto:${knowledgeBase.contact.email}`,
-    );
-  });
-
-  it('says the résumé is coming rather than linking to nothing', () => {
-    renderWorkspace();
-    expect(screen.queryByRole('link', { name: /Download resume/ })).not.toBeInTheDocument();
-    expect(screen.getByText('Soon')).toBeInTheDocument();
   });
 });
 

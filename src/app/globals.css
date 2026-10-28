@@ -254,6 +254,19 @@
   --grid-template-columns-impact: 84px minmax(0, 1fr);
 
   --list-style-type-circle: circle;
+
+  /*
+   * The app shell: the sidebar column beside the conversation, the drawer it
+   * becomes in the compact layout, the hairlines that separate the regions
+   * without taking up layout space, and Marcio's name in the sidebar and the
+   * mobile bar.
+   */
+  --grid-template-columns-shell: var(--container-sidebar) minmax(0, 1fr);
+  --width-drawer: min(300px, calc(100% - 56px));
+  --inset-shadow-rule-top: inset 0 1px 0 var(--color-border);
+  --inset-shadow-rule-right: inset -1px 0 0 var(--color-border);
+  --inset-shadow-rule-bottom: inset 0 -1px 0 var(--color-border);
+  --tracking-identity: -0.02em;
 }
 
 /* The two named durations, so a component writes the token and not a number. */
