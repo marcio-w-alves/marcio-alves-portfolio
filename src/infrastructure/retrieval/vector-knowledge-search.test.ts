@@ -26,10 +26,15 @@ const corpus = buildCorpus(knowledge);
 const citation = createCitation(knowledge);
 
 // Read from the bound profile, so the search is tested on whatever record it has.
-const highlight = corpus.find((chunk) => /^role:[^:]+:\d+$/.test(chunk.id));
-if (!highlight) throw new Error('The record has no role highlight to search for.');
-const [firstRole] = knowledge.experience;
-if (!firstRole) throw new Error('The record documents no role.');
+function present<T>(value: T | undefined, missing: string): T {
+  if (value === undefined) throw new Error(missing);
+  return value;
+}
+const highlight = present(
+  corpus.find((chunk) => /^role:[^:]+:\d+$/.test(chunk.id)),
+  'The record has no role highlight to search for.',
+);
+const firstRole = present(knowledge.experience[0], 'The record documents no role.');
 const roleSource = firstRole.source;
 
 function newBreaker(now: () => number = Date.now) {
