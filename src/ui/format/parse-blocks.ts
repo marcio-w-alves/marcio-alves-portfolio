@@ -1,0 +1,112 @@
+import { parseInline, type InlineNode } from './parse-inline';
+
+/**
+ * The block-level Markdown subset an answer may use — paragraphs, `###`
+ * headings, `-` and `1.` lists, fenced code — parsed into plain data, like the
+ * inline subset. A fence still open at the end is kept, so code can be shown
+ * while it streams in.
+ */
+
+export type Block =
+  | { readonly kind: 'paragraph'; readonly content: readonly InlineNode[] }
+  | { readonly kind: 'heading'; readonly content: readonly InlineNode[] }
+  | {
+      readonly kind: 'list';
+      readonly ordered: boolean;
+      readonly items: readonly (readonly InlineNode[])[];
+    }
+  | { readonly kind: 'code'; readonly language: string; readonly code: string };
+
+const FENCE = /^```\s*([\w-]*)/;
+const HEADING = /^#{2,4}\s+(.*)$/;
+const BULLET = /^\s*[-*]\s+(.*)$/;
+const NUMBERED = /^\s*\d+\.\s+(.*)$/;
+
+interface OpenList {
+  readonly ordered: boolean;
+  readonly items: InlineNode[][];
+}
+
+interface OpenCode {
+  readonly language: string;
+  readonly lines: string[];
+}
+
+export function parseBlocks(markdown: string): Block[] {
+  const blocks: Block[] = [];
+  const open: { paragraph: string[]; list: OpenList | null; code: OpenCode | null } = {
+    paragraph: [],
+    list: null,
+    code: null,
+  };
+
+  const flushParagraph = () => {
+    if (open.paragraph.length > 0) {
+      blocks.push({ kind: 'paragraph', content: parseInline(open.paragraph.join(' ')) });
+    }
+    open.paragraph = [];
+  };
+  const flushList = () => {
+    if (open.list) blocks.push({ kind: 'list', ...open.list });
+    open.list = null;
+  };
+  const flushCode = () => {
+    if (open.code) {
+      blocks.push({
+        kind: 'code',
+        language: open.code.language || 'text',
+        code: open.code.lines.join('\n'),
+      });
+    }
+    open.code = null;
+  };
+
+  for (const rawLine of markdown.split('\n')) {
+    const line = rawLine.trimEnd();
+
+    if (open.code) {
+      if (line.trim().startsWith('```')) flushCode();
+      else open.code.lines.push(rawLine);
+      continue;
+    }
+
+    const fence = FENCE.exec(line.trim());
+    if (fence) {
+      flushParagraph();
+      flushList();
+      open.code = { language: fence[1] ?? '', lines: [] };
+      continue;
+    }
+    if (!line.trim()) {
+      flushParagraph();
+      flushList();
+      continue;
+    }
+
+    const heading = HEADING.exec(line);
+    if (heading) {
+      flushParagraph();
+      flushList();
+      blocks.push({ kind: 'heading', content: parseInline(heading[1] ?? '') });
+      continue;
+    }
+
+    const item = BULLET.exec(line) ?? NUMBERED.exec(line);
+    if (item) {
+      flushParagraph();
+      const ordered = NUMBERED.test(line);
+      if (open.list?.ordered !== ordered) flushList();
+      open.list ??= { ordered, items: [] };
+      open.list.items.push(parseInline(item[1] ?? ''));
+      continue;
+    }
+
+    flushList();
+    open.paragraph.push(line.trim());
+  }
+
+  flushParagraph();
+  flushList();
+  flushCode();
+  return blocks;
+}
