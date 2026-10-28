@@ -21,6 +21,8 @@ export interface TopicQuestion {
 export interface TopicCopy {
   readonly label: string;
   readonly intro: string;
+  /** The page's search-result snippet: a sentence or two, at most 160 characters. */
+  readonly description: string;
   readonly questions: readonly TopicQuestion[];
   /** What the page shows beneath its introduction: its part of the record. */
   readonly page: readonly ResponsePart[];
@@ -40,6 +42,7 @@ export interface Topic {
   readonly label: string;
   readonly icon: TopicIcon;
   readonly intro: string;
+  readonly description: string;
   readonly questions: readonly TopicQuestion[];
 }
 
@@ -72,6 +75,7 @@ export function createTopicCatalog(copy: Readonly<Record<TopicId, TopicCopy>>): 
     label: copy[id].label,
     icon: TOPIC_ICONS[id],
     intro: copy[id].intro,
+    description: copy[id].description,
     questions: copy[id].questions,
   });
   // A tuple, so the first topic is a known fallback rather than a possibly-undefined index.

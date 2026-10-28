@@ -19,6 +19,7 @@ export function createTopics(kit: ResponseKit): Readonly<Record<TopicId, TopicCo
     overview: {
       label: 'Overview',
       intro: `Here's the short version: ${profile.firstName} is ${article(profile.title)} ${profile.title} and ${profile.yearsLabel} in React, TypeScript and frontend architecture, with measurable wins in performance and team growth. What would you like to know?`,
+      description: `${profile.name}, senior frontend engineer: React, TypeScript, Next.js, frontend architecture and performance. Ask the AI assistant about his work.`,
       questions: [
         { question: `Tell me about ${first}'s career.`, tag: 'Career', short: 'His career' },
         { question: 'What scope has he worked at?', tag: 'Scope', short: 'Scope of his work' },
@@ -50,6 +51,7 @@ export function createTopics(kit: ResponseKit): Readonly<Record<TopicId, TopicCo
     experience: {
       label: 'Experience',
       intro: `${first}'s career spans ${String(experience.length)} roles since ${String(profile.careerStartYear)} — from freelance web development to lead and senior frontend roles at ${employer('roots')} and ${employer('deel')} and, today, full-stack work at ${employer('way2b1')}. Pick a company, or ask how his scope grew over time.`,
+      description: `${profile.name}'s experience: ${employer('way2b1')}, ${employer('deel')}, ${employer('roots')} and more — ${profile.yearsLabel} of frontend and full-stack work since ${String(profile.careerStartYear)}.`,
       questions: [
         { question: `Tell me about ${first}'s career.`, tag: 'Career' },
         { question: `What has he built at ${employer('deel')}?`, tag: employer('deel') },
@@ -68,6 +70,7 @@ export function createTopics(kit: ResponseKit): Readonly<Record<TopicId, TopicCo
     skills: {
       label: 'Technical Skills',
       intro: `${first}'s core stack is React, TypeScript and Next.js, backed by architecture, performance and leadership skills. Ask about any area and you'll get the evidence behind it, not a self-rated score.`,
+      description: `${profile.name}'s technical skills: React, TypeScript, Next.js, frontend architecture, performance, accessibility, Node.js and technical leadership.`,
       questions: [
         { question: 'How experienced is he with React and TypeScript?', tag: 'React & TypeScript' },
         { question: 'How did he optimize performance?', tag: 'Performance' },
@@ -92,6 +95,7 @@ export function createTopics(kit: ResponseKit): Readonly<Record<TopicId, TopicCo
     projects: {
       label: 'Projects',
       intro: `Beyond his day job, ${first} builds his own products. ${liveProducts} already have public sites, and ${product('fictiondraft')} is still a concept. Ask about any of them — I'll be clear about what's live versus planned.`,
+      description: `Products ${profile.name} builds on his own — ${joinNames(knowledge.projects.map((project) => project.name))}: what each does and where it stands.`,
       questions: [
         { question: `Tell me more about ${product('evcopilot')}.`, tag: product('evcopilot') },
         { question: `Tell me more about ${product('formdaily')}.`, tag: product('formdaily') },
@@ -113,6 +117,7 @@ export function createTopics(kit: ResponseKit): Readonly<Record<TopicId, TopicCo
     philosophy: {
       label: 'Engineering Philosophy',
       intro: `${first}'s engineering is pragmatic: readable code other people can evolve, architecture sized to the product's real stage, and quality he can verify. Here are the principles he works by and how he takes a problem from question to delivery.`,
+      description: `How ${profile.name} engineers software: maintainable code, architecture sized to the product, verifiable quality and his process from problem to delivery.`,
       questions: [
         { question: "What's his engineering philosophy?", tag: 'Principles' },
         { question: 'How does he use AI in engineering?', tag: 'AI engineering' },
@@ -133,6 +138,7 @@ export function createTopics(kit: ResponseKit): Readonly<Record<TopicId, TopicCo
     education: {
       label: 'Education & Languages',
       intro: `${first} holds a ${education.degree.replace("Bachelor's Degree", "Bachelor's degree")} from ${education.school} (${String(education.year)}) and works in ${joinNames(languages.map((language) => language.name))}.`,
+      description: `${profile.name}'s education and languages: ${education.schoolShort} (${String(education.year)}), ${joinNames(languages.map((language) => language.name))}, courses and continuous learning.`,
       questions: [
         { question: 'How does he use AI in engineering?', tag: 'AI engineering' },
         { question: 'Has he worked with backend systems?', tag: 'Full stack' },

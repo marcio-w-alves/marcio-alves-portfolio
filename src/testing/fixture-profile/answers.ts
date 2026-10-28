@@ -79,6 +79,7 @@ export const fixtureAnswers: AnswerSet = {
     ) => ({
       label,
       intro,
+      description: intro,
       questions,
       page: [],
     });

@@ -132,7 +132,7 @@ function SidebarFooter({ links }: { links: SidebarLinks }) {
     <div className="mt-auto flex flex-col gap-1 px-2.5">
       <a
         href={mailto}
-        className="group mb-3 inline-flex w-fit items-center gap-1.5 text-13.5 leading-label font-medium text-ink no-underline"
+        className="group -mt-3 inline-flex min-h-11 w-fit items-center gap-1.5 py-3 text-13.5 leading-label font-medium text-ink no-underline"
       >
         Get in touch
         <Icon

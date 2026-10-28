@@ -10,7 +10,12 @@ import { shareImage, shareImageAlt } from './share-image';
 import { createSiteContent } from './site-content';
 import type { SiteProfile } from './site-profile';
 import { sitemap } from './sitemap';
-import { personStructuredData, serializeStructuredData } from './structured-data';
+import { topicPath } from './routes';
+import {
+  homeStructuredData,
+  serializeStructuredData,
+  topicStructuredData,
+} from './structured-data';
 import { workspaceView } from './workspace-view';
 
 interface SiteOptions {
@@ -49,7 +54,7 @@ export function createSite(profile: SiteProfile, { fontClassName, siteUrl }: Sit
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: serializeStructuredData(personStructuredData(knowledge, siteUrl())),
+            __html: serializeStructuredData(homeStructuredData(knowledge, siteUrl())),
           }}
         />
         <ChatWorkspace {...workspaceView(content)} />
@@ -64,13 +69,28 @@ export function createSite(profile: SiteProfile, { fontClassName, siteUrl }: Sit
    */
   function topicPage(topic: TopicId) {
     function TopicPage() {
-      return <ChatWorkspace {...workspaceView(content, topic)} />;
+      const { label } = content.topicCatalog.topicById(topic);
+      return (
+        <>
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: serializeStructuredData(
+                topicStructuredData(knowledge, siteUrl(), label, topicPath(topic)),
+              ),
+            }}
+          />
+          <ChatWorkspace {...workspaceView(content, topic)} />
+        </>
+      );
     }
     return { metadata: topicMetadata(content, topic), Page: TopicPage };
   }
 
   return {
     rootMetadata: () => rootMetadata(knowledge, siteUrl()),
+    // The browser's own chrome, on phones, takes the page's background.
+    viewport: { themeColor: profile.brand.colors.bg },
     RootLayout,
     homeMetadata,
     HomePage,
@@ -80,6 +100,15 @@ export function createSite(profile: SiteProfile, { fontClassName, siteUrl }: Sit
     imageFonts: () => loadImageFonts(profile.brand.imageFont),
     icon: (size: ImageSize, fonts: ImageFonts) =>
       iconImage({ initials: knowledge.profile.initials, brand: profile.brand, fonts, size }),
+    // Full-bleed: iOS rounds the home-screen icon's corners itself.
+    appleIcon: (size: ImageSize, fonts: ImageFonts) =>
+      iconImage({
+        initials: knowledge.profile.initials,
+        brand: profile.brand,
+        fonts,
+        size,
+        radius: 0,
+      }),
     shareImageAlt: shareImageAlt(knowledge),
     shareImage: (size: ImageSize, fonts: ImageFonts) =>
       shareImage({ knowledge, brand: profile.brand, fonts, host: siteUrl().host, size }),
