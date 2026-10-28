@@ -124,8 +124,25 @@ The assistant reaches data only through an allow-list of named actions. It is
 never handed the knowledge base itself, and a question no action covers is
 answered as undocumented rather than guessed.
 
+## Versioning
+
+Versions are derived from commit history by semantic-release, which runs on
+`main` only after the `ci` job has passed — a broken `main` is never tagged.
+`fix:` moves the patch, `feat:` the minor, and a `BREAKING CHANGE:` footer the
+major.
+
+A release is a git tag plus a GitHub Release with generated notes. There is no
+`CHANGELOG.md` and nothing is committed back to `main`: the Releases page
+already renders that history linked to its commits, and writing a file back
+would mean a bot commit on every release — one that would have to be exempted
+from this project's own commit rules to get through.
+
+`version` in `package.json` stays at `0.0.0-semantically-released` on purpose.
+Nothing reads it, the site is not published to a registry, and a number
+sitting in a file is a number somebody eventually edits. **Never bump it by
+hand.**
+
 ## Conventions
 
 Branches `por-<nn>-<slug>`, Conventional Commits carrying the task key, one
-pull request per task. Versioning is automated from commit history on `main`;
-never bump `version` by hand.
+pull request per task.

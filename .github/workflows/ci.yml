@@ -91,3 +91,28 @@ jobs:
           echo "::error::One or more gates failed. See the jobs above."
           exit 1
       - run: echo "All gates passed."
+
+  # Versioning is derived from the commits that reached main, and only once
+  # every gate has passed. It never runs on a pull request, so it never shows
+  # up in the list of checks a pull request has to satisfy.
+  release:
+    name: release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [ci]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # create the tag and the release
+      issues: write # comment on the issues a release closes
+      pull-requests: write # comment on the pull requests it contains
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # semantic-release decides the next version by reading every existing
+          # tag, so a shallow clone would make it start from zero each time.
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - run: pnpm release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
