@@ -7,7 +7,7 @@ import {
 } from '@/core/i18n/locale';
 import type { KnowledgeSource, SiteSubject } from '@/core/knowledge/schema';
 import { excludePattern } from '@/core/knowledge/product-sites';
-import { addedFigures, untranslated } from '@/core/knowledge/translations';
+import { figureMismatches, untranslated } from '@/core/knowledge/translations';
 import { knowledgeRecordSchema } from '@/core/knowledge/validate';
 import type { Brand, LocaleCopy } from '@/site/site-profile';
 import type { EvaluationCase } from './evaluation/cases';
@@ -146,10 +146,17 @@ interface Publication {
   readonly copy: Partial<Record<Locale, unknown>>;
 }
 
+function describeMismatch(added: readonly string[], missing: readonly string[]): string {
+  return [
+    ...(added.length > 0 ? [`not ${added.join(', ')}`] : []),
+    ...(missing.length > 0 ? [`missing ${missing.join(', ')}`] : []),
+  ].join('; ');
+}
+
 /**
  * A language is published only once the copy and the whole record are written
- * in it, each text saying what its English one says: no number, date or link
- * of its own.
+ * in it, each text saying what its English one says: the same numbers, dates
+ * and links, none added and none left out.
  */
 function checkPublishedLocalesWritten(
   { locales, knowledge, copy }: Publication,
@@ -171,10 +178,10 @@ function checkPublishedLocalesWritten(
         path: ['knowledge', ...path],
       });
     }
-    for (const { path, figures } of addedFigures(knowledge, locale)) {
+    for (const { path, added, missing } of figureMismatches(knowledge, locale)) {
       context.addIssue({
         code: 'custom',
-        message: `A translation states only what its English text does, not ${figures.join(', ')}`,
+        message: `A translation states the figures its English text does: ${describeMismatch(added, missing)}`,
         path: ['knowledge', ...path],
       });
     }

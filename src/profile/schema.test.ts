@@ -143,6 +143,17 @@ describe('validating a profile', () => {
     ]);
   });
 
+  it('rejects a translation that leaves out a figure its English text states', () => {
+    const knowledge = withMetric(fixtureKnowledge, 'acme-build-time', {
+      label: { en: 'Builds 40% faster since 2022', 'pt-BR': 'Builds 40% mais rápidos' },
+    });
+
+    expect(() => validateProfile({ ...bilingual, knowledge })).toThrow(/missing 2022/);
+    expect(issuePaths({ ...bilingual, knowledge })).toEqual([
+      ['knowledge', 'metrics', 'acme-build-time', 'label', 'pt-BR'],
+    ]);
+  });
+
   it('accepts a translation that writes the same figure the way its language does', () => {
     const knowledge = withMetric(fixtureKnowledge, 'acme-build-time', {
       label: { en: 'Builds 1.5x faster', 'pt-BR': 'Builds 1,5x mais rápidos' },

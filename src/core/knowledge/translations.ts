@@ -45,20 +45,28 @@ function figures(text: string): Set<string> {
   );
 }
 
-/** A translation states only what its English text does: no figure, date or link of its own. */
-export interface AddedFigures {
+/** Where a translation's figures, dates and links differ from its English text's. */
+export interface FigureMismatch {
   readonly path: TextPath;
-  readonly figures: readonly string[];
+  /** Stated by the translation, not by its English text. */
+  readonly added: readonly string[];
+  /** Stated by the English text, left out of the translation. */
+  readonly missing: readonly string[];
 }
 
-/** Each translation into `locale` that states a figure, date or link its English text does not. */
-export function addedFigures(value: unknown, locale: Locale): AddedFigures[] {
+/**
+ * Each translation into `locale` that does not state exactly the figures,
+ * dates and links its English text does: none of its own, none left out.
+ */
+export function figureMismatches(value: unknown, locale: Locale): FigureMismatch[] {
   if (locale === DEFAULT_LOCALE) return [];
   return localizedTexts(value).flatMap(([path, text]) => {
     const translation = text[locale];
     if (translation === undefined) return [];
     const english = figures(text.en);
-    const added = [...figures(translation)].filter((figure) => !english.has(figure));
-    return added.length > 0 ? [{ path: [...path, locale], figures: added }] : [];
+    const translated = figures(translation);
+    const added = [...translated].filter((figure) => !english.has(figure));
+    const missing = [...english].filter((figure) => !translated.has(figure));
+    return added.length + missing.length > 0 ? [{ path: [...path, locale], added, missing }] : [];
   });
 }
