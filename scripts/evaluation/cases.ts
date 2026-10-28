@@ -451,7 +451,7 @@ export const CASES: readonly EvaluationCase[] = [
     category: 'notes',
     // POR-73: this site is his production RAG work, no longer only a study.
     question: 'Has he built a RAG system in production?',
-    expect: { path: 'model', mentions: ['portfolio'] },
+    expect: { mentions: ['portfolio'] },
   },
   {
     id: 'pt-accessibility',

@@ -113,6 +113,21 @@ const SEARCH = 'searchKnowledge';
 const SEARCH_FIRST =
   'Your decline was not recorded. These passages come from a search of his whole record for the question: answer from them if one answers it, and call declineToAnswer again only if none does.';
 const MAX_QUERY = 300;
+/**
+ * The relevance from which the record probably answers the question, so a
+ * decline made without a search is replaced by the passages. Below it the
+ * decline stands: handed weakly related passages, the model wrote "not
+ * documented" without declining and cited them. Calibrated on real
+ * embeddings: answerable questions (his dogs, the Roots backend, MongoDB)
+ * scored 0.53–0.74 and undocumented ones (GPA, salary, leaving Deel, Google)
+ * 0.34–0.43.
+ */
+const ANSWERABLE = 0.5;
+
+function bestRelevance(data: unknown): number {
+  const passages = (data as { passages?: readonly { relevance?: number }[] }).passages ?? [];
+  return Math.max(0, ...passages.map((passage) => passage.relevance ?? 0));
+}
 
 // Every call needs a reply, or the conversation is invalid.
 function roundMessages(turn: ModelTurn, results: readonly ActionResult[]): ModelMessage[] {
@@ -269,19 +284,26 @@ export function createModelAssistant({
   // The prompt asks for a search before anything is called not documented,
   // and the model still skips it after a narrower action comes back empty
   // ("did he work on the Roots backend?" once went getTechnologyEvidence →
-  // decline, while his notes answer it). Sending the decline back was not
+  // decline, while his notes answer it), or calls it private ("what are his
+  // dogs called?", which he chose to share). Sending the decline back was not
   // enough — the model then answered without searching — so the search runs
   // in its place, with the visitor's own question.
 
   function declinesUnsearched(call: ToolCall, searched: boolean): boolean {
     if (!canSearch || searched || call.name !== 'declineToAnswer') return false;
     const parsed = parseArguments(call.arguments) as { reason?: unknown } | undefined;
-    return parsed?.reason === 'not_documented';
+    return parsed?.reason === 'not_documented' || parsed?.reason === 'private';
   }
 
-  async function searchInstead(question: string, signal?: AbortSignal): Promise<ToolOutcome> {
+  async function searchInstead(
+    question: string,
+    decline: ToolCall,
+    signal?: AbortSignal,
+  ): Promise<ToolOutcome> {
     const outcome = await tools.run(SEARCH, { query: question.slice(0, MAX_QUERY) }, signal);
-    if (!outcome.ok) return outcome;
+    if (!outcome.ok || bestRelevance(outcome.result.data) < ANSWERABLE) {
+      return execute(decline, signal);
+    }
     return {
       ok: true,
       result: { ...outcome.result, data: { note: SEARCH_FIRST, results: outcome.result.data } },
@@ -295,7 +317,7 @@ export function createModelAssistant({
     { searched, question, signal }: RoundContext,
   ): Promise<ToolOutcome> {
     if (index >= MAX_CALLS_PER_ROUND) return Promise.resolve(SKIPPED_ACTION);
-    if (declinesUnsearched(call, searched)) return searchInstead(question, signal);
+    if (declinesUnsearched(call, searched)) return searchInstead(question, call, signal);
     return execute(call, signal);
   }
 

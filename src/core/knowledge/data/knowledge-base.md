@@ -1194,6 +1194,9 @@ R: Favorece a forma mais simples que preserve limites de domínio e capacidade d
 **P: O que diferencia seu perfil como engenheiro de software além de React?**  
 R: Capacidade de trabalhar entre camadas, liderar decisões arquiteturais, melhorar performance com métricas, coordenar pessoas, definir contratos e integrar IA no processo de engenharia com contexto, hooks, validação e responsabilidade técnica. Essa combinação se apoia em trabalhos na Roots/Deel/Toptal e em estudos independentes.
 
+**P: O que ele gosta de fazer fora do trabalho?**  
+R: Jogar, sobretudo MMORPGs como Ragnarok Online, e criar coisas para eles; ler novels, que ocupam a maior parte do seu tempo livre; musculação, corrida e jiu-jitsu; aprender bateria, hoje em pausa; passear e brincar com seus dois cachorros, o Sky e o Oreo; e estar perto da família. Também gosta de séries como Foundation e Dark Matter. [RELATO]
+
 **P: Ele tem animais de estimação?**  
 R: Sim. Marcio tem dois cachorros, o Sky e o Oreo — um Samoieda e um Laika da Yakútia —, e gosta de passear e brincar bastante com eles. [RELATO]
 
