@@ -19,7 +19,7 @@ function InlineElement({ node }: { readonly node: InlineNode }) {
       return <strong className="font-semibold">{node.text}</strong>;
     case 'code':
       return (
-        <code className="bg-code-bg inset-shadow-ring rounded-code px-1.25 py-px font-mono text-code font-normal">
+        <code className="rounded-code bg-fill px-1.5 py-0.5 font-mono text-code font-medium">
           {node.text}
         </code>
       );
@@ -30,7 +30,7 @@ function InlineElement({ node }: { readonly node: InlineNode }) {
 
 function InlineLink({ node }: { readonly node: Extract<InlineNode, { kind: 'link' }> }) {
   const className =
-    'text-accent underline decoration-accent/35 underline-offset-3 hover:text-accent-hover hover:decoration-current';
+    'font-medium text-ink underline decoration-border-strong underline-offset-3 hover:decoration-current';
   if (!node.external) {
     return (
       <a className={className} href={node.href}>

@@ -43,16 +43,19 @@ function SectionContent({ section }: { readonly section: RoleSection }) {
     case 'metrics':
       return <ImpactList items={section.items} />;
     case 'tags':
-      return <TagList tags={section.items} />;
+      return <TagList tags={section.items} tone="outline" />;
   }
 }
 
 function ImpactList({ items }: { readonly items: readonly MetricItem[] }) {
   return (
-    <ul className="flex flex-col gap-1.5 text-14 leading-normal">
+    <ul className="flex flex-col gap-2 text-14 leading-normal">
       {items.map((metric) => (
-        <li key={`${metric.value} ${metric.label}`} className="grid grid-cols-impact gap-3">
-          <span className="font-semibold text-accent tabular-nums">{metric.value}</span>
+        <li
+          key={`${metric.value} ${metric.label}`}
+          className="grid grid-cols-impact items-baseline gap-3"
+        >
+          <span className="font-semibold tabular-nums">{metric.value}</span>
           <span>{metric.label}</span>
         </li>
       ))}

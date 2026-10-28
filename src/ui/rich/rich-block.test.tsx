@@ -146,6 +146,15 @@ describe('projects', () => {
     expect(within(live).queryByText('Planned scope')).not.toBeInTheDocument();
   });
 
+  it('lists the platforms a product runs on, and nothing for one that names none', () => {
+    renderBlock(exampleBlock('projects'));
+    const evcopilot = screen.getByRole('article', { name: 'Project: EvCopilot' });
+    expect(within(evcopilot).getByText('Platforms')).toBeInTheDocument();
+    expect(within(evcopilot).getByText('iPhone (beta)')).toBeInTheDocument();
+    const concept = screen.getByRole('article', { name: 'Project: FictionDraft' });
+    expect(within(concept).queryByText('Platforms')).not.toBeInTheDocument();
+  });
+
   it('leaves out sections the record does not document', () => {
     const block = exampleBlock('projects');
     const concept = block.props.projects.find((project) => project.id === 'fictiondraft');
@@ -302,12 +311,15 @@ describe('contact', () => {
     expect(screen.queryByRole('link', { name: /resume/i })).not.toBeInTheDocument();
   });
 
-  it('offers the résumé as a download once there is one', () => {
+  it('opens the résumé in a new tab once there is one, saying it is a PDF', () => {
     const { props } = exampleBlock('contact');
     renderBlock({ component: 'contact', props: { ...props, resumeUrl: '/marcio-alves.pdf' } });
-    const resume = screen.getByRole('link', { name: 'Download resume' });
+    const resume = screen.getByRole('link', {
+      name: /^View resume ?\(PDF, opens in a new tab\)$/,
+    });
     expect(resume).toHaveAttribute('href', '/marcio-alves.pdf');
-    expect(resume).toHaveAttribute('download');
+    expect(resume).toHaveAttribute('target', '_blank');
+    expect(resume).not.toHaveAttribute('download');
   });
 });
 

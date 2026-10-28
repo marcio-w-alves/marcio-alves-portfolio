@@ -16,7 +16,7 @@ export function Details({ summary, text }: DetailsProps) {
   const panelId = useId();
 
   return (
-    <div className="shadow-raised animate-block-enter rounded-md bg-surface">
+    <div className="animate-block-enter rounded-md bg-surface shadow-ring">
       <button
         type="button"
         aria-expanded={isOpen}
@@ -24,14 +24,14 @@ export function Details({ summary, text }: DetailsProps) {
         onClick={() => {
           setIsOpen((open) => !open);
         }}
-        className="flex min-h-11.5 w-full cursor-pointer items-center justify-between gap-3 rounded-md bg-transparent px-3.5 py-2.5 text-left font-sans text-14 leading-label font-medium text-ink hover:bg-bg"
+        className="flex min-h-12 w-full cursor-pointer items-center justify-between gap-3 rounded-md bg-transparent px-4 py-3 text-left font-sans text-14 leading-label font-medium text-ink hover:bg-ice"
       >
         <span>{summary}</span>
         <Icon
           name="chevronDown"
           size="sm"
           className={cn(
-            'text-ink-faint transition-[rotate] duration-medium ease-standard',
+            'text-ink-muted transition-[rotate] duration-medium ease-standard',
             isOpen && 'rotate-180',
           )}
         />
@@ -39,7 +39,7 @@ export function Details({ summary, text }: DetailsProps) {
       {isOpen ? (
         <div
           id={panelId}
-          className="animate-reveal px-3.5 pb-3.5 text-14.5 leading-prose text-ink-muted"
+          className="animate-reveal px-4 pb-4 text-14.5 leading-airy text-ink-muted"
         >
           {paragraphs(text).map((paragraph, index) => (
             <p key={index} className="text-pretty wrap-anywhere">

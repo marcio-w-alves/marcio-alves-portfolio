@@ -2,6 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { AssistantMessage as Message } from '@/core/conversation/messages';
+import { knowledgeBase } from '@/core/knowledge/knowledge-base';
 import { AssistantMessage } from './assistant-message';
 
 function message(fields: Partial<Message>): Message {
@@ -36,6 +37,29 @@ function renderMessage(fields: Partial<Message>) {
   render(<AssistantMessage message={message(fields)} isLatest {...handlers} />);
   return handlers;
 }
+
+describe('an answer', () => {
+  it('is signed with the name the knowledge base gives the assistant', () => {
+    renderMessage({ parts: [{ type: 'text', id: 'p0', text: 'Hello.' }] });
+    const answer = screen.getByRole('article', {
+      name: "Answer from Marcio's portfolio assistant",
+    });
+    expect(within(answer).getByText(knowledgeBase.assistant.name).tagName).toBe('STRONG');
+  });
+
+  it('offers its follow-ups under a heading, and asks the one picked', async () => {
+    const user = userEvent.setup();
+    const handlers = renderMessage({
+      parts: [{ type: 'text', id: 'p0', text: 'Hello.' }],
+      followUps: ['How did he optimize performance?'],
+    });
+    const followUps = screen.getByRole('list', { name: 'Ask a follow-up' });
+    await user.click(
+      within(followUps).getByRole('button', { name: 'How did he optimize performance?' }),
+    );
+    expect(handlers.onFollowUp).toHaveBeenCalledWith('How did he optimize performance?');
+  });
+});
 
 describe('an answer’s text', () => {
   it('renders headings, lists and inline formatting from the answer’s Markdown', () => {
