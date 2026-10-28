@@ -20,6 +20,14 @@ import type {
  * client never has to know a knowledge-base id exists.
  */
 
+export function bullets(items: readonly string[]): string {
+  return items.map((item) => `- ${item}`).join('\n');
+}
+
+export function numbered(items: readonly string[]): string {
+  return items.map((item, index) => `${String(index + 1)}. ${item}`).join('\n');
+}
+
 export function text(markdown: string): ResponsePart {
   return { type: 'text', text: markdown };
 }

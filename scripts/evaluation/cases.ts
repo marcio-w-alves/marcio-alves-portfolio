@@ -335,7 +335,7 @@ export const CASES: readonly EvaluationCase[] = [
     category: 'notes',
     // Only the knowledge-base notes describe how he works with coding agents.
     question: 'How does Marcio use AI when he programs?',
-    expect: { path: 'model', mentions: ['Claude Code'], avoids: ['% productivity', '% faster'] },
+    expect: { path: 'fast', mentions: ['Claude Code'], avoids: ['% productivity', '% faster'] },
   },
   {
     id: 'notes-own-product-study',

@@ -38,6 +38,7 @@ const SCORED_ANSWERS: Readonly<
   scaling: career.scaling,
   enterprise: career.enterprise,
   staffFit: career.staffFit,
+  aiEngineering: expertise.aiEngineering,
   philosophy: expertise.philosophy,
   architecture: expertise.architecture,
   performance: expertise.performance,
