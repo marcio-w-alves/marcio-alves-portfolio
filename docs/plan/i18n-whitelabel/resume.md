@@ -1,6 +1,6 @@
 # Resume — i18n-whitelabel
 
-_Last updated: 2026-10-28 · Base: `main` · Tasks: POR-41…POR-70 (POR-71 = this plan's docs PR)_
+_Last updated: 2026-10-28 (after POR-44) · Base: `main` · Tasks: POR-41…POR-70 (POR-71 = this plan's docs PR)_
 
 ## How to resume (read this first)
 
@@ -55,23 +55,23 @@ The owner authorised this, and the repository works this way (memory: "Always pu
 
 ## Status snapshot
 
-- Overall: **in_progress** (0/30 tasks merged). The plan docs are approved; POR-71 lands them on `main`.
-- Current set: **S1** = POR-41, 42, 47, 48, 57, 62. Blocked: none.
+- Overall: **in_progress** (9/30 tasks merged + plan docs POR-71). Merged: 41, 42, 43, 44, 47, 48, 49, 57, 62.
+- Current set: **S4** = POR-45 (PR open). Next: S5 POR-46. Blocked: POR-67 (owner confirmation on generated PDF).
 
 ## Deliverables
 
 | id     | scope                                                         | depends on     | set | status  | branch | PR  | notes                         |
 | ------ | ------------------------------------------------------------- | -------------- | --- | ------- | ------ | --- | ----------------------------- |
-| POR-71 | Plan docs (`docs/plan/i18n-whitelabel`)                       | —              | —   | pending | —      | —   | land first                    |
-| POR-41 | Offer filter keeps factual sentences                          | —              | S1  | pending | —      | —   |                               |
-| POR-42 | Router stops refusing valid questions                         | —              | S1  | pending | —      | —   |                               |
-| POR-43 | Forged context intents never throw                            | 42             | S2  | pending | —      | —   |                               |
-| POR-44 | Boundary rules, server-only, knowledge↔assistant cycle        | 43             | S3  | pending | —      | —   |                               |
+| POR-71 | Plan docs (`docs/plan/i18n-whitelabel`)                       | —              | —   | merged  | —      | #45 | land first                    |
+| POR-41 | Offer filter keeps factual sentences                          | —              | S1  | merged  | —      | #51 |                               |
+| POR-42 | Router stops refusing valid questions                         | —              | S1  | merged  | —      | #48 |                               |
+| POR-43 | Forged context intents never throw                            | 42             | S2  | merged  | —      | #54 |                               |
+| POR-44 | Boundary rules, server-only, knowledge↔assistant cycle        | 43             | S3  | merged  | —      | #57 |                               |
 | POR-45 | Limiter/budget memory, IPv6 /64, interrupted tokens           | 44, 49         | S4  | pending | —      | —   |                               |
 | POR-46 | Embeddings breaker/abort, tool exceptions, adapter validation | 44, 45         | S5  | pending | —      | —   |                               |
-| POR-47 | Eval harness (N runs, calibration, avoids, new cases)         | —              | S1  | pending | —      | —   | eval stays local              |
-| POR-48 | Coverage thresholds core/infrastructure                       | —              | S1  | pending | —      | —   |                               |
-| POR-49 | Core code health                                              | 41, 42, 43     | S3  | pending | —      | —   |                               |
+| POR-47 | Eval harness (N runs, calibration, avoids, new cases)         | —              | S1  | merged  | —      | #52 | eval stays local              |
+| POR-48 | Coverage thresholds core/infrastructure                       | —              | S1  | merged  | —      | #47 |                               |
+| POR-49 | Core code health                                              | 41, 42, 43     | S3  | merged  | —      | #56 |                               |
 | POR-50 | Link allow-list                                               | 46             | S6  | pending | —      | —   |                               |
 | POR-51 | Model answer quality                                          | 46, 47, 50     | S7  | pending | —      | —   |                               |
 | POR-52 | Profile folder + knowledge injection                          | 44, 46, 47, 49 | S6  | pending | —      | —   |                               |
@@ -79,12 +79,12 @@ The owner authorised this, and the repository works this way (memory: "Always pu
 | POR-54 | Fast path from the record; owner wording to the profile       | 52, 51         | S8  | pending | —      | —   |                               |
 | POR-55 | Record corrections                                            | 54, 53, 58     | S9  | pending | —      | —   | IDX                           |
 | POR-56 | Product-site ingestion                                        | 55, 51         | S10 | pending | —      | —   | IDX                           |
-| POR-57 | Retry/edit cancels the in-flight answer                       | —              | S1  | pending | —      | —   |                               |
+| POR-57 | Retry/edit cancels the in-flight answer                       | —              | S1  | merged  | —      | #49 |                               |
 | POR-58 | Single client/server contracts                                | 57, 43, 53     | S8  | pending | —      | —   |                               |
 | POR-59 | Knowledge base out of the client bundle                       | 58, 54         | S9  | pending | —      | —   |                               |
 | POR-60 | SSE heartbeat, time limit, maxDuration, parser                | 58             | S9  | pending | —      | —   |                               |
 | POR-61 | UI code health                                                | 59             | S10 | pending | —      | —   |                               |
-| POR-62 | Motion e2e waits on conditions                                | —              | S1  | pending | —      | —   |                               |
+| POR-62 | Motion e2e waits on conditions                                | —              | S1  | merged  | —      | #55 |                               |
 | POR-63 | EN catalog, brand tokens, fixture tests, full whitelabel      | 61, 60, 55     | S11 | pending | —      | —   | pixel-neutral                 |
 | POR-64 | Locale routing (PT off)                                       | 63             | S12 | pending | —      | —   | starts with the routing spike |
 | POR-65 | Portuguese content (still off)                                | 64, 56         | S13 | pending | —      | —   | IDX                           |
@@ -104,9 +104,9 @@ S16: 69 · S17: 70. Some edges exist only because tasks edit the same file; they
 
 Every AC is listed with its tests in `test-plan.md` §2. Tick an AC here when its task merges:
 
-- [ ] POR-41 · [ ] POR-42 · [ ] POR-43 · [ ] POR-44 · [ ] POR-45 · [ ] POR-46 · [ ] POR-47 · [ ] POR-48
-- [ ] POR-49 · [ ] POR-50 · [ ] POR-51 · [ ] POR-52 · [ ] POR-53 · [ ] POR-54 · [ ] POR-55 · [ ] POR-56
-- [ ] POR-57 · [ ] POR-58 · [ ] POR-59 · [ ] POR-60 · [ ] POR-61 · [ ] POR-62 · [ ] POR-63 · [ ] POR-64
+- [x] POR-41 · [ ] POR-42 · [ ] POR-43 · [ ] POR-44 · [ ] POR-45 · [ ] POR-46 · [ ] POR-47 · [x] POR-48
+- [x] POR-49 · [ ] POR-50 · [ ] POR-51 · [ ] POR-52 · [ ] POR-53 · [ ] POR-54 · [ ] POR-55 · [ ] POR-56
+- [x] POR-57 · [ ] POR-58 · [ ] POR-59 · [ ] POR-60 · [ ] POR-61 · [ ] POR-62 · [ ] POR-63 · [ ] POR-64
 - [ ] POR-65 · [ ] POR-66 · [ ] POR-67 · [ ] POR-68 · [ ] POR-69 · [ ] POR-70
 
 ## Decisions & constraints (carry-forward; do not reopen)
