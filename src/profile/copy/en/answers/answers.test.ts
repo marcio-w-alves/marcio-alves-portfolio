@@ -64,7 +64,7 @@ describe('fast path — documented answers', () => {
   it('closes a recruitment answer with the contact card only once per conversation', () => {
     const hasContact = (response: AssistantResponse) =>
       response.parts.some((part) => part.type === 'component' && part.component === 'contact');
-    const question = 'What makes Marcio a strong Staff Engineer?';
+    const question = 'What scope has he worked at?';
     expect(hasContact(answer(question))).toBe(true);
     expect(hasContact(answer(question, { ...FRESH, ctaShown: true }))).toBe(false);
   });
@@ -189,8 +189,37 @@ describe('fast path — boundaries', () => {
     expect(plainText(response)).not.toMatch(/script|alert/);
   });
 
-  it('gives the city and the country he lives in', () => {
-    expect(plainText(answer('Where does he live?'))).toContain('João Pessoa, Paraíba, Brazil');
+  it('gives the city and the country he lives in, and his availability', () => {
+    const text = plainText(answer('Where does he live?'));
+    expect(text).toContain('João Pessoa, Paraíba, Brazil');
+    expect(text).toContain(knowledge.profile.availability);
+  });
+
+  it('answers whether he is available with his availability and the contact card', () => {
+    const response = answer('Is he available?');
+    expect(response.intent).toBe('contact');
+    expect(plainText(response)).toContain(knowledge.profile.availability);
+    const card = response.parts.find(
+      (part) => part.type === 'component' && part.component === 'contact',
+    );
+    expect(card?.type === 'component' && card.props).toMatchObject({
+      availability: knowledge.profile.availability,
+    });
+  });
+
+  it('argues the scope of his work from the record and claims no Staff title', () => {
+    const response = answer('What scope has he worked at?');
+    const text = plainText(response);
+    expect(response.intent).toBe('roleFit');
+    for (const figure of text.match(/\d+%/g) ?? []) {
+      expect(
+        Object.values(knowledge.metrics)
+          .map((metric) => metric.value)
+          .join(' '),
+      ).toContain(figure);
+    }
+    expect(text).toContain(knowledge.experience.find((role) => role.id === 'roots')?.role);
+    expect(text).not.toMatch(/staff[- ]level|\b(is|was|as) an? staff\b|staff engineer/i);
   });
 
   it('escalates instead of answering what it does not recognize', () => {
@@ -202,7 +231,7 @@ describe('topics — introductions', () => {
   it('tells the live products apart from the concept', () => {
     const intro = topics.find((topic) => topic.id === 'projects')?.intro;
     expect(intro).toBe(
-      "Beyond his day job, Marcio builds his own products. EvCopilot, FormDaily and TargUp already have public sites, and FictionDraft is still a concept. Ask about any of them — I'll be clear about what's live versus planned.",
+      "Beyond his day job, Marcio builds his own products. EvCopilot, FormDaily, TargUp and marciomariani.dev already have public sites, and FictionDraft is still a concept. Ask about any of them — I'll be clear about what's live versus planned.",
     );
   });
 });

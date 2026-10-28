@@ -79,7 +79,7 @@ export function createBoundaryAnswers(kit: ResponseKit) {
       {
         followUps: [
           `Tell me about ${first}'s career.`,
-          `What makes ${first} a strong Staff Engineer?`,
+          'What scope has he worked at?',
           'What projects is he working on?',
         ],
         sources: [],

@@ -1,7 +1,7 @@
 [
  {
   "id": "1:1",
-  "text": "Knowledge-base notes — 1. Identidade e resumo:\n| Campo | Informação |\n| --- | --- |\n| Nome público | Marcio Alves |\n| Base profissional | Brasil; mora em João Pessoa, Paraíba (relato de 28/10/2026) |\n| Área principal | Engenharia de software, com especialização em frontend |\n| Posicionamento | Senior Frontend Engineer, Lead Frontend Engineer e atuação de escopo staff-level |\n| Tempo de experiência | Mais de 10 anos de experiência em software, conforme currículo |\n| Especialidades | React, TypeScript, Next.js, arquitetura frontend, performance, design systems, Developer Experience e liderança técnica |\n| Áreas complementares | Engenharia full-stack, Software Engineering, System Design, Node.js e APIs, arquitetura backend, sistemas distribuídos, dados, cloud, produto e UX |\n| IA aplicada à engenharia | Codex, Claude Code, Cursor, agentes por objetivo, engenharia de contexto, hooks, validação iterativa, RAG e tool calling em estudos/projetos |\n| Liderança | Decisões arquiteturais, estratégia técnica, formação de equipe, mentoria, reviews, onboarding, planejamento e colaboração transversal |\n| Idiomas | Português nativo; inglês fluente; francês e espanhol intermediários, conforme currículo |\n| GitHub | Identificador `marcio-w-alves`, link e repositórios públicos sujeitos a validação |"
+  "text": "Knowledge-base notes — 1. Identidade e resumo:\n| Campo | Informação |\n| --- | --- |\n| Nome público | Marcio Alves |\n| Base profissional | Brasil; mora em João Pessoa, Paraíba (relato de 28/10/2026) |\n| Área principal | Engenharia de software, com especialização em frontend |\n| Posicionamento | Senior Frontend Engineer com responsabilidade de tech lead; títulos formais recentes: Senior Frontend Engineer e Lead Frontend Engineer |\n| Tempo de experiência | Mais de 10 anos de experiência em software, conforme currículo |\n| Especialidades | React, TypeScript, Next.js, arquitetura frontend, performance, design systems, Developer Experience e liderança técnica |\n| Áreas complementares | Engenharia full-stack, Software Engineering, System Design, Node.js e APIs, arquitetura backend, sistemas distribuídos, dados, cloud, produto e UX |\n| IA aplicada à engenharia | Codex, Claude Code, Cursor, agentes por objetivo, engenharia de contexto, hooks, validação iterativa, RAG e tool calling em estudos/projetos |\n| Liderança | Decisões arquiteturais, estratégia técnica, formação de equipe, mentoria, reviews, onboarding, planejamento e colaboração transversal |\n| Idiomas | Português nativo; inglês fluente; francês e espanhol intermediários, conforme currículo |\n| GitHub | Identificador `marcio-w-alves`, link e repositórios públicos sujeitos a validação |"
  },
  {
   "id": "1:2",
@@ -13,7 +13,7 @@
  },
  {
   "id": "1.2",
-  "text": "Knowledge-base notes — 1. Identidade e resumo › 1.2 O que **não** se deve inferir:\n- O título **Staff** descreve seu posicionamento e escopo pretendido; não significa que tenha exercido formalmente um cargo de Staff Engineer em todas as empresas.\n- As métricas do currículo são resultados reportados e contribuições em contexto de equipe, não provas de autoria individual exclusiva.\n- Um projeto especificado, prototipado ou testado em beta não equivale a um serviço comercial lançado.\n- Uma tecnologia considerada na arquitetura de um projeto não equivale, por si só, a domínio profundo em produção.\n- Perguntas sobre um hobby, viagem, equipamento ou produto não provam um hábito contínuo nem uma experiência realizada."
+  "text": "Knowledge-base notes — 1. Identidade e resumo › 1.2 O que **não** se deve inferir:\n- Seus títulos formais mais recentes são Senior Frontend Engineer e Lead Frontend Engineer; nenhum é Staff. As evidências de escopo amplo descrevem o trabalho, não um título de Staff Engineer.\n- As métricas do currículo são resultados reportados e contribuições em contexto de equipe, não provas de autoria individual exclusiva.\n- Um projeto especificado, prototipado ou testado em beta não equivale a um serviço comercial lançado.\n- Uma tecnologia considerada na arquitetura de um projeto não equivale, por si só, a domínio profundo em produção.\n- Perguntas sobre um hobby, viagem, equipamento ou produto não provam um hábito contínuo nem uma experiência realizada."
  },
  {
   "id": "2:1",
@@ -313,7 +313,7 @@
  },
  {
   "id": "8.7",
-  "text": "Knowledge-base notes — 8. Liderança técnica e colaboração › 8.7 Escopo de senioridade e caminho profissional:\nHá evidência sólida de competências adequadas a papéis de **Senior Frontend Engineer, Lead Frontend Engineer** e atuação de alcance **staff-level**, principalmente em iniciativas de frontend que exigem coordenação, padronização, influência transversal, mentoring e resultados. Seu conhecimento de backend e IA amplia sua capacidade de discutir sistemas e orientar soluções integradas. A aderência a cargos formais Staff/Principal em outra empresa depende da definição de escopo e avaliação técnica; o documento não substitui isso."
+  "text": "Knowledge-base notes — 8. Liderança técnica e colaboração › 8.7 Escopo de senioridade e caminho profissional:\nHá evidência sólida de competências adequadas a papéis de **Senior Frontend Engineer, Lead Frontend Engineer** e de responsabilidade de tech lead, com escopo que vai além do próprio código, principalmente em iniciativas de frontend que exigem coordenação, padronização, influência transversal, mentoring e resultados. Seu conhecimento de backend e IA amplia sua capacidade de discutir sistemas e orientar soluções integradas. A aderência a cargos formais Staff/Principal em outra empresa depende da definição de escopo e avaliação técnica; o documento não substitui isso."
  },
  {
   "id": "9",
@@ -457,7 +457,7 @@
  },
  {
   "id": "14.q3",
-  "text": "Knowledge-base notes — 14. Perguntas e respostas para uma IA de portfólio:\n**P: Ele é Staff Engineer?**\nR: Seu posicionamento é staff-level e ele busca escopos dessa senioridade, mas os títulos formais mais recentes registrados são Senior Frontend Engineer e Lead Frontend Engineer."
+  "text": "Knowledge-base notes — 14. Perguntas e respostas para uma IA de portfólio:\n**P: Ele é Staff Engineer?**\nR: Seus títulos formais mais recentes são Senior Frontend Engineer e Lead Frontend Engineer; nenhum é Staff. As evidências descrevem o escopo do trabalho, não um título."
  },
  {
   "id": "14.q4",
@@ -525,7 +525,7 @@
  },
  {
   "id": "14.q20",
-  "text": "Knowledge-base notes — 14. Perguntas e respostas para uma IA de portfólio:\n**P: Ele é a pessoa certa para minha vaga?**\nR: Há boa evidência de competências relevantes para posições Senior/Lead e escopos staff-level com forte frontend. A compatibilidade real depende da função, profundidade requerida, colaboração e contexto da equipe; a IA deve apontar evidências em vez de prometer adequação."
+  "text": "Knowledge-base notes — 14. Perguntas e respostas para uma IA de portfólio:\n**P: Ele é a pessoa certa para minha vaga?**\nR: Há boa evidência de competências relevantes para posições Senior/Lead e de responsabilidade de tech lead, com forte frontend. A compatibilidade real depende da função, profundidade requerida, colaboração e contexto da equipe; a IA deve apontar evidências em vez de prometer adequação."
  },
  {
   "id": "14.q21",

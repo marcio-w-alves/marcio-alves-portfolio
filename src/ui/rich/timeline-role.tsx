@@ -45,7 +45,7 @@ export function TimelineRole({
           </span>
           <span className="text-14 text-ink-muted">{role.role}</span>
           {role.current ? <Tag tone="accent">Current</Tag> : null}
-          {role.concurrent && !role.current ? <Tag>Concurrent</Tag> : null}
+          {role.contract ? <Tag>Contract</Tag> : null}
           <Icon
             name="chevronDown"
             size="sm"

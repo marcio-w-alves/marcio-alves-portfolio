@@ -99,6 +99,7 @@ describe('an answer as plain text', () => {
           props: {
             heading: 'Get in touch',
             text: 'Reach out',
+            availability: 'Portugal · hybrid',
             email: 'ada@rivera.example',
             linkedin: 'https://www.linkedin.com/in/ada-rivera-example',
             github: 'https://github.com/ada-rivera-example',

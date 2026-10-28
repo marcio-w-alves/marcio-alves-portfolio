@@ -68,7 +68,7 @@ export function createCareerAnswers(kit: ResponseKit) {
       'roleFit',
       [
         text(
-          `${first} has several characteristics associated with Staff-level frontend engineering: deep technical expertise, ownership of architectural decisions, measurable product improvements and a track record of mentoring engineers.\n\n` +
+          `${first}'s scope has reached beyond his own code: he has owned architectural decisions, delivered measurable product improvements and mentored engineers.\n\n` +
             `At **${employer('deel')}**, he helped lead the HRIS team, standardized architecture across its interfaces and led the migration of ${employer('roots')} into the platform — while improving Web Vitals by at least ${amount('deel-web-vitals')} and cutting critical page loading time by ${metric('deel-critical-load')}. At **${employer('roots')}**, he directed frontend strategy and grew the frontend team from ${team.from} developer to ${team.to}.`,
         ),
         table(
@@ -105,10 +105,10 @@ export function createCareerAnswers(kit: ResponseKit) {
               employer('way2b1'),
             ],
           ],
-          'Staff-level signals in his experience',
+          'The scope of his work, with evidence',
         ),
         text(
-          `### How he leads\n${practice.leadershipPractice.style}\n\nHis formal titles were Senior and Lead Frontend Engineer; Staff-level describes the scope of his work, not a title he held.`,
+          `### How he leads\n${practice.leadershipPractice.style}\n\nHis most recent titles are ${title('way2b1')} and, at ${employer('roots')}, ${title('roots')}. No title in his record is Staff: the evidence above describes the scope of his work, not a title.`,
         ),
         note(
           'inference',

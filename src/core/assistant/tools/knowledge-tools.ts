@@ -23,7 +23,7 @@ export function createKnowledgeTools(kit: ResponseKit): Tool[] {
 
   const getProfileSummary = defineTool({
     name: 'getProfileSummary',
-    description: `${profile.firstName}'s professional summary: title, years of experience, specializations, focus, and where he is based.`,
+    description: `${profile.firstName}'s professional summary: title, years of experience, specializations, focus, where he is based and his availability.`,
     input: {},
     execute: () => ({
       data: {
@@ -39,6 +39,7 @@ export function createKnowledgeTools(kit: ResponseKit): Tool[] {
           country: profile.location.country,
           city: profile.location.city ?? 'not documented',
         },
+        availability: profile.availability,
       },
       sources: [citation(profile.source)],
     }),

@@ -479,7 +479,7 @@ export function createExpertiseAnswers(kit: ResponseKit) {
       'projects',
       [
         text(
-          `Alongside his professional work, ${first} builds his own products. ${liveProducts} already have public sites — **${product('evcopilot')}** (iPhone beta), **${product('formdaily')}** (invite-only) and **${product('targup')}** (in development) — and **${product('fictiondraft')}** is still a concept.`,
+          `Alongside his professional work, ${first} builds his own products. ${liveProducts} already have public sites — **${product('evcopilot')}** (iPhone beta), **${product('formdaily')}** (invite-only), **${product('targup')}** (in development) and **${product('marciomariani-dev')}**, this site — and **${product('fictiondraft')}** is still a concept.`,
         ),
         projectCards(),
         text(
@@ -574,25 +574,18 @@ export function createExpertiseAnswers(kit: ResponseKit) {
   }
 
   function location(): AssistantResponse {
-    const { city, country } = knowledge.profile.location;
-    return response(
-      'location',
-      [
-        text(
-          city
-            ? `${first} is based in **${city}, ${country}**.`
-            : `${first} is based in **${country}**. His city isn't documented in his portfolio, so I won't guess it.`,
-        ),
+    const { location: where, availability } = knowledge.profile;
+    const based = where.city
+      ? `${first} is based in **${where.city}, ${where.country}**.`
+      : `${first} is based in **${where.country}**. His city isn't documented in his portfolio, so I won't guess it.`;
+    return response('location', [text(`${based}\n\nHis availability: **${availability}**.`)], {
+      followUps: [
+        `How can I contact ${first}?`,
+        'What languages does he speak?',
+        `Tell me about ${first}'s career.`,
       ],
-      {
-        followUps: [
-          `How can I contact ${first}?`,
-          'What languages does he speak?',
-          `Tell me about ${first}'s career.`,
-        ],
-        sources: ['profile'],
-      },
-    );
+      sources: ['profile'],
+    });
   }
 
   function contact(): AssistantResponse {
@@ -600,7 +593,7 @@ export function createExpertiseAnswers(kit: ResponseKit) {
       'contact',
       [
         text(
-          `The best way to reach ${first} is by email or LinkedIn. He is open to conversations about engineering, architecture and product opportunities.`,
+          `The best way to reach ${first} is by email or LinkedIn. His availability: **${knowledge.profile.availability}**.`,
         ),
         contactCard(),
       ],

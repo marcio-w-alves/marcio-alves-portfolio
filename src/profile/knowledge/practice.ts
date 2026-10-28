@@ -269,6 +269,9 @@ export const practice: PracticeSource = {
     targup: {
       en: 'A study in reliable asynchronous workflows: campaigns created, scheduled, queued, attempted and confirmed, with idempotency keys and retry policies so a provider timeout never means a duplicate send.',
     },
+    'marciomariani-dev': {
+      en: 'A study in grounding a language model: it acts only through a closed list of validated tools, retrieves facts by embeddings with source tags and a relevance floor, and an offline evaluation has a second model grade its answers claim by claim against the evidence.',
+    },
     fictiondraft: {
       en: 'Explores document versioning, role-based editorial permissions, review and translation, and asynchronous import and publishing jobs.',
     },
@@ -277,7 +280,7 @@ export const practice: PracticeSource = {
   /** What he is looking for next. */
   goals: {
     roles: {
-      en: 'Senior or Staff Frontend Engineer, frontend technical leadership, Tech Lead and product engineering roles with architectural autonomy.',
+      en: 'Senior Frontend or Senior Full Stack Engineer roles, and Tech Lead roles that match his interests.',
     },
     mode: { en: 'Fully remote, with international teams, working in English.' },
     challenges: {

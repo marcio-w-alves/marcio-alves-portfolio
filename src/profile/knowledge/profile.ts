@@ -11,7 +11,7 @@ export const profile: ProfileSource = {
   name: identity.name,
   firstName: identity.firstName,
   initials: identity.initials,
-  title: { en: 'Staff-level Frontend Engineer' },
+  title: { en: 'Senior Frontend Engineer with tech-lead responsibilities' },
   yearsLabel: { en: '10+ years' },
   careerStartYear: 2015,
   specializations: [
@@ -27,7 +27,7 @@ export const profile: ProfileSource = {
     { en: 'Product Engineering' },
   ],
   summary: {
-    en: 'Marcio is a Staff-level frontend engineer with deep expertise in React and Next.js, focused on scalable architecture, performance optimization and developer experience.',
+    en: 'Marcio is a senior frontend engineer with tech-lead responsibilities and deep expertise in React and Next.js, focused on scalable architecture, performance optimization and developer experience.',
   },
   context: {
     en: 'He designs, implements and maintains scalable applications end to end, while driving technical strategy, mentoring engineers and collaborating with product and design teams.',
@@ -36,6 +36,7 @@ export const profile: ProfileSource = {
     en: 'He plans OKRs, quarterly goals and engineering deliverables aligned with product needs and user impact, raising engineering standards and improving team execution across complex frontend systems.',
   },
   location: { country: { en: 'Brazil' }, city: 'João Pessoa, Paraíba' },
+  availability: { en: 'Brazil · remote · UTC−3 · open to opportunities' },
   source: 'profile',
 };
 
@@ -44,7 +45,7 @@ export const profile: ProfileSource = {
 export const welcome: WelcomeSource = {
   heading: { en: "Hi, I'm Marcio" },
   description: {
-    en: 'Staff-level frontend engineer with 10+ years in React, TypeScript and frontend architecture. Ask anything about my work.',
+    en: 'Senior frontend engineer with tech-lead responsibilities and 10+ years in React, TypeScript and frontend architecture. Ask anything about my work.',
   },
   placeholder: { en: 'Ask about my experience, skills or projects…' },
   helper: { en: 'AI answers grounded in my professional experience' },

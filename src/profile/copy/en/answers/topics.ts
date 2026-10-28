@@ -2,7 +2,7 @@ import type { ResponseKit } from '@/core/assistant/response-kit';
 import { bullets, details, numbered, table, text } from '@/core/assistant/response-kit';
 import type { TopicCopy } from '@/core/assistant/topics';
 import type { TopicId } from '@/core/chat/topic-id';
-import { createFacts, joinNames } from './facts';
+import { article, createFacts, joinNames } from './facts';
 
 /**
  * The site's pages: each opens with a curated introduction and its part of
@@ -18,14 +18,10 @@ export function createTopics(kit: ResponseKit): Readonly<Record<TopicId, TopicCo
   return {
     overview: {
       label: 'Overview',
-      intro: `Here's the short version: ${profile.firstName} is a Staff-level frontend engineer with ${profile.yearsLabel} in React, TypeScript and frontend architecture, with measurable wins in performance and team growth. What would you like to know?`,
+      intro: `Here's the short version: ${profile.firstName} is ${article(profile.title)} ${profile.title} and ${profile.yearsLabel} in React, TypeScript and frontend architecture, with measurable wins in performance and team growth. What would you like to know?`,
       questions: [
         { question: `Tell me about ${first}'s career.`, tag: 'Career', short: 'His career' },
-        {
-          question: `What makes ${first} a strong Staff Engineer?`,
-          tag: 'Staff-level',
-          short: 'Why Staff-level',
-        },
+        { question: 'What scope has he worked at?', tag: 'Scope', short: 'Scope of his work' },
         {
           question: `What has he built at ${employer('deel')}?`,
           tag: employer('deel'),
@@ -101,6 +97,10 @@ export function createTopics(kit: ResponseKit): Readonly<Record<TopicId, TopicCo
         { question: `Tell me more about ${product('formdaily')}.`, tag: product('formdaily') },
         { question: `What is ${product('targup')}?`, tag: product('targup') },
         { question: `What is ${product('fictiondraft')}?`, tag: product('fictiondraft') },
+        {
+          question: `Tell me more about ${product('marciomariani-dev')}.`,
+          tag: product('marciomariani-dev'),
+        },
         { question: 'Has he built mobile apps?', tag: 'Mobile' },
       ],
       page: [

@@ -100,9 +100,23 @@ describe('parseInline', () => {
     '[click](data:text/html;base64,PHNjcmlwdD4=)',
     '[click](vbscript:msgbox)',
     '[click](//evil.example.com)',
-    '[click](/relative/path)',
+    '[click](/\\evil.example.com)',
+    '[click](relative/path)',
   ])('leaves the unsafe link %s as plain text', (source) => {
     expect(parseInline(source)).toEqual([{ kind: 'text', text: source }]);
+  });
+
+  it('links a path on this site, such as the résumé the fast path offers, without leaving it', () => {
+    expect(parseInline('You can [open his resume as a PDF](/marcio-alves-resume.pdf).')).toEqual([
+      { kind: 'text', text: 'You can ' },
+      {
+        kind: 'link',
+        text: 'open his resume as a PDF',
+        href: '/marcio-alves-resume.pdf',
+        external: false,
+      },
+      { kind: 'text', text: '.' },
+    ]);
   });
 
   it('never turns HTML in the source into anything but text', () => {
@@ -124,11 +138,18 @@ describe('parseInline', () => {
 });
 
 describe('isSafeHref', () => {
-  it('allows only web and mail links', () => {
+  it('allows only web and mail links, and paths on this site', () => {
     expect(isSafeHref('https://github.com/marcio-w-alves')).toBe(true);
     expect(isSafeHref('http://example.com')).toBe(true);
     expect(isSafeHref('mailto:a@b.co')).toBe(true);
+    expect(isSafeHref('/marcio-alves-resume.pdf')).toBe(true);
     expect(isSafeHref('javascript:alert(1)')).toBe(false);
     expect(isSafeHref(' https://example.com')).toBe(false);
+  });
+
+  it('refuses an address that only looks like a path but names another host', () => {
+    expect(isSafeHref('//evil.example.com/resume.pdf')).toBe(false);
+    expect(isSafeHref('/\\evil.example.com/resume.pdf')).toBe(false);
+    expect(isSafeHref('resume.pdf')).toBe(false);
   });
 });

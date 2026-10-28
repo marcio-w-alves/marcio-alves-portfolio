@@ -6,8 +6,8 @@ import type { SiteContent } from './site-content';
 
 /** What every page inherits: the site's name, its address, and how a share card reads. */
 export function rootMetadata({ profile }: Knowledge, siteUrl: URL): Metadata {
-  const title = `${profile.name} — Frontend Engineer`;
-  const description = `Portfolio of ${profile.name}, frontend engineer, with an AI assistant grounded in his documented experience.`;
+  const title = `${profile.name} — ${profile.title}`;
+  const description = `Portfolio of ${profile.name}, ${profile.title}. Ask its AI assistant about his documented experience.`;
   return {
     metadataBase: siteUrl,
     title,

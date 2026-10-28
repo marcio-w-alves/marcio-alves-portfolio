@@ -224,6 +224,7 @@ const intentRules = ({ first }: Subject): IntentRules => ({
   ],
   roleFit: [
     [/\bstaff\b/, 3],
+    [/\bscope\b/, 3],
     [/\bfit\b/, 3],
     [/\bgood (candidate|hire|match)\b/, 3],
     [/\bstrong\b.*\b(engineer|candidate)\b/, 1],

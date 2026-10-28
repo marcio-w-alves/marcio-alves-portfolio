@@ -2,7 +2,8 @@ import type { ProjectSource } from '@/core/knowledge/schema';
 
 // Marcio's own products. Descriptions and status come from each product's
 // public site (Oct 2026): no users, revenue or release dates may be inferred
-// beyond what those sites state.
+// beyond what those sites state. This portfolio is described by its own
+// repository: its stack and outcomes are what the code and its CI show.
 export const projects: readonly ProjectSource[] = [
   {
     id: 'evcopilot',
@@ -25,6 +26,7 @@ export const projects: readonly ProjectSource[] = [
     platforms: [{ en: 'iPhone (beta)' }],
     technologies: [],
     considerations: [],
+    outcomes: [],
     links: [{ label: { en: 'Visit evcopilotapp.io' }, url: 'https://evcopilotapp.io' }],
     source: 'projects',
   },
@@ -49,6 +51,7 @@ export const projects: readonly ProjectSource[] = [
     platforms: [{ en: 'Web' }, { en: 'iOS' }, { en: 'Android' }],
     technologies: [],
     considerations: [],
+    outcomes: [],
     links: [{ label: { en: 'Visit formdaily.app' }, url: 'https://formdaily.app' }],
     source: 'projects',
   },
@@ -73,14 +76,61 @@ export const projects: readonly ProjectSource[] = [
     platforms: [{ en: 'Web' }],
     technologies: [],
     considerations: [],
+    outcomes: [],
     links: [{ label: { en: 'Visit TargUp' }, url: 'https://dev.targup.com/' }],
+    source: 'projects',
+  },
+  {
+    id: 'marciomariani-dev',
+    name: 'marciomariani.dev',
+    category: { en: 'AI assistant · this site' },
+    status: { en: 'Live' },
+    live: true,
+    description: {
+      en: 'This portfolio: an AI assistant that answers questions about his work from his résumé and his own notes, citing its sources for every answer drawn from his record.',
+    },
+    scopeLabel: { en: 'Key features' },
+    scope: [
+      { en: 'Instant answers to the questions it recognizes' },
+      { en: 'An OpenAI model for everything else' },
+      { en: 'A closed list of validated tools' },
+      { en: 'Retrieval over embeddings of his record' },
+      { en: 'Sources cited with each answer from his record' },
+      { en: 'Usage and cost limits' },
+    ],
+    platforms: [{ en: 'Web' }],
+    technologies: [
+      'Next.js',
+      'React',
+      'TypeScript',
+      'Tailwind CSS',
+      'OpenAI',
+      'Vitest',
+      'Playwright',
+    ],
+    considerations: [],
+    outcomes: [
+      {
+        en: 'Every pull request must pass Lighthouse CI on the home page: 100 for accessibility and SEO, at least 90 for performance.',
+      },
+      {
+        en: 'Its architecture is enforced in CI: dependency rules reject any import that crosses a layer the wrong way, and the core and its adapters carry coverage thresholds.',
+      },
+    ],
+    links: [
+      { label: { en: 'Visit marciomariani.dev' }, url: 'https://marciomariani.dev' },
+      {
+        label: { en: 'View the code on GitHub' },
+        url: 'https://github.com/marcio-w-alves/marcio-alves-portfolio',
+      },
+    ],
     source: 'projects',
   },
   {
     id: 'fictiondraft',
     name: 'FictionDraft',
     category: { en: 'AI writing & publishing' },
-    status: { en: 'In development · not published' },
+    status: { en: 'Concept' },
     live: false,
     description: {
       en: 'An AI writing assistant for novels, books, documents and scripts: a template for each kind of text, with an AI that checks it against what was already written.',
@@ -95,6 +145,7 @@ export const projects: readonly ProjectSource[] = [
     platforms: [],
     technologies: [],
     considerations: [],
+    outcomes: [],
     links: [],
     source: 'projects',
   },

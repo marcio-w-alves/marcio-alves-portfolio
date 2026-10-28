@@ -30,6 +30,7 @@ const roleSchema = z.strictObject({
   start: z.number(),
   end: z.number().nullable(),
   current: z.boolean(),
+  engagement: z.enum(['employment', 'contract']),
   summary: localized,
   responsibilities: texts,
   leadership: texts,
@@ -53,6 +54,7 @@ const projectSchema = z.strictObject({
   platforms: texts,
   technologies: z.array(text),
   considerations: texts,
+  outcomes: texts,
   links: z.array(z.strictObject({ label: localized, url: httpsUrl })),
   source: text,
 });
@@ -99,6 +101,7 @@ const knowledgeSchema = z.strictObject({
     context: localized,
     focus: localized,
     location: z.strictObject({ country: localized, city: text.nullable() }),
+    availability: localized,
     source: text,
   }),
   welcome: z.strictObject({
