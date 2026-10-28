@@ -16,24 +16,31 @@ interface Rule {
 }
 
 const RULES: readonly Rule[] = [
-  { pattern: /waitForTimeout/, reason: 'a fixed sleep', appliesTo: () => true },
-  { pattern: /setTimeout\(/, reason: 'a timer', appliesTo: () => true },
-  { pattern: /page\.waitFor\(\d/, reason: 'a fixed sleep', appliesTo: () => true },
+  { pattern: /waitForTimeout/g, reason: 'a fixed sleep', appliesTo: () => true },
+  { pattern: /setTimeout\(/g, reason: 'a timer', appliesTo: () => true },
+  { pattern: /page\.waitFor\(\d/g, reason: 'a fixed sleep', appliesTo: () => true },
   {
-    pattern: /expect\(await /,
+    pattern: /expect\(\s*await\s/g,
     reason: 'a single-shot reading of motion',
     appliesTo: (file) => file === 'motion.spec.ts',
   },
 ];
 
+function lineAt(source: string, index: number): number {
+  return source.slice(0, index).split('\n').length;
+}
+
+/** Scans the whole file, so a call that prettier wraps over several lines is still found. */
 function clockWaits(file: string, source: string): string[] {
-  return source
-    .split('\n')
-    .flatMap((line, index) =>
-      RULES.filter((rule) => rule.appliesTo(file) && rule.pattern.test(line)).map(
-        (rule) => `${file}:${String(index + 1)}: ${rule.reason}`,
-      ),
-    );
+  return RULES.filter((rule) => rule.appliesTo(file))
+    .flatMap((rule) =>
+      [...source.matchAll(rule.pattern)].map((match) => ({
+        line: lineAt(source, match.index),
+        reason: rule.reason,
+      })),
+    )
+    .sort((first, second) => first.line - second.line)
+    .map(({ line, reason }) => `${file}:${String(line)}: ${reason}`);
 }
 
 function e2eSources(): [file: string, source: string][] {
@@ -59,8 +66,13 @@ describe('end-to-end hygiene', () => {
       'expect(await leftEdge(drawer)).toBeLessThan(0);',
       'a single-shot reading of motion',
     ],
-  ])('reports a clock wait planted in %s', (file, line, reason) => {
-    expect(clockWaits(file, `const ready = true;\n${line}\n`)).toEqual([`${file}:2: ${reason}`]);
+    [
+      'motion.spec.ts',
+      'expect(\n      await leftEdge(drawer),\n    ).toBeLessThan(0);',
+      'a single-shot reading of motion',
+    ],
+  ])('reports a clock wait planted in %s', (file, planted, reason) => {
+    expect(clockWaits(file, `const ready = true;\n${planted}\n`)).toEqual([`${file}:2: ${reason}`]);
   });
 
   it('allows a one-off read outside the motion spec', () => {

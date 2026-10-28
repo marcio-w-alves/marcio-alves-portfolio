@@ -65,8 +65,9 @@ async function recordLeftEdge(element: Locator, restsAt: number): Promise<Record
 /**
  * Records the element's left edge on every frame until its slide crosses
  * `holdAt`, and pauses the slide right there, so the visitor's next action
- * lands mid-slide however fast or slow the runner is. The slide is the one
- * running `translate` transition.
+ * lands mid-slide however fast or slow the runner is. The slide is the
+ * `translate` transition that moves the element; the transition sits on the
+ * drawer's wrapper, so it is found by what it moves rather than on the node.
  */
 async function recordLeftEdgeHoldingAt(
   element: Locator,
@@ -81,7 +82,13 @@ async function recordLeftEdgeHoldingAt(
         const [first = left] = readings;
         const slide = document
           .getAnimations()
-          .find((animation) => (animation as CSSTransition).transitionProperty === 'translate');
+          .find(
+            (animation) =>
+              animation instanceof CSSTransition &&
+              animation.transitionProperty === 'translate' &&
+              animation.effect instanceof KeyframeEffect &&
+              animation.effect.target?.contains(node) === true,
+          );
         if (slide && Math.sign(left - target) !== Math.sign(first - target)) {
           slide.pause();
           resolve(readings);
@@ -150,7 +157,9 @@ async function recordAnswer(answer: Locator): Promise<Recording<AnswerFrame>> {
     const shimmering = () =>
       article
         .getAnimations({ subtree: true })
-        .some((animation) => (animation as CSSAnimation).animationName === 'shimmer');
+        .some(
+          (animation) => animation instanceof CSSAnimation && animation.animationName === 'shimmer',
+        );
     const done = new Promise<AnswerFrame[]>((resolve) => {
       const read = () => {
         frames.push({ thinking: shimmering(), length: article.textContent.length });
@@ -256,8 +265,10 @@ test.describe('with motion', () => {
     const fullLength = typed.at(-1) ?? 0;
     expect(frames[0]?.thinking).toBe(true);
     expect(typed.some(between(0, fullLength))).toBe(true);
-    expect(new Set(typed).size).toBeGreaterThan(2);
-    expect(isNonDecreasing(typed)).toBe(true);
+    expect(new Set(typed).size).toBeGreaterThan(10);
+    // Not strictly growing: a markdown marker shows until its closing half is
+    // typed, then renders away, so the text can dip by a character.
+    expect(Math.max(...typed)).toBe(fullLength);
     await expect(conversation(page)).toHaveAttribute('aria-busy', 'false');
   });
 });
