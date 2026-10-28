@@ -1,4 +1,4 @@
-import type { AssistantEvent } from '@/core/assistant/assistant-event';
+import type { AssistantEvent } from '@/core/chat/events';
 import type { AnswerCachePort } from '@/core/assistant/ports/answer-cache.port';
 
 interface Options {

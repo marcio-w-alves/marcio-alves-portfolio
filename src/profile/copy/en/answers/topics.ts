@@ -1,6 +1,7 @@
 import type { ResponseKit } from '@/core/assistant/response-kit';
 import { bullets, details, numbered, table, text } from '@/core/assistant/response-kit';
-import type { TopicCopy, TopicId } from '@/core/assistant/topics';
+import type { TopicCopy } from '@/core/assistant/topics';
+import type { TopicId } from '@/core/chat/topic-id';
 import { createFacts, joinNames } from './facts';
 
 /**

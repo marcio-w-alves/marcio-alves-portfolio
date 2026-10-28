@@ -1,4 +1,4 @@
-import type { AnswerSource } from '@/core/assistant/assistant-event';
+import type { AnswerSource } from '@/core/chat/events';
 import type { EmbeddingPort } from '@/core/assistant/ports/embedding.port';
 import type { KnowledgeSearchPort, Passage } from '@/core/assistant/ports/knowledge-search.port';
 import type { KnowledgeChunk } from '@/core/knowledge/corpus';

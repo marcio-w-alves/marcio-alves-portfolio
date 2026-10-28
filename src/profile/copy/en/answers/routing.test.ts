@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ConversationContext } from '@/core/assistant/response';
+import type { ConversationContext } from '@/core/chat/request';
 import { createRouter } from '@/core/assistant/system1/router';
 import { localize } from '@/core/knowledge/localize';
 import { answers } from '.';

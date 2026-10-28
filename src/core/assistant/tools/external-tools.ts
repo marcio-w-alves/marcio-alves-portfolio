@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { AnswerSource } from '../assistant-event';
+import type { AnswerSource } from '../../chat/events';
 import type { GithubPort } from '../ports/github.port';
 import type { ReferencePort, ReferenceSummary } from '../ports/reference.port';
 import type { ResponseKit } from '../response-kit';

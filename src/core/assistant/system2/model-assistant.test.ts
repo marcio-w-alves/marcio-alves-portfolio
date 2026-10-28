@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { localize } from '@/core/knowledge/localize';
 import { fixtureKnowledge } from '@/testing/fixture-profile';
-import type { AssistantEvent } from '../assistant-event';
+import type { AssistantEvent } from '../../chat/events';
 import type {
   LanguageModelPort,
   ModelRequest,

@@ -1,23 +1,10 @@
+import { TOPIC_IDS, type TopicId } from '../chat/topic-id';
 import type { ResponsePart } from './response';
 
 /**
  * Topics are the site's pages: each opens with a curated introduction and its
  * part of the record — never a model call — and has its own conversation.
  */
-
-export const TOPIC_IDS = [
-  'overview',
-  'experience',
-  'skills',
-  'projects',
-  'philosophy',
-  'education',
-] as const;
-export type TopicId = (typeof TOPIC_IDS)[number];
-
-export function isTopicId(value: string): value is TopicId {
-  return (TOPIC_IDS as readonly string[]).includes(value);
-}
 
 export type TopicIcon =
   'home' | 'briefcase' | 'code' | 'folder' | 'award' | 'compass' | 'graduation';

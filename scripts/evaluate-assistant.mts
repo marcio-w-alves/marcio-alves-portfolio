@@ -20,7 +20,7 @@ import { writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { buildContainer } from '../src/composition-root';
-import type { AssistantEvent } from '../src/core/assistant/assistant-event';
+import type { AssistantEvent } from '../src/core/chat/events';
 import type { ToolTrace } from '../src/core/assistant/system2/model-assistant';
 import { createResponseKit } from '../src/core/assistant/response-kit';
 import { createToolRegistry } from '../src/core/assistant/tools/registry';

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { TopicId } from '@/core/assistant/topics';
+import type { TopicId } from '@/core/chat/topic-id';
 import { ChatWorkspace } from '@/ui/chat/chat-workspace';
 import { ConversationsProvider } from '@/ui/chat/conversation-store';
 import { iconImage } from './icon';

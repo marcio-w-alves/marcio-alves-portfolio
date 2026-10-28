@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import type { MetricItem } from '@/core/assistant/components';
+import type { MetricItem } from '@/core/chat/components';
 
 const STAGGER_MS = 60;
 

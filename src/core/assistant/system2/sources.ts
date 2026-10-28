@@ -1,4 +1,4 @@
-import type { AnswerSource } from '../assistant-event';
+import type { AnswerSource } from '../../chat/events';
 import type { ToolResult } from '../tools/tool';
 
 /** The text an action returned on behalf of one source. */

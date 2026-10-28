@@ -1,12 +1,10 @@
-import type { AssistantError, AssistantEvent } from '@/core/assistant/assistant-event';
-import type { ConversationContext } from '@/core/assistant/response';
-import type { HistoryTurn } from '@/core/conversation/messages';
-
-export interface ChatRequest {
-  readonly message: string;
-  readonly history: readonly HistoryTurn[];
-  readonly context: ConversationContext;
-}
+import {
+  INTERRUPTED,
+  isAssistantEvent,
+  type AssistantError,
+  type AssistantEvent,
+} from '@/core/chat/events';
+import type { ChatRequest } from '@/core/chat/request';
 
 interface Options {
   readonly signal: AbortSignal;
@@ -17,69 +15,27 @@ interface Options {
 
 const DEFAULT_IDLE_TIMEOUT_MS = 30_000;
 
-const UNREACHABLE: AssistantError = {
-  code: 'network',
-  message: "The assistant couldn't be reached. Check your connection and try again.",
-  retryable: true,
-};
-
-const TIMED_OUT: AssistantError = {
-  code: 'timeout',
-  message: 'The answer is taking too long. Please try again.',
-  retryable: true,
-};
-
-const INTERRUPTED: AssistantError = {
-  code: 'internal',
-  message: 'The answer was interrupted. Please try again.',
-  retryable: true,
-};
+const UNREACHABLE: AssistantError = { code: 'network', retryable: true };
+const TIMED_OUT: AssistantError = { code: 'timeout', retryable: true };
 
 function rateLimited(retryAfter: string | null): AssistantError {
-  const minutes = Math.ceil(Number(retryAfter) / 60);
-  const wait =
-    Number.isFinite(minutes) && minutes > 0
-      ? `Try again in ${String(minutes)} minute${minutes > 1 ? 's' : ''}.`
-      : 'Try again in a few minutes.';
-  return {
-    code: 'rate_limited',
-    message: `Too many questions in a short time. ${wait}`,
-    retryable: true,
-  };
+  const seconds = Number(retryAfter);
+  return Number.isFinite(seconds) && seconds > 0
+    ? { code: 'rate_limited', retryable: true, retryAfterSeconds: seconds }
+    : { code: 'rate_limited', retryable: true };
 }
 
 function rejected(status: number): AssistantError {
   return status === 413 || status === 400
-    ? {
-        code: 'internal',
-        message: 'That question could not be sent. Try a shorter one.',
-        retryable: false,
-      }
-    : {
-        code: 'internal',
-        message: 'Something failed on our side. Please try again.',
-        retryable: true,
-      };
+    ? { code: 'rejected', retryable: false }
+    : { code: 'internal', retryable: true };
 }
-
-const EVENT_TYPES = new Set([
-  'start',
-  'text-start',
-  'text-delta',
-  'text-end',
-  'component',
-  'finish',
-  'error',
-]);
 
 /** The stream comes from our own server, but it is still parsed, not trusted. */
 function parseEvent(data: string): AssistantEvent | null {
   try {
     const value: unknown = JSON.parse(data);
-    if (typeof value !== 'object' || value === null || !('type' in value)) return null;
-    return typeof value.type === 'string' && EVENT_TYPES.has(value.type)
-      ? (value as AssistantEvent)
-      : null;
+    return isAssistantEvent(value) ? value : null;
   } catch {
     return null;
   }
@@ -160,7 +116,7 @@ export async function* streamAnswer(
       yield event;
       if (event.type === 'finish' || event.type === 'error') return;
     }
-    yield { type: 'error', error: INTERRUPTED };
+    yield INTERRUPTED;
   } catch {
     if (signal.aborted) return;
     yield { type: 'error', error: idle.signal.aborted ? TIMED_OUT : UNREACHABLE };

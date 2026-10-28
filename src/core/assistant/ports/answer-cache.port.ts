@@ -1,4 +1,4 @@
-import type { AssistantEvent } from '../assistant-event';
+import type { AssistantEvent } from '../../chat/events';
 
 /** Finished model answers, kept so a repeated question costs nothing. */
 export interface AnswerCachePort {

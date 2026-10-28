@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { TopicId } from '@/core/assistant/topics';
+import type { TopicId } from '@/core/chat/topic-id';
 import {
   activeAnswer,
   addExchange,

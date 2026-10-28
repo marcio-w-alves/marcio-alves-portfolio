@@ -9,10 +9,10 @@ import { EVENT_STREAM_HEADERS, eventStream } from '@/http/event-stream';
 import { profile } from '@/profile';
 import { createSiteContent } from '@/site/site-content';
 import { workspaceView } from '@/site/workspace-view';
-import type { AssistantEvent } from '@/core/assistant/assistant-event';
+import type { AssistantEvent } from '@/core/chat/events';
 import { createAssistant } from '@/core/assistant/assistant';
 import { createFastPath } from '@/core/assistant/system1/fast-path';
-import type { TopicId } from '@/core/assistant/topics';
+import type { TopicId } from '@/core/chat/topic-id';
 import { createAnswerCache } from '@/infrastructure/budget/answer-cache';
 import { createModelBudget } from '@/infrastructure/budget/model-budget';
 import { ChatWorkspace } from './chat-workspace';
@@ -124,6 +124,37 @@ describe('asking a question', () => {
     ).toBeInTheDocument();
     expect(answer).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('Answer ready');
+  });
+
+  it('answers a follow-up to an answer longer than the history carries', async () => {
+    async function* longAnswer(): AsyncGenerator<AssistantEvent> {
+      yield { type: 'start', intent: 'career', related: null };
+      yield { type: 'text-start', id: 'p0' };
+      yield { type: 'text-delta', id: 'p0', delta: 'He shipped it. '.repeat(400) };
+      yield { type: 'text-end', id: 'p0' };
+      yield { type: 'finish', followUps: [], sources: [] };
+    }
+    server.use(
+      http.post(
+        CHAT_URL,
+        () =>
+          new HttpResponse(
+            eventStream(longAnswer(), () => undefined),
+            {
+              headers: EVENT_STREAM_HEADERS,
+            },
+          ),
+        { once: true },
+      ),
+    );
+    const user = renderWorkspace();
+    await user.type(composer(), "Tell me about Marcio's career.{Enter}");
+    await screen.findByRole('group', { name: 'Answer actions' });
+
+    await user.type(composer(), 'What did he do at Roots?{Enter}');
+
+    expect(await within(conversation()).findByText(/grew the frontend team/)).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('empties the composer once the question is sent', async () => {
@@ -426,6 +457,11 @@ describe('an answer in flight when another is retried, edited or dropped', () =>
 });
 
 describe('when an answer fails', () => {
+  async function* brokenAnswer(): AsyncGenerator<AssistantEvent> {
+    yield await Promise.resolve<AssistantEvent>({ type: 'start', intent: 'career', related: null });
+    throw new Error('the model went away');
+  }
+
   function failOnce() {
     server.use(http.post(CHAT_URL, () => HttpResponse.json({}, { status: 500 }), { once: true }));
   }
@@ -440,6 +476,46 @@ describe('when an answer fails', () => {
     await screen.findByRole('group', { name: 'Answer actions' });
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(within(conversation()).getAllByText('What did he do at Roots?')).toHaveLength(1);
+  });
+
+  it('words an answer the server broke off by its error code, and offers to retry it', async () => {
+    server.use(
+      http.post(
+        CHAT_URL,
+        () =>
+          new Response(
+            eventStream(brokenAnswer(), () => undefined),
+            {
+              headers: EVENT_STREAM_HEADERS,
+            },
+          ),
+        { once: true },
+      ),
+    );
+    const user = renderWorkspace();
+    await user.type(composer(), 'What did he do at Roots?{Enter}');
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('The answer was interrupted. Please try again.');
+    expect(within(alert).getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+  });
+
+  it('says how long to wait after too many questions', async () => {
+    server.use(
+      http.post(
+        CHAT_URL,
+        () =>
+          HttpResponse.json(
+            { error: { code: 'rate_limited', message: 'Too many questions in a short time.' } },
+            { status: 429, headers: { 'Retry-After': '90' } },
+          ),
+        { once: true },
+      ),
+    );
+    const user = renderWorkspace();
+    await user.type(composer(), 'What did he do at Roots?{Enter}');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Too many questions in a short time. Try again in 2 minutes.',
+    );
   });
 
   it('hands the question back to the composer to edit', async () => {

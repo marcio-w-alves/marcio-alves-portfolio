@@ -3,7 +3,9 @@ import { localize } from '@/core/knowledge/localize';
 import type { KnowledgeSource } from '@/core/knowledge/schema';
 import { fixtureAnswers, fixtureKnowledge } from '@/testing/fixture-profile';
 import { withMetric, withRole } from '@/testing/fixture-profile/variants';
-import type { AssistantResponse, ConversationContext } from '../response';
+import type { ConversationContext } from '../../chat/request';
+import type { TopicId } from '../../chat/topic-id';
+import type { AssistantResponse } from '../response';
 import { toEvents } from '../response';
 import { createResponseKit } from '../response-kit';
 import { createTopicIntro } from '../topic-pages';
@@ -171,11 +173,6 @@ describe('fast path — a forged context', () => {
     },
   );
 
-  it.each(PROTOTYPE_NAMES)('treats the prototype-named topic %s as no topic', (topic) => {
-    const forged = answer('Tell me more', { ...FRESH, topic });
-    expect(forged).toEqual(answer('Tell me more', FRESH));
-  });
-
   it('still follows a genuine last intent', () => {
     expect(answer('Tell me more', { ...FRESH, lastIntent: 'career' }).intent).toBe('achievements');
   });
@@ -230,7 +227,7 @@ describe('fast path — a topic page never repeats itself', () => {
   );
   const topicIntro = createTopicIntro(catalog);
   const pages = catalog.topics.filter((topic) => topic.id !== 'overview');
-  const onPage = (topic: string): ConversationContext => ({ ...FRESH, topic });
+  const onPage = (topic: TopicId): ConversationContext => ({ ...FRESH, topic });
   const key = (part: unknown) => JSON.stringify(part);
   const isTimeline = (part: AssistantResponse['parts'][number]) =>
     part.type === 'component' && part.component === 'timeline';

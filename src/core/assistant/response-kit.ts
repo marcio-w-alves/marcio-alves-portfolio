@@ -1,13 +1,9 @@
 import type { Knowledge, Metric, Project, Role } from '@/core/knowledge/schema';
-import type { AnswerSource } from './assistant-event';
+import type { AnswerSource } from '../chat/events';
 import { createCitation } from './citations';
-import type { MetricItem, NoteTone, ProjectView, RoleSection, RoleView } from './components';
-import type {
-  AssistantResponse,
-  ComponentPart,
-  ConversationContext,
-  ResponsePart,
-} from './response';
+import type { MetricItem, NoteTone, ProjectView, RoleSection, RoleView } from '../chat/components';
+import type { ConversationContext } from '../chat/request';
+import type { AssistantResponse, ComponentPart, ResponsePart } from './response';
 
 /**
  * Builders for answer parts. Components always receive resolved data, so the

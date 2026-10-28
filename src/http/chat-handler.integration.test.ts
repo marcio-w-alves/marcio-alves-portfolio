@@ -3,7 +3,7 @@ import { setupServer } from 'msw/node';
 import { Agent, getGlobalDispatcher, setGlobalDispatcher } from 'undici';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildContainer } from '@/composition-root';
-import type { AnswerSource, AssistantEvent } from '@/core/assistant/assistant-event';
+import type { AnswerSource, AssistantEvent } from '@/core/chat/events';
 import { assistantSettings } from '@/env';
 import { MAX_OUTPUT_TOKENS } from '@/core/assistant/system2/model-assistant';
 import { SEARCH_UNAVAILABLE } from '@/core/assistant/tools/search-tools';
@@ -438,11 +438,7 @@ describe('POST /api/chat — when OpenAI fails', () => {
     ]);
     expect(events.at(-1)).toEqual({
       type: 'error',
-      error: {
-        code: 'internal',
-        message: 'The answer was interrupted. Please try again.',
-        retryable: true,
-      },
+      error: { code: 'interrupted', retryable: true },
     });
     expect(signals.map((signal) => signal.aborted)).toEqual([true]);
     expect(reported).toEqual([expect.objectContaining({ errorName: 'ModelStreamStalledError' })]);

@@ -2,7 +2,7 @@ import { createRef, useState } from 'react';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { MAX_QUESTION_LENGTH } from '@/core/assistant/system1/router';
+import { MAX_QUESTION_LENGTH } from '@/core/chat/request';
 import { profile } from '@/profile';
 import { createSiteContent } from '@/site/site-content';
 import { ChatComposer, ComposerDock, JumpToLatest, type ChatComposerHandle } from '.';

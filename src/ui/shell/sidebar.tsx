@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import type { TopicId } from '@/core/assistant/topics';
+import type { TopicId } from '@/core/chat/topic-id';
 import { cn } from '../cn';
 import { Icon, IconButton, VisuallyHidden, type IconName } from '../primitives';
 

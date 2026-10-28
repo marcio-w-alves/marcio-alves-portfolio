@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { localize } from '@/core/knowledge/localize';
 import { fixtureAnswers, fixtureKnowledge } from '@/testing/fixture-profile';
 import { createAssistant, type AnswerReport, type AssistantRequest } from './assistant';
-import type { AssistantEvent } from './assistant-event';
+import type { AssistantEvent } from '../chat/events';
+import type { ConversationContext } from '../chat/request';
+import type { TopicId } from '../chat/topic-id';
 import type { AnswerCachePort } from './ports/answer-cache.port';
 import type { ModelBudgetPort } from './ports/model-budget.port';
 import { createFastPath } from './system1/fast-path';
@@ -10,7 +12,7 @@ import type { ModelAssistant, ModelAssistantRequest } from './system2/model-assi
 
 const fastPath = createFastPath(localize(fixtureKnowledge, 'en'), fixtureAnswers);
 
-const FRESH = { topic: 'overview', lastIntent: null, ctaShown: false };
+const FRESH: ConversationContext = { topic: 'overview', lastIntent: null, ctaShown: false };
 
 function request(question: string, history: AssistantRequest['history'] = []): AssistantRequest {
   return { question, history, context: FRESH, clientId: 'visitor-1' };
@@ -121,7 +123,7 @@ describe('assistant — choosing a path', () => {
 });
 
 describe('assistant — on a topic page', () => {
-  const onPage = (topic: string, question: string): AssistantRequest => ({
+  const onPage = (topic: TopicId, question: string): AssistantRequest => ({
     question,
     history: [],
     context: { ...FRESH, topic },
@@ -182,11 +184,7 @@ describe('assistant — when the model is unavailable', () => {
     const events = await collect(assistantWith(model), 'What is TypeScript?');
     expect(events.at(-1)).toEqual({
       type: 'error',
-      error: {
-        code: 'internal',
-        message: 'The answer was interrupted. Please try again.',
-        retryable: true,
-      },
+      error: { code: 'interrupted', retryable: true },
     });
     expect(events.filter((event) => event.type === 'start')).toHaveLength(1);
   });

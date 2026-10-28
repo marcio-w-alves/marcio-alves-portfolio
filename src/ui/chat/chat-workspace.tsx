@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import type { SuggestedQuestion, TopicId } from '@/core/assistant/topics';
+import type { SuggestedQuestion } from '@/core/assistant/topics';
+import type { TopicId } from '@/core/chat/topic-id';
 import { latestAnswerId } from '@/core/conversation/conversation';
 import type { Conversation } from '@/core/conversation/messages';
 import { toPlainText } from '@/core/conversation/plain-text';

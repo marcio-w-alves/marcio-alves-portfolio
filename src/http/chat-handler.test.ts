@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildContainer } from '@/composition-root';
 import { createAssistant, type Assistant } from '@/core/assistant/assistant';
-import type { AssistantEvent } from '@/core/assistant/assistant-event';
+import type { AssistantEvent } from '@/core/chat/events';
 import type { LanguageModelPort, ToolCall } from '@/core/assistant/ports/language-model.port';
 import { createResponseKit } from '@/core/assistant/response-kit';
 import { createFastPath } from '@/core/assistant/system1/fast-path';
@@ -240,11 +240,7 @@ describe('POST /api/chat — the stream', () => {
     const events = await readEvents(await handlerWith(assistant)(post({ message: 'q' })));
     expect(events.at(-1)).toEqual({
       type: 'error',
-      error: {
-        code: 'internal',
-        message: 'The answer was interrupted. Please try again.',
-        retryable: true,
-      },
+      error: { code: 'interrupted', retryable: true },
     });
     expect(reported).toEqual([failure]);
   });

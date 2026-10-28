@@ -1,6 +1,6 @@
-import type { AnswerSource, AssistantError } from '../assistant/assistant-event';
-import type { RichComponent } from '../assistant/components';
-import type { TopicId } from '../assistant/topics';
+import type { AnswerSource, AssistantError } from '../chat/events';
+import type { RichComponent } from '../chat/components';
+import type { TopicId } from '../chat/topic-id';
 
 export type MessagePart =
   | { readonly type: 'text'; readonly id: string; readonly text: string }
@@ -39,9 +39,4 @@ export interface Conversation {
   readonly topic: TopicId;
   readonly lastIntent: string | null;
   readonly ctaShown: boolean;
-}
-
-export interface HistoryTurn {
-  readonly role: 'user' | 'assistant';
-  readonly text: string;
 }

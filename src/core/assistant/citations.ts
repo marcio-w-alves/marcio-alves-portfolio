@@ -1,4 +1,4 @@
-import type { AnswerSource } from './assistant-event';
+import type { AnswerSource } from '../chat/events';
 
 /** How an answer credits the knowledge-base record it was built from. */
 export function createCitation(sourceLabels: Readonly<Record<string, string>>) {

@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { localize } from '@/core/knowledge/localize';
 import { fixtureAnswers, fixtureKnowledge } from '@/testing/fixture-profile';
-import type { AssistantEvent } from '../assistant/assistant-event';
+import type { AssistantEvent } from '../chat/events';
+import { MAX_HISTORY_MESSAGES, MAX_HISTORY_TEXT } from '../chat/request';
+import { chatRequestSchema } from '../chat/request-schema';
 import { toEvents } from '../assistant/response';
 import { createResponseKit } from '../assistant/response-kit';
 import { createFastPath } from '../assistant/system1/fast-path';
@@ -191,7 +193,7 @@ describe('history sent to the server', () => {
     let conversation = createConversation('experience', topicIntro('experience'));
     conversation = ask(conversation, 'What did she do at Globex?').conversation;
     conversation = ask(conversation, 'Broken', [
-      { type: 'error', error: { code: 'network', message: 'x', retryable: true } },
+      { type: 'error', error: { code: 'network', retryable: true } },
     ]).conversation;
     const history = historyOf(conversation);
     expect(history.map((turn) => turn.role)).toEqual(['user', 'assistant', 'user']);
@@ -199,12 +201,29 @@ describe('history sent to the server', () => {
     expect(history[1]?.text).not.toContain('**');
   });
 
+  it('clips each earlier message to the length a request may carry', () => {
+    const longAnswer = 'He shipped it. '.repeat(400);
+    let conversation = ask(createConversation(), 'Career?', [
+      { type: 'start', intent: 'career', related: null },
+      { type: 'text-start', id: 'p0' },
+      { type: 'text-delta', id: 'p0', delta: longAnswer },
+      { type: 'text-end', id: 'p0' },
+      { type: 'finish', followUps: [], sources: [] },
+    ]).conversation;
+    conversation = ask(conversation, 'More?').conversation;
+
+    const history = historyOf(conversation);
+
+    expect(history[1]?.text).toBe(longAnswer.slice(0, MAX_HISTORY_TEXT));
+    expect(chatRequestSchema.safeParse({ message: 'More?', history }).success).toBe(true);
+  });
+
   it('keeps only the latest turns', () => {
     let conversation = createConversation();
     for (let turn = 0; turn < 10; turn += 1) {
       conversation = ask(conversation, "Tell me about Ada's career.").conversation;
     }
-    expect(historyOf(conversation)).toHaveLength(12);
+    expect(historyOf(conversation)).toHaveLength(MAX_HISTORY_MESSAGES);
   });
 
   it('points at the latest answer', () => {

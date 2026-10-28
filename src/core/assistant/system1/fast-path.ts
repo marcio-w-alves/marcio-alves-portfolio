@@ -1,10 +1,11 @@
 import type { Knowledge } from '@/core/knowledge/schema';
+import type { ConversationContext } from '../../chat/request';
 import type { AnswerSet } from '../answer-set';
-import type { AssistantResponse, ConversationContext, ResponsePart } from '../response';
+import type { AssistantResponse, ResponsePart } from '../response';
 import { createResponseKit } from '../response-kit';
 import { summarizePage } from '../page-summary';
 import { createTopicIntro } from '../topic-pages';
-import { createTopicCatalog, isTopicId } from '../topics';
+import { createTopicCatalog } from '../topics';
 import { createRouter, type ScoredIntent } from './router';
 import { createEvidenceFinder } from './technologies';
 
@@ -65,7 +66,7 @@ export function createFastPath(knowledge: Knowledge, answerSet: AnswerSet): Fast
   // record, so an answer there leaves that part out. The overview opens on
   // the welcome screen, which shows none of it.
   function shownOnPage(context: ConversationContext): ReadonlySet<string> {
-    if (context.topic === 'overview' || !isTopicId(context.topic)) return new Set();
+    if (context.topic === 'overview') return new Set();
     return new Set(topicIntro(context.topic).parts.map(partKey));
   }
 
@@ -171,7 +172,7 @@ export function createFastPath(knowledge: Knowledge, answerSet: AnswerSet): Fast
     followUpsFor: (intent, context) =>
       intent ? answers.scored[intent](context, '').followUps : answers.greeting().followUps,
     pageShown: (context) =>
-      context.topic === 'overview' || !isTopicId(context.topic)
+      context.topic === 'overview'
         ? null
         : {
             label: catalog.topicById(context.topic).label,

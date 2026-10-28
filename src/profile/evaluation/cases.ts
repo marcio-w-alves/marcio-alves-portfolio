@@ -1,4 +1,4 @@
-import type { HistoryTurn } from '@/core/assistant/system2/model-assistant';
+import type { HistoryTurn } from '@/core/chat/request';
 
 /**
  * The conversations the assistant is held to. Each states what a correct

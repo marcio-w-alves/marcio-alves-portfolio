@@ -1,5 +1,5 @@
-import type { AnswerSource, AssistantEvent } from './assistant-event';
-import type { RichComponent } from './components';
+import type { AnswerSource, AssistantEvent } from '../chat/events';
+import type { RichComponent } from '../chat/components';
 
 export type ComponentPart = { readonly type: 'component' } & RichComponent;
 
@@ -18,13 +18,6 @@ export interface AssistantResponse {
   readonly related: string | null;
   /** False when the answer is a refusal or a gap rather than documented fact. */
   readonly grounded: boolean;
-}
-
-/** What the visitor's session carries between turns. Untrusted, and harmless if forged. */
-export interface ConversationContext {
-  readonly topic: string;
-  readonly lastIntent: string | null;
-  readonly ctaShown: boolean;
 }
 
 /** One delta per text part; the transport is free to re-chunk them for pacing. */

@@ -1,4 +1,4 @@
-import type { ProjectView } from '@/core/assistant/components';
+import type { ProjectView } from '@/core/chat/components';
 import { ButtonLink, Icon, Tag, VisuallyHidden } from '../primitives';
 import { BulletList } from './bullet-list';
 import { SectionTitle } from './section-title';

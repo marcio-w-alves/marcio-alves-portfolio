@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import type { AnswerSource } from '../assistant-event';
-import type { RichComponent } from '../components';
+import type { AnswerSource } from '../../chat/events';
+import type { RichComponent } from '../../chat/components';
 
 /**
  * An action the model may take. The model is given these and nothing else:
