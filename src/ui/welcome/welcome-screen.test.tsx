@@ -1,0 +1,43 @@
+import { render, screen, within } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+import { knowledgeBase } from '@/core/knowledge/knowledge-base';
+import { WelcomeLayout } from './welcome-layout';
+import { WelcomeScreen } from './welcome-screen';
+
+const { welcome } = knowledgeBase;
+
+describe('WelcomeScreen', () => {
+  it('makes the greeting the page heading', () => {
+    render(<WelcomeScreen welcome={welcome} />);
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent("Hi, I'm Marcio");
+    expect(screen.getAllByRole('heading')).toHaveLength(1);
+  });
+
+  it('introduces Marcio with the documented copy', () => {
+    render(<WelcomeScreen welcome={welcome} />);
+
+    expect(screen.getByText('Welcome to my portfolio')).toBeInTheDocument();
+    expect(
+      screen.getByText('Frontend engineer, architect, and problem solver'),
+    ).toBeInTheDocument();
+    expect(screen.getByText(welcome.description)).toBeInTheDocument();
+    expect(screen.getByText(welcome.invitation)).toBeInTheDocument();
+  });
+});
+
+describe('WelcomeLayout', () => {
+  it('is a labelled region holding what it is given, in order', () => {
+    render(
+      <WelcomeLayout>
+        <WelcomeScreen welcome={welcome} />
+        <p>Composer</p>
+      </WelcomeLayout>,
+    );
+
+    const region = screen.getByRole('region', { name: 'Welcome' });
+    const heading = within(region).getByRole('heading', { level: 1 });
+    const composer = within(region).getByText('Composer');
+    expect(heading.compareDocumentPosition(composer)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+});
