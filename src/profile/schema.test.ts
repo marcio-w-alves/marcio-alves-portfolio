@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ZodError } from 'zod';
 import { fixtureAnswers, fixtureBrand, fixtureKnowledge } from '@/testing/fixture-profile';
-import { validateProfile, type Identity, type Profile } from './schema';
+import { validateProfile, type Identity, type Profile, type SiteEntry } from './schema';
 
 const identity: Identity = {
   name: 'Ada Rivera',
@@ -18,10 +18,22 @@ const identity: Identity = {
   nonIdentifyingTerms: [],
 };
 
+const pipewrightEntry: SiteEntry = {
+  subject: { kind: 'project', id: 'pipewright' },
+  urls: ['https://pipewright.example/'],
+  termsNote: "Ada's own product.",
+};
+const acmeEntry: SiteEntry = {
+  subject: { kind: 'company', id: 'acme' },
+  urls: ['https://www.acme.example/about'],
+  termsNote: 'Company page; robots.txt allows it.',
+};
+
 const valid: Profile = {
   identity,
   locales: ['en'],
   knowledge: fixtureKnowledge,
+  siteAllowList: [pipewrightEntry, acmeEntry],
   brand: fixtureBrand,
   copy: { en: { answers: fixtureAnswers } },
   evaluation: [],
@@ -92,6 +104,29 @@ describe('validating a profile', () => {
       'imageFont',
       'files',
       '400',
+    ]);
+  });
+
+  it('rejects a site passage read from a page the allow-list does not name', () => {
+    expect(issuePaths({ ...valid, siteAllowList: [acmeEntry] })).toEqual([
+      ['knowledge', 'productSites', 0, 'url'],
+    ]);
+  });
+
+  it("rejects a site passage filed under another subject than its page's", () => {
+    const swapped = { ...pipewrightEntry, subject: { kind: 'project' as const, id: 'loomstack' } };
+    expect(issuePaths({ ...valid, siteAllowList: [swapped, acmeEntry] })).toEqual([
+      ['knowledge', 'productSites', 0, 'url'],
+    ]);
+  });
+
+  it('rejects an allow-listed page that is not https', () => {
+    const entry = { ...pipewrightEntry, urls: ['http://pipewright.example/'] };
+    expect(issuePaths({ ...valid, siteAllowList: [entry] })).toContainEqual([
+      'siteAllowList',
+      0,
+      'urls',
+      0,
     ]);
   });
 

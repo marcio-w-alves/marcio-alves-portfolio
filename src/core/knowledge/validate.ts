@@ -53,11 +53,24 @@ const projectSchema = z.strictObject({
   scope: texts,
   platforms: texts,
   technologies: z.array(text),
+  technologiesSource: text.optional(),
   considerations: texts,
   outcomes: texts,
   links: z.array(z.strictObject({ label: localized, url: httpsUrl })),
   source: text,
 });
+
+/** The committed product-site snapshot, which is read from JSON and checked like any input. */
+export const sitePassagesSchema = z.array(
+  z.strictObject({
+    id: z.string().regex(/^site\/[\w-]+\/\d+$/, 'Must be site/<subject id>/<n>'),
+    subject: z.strictObject({ kind: z.enum(['project', 'company']), id: text }),
+    url: httpsUrl,
+    fetchedAt: z.iso.date(),
+    language: text,
+    text,
+  }),
+);
 
 const stackArea = z.strictObject({ area: localized, items: localized });
 
@@ -147,6 +160,7 @@ const knowledgeSchema = z.strictObject({
     guide: text,
     passages: z.array(z.strictObject({ id: text, text })),
   }),
+  productSites: sitePassagesSchema,
   references: z.strictObject({
     technologies: z
       .record(z.string(), text.nullable())
@@ -258,6 +272,43 @@ function checkPracticeReferences(source: KnowledgeSource, report: Report) {
   }
 }
 
+/** A site passage is about something the record holds: one of its projects or companies. */
+function checkSiteSubjects(source: KnowledgeSource, report: Report) {
+  const known = {
+    project: new Set(source.projects.map((project) => project.id)),
+    company: new Set(source.experience.map((role) => role.id)),
+  };
+  source.productSites.forEach(({ subject }, index) => {
+    if (!known[subject.kind].has(subject.id)) {
+      report(`Unknown ${subject.kind} "${subject.id}"`, ['productSites', index, 'subject', 'id']);
+    }
+  });
+}
+
+/** A project lists technologies only where the record or its own site states them. */
+function checkTechnologiesSources(source: KnowledgeSource, report: Report) {
+  source.projects.forEach((project, index) => {
+    if (project.technologies.length === 0) return;
+    const stated = project.technologiesSource;
+    const ownPages = source.productSites
+      .filter(({ subject }) => subject.kind === 'project' && subject.id === project.id)
+      .map(({ url }) => url);
+    if (stated === undefined) {
+      report('Technologies need the source that states them', [
+        'projects',
+        index,
+        'technologiesSource',
+      ]);
+    } else if (!(stated in source.sourceLabels) && !ownPages.includes(stated)) {
+      report(`Must be a source of the record or a page of the project's site, not "${stated}"`, [
+        'projects',
+        index,
+        'technologiesSource',
+      ]);
+    }
+  });
+}
+
 /** The record's schema, for a caller that validates it as part of something larger. */
 export const knowledgeRecordSchema = knowledgeSchema.superRefine((parsed, context) => {
   const source = parsed as KnowledgeSource;
@@ -273,6 +324,9 @@ export const knowledgeRecordSchema = knowledgeSchema.superRefine((parsed, contex
   checkSharedSource('certifications', source.certifications, report);
   checkSharedSource('languages', source.languages, report);
   checkPracticeReferences(source, report);
+  checkUniqueIds(source.productSites, 'productSites', report);
+  checkSiteSubjects(source, report);
+  checkTechnologiesSources(source, report);
 });
 
 /** Returns the record unchanged, or throws a `ZodError` listing every violation by path. */

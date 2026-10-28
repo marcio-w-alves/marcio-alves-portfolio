@@ -249,6 +249,24 @@ export const fixtureKnowledge: KnowledgeSource = {
       { id: '3', text: 'Notes — Tooling:\nAda reports she runs the CI agents on Docker.' },
     ],
   },
+  productSites: [
+    {
+      id: 'site/pipewright/0',
+      subject: { kind: 'project', id: 'pipewright' },
+      url: 'https://pipewright.example/',
+      fetchedAt: '2026-10-01',
+      language: 'en',
+      text: 'Pipewright rebuilds only the targets a change affects. It is written in Go and caches every step remotely, so a monorepo build finishes in seconds.',
+    },
+    {
+      id: 'site/acme/0',
+      subject: { kind: 'company', id: 'acme' },
+      url: 'https://www.acme.example/about',
+      fetchedAt: '2026-10-01',
+      language: 'en',
+      text: 'Acme makes anvils for the whole desert, shipped overnight by rocket.',
+    },
+  ],
   references: {
     technologies: {
       Bazel: 'Bazel (software)',

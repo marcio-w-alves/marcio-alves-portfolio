@@ -1,10 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { ZodError } from 'zod';
 import { fixtureKnowledge } from '@/testing/fixture-profile/knowledge';
-import type { KnowledgeSource, RoleSource } from './schema';
+import type { KnowledgeSource, ProjectSource, RoleSource, SitePassage } from './schema';
 import { validateKnowledge } from './validate';
 
 const [acme, globex, initech] = fixtureKnowledge.experience as [RoleSource, RoleSource, RoleSource];
+const [pipewright, loomstack] = fixtureKnowledge.projects as [ProjectSource, ProjectSource];
+const [pipewrightPage] = fixtureKnowledge.productSites as [SitePassage];
+
+function withProjects(...projects: ProjectSource[]): KnowledgeSource {
+  return { ...fixtureKnowledge, projects };
+}
+
+function withSitePassages(...productSites: SitePassage[]): KnowledgeSource {
+  return { ...fixtureKnowledge, productSites };
+}
 
 function withRoles(...experience: RoleSource[]): KnowledgeSource {
   return { ...fixtureKnowledge, experience };
@@ -130,8 +140,63 @@ describe('validating a record', () => {
       },
       ['languages', 1, 'source'],
     ],
+    [
+      'technologies listed with no source that states them',
+      withProjects({ ...pipewright, technologies: ['Go'] }, loomstack),
+      ['projects', 0, 'technologiesSource'],
+    ],
+    [
+      'technologies credited to a source the record does not hold',
+      withProjects(
+        { ...pipewright, technologies: ['Go'], technologiesSource: 'cv.nowhere' },
+        loomstack,
+      ),
+      ['projects', 0, 'technologiesSource'],
+    ],
+    [
+      "technologies credited to another project's site",
+      withProjects(pipewright, {
+        ...loomstack,
+        technologies: ['Go'],
+        technologiesSource: pipewrightPage.url,
+      }),
+      ['projects', 1, 'technologiesSource'],
+    ],
+    [
+      'two site passages with one id',
+      withSitePassages(pipewrightPage, { ...pipewrightPage, url: 'https://pipewright.example/b' }),
+      ['productSites', 1, 'id'],
+    ],
+    [
+      'a site passage about a project the record does not hold',
+      withSitePassages({ ...pipewrightPage, subject: { kind: 'project', id: 'acme' } }),
+      ['productSites', 0, 'subject', 'id'],
+    ],
+    [
+      'a site passage with no fetch date',
+      withSitePassages({ ...pipewrightPage, fetchedAt: 'last week' }),
+      ['productSites', 0, 'fetchedAt'],
+    ],
+    [
+      'a site passage read over http',
+      withSitePassages({ ...pipewrightPage, url: 'http://pipewright.example/' }),
+      ['productSites', 0, 'url'],
+    ],
   ])('rejects %s, naming where it is', (_case, source, path) => {
     expect(issuesOf(source).map((issue) => issue.path)).toContainEqual(path);
+  });
+
+  it.each<[string, ProjectSource]>([
+    [
+      'a source of the record',
+      { ...pipewright, technologies: ['Go'], technologiesSource: 'projects' },
+    ],
+    [
+      'a page of its own site',
+      { ...pipewright, technologies: ['Go'], technologiesSource: pipewrightPage.url },
+    ],
+  ])('accepts technologies stated by %s', (_case, project) => {
+    expect(issuesOf(withProjects(project, loomstack))).toEqual([]);
   });
 
   it('rejects a field the record does not define, so a phone number cannot slip in', () => {

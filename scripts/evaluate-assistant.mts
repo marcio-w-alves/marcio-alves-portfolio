@@ -49,8 +49,14 @@ const CONCURRENCY = 4;
 const options = parseOptions(process.argv.slice(2), process.env);
 const cases = selectCases(profile.evaluation, options.only);
 const knowledge = localize(profile.knowledge, 'en');
-// The fast path's evidence is the record it answers from, as the judge has always seen it.
-const { notes: _notes, sourceLabels: _sourceLabels, ...knowledgeBase } = knowledge;
+// The fast path's evidence is the record it answers from, as the judge has always seen it:
+// the product sites are retrieval's, and the fast path never reads them.
+const {
+  notes: _notes,
+  sourceLabels: _sourceLabels,
+  productSites: _productSites,
+  ...knowledgeBase
+} = knowledge;
 
 const apiKey = process.env.OPENAI_API_KEY;
 if (!apiKey) throw new Error('OPENAI_API_KEY is not set. Put it in .env.local.');
@@ -80,7 +86,7 @@ interface RunOutcome extends RunReport {
 
 const JUDGE_INSTRUCTIONS = `You audit an assistant on a person's portfolio website. You receive a QUESTION, the assistant's ANSWER, and the EVIDENCE — everything the assistant was given to answer with.
 
-Today is ${new Date().toISOString().slice(0, 10)}. The EVIDENCE is Marcio's own record: the roles, projects and achievements in it are his.
+Today is ${new Date().toISOString().slice(0, 10)}. The EVIDENCE is Marcio's own record: the roles, projects and achievements in it are his — except passages marked about: "product", which come from a product's or a company's public website. Those support claims about what the product or the company does, never a claim about what Marcio built, did or achieved.
 
 Go through the ANSWER statement by statement. Split compound sentences: every fact and every characterization is its own claim, so a true fact never carries an unsupported one along with it.
 
@@ -136,7 +142,7 @@ function quoteIsInEvidence(quote: string | null, haystack: string): boolean {
   return fragments.length > 0 && fragments.every((fragment) => isInEvidence(fragment, haystack));
 }
 
-const RECHECK_INSTRUCTIONS = `You receive one CLAIM about Marcio and the EVIDENCE an assistant had. The EVIDENCE is Marcio's own record: the roles, projects and achievements in it are his, so the passage describing a project supports a claim that it is his. Find the passage of the EVIDENCE that supports the CLAIM and copy it character for character. A faithful paraphrase or translation is supported by the passage it restates; when the claim rests on several passages, join them with " ... ". A characterization ("brilliant", "an innovative leader", "a solid background") is supported only if the EVIDENCE makes that same characterization, not merely facts one could admire. If nothing in the EVIDENCE supports the claim, the quote is null.
+const RECHECK_INSTRUCTIONS = `You receive one CLAIM about Marcio and the EVIDENCE an assistant had. The EVIDENCE is Marcio's own record: the roles, projects and achievements in it are his, so the passage describing a project supports a claim that it is his. A passage marked about: "product" is from a product's or a company's website: it supports what the product or company does, never what Marcio built, did or achieved. Find the passage of the EVIDENCE that supports the CLAIM and copy it character for character. A faithful paraphrase or translation is supported by the passage it restates; when the claim rests on several passages, join them with " ... ". A characterization ("brilliant", "an innovative leader", "a solid background") is supported only if the EVIDENCE makes that same characterization, not merely facts one could admire. If nothing in the EVIDENCE supports the claim, the quote is null.
 
 Reply with JSON only: {"quote": string | null}`;
 
@@ -258,6 +264,9 @@ async function runOnce(testCase: EvaluationCase, clientId: string): Promise<RunO
   }
   for (const fragment of expect.avoids ?? []) {
     if (lower.includes(fragment.toLowerCase())) failures.push(`contains forbidden "${fragment}"`);
+  }
+  for (const id of expect.cites ?? []) {
+    if (!sources.includes(id)) failures.push(`does not cite ${id}`);
   }
   for (const claim of await unsupportedClaims(verdict, evidence))
     failures.push(`unsupported: ${claim}`);

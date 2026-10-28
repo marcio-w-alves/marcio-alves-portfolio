@@ -42,7 +42,7 @@ async function run(port: KnowledgeSearchPort, args: unknown) {
 
 const knowledge = localize(fixtureKnowledge, 'en');
 const corpus = buildCorpus(knowledge);
-const citation = createCitation(knowledge.sourceLabels);
+const citation = createCitation(knowledge);
 
 /** A passage of a corpus, as the vector search hands it back. */
 function corpusPassage(id: string, score: number): Passage {
@@ -176,6 +176,55 @@ describe('searchKnowledge', () => {
       ],
     });
     expect(result.sources).toEqual([GLOBEX]);
+  });
+
+  it("labels a site's passage as about the product, citing the page it was read from", async () => {
+    const site = corpusPassage('site/pipewright/0', 0.5);
+    const record = corpusPassage('role:acme:0', 0.4);
+    const { port } = searchReturning([site, record]);
+
+    const result = await run(port, { query: 'What does Pipewright do?' });
+
+    expect(result.data).toEqual({
+      passages: [
+        {
+          text: site.text,
+          category: 'product-sites',
+          relevance: 0.5,
+          about: 'product',
+          note: 'Describes the product or the company, not his role or results.',
+        },
+        { text: record.text, category: 'experience', relevance: 0.4 },
+      ],
+    });
+    expect(result.sources).toEqual([
+      {
+        id: 'site:https://pipewright.example/',
+        label: 'pipewright.example',
+        url: 'https://pipewright.example/',
+      },
+      { id: 'cv.acme', label: 'CV' },
+    ]);
+  });
+
+  it("never lets a role passage displace a site's passage on a leadership question", async () => {
+    const site = corpusPassage('site/acme/0', 0.5);
+    const port: KnowledgeSearchPort = {
+      search: (query) =>
+        Promise.resolve(
+          query.category === 'experience'
+            ? EXPERIENCE
+            : [site, corpusPassage('skills:platform', 0.48), corpusPassage('education', 0.33)],
+        ),
+    };
+
+    const result = await run(port, { query: 'Has he led teams at Acme?' });
+
+    const shown = (result.data as { passages: { text: string }[] }).passages.map(
+      ({ text }) => text,
+    );
+    expect(shown).toContain(site.text);
+    expect(shown).not.toContain(corpusPassage('education', 0).text);
   });
 
   it('tells the model not to fall back on general knowledge when nothing matches', async () => {

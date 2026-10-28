@@ -8,7 +8,7 @@ import { knowledge as source } from '.';
 /** What each source vouches for when a search returns these passages of the record. */
 function evidenceFrom(ids: readonly string[]): SourceEvidence[] {
   const knowledge = localize(source, 'en');
-  const citation = createCitation(knowledge.sourceLabels);
+  const citation = createCitation(knowledge);
   const chunks = buildCorpus(knowledge).filter((chunk) => ids.includes(chunk.id));
   return [...new Set(chunks.map((chunk) => chunk.source))].map((id) => ({
     source: citation(id),

@@ -16,6 +16,7 @@ that validates.
 | `fonts.ts`                    | The faces the pages are set in, loaded with `next/font`                                                                                                                      |
 | `knowledge/`                  | Your record: profile, experience, metrics, projects, skills, education, practice and how each source is cited                                                                |
 | `knowledge/knowledge-base.md` | Your long-form notes; `notes.json` beside it is generated from it                                                                                                            |
+| `sites/`                      | `allow-list.ts`: the public pages of your products and companies the assistant may read; `snapshot.json` beside it is generated from them by `pnpm sites:ingest`             |
 | `copy/`                       | What the site writes around your facts, per language: `copy/en/answers/` holds the fast path's answers, the topic pages and your own words for some questions (`vocabulary`) |
 | `evaluation/`                 | The conversations `pnpm eval:assistant` holds the assistant to                                                                                                               |
 | `generated/`                  | Generated files: the retrieval index. Never edit them by hand                                                                                                                |
@@ -43,6 +44,12 @@ and a test keeps them equal to `brand.ts`.
 ## After editing
 
 1. `pnpm notes:build`, if you changed `knowledge/knowledge-base.md`.
+   `pnpm sites:ingest`, if you changed `sites/allow-list.ts` or a site changed
+   (`pnpm sites:ingest --check` lists the pages read more than 180 days ago).
+   It reads only the listed pages, obeys their robots.txt, and reports any it
+   could not read. A site's text describes the product, never your part in it:
+   the assistant is told so, and a project shows technologies only where
+   `technologiesSource` names the record or the site page that states them.
 2. `pnpm rag:build`, to rebuild the retrieval index (needs `OPENAI_API_KEY` in
    `.env.local`). The tests fail while the index does not match the record.
 3. `pnpm test`. An invalid profile fails here, with the path of every problem,

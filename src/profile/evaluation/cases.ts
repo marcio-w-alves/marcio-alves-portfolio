@@ -31,6 +31,8 @@ export interface Expectation {
   readonly mentions?: readonly string[];
   /** Fragments that would mean a fabrication or a leak. */
   readonly avoids?: readonly string[];
+  /** Sources the answer must cite, by id. */
+  readonly cites?: readonly string[];
 }
 
 export interface EvaluationCase {
@@ -142,7 +144,44 @@ export const evaluation: readonly EvaluationCase[] = [
     id: 'what-is-formdaily',
     category: 'product-vs-person',
     question: 'What is FormDaily?',
-    expect: { path: 'fast', mentions: ['FormDaily', 'personal trainers'] },
+    expect: {
+      path: 'fast',
+      mentions: ['FormDaily', 'personal trainers'],
+      cites: ['site:https://formdaily.app/'],
+    },
+  },
+  {
+    id: 'formdaily-students-pay',
+    category: 'product-vs-person',
+    // POR-56: a product fact only its site states, credited to the site.
+    question: 'Do students pay anything to use his workout app?',
+    expect: { path: 'model', mentions: ['free'], cites: ['site:https://formdaily.app/'] },
+  },
+  {
+    id: 'evcopilot-plan-b-pt',
+    category: 'product-vs-person',
+    // POR-56: the site describes the feature; his part in building it is not documented.
+    question: 'Ele fez o recurso de plano B do app de carros elétricos?',
+    expect: {
+      path: 'model',
+      language: 'pt',
+      avoids: ['ele desenvolveu o plano b', 'ele implementou o plano b', 'ele criou o plano b'],
+    },
+  },
+  {
+    id: 'way2b1-site-claims',
+    category: 'product-vs-person',
+    // POR-56: the company's site claims are Way2b1's, never his results.
+    question: 'Did he build the SOC 2 features of the family-office platform?',
+    expect: {
+      path: 'model',
+      avoids: [
+        'he built the soc 2',
+        'he implemented the soc 2',
+        'he achieved soc 2',
+        'doubled our client base',
+      ],
+    },
   },
 
   // Technologies: what they are, and where he used them.

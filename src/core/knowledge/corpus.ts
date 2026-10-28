@@ -1,4 +1,5 @@
-import type { Knowledge, Project } from './schema';
+import { siteLabel, siteSourceId } from './product-sites';
+import type { Knowledge, Project, SitePassage } from './schema';
 
 /**
  * The knowledge base flattened into categorized passages for retrieval.
@@ -7,7 +8,9 @@ import type { Knowledge, Project } from './schema';
  * period in the text, so a match is precise and still says where the fact
  * comes from. The owner's knowledge-base document follows as its own passages
  * (see notes.ts): the résumé records what they did, the notes add how they
- * work, what they study and build, and what they are interested in. Contact
+ * work, what they study and build, and what they are interested in. Passages
+ * of the public sites of their products and companies come last, each opening
+ * with whose site it is, so a match never reads as the owner's own work. Contact
  * details are deliberately absent: they are served by an action, never
  * retrieved by similarity.
  */
@@ -22,6 +25,7 @@ export const CHUNK_CATEGORIES = [
   'projects',
   'principles',
   'notes',
+  'product-sites',
 ] as const;
 export type ChunkCategory = (typeof CHUNK_CATEGORIES)[number];
 
@@ -64,7 +68,35 @@ function sectionPassage(
   return first ? [{ id: category, category, text, source: first.source }] : [];
 }
 
-export function buildCorpus({
+const SUBJECT_NOUN = { project: 'product', company: 'company' } as const;
+
+function subjectName({ projects, experience }: Knowledge, { subject }: SitePassage): string {
+  const name =
+    subject.kind === 'project'
+      ? projects.find((project) => project.id === subject.id)?.name
+      : experience.find((role) => role.id === subject.id)?.company;
+  if (name === undefined) throw new Error(`Unknown site subject "${subject.id}".`);
+  return name;
+}
+
+function sitePassage(knowledge: Knowledge, passage: SitePassage): KnowledgeChunk {
+  const name = subjectName(knowledge, passage);
+  return {
+    id: passage.id,
+    category: 'product-sites',
+    text: `From the public website of ${name} (${siteLabel(passage.url)}), describing the ${SUBJECT_NOUN[passage.subject.kind]} itself:\n${passage.text}`,
+    source: siteSourceId(passage.url),
+  };
+}
+
+export function buildCorpus(knowledge: Knowledge): KnowledgeChunk[] {
+  return [
+    ...recordPassages(knowledge),
+    ...knowledge.productSites.map((passage) => sitePassage(knowledge, passage)),
+  ];
+}
+
+function recordPassages({
   profile,
   experience,
   skills,

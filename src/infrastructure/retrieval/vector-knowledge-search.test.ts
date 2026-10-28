@@ -17,12 +17,13 @@ import {
   createVectorKnowledgeSearch,
   NOTES_SHARE,
   RELEVANCE_FLOOR,
+  SITES_SHARE,
 } from './vector-knowledge-search';
 
 const knowledge = localize(profile.knowledge, 'en');
 const index: KnowledgeIndex = committed;
 const corpus = buildCorpus(knowledge);
-const citation = createCitation(knowledge.sourceLabels);
+const citation = createCitation(knowledge);
 
 function newBreaker(now: () => number = Date.now) {
   return createCircuitBreaker({ failureThreshold: 3, cooldownMs: 30_000, now });
@@ -76,7 +77,7 @@ describe('vector knowledge search', () => {
     });
   });
 
-  it('returns best matches first, no more than asked from the résumé plus a few notes', async () => {
+  it('returns best matches first, no more than asked from the résumé plus a few notes and site passages', async () => {
     const search = createVectorKnowledgeSearch({
       citation,
       breaker: newBreaker(),
@@ -86,8 +87,10 @@ describe('vector knowledge search', () => {
     });
     const passages = await search.search({ query: 'languages', limit: 4 });
     const notes = passages.filter((passage) => passage.category === 'notes');
-    expect(passages.length - notes.length).toBeLessThanOrEqual(4);
+    const sites = passages.filter((passage) => passage.category === 'product-sites');
+    expect(passages.length - notes.length - sites.length).toBeLessThanOrEqual(4);
     expect(notes.length).toBeLessThanOrEqual(NOTES_SHARE);
+    expect(sites.length).toBeLessThanOrEqual(SITES_SHARE);
     const scores = passages.map((passage) => passage.score);
     expect(scores).toEqual([...scores].sort((a, b) => b - a));
   });
@@ -146,6 +149,40 @@ describe('vector knowledge search — résumé and notes together', () => {
       'note-b',
       'note-c',
       'resume',
+    ]);
+  });
+});
+
+describe('vector knowledge search — product sites beside the record', () => {
+  it("never lets a product site's pages crowd out the record's own passages", async () => {
+    const at = (similarity: number) => [100 * similarity, 100 * Math.sqrt(1 - similarity ** 2)];
+    const sites = { 'site/a/0': 0.9, 'site/a/1': 0.88, 'site/a/2': 0.86, 'site/a/3': 0.84 };
+    const record = { 'project:a': 0.5, 'role:b': 0.45 };
+    const similarities: Record<string, number> = { ...sites, ...record };
+    const search = createVectorKnowledgeSearch({
+      citation,
+      breaker: newBreaker(),
+      embeddings: embeddingsReturning([1, 0]),
+      index: {
+        ...index,
+        vectors: Object.fromEntries(
+          Object.entries(similarities).map(([id, similarity]) => [id, at(similarity)]),
+        ),
+      },
+      corpus: Object.keys(similarities).map((id): KnowledgeChunk =>
+        id in sites
+          ? { id, category: 'product-sites', text: id, source: 'projects' }
+          : { id, category: 'projects', text: id, source: 'projects' },
+      ),
+    });
+
+    const found = await search.search({ query: 'What is A?', limit: 2 });
+
+    expect(found.map((passage) => passage.id)).toEqual([
+      'site/a/0',
+      'site/a/1',
+      'project:a',
+      'role:b',
     ]);
   });
 });

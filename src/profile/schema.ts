@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { AnswerSet } from '@/core/assistant/answer-set';
-import type { KnowledgeSource, Locale } from '@/core/knowledge/schema';
+import type { KnowledgeSource, Locale, SiteSubject } from '@/core/knowledge/schema';
 import { knowledgeRecordSchema } from '@/core/knowledge/validate';
 import type { Brand } from '@/site/site-profile';
 import type { EvaluationCase } from './evaluation/cases';
@@ -27,11 +27,24 @@ export interface Identity {
   readonly nonIdentifyingTerms: readonly string[];
 }
 
+/**
+ * A public site `pnpm sites:ingest` may read. Only these exact pages are
+ * fetched: nothing is crawled and no link is followed.
+ */
+export interface SiteEntry {
+  readonly subject: SiteSubject;
+  readonly urls: readonly string[];
+  /** Whose site it is, why reading it is fine, and when that was last checked. */
+  readonly termsNote: string;
+}
+
 export interface Profile {
   readonly identity: Identity;
   /** The languages the site is published in. */
   readonly locales: readonly Locale[];
   readonly knowledge: KnowledgeSource;
+  /** The public pages the record's `productSites` passages are read from. */
+  readonly siteAllowList: readonly SiteEntry[];
   /** The colours and image face the pages, the share image and the tab icon are drawn in. */
   readonly brand: Brand;
   /** What the site writes around the record's facts, per language. */
@@ -61,15 +74,49 @@ const brandSchema = z.strictObject({
   }),
 });
 
-const profileSchema = z.strictObject({
-  identity: identitySchema,
-  locales: z.array(z.enum(['en'])).min(1),
-  knowledge: knowledgeRecordSchema,
-  brand: brandSchema,
-  // Its shape is the type's to check: copy is code, written against the record.
-  copy: z.strictObject({ en: z.strictObject({ answers: z.looseObject({}) }) }),
-  evaluation: z.array(z.looseObject({ id: z.string().regex(/\S/) })),
+const siteEntrySchema = z.strictObject({
+  subject: z.strictObject({ kind: z.enum(['project', 'company']), id: z.string().regex(/\S/) }),
+  urls: z.array(httpsUrl).min(1),
+  termsNote: z.string().regex(/\S/),
 });
+
+interface SitesAndPassages {
+  readonly siteAllowList: readonly Pick<SiteEntry, 'subject' | 'urls'>[];
+  readonly knowledge: Pick<KnowledgeSource, 'productSites'>;
+}
+
+/** Every passage of a site was read from a page the allow-list names, for the subject it names. */
+function checkSitePassagesAllowed(
+  { siteAllowList, knowledge }: SitesAndPassages,
+  context: z.RefinementCtx,
+) {
+  const subjectOf = new Map(
+    siteAllowList.flatMap(({ subject, urls }) => urls.map((url) => [url, subject])),
+  );
+  knowledge.productSites.forEach(({ url, subject }, index) => {
+    const allowed = subjectOf.get(url);
+    if (allowed?.kind !== subject.kind || allowed.id !== subject.id) {
+      context.addIssue({
+        code: 'custom',
+        message: `"${url}" is not on the site allow-list for ${subject.kind} "${subject.id}"`,
+        path: ['knowledge', 'productSites', index, 'url'],
+      });
+    }
+  });
+}
+
+const profileSchema = z
+  .strictObject({
+    identity: identitySchema,
+    locales: z.array(z.enum(['en'])).min(1),
+    knowledge: knowledgeRecordSchema,
+    siteAllowList: z.array(siteEntrySchema),
+    brand: brandSchema,
+    // Its shape is the type's to check: copy is code, written against the record.
+    copy: z.strictObject({ en: z.strictObject({ answers: z.looseObject({}) }) }),
+    evaluation: z.array(z.looseObject({ id: z.string().regex(/\S/) })),
+  })
+  .superRefine(checkSitePassagesAllowed);
 
 /**
  * Fails, listing every problem by its path, when the profile is not one the

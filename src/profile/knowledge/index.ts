@@ -1,4 +1,6 @@
 import type { KnowledgeSource } from '@/core/knowledge/schema';
+import { sitePassagesSchema } from '@/core/knowledge/validate';
+import siteSnapshot from '../sites/snapshot.json';
 import { education, languages } from './education';
 import { experience } from './experience';
 import { metrics } from './metrics';
@@ -28,5 +30,6 @@ export const knowledge: KnowledgeSource = {
   practice,
   sourceLabels,
   notes: { source: 'notes', guide: notesGuide, passages: notes },
+  productSites: sitePassagesSchema.parse(siteSnapshot.entries),
   references,
 };

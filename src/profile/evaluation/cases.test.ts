@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { siteSourceId } from '@/core/knowledge/product-sites';
+import { knowledge } from '../knowledge';
 import { evaluation } from './cases';
 
 describe('the evaluation cases', () => {
@@ -33,5 +35,14 @@ describe('the evaluation cases', () => {
       .filter(({ category }) => category === 'leadership')
       .map(({ expect: expectation }) => expectation.language ?? 'en');
     expect(new Set(languages)).toEqual(new Set(['en', 'pt']));
+  });
+
+  it('expect only site pages the snapshot holds to be cited', () => {
+    const pages = new Set(knowledge.productSites.map(({ url }) => siteSourceId(url)));
+    const cited = evaluation.flatMap(({ expect: expectation }) => expectation.cites ?? []);
+    expect(cited.length).toBeGreaterThan(0);
+    for (const id of cited.filter((source) => source.startsWith('site:'))) {
+      expect(pages, id).toContain(id);
+    }
   });
 });
