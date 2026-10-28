@@ -90,7 +90,7 @@ describe("the owner's record", () => {
   it('backs the welcome greeting with his current and recent companies and two headline results', () => {
     const { roles, metrics } = knowledge.welcome.evidence;
     expect(roles).toEqual(['way2b1', 'deel', 'roots']);
-    expect(metrics.map((id) => knowledge.metrics[id]?.value)).toEqual(['50%', '1 → 4']);
+    expect(metrics.map((id) => knowledge.metrics[id]?.value)).toEqual(['50%', '30%+']);
   });
 
   it('names the owner the way the identity does, in one place', () => {
