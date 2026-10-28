@@ -19,6 +19,11 @@ export interface ToolResult {
   /** JSON-serializable; this is all the model sees. */
   readonly data: unknown;
   readonly sources: readonly AnswerSource[];
+  /**
+   * The text each source backs, by source id, when a result mixes several
+   * records; a source without an entry is backed by the whole `data`.
+   */
+  readonly evidence?: Readonly<Record<string, string>>;
   readonly effect?: ToolEffect;
 }
 
