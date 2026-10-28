@@ -51,7 +51,18 @@ const assistantSettingsSchema = z
      */
     MODEL_DAILY_TOKENS: positiveInteger(2_000_000),
     /** The longest any answer may take; past it the visitor is told it was interrupted. */
-    CHAT_REQUEST_TIMEOUT_MS: positiveInteger(60_000),
+    CHAT_REQUEST_TIMEOUT_MS: z.preprocess(
+      unset,
+      z.coerce
+        .number()
+        .int()
+        .positive()
+        .max(
+          70_000,
+          'Keep it under the chat route maxDuration (75 s), so the limit ends an answer first.',
+        )
+        .default(60_000),
+    ),
   })
   .transform((env) => ({
     chatModel: env.OPENAI_CHAT_MODEL,

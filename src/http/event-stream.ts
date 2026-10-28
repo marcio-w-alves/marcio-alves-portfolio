@@ -30,6 +30,11 @@ interface Options {
   /** When the answer has taken too long: the visitor is told it was interrupted. */
   readonly deadline?: AbortSignal;
   readonly heartbeatMs?: number;
+  /**
+   * The visitor went away. Called before the answer is returned, which waits
+   * for whatever the answer is awaiting — so this is what stops that call.
+   */
+  readonly onCancel?: () => void;
 }
 
 /**
@@ -45,16 +50,22 @@ interface Options {
 export function eventStream(
   events: AsyncIterable<AssistantEvent>,
   reportError: (error: unknown) => void,
-  { deadline, heartbeatMs = HEARTBEAT_INTERVAL_MS }: Options = {},
+  { deadline, heartbeatMs = HEARTBEAT_INTERVAL_MS, onCancel }: Options = {},
 ): ReadableStream<Uint8Array> {
   const iterator = events[Symbol.asyncIterator]();
   let ended = false;
   let answered = false;
   let heartbeat: ReturnType<typeof setInterval> | undefined;
+  const deadlineListener = new AbortController();
 
-  function end(controller: ReadableStreamDefaultController<Uint8Array>, last?: AssistantEvent) {
+  function stop(): void {
     ended = true;
     clearInterval(heartbeat);
+    deadlineListener.abort();
+  }
+
+  function end(controller: ReadableStreamDefaultController<Uint8Array>, last?: AssistantEvent) {
+    stop();
     if (last) controller.enqueue(frame(last));
     controller.close();
   }
@@ -73,7 +84,7 @@ export function eventStream(
           end(controller, answered ? undefined : INTERRUPTED);
           iterator.return?.().catch(reportError);
         },
-        { once: true },
+        { once: true, signal: deadlineListener.signal },
       );
     },
     async pull(controller) {
@@ -96,8 +107,8 @@ export function eventStream(
       }
     },
     async cancel() {
-      ended = true;
-      clearInterval(heartbeat);
+      stop();
+      onCancel?.();
       await iterator.return?.();
     },
   });

@@ -154,6 +154,31 @@ describe('the event stream when the answer ends early', () => {
     expect(reported).toEqual([failure]);
   });
 
+  it('tells the answer the visitor left before waiting for it to stop', async () => {
+    const visitor = new AbortController();
+    let generatorFinished = false;
+    async function* answer() {
+      try {
+        yield START;
+        yield await untilAborted(visitor.signal);
+      } finally {
+        generatorFinished = true;
+      }
+    }
+    const reader = eventStream(answer(), noErrors, {
+      onCancel: () => {
+        visitor.abort(new DOMException('Left', 'AbortError'));
+      },
+    }).getReader();
+    await reader.read();
+    await vi.advanceTimersByTimeAsync(0);
+
+    await reader.cancel();
+
+    expect(visitor.signal.aborted).toBe(true);
+    expect(generatorFinished).toBe(true);
+  });
+
   it('returns the answer and sends nothing more when the visitor leaves', async () => {
     let generatorFinished = false;
     async function* answer() {

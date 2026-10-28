@@ -45,7 +45,7 @@ describe('assistant settings', () => {
     expect(assistantSettings()).toMatchObject({ chatRequestTimeoutMs: 45_000 });
   });
 
-  it.each(['soon', '0', '-1000'])('refuses %j as the overall time limit', (value) => {
+  it.each(['soon', '0', '-1000', '75000'])('refuses %j as the overall time limit', (value) => {
     vi.stubEnv('CHAT_REQUEST_TIMEOUT_MS', value);
     expect(() => assistantSettings()).toThrow();
   });

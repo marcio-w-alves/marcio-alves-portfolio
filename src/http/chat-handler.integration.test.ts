@@ -643,6 +643,26 @@ describe('POST /api/chat — an answer past its time limit', () => {
     expect(loggedEvents('retrieval.circuit_opened')).toEqual([]);
   });
 
+  it('stops the OpenAI call and logs an abandoned answer when the visitor closes the stream', async () => {
+    server.use(http.post(COMPLETIONS, ({ request }) => noResponseUntilAborted(request)));
+    // The connection closing is all the platform may report: the request's own
+    // signal cannot be relied on once the platform has let the request go.
+    const response = await createChatHandler(outOfTime())(question(MODEL_QUESTION));
+    await vi.waitFor(() => {
+      expect(outbound.filter((request) => request.url === COMPLETIONS)).toHaveLength(1);
+    });
+
+    await response.body?.cancel();
+
+    await vi.waitFor(() => {
+      expect(loggedEvents('chat.answered')).toMatchObject([{ outcome: 'abandoned' }]);
+    });
+    expect(
+      outbound.filter((request) => request.url === COMPLETIONS).map((r) => r.signal.aborted),
+    ).toEqual([true]);
+    expect(reported).toEqual([]);
+  });
+
   it('is told apart from a visitor leaving, who gets no interrupted event and no failure', async () => {
     server.use(http.post(COMPLETIONS, ({ request }) => noResponseUntilAborted(request)));
     const leaving = new AbortController();
