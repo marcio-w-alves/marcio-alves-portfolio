@@ -60,7 +60,7 @@ export const evaluation: readonly EvaluationCase[] = [
     id: 'career-overview',
     category: 'career',
     question: "Tell me about Marcio's career.",
-    expect: { path: 'fast', mentions: ['Deel', 'Way2B1'] },
+    expect: { path: 'fast', mentions: ['Deel', 'Way2b1'] },
   },
   {
     id: 'deel-backlog',
@@ -95,8 +95,8 @@ export const evaluation: readonly EvaluationCase[] = [
   {
     id: 'current-role',
     category: 'career',
-    question: 'What is he working on at Way2B1?',
-    expect: { path: 'fast', mentions: ['Way2B1'] },
+    question: 'What is he working on at Way2b1?',
+    expect: { path: 'fast', mentions: ['Way2b1'] },
   },
   {
     id: 'achievements',
@@ -204,8 +204,8 @@ export const evaluation: readonly EvaluationCase[] = [
   {
     id: 'what-is-way2b1',
     category: 'company',
-    question: 'What kind of company is Way2B1?',
-    expect: { path: 'model', mentions: ['Way2B1'] },
+    question: 'What kind of company is Way2b1?',
+    expect: { path: 'model', mentions: ['Way2b1'] },
   },
   {
     id: 'what-is-roots',

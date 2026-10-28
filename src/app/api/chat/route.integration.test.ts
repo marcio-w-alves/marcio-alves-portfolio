@@ -334,7 +334,7 @@ describe('POST /api/chat — a model answer', () => {
         return HttpResponse.json({
           object: 'list',
           model: 'text-embedding-3-small',
-          // The query lands exactly on the indexed Way2B1 role, sent as the
+          // The query lands exactly on the indexed Way2b1 role, sent as the
           // base64 floats the SDK asks for.
           data: [{ object: 'embedding', index: 0, embedding: base64Floats(WAY2B1_VECTOR) }],
           usage: { prompt_tokens: 5, total_tokens: 5 },
@@ -343,7 +343,7 @@ describe('POST /api/chat — a model answer', () => {
     );
     scriptedCompletions(
       toolCallRound('searchKnowledge', '{"query":"talent marketplace work"}'),
-      textRound('He worked at Way2B1.'),
+      textRound('He worked at Way2b1.'),
     );
 
     const events = await allEventsOf(await postChat()(question(MODEL_QUESTION)));
@@ -353,10 +353,10 @@ describe('POST /api/chat — a model answer', () => {
       input: ['talent marketplace work'],
       dimensions: 512,
     });
-    expect(textOf(events)).toBe('He worked at Way2B1.');
+    expect(textOf(events)).toBe('He worked at Way2b1.');
     expect(sourcesOf(events)).toContainEqual({
-      id: 'notes.way2b1',
-      label: 'Knowledge base',
+      id: 'resume.way2b1',
+      label: 'Resume',
     });
   });
 
@@ -475,7 +475,7 @@ describe('POST /api/chat — when retrieval is down', () => {
     const ask = createChatHandler(container);
 
     const answers: AssistantEvent[][] = [];
-    for (const company of ['Roots', 'Deel', 'Way2B1', 'Shall']) {
+    for (const company of ['Roots', 'Deel', 'Way2b1', 'Shall']) {
       answers.push(await allEventsOf(await ask(question(`Compare ${company} and Deel.`))));
     }
 
@@ -653,7 +653,7 @@ describe('POST /api/chat — the spending budget', () => {
 
   async function nextModelAnswerIsPaced(handle: (request: Request) => Promise<Response>) {
     const calls = outbound.filter((request) => request.url === COMPLETIONS).length;
-    await allEventsOf(await handle(question('Compare Way2B1 and Deel.')));
+    await allEventsOf(await handle(question('Compare Way2b1 and Deel.')));
     const paced = loggedEvents('chat.answered').at(-1)?.outcome === 'paced';
     const calledOpenAI = outbound.filter((request) => request.url === COMPLETIONS).length > calls;
     expect(paced).toBe(!calledOpenAI);

@@ -5,8 +5,7 @@ import type { Localized } from '@/core/knowledge/schema';
 export const sourceLabels: Readonly<Record<string, Localized>> = {
   profile: { en: 'Resume' },
   principles: { en: 'Engineering principles' },
-  // Not on the published résumé yet: Marcio described the role himself.
-  'notes.way2b1': { en: 'Knowledge base' },
+  'resume.way2b1': { en: 'Resume' },
   'resume.deel': { en: 'Resume' },
   'resume.roots': { en: 'Resume' },
   'resume.maison': { en: 'Resume' },

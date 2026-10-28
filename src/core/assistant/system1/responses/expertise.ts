@@ -92,7 +92,7 @@ export function createExpertiseAnswers(kit: ResponseKit) {
         text(
           "Marcio's architecture work follows a consistent thread: standardize the foundations, keep components modular, and tie structural decisions to measurable product outcomes.\n\n" +
             '### Documented decisions\n' +
-            '- **Way2B1** — migrates legacy code to a modern, maintainable base across several products.\n' +
+            '- **Way2b1** — migrates legacy code to a modern, maintainable base across several products.\n' +
             '- **Deel** — standardized HRIS frontend architecture to improve structure, state management, error handling and scalability.\n' +
             '- **Roots** — directed frontend strategy, introduced advanced state management and set up GitLab CI pipelines deploying to Amazon S3.\n' +
             '- **Maison Moderne** — implemented SSR with Next.js and integrated the frontend with external publishing platforms.\n' +
@@ -105,7 +105,7 @@ export function createExpertiseAnswers(kit: ResponseKit) {
           `### How he designs a system\n${numbered(practice.designProcess)}\n\nThe trade-offs he weighs most often: ${practice.decisionCriteria.map((criterion) => criterion.charAt(0).toLowerCase() + criterion.slice(1)).join('; ')}.`,
         ),
         details(
-          'The engineering problem at Roots, Deel and Way2B1',
+          'The engineering problem at Roots, Deel and Way2b1',
           (['roots', 'deel', 'way2b1'] as const)
             .map((id) => {
               const study = practice.caseStudies[id];
@@ -145,9 +145,10 @@ export function createExpertiseAnswers(kit: ResponseKit) {
       'performance',
       [
         text("Performance is one of the most consistently documented themes in Marcio's work:"),
-        metrics(['deel-web-vitals', 'deel-critical-load', 'deel-people-list']),
+        metrics(['deel-web-vitals', 'deel-critical-load', 'deel-people-list', 'way2b1-bundle']),
         text(
           '### How he got there\n' +
+            '- **Way2b1** — refactored and optimized critical workflows platform-wide; bundle size down by nearly 50% and loading times down to a few hundred milliseconds.\n' +
             '- **Deel** — targeted refactoring and optimization of critical pages; the People List page went from six seconds to three on a cold run.\n' +
             '- **Maison Moderne** — server-side rendering to improve SEO and initial load speed for editorial products read by thousands daily.',
         ),
@@ -161,7 +162,7 @@ export function createExpertiseAnswers(kit: ResponseKit) {
           'Does he have Next.js and SSR experience?',
           'How does he approach frontend architecture?',
         ],
-        sources: ['resume.deel', 'resume.roots', 'resume.maison', 'resume.skills', 'notes'],
+        sources: ['resume.way2b1', 'resume.deel', 'resume.maison', 'resume.skills', 'notes'],
         related: 'deel',
       },
     );
@@ -179,7 +180,7 @@ export function createExpertiseAnswers(kit: ResponseKit) {
         skillGroups(['backend']),
         note(
           'inference',
-          'His deepest specialization is frontend; his current role at Way2B1 is full stack, and at Roots and Deel the backend belonged to other teams.',
+          'His deepest specialization is frontend; his current role at Way2b1 is full stack, and at Roots and Deel the backend belonged to other teams.',
         ),
       ],
       {
@@ -190,7 +191,7 @@ export function createExpertiseAnswers(kit: ResponseKit) {
         ],
         sources: [
           'resume.shall',
-          'notes.way2b1',
+          'resume.way2b1',
           'resume.roots',
           'resume.deel',
           'resume.skills',
@@ -289,7 +290,7 @@ export function createExpertiseAnswers(kit: ResponseKit) {
         followUps: [
           'How does he approach accessibility?',
           'How does he approach frontend architecture?',
-          'What is he working on at Way2B1?',
+          'What is he working on at Way2b1?',
         ],
         sources: ['resume.deel', 'resume.maison', 'notes'],
         related: 'deel',
@@ -351,7 +352,7 @@ export function createExpertiseAnswers(kit: ResponseKit) {
     'Maintainability over cleverness':
       'Coding standards and code reviews at Maison Moderne; a move to React Hooks at Shall And Partners.',
     'Composition over monoliths':
-      'Legacy code moved to a modern, modular codebase across several products at Way2B1.',
+      'Legacy code moved to a modern, modular codebase across several products at Way2b1.',
     'Reuse before rewriting':
       'One standardized HRIS frontend architecture across product areas at Deel.',
     'Architecture sized to the problem':
@@ -398,7 +399,7 @@ export function createExpertiseAnswers(kit: ResponseKit) {
         ],
         sources: [
           'principles',
-          'notes.way2b1',
+          'resume.way2b1',
           'resume.deel',
           'resume.roots',
           'resume.maison',

@@ -264,7 +264,7 @@ describe('display actions', () => {
     );
     expect(metrics.sources.map((source) => source.id)).toEqual(['resume.deel', 'resume.roots']);
     const timeline = succeeded(await registry.run('showTimeline', { companies: ['way2b1'] }));
-    expect(timeline.sources.map((source) => source.id)).toEqual(['notes.way2b1']);
+    expect(timeline.sources.map((source) => source.id)).toEqual(['resume.way2b1']);
   });
 
   it('refuses a metric the knowledge base does not have', async () => {

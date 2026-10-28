@@ -4,37 +4,61 @@ import type { RoleSource } from '@/core/knowledge/schema';
 export const experience: readonly RoleSource[] = [
   {
     id: 'way2b1',
-    company: 'Way2B1',
-    role: 'Full Stack Engineer',
-    period: '2026 — Present',
-    start: 2026.17,
+    company: 'Way2b1',
+    role: 'Senior Frontend Engineer',
+    period: 'Jun 2026 — Present',
+    start: 2026.42,
     end: null,
     current: true,
     summary: {
-      en: 'Full-stack work across the products of a small startup: legacy code migration and performance.',
+      en: 'Full-stack work across the product suite of a small startup: performance, legacy migration and end-to-end features.',
     },
     responsibilities: [
       {
-        en: "Works across the teams of Way2B1's products as a full-stack engineer, at a small startup building a platform for families and family offices.",
+        en: "Works as a full-stack engineer across Way2b1's product suite, at a small San Francisco startup building a platform for families and family offices.",
       },
-      { en: 'Migrates legacy code to a modern, maintainable codebase.' },
-      { en: 'Improves performance across the products.' },
+      {
+        en: 'Cut bundle size by nearly 50% and brought loading times down to a few hundred milliseconds.',
+      },
+      {
+        en: 'Migrated legacy code to a modern, maintainable architecture across multiple products, keeping features stable in production.',
+      },
+      { en: 'Delivers features end to end: frontend interfaces, backend services and APIs.' },
     ],
-    leadership: [],
+    leadership: [
+      {
+        en: 'Collaborates across product teams to align technical decisions, share patterns and keep the codebases consistent.',
+      },
+    ],
     achievements: [],
     focus: [
-      { en: 'Full stack' },
-      { en: 'Legacy code migration' },
       { en: 'Performance' },
+      { en: 'Legacy code migration' },
+      { en: 'Full stack' },
       { en: 'Cross-team work' },
     ],
-    metrics: [],
+    metrics: ['way2b1-bundle', 'way2b1-load'],
     highlights: [
-      { en: "Works as a full-stack engineer across the teams of Way2B1's products." },
-      { en: 'Migrates legacy code to a modern, maintainable codebase.' },
-      { en: 'Improves performance across the products.' },
+      {
+        en: 'Reduced bundle size by nearly 50% and decreased loading times to a few hundred milliseconds.',
+      },
+      {
+        en: 'Enhanced application performance platform-wide by refactoring and optimizing critical workflows.',
+      },
+      {
+        en: 'Delivered end-to-end features encompassing frontend interfaces, backend services, and APIs.',
+      },
+      {
+        en: "Contributed as a full-stack engineer across Way2b1's product suite at a small San Francisco startup developing a platform for families and family offices.",
+      },
+      {
+        en: 'Migrated legacy code to a modern, maintainable architecture across multiple products, reducing technical debt and maintaining feature stability in production.',
+      },
+      {
+        en: 'Collaborated across product teams to align technical decisions, share patterns, and maintain codebase consistency between products.',
+      },
     ],
-    source: 'notes.way2b1',
+    source: 'resume.way2b1',
   },
   {
     id: 'deel',

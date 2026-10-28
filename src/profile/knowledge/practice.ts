@@ -177,7 +177,7 @@ export const practice: PracticeSource = {
       {
         en: '**Deel** — frontend and HRIS at the core, working across services, data interfaces and the Roots migration; no authorship of corporate backend services is claimed.',
       },
-      { en: "**Way2B1** — full-stack work across the startup's products, frontend and backend." },
+      { en: "**Way2b1** — full-stack work across the startup's products, frontend and backend." },
     ],
     ownProducts: {
       en: 'In his own products he designs Node.js/TypeScript services with domain boundaries, a Backend for Frontend, authentication and RBAC, PostgreSQL with Prisma, Redis, queues, idempotency and the transactional outbox pattern. These are designs and prototypes at different stages, not production systems at an employer.',

@@ -28,7 +28,7 @@ export function createCareerAnswers(kit: ResponseKit) {
       'career',
       [
         text(
-          `Marcio is a frontend engineer with **over 10 years** of professional experience. He started in ${String(knowledge.profile.careerStartYear)} as a freelance web developer and grew into senior and lead frontend roles — helping lead the HRIS team at **Deel** (2022 — 2026) and, since 2026, working full stack across the products of **Way2B1**, a small startup.\n\n` +
+          `Marcio is a frontend engineer with **over 10 years** of professional experience. He started in ${String(knowledge.profile.careerStartYear)} as a freelance web developer and grew into senior and lead frontend roles — helping lead the HRIS team at **Deel** (2022 — 2026) and, since June 2026, as a Senior Frontend Engineer at **Way2b1**, working full stack across a small startup's product suite.\n\n` +
             'Across those roles the thread is consistent: React and Next.js architecture, performance, developer experience and technical leadership, with engineering work tied to product needs and user impact.',
         ),
         text(`### How his scope grew\n${bullets(practice.careerArc)}`),
@@ -87,8 +87,8 @@ export function createCareerAnswers(kit: ResponseKit) {
             ],
             [
               'Across products',
-              'Full-stack work across the teams of several products: legacy migration and performance',
-              'Way2B1',
+              'Bundle size cut by nearly 50% and legacy code migrated across a product suite',
+              'Way2b1',
             ],
           ],
           'Staff-level signals in his experience',
@@ -108,7 +108,7 @@ export function createCareerAnswers(kit: ResponseKit) {
           'Show me examples of architectural decisions.',
           'What are his strongest technical skills?',
         ],
-        sources: ['notes.way2b1', 'resume.deel', 'resume.roots', 'notes'],
+        sources: ['resume.way2b1', 'resume.deel', 'resume.roots', 'notes'],
         related: 'deel',
       },
     );
@@ -116,7 +116,7 @@ export function createCareerAnswers(kit: ResponseKit) {
 
   const COMPANY_INTROS: Readonly<Record<string, string>> = {
     way2b1:
-      'Since 2026, Marcio has worked as a full-stack engineer at **Way2B1**, a small San Francisco startup building a platform for families and family offices. He works across the teams of its products, migrating legacy code and improving performance.',
+      'Since June 2026, Marcio has been a Senior Frontend Engineer at **Way2b1**, a small San Francisco startup building a platform for families and family offices. He works full stack across its product suite: he cut bundle size by nearly 50%, brought loading times down to a few hundred milliseconds and migrated legacy code across multiple products.',
     deel: "Marcio worked at **Deel** from 2022 to 2026 as a Senior Frontend Engineer, helping lead the HRIS team behind the company's core HR tools and leading the migration of Roots into Deel.",
     roots:
       "At **Roots** (2020 — 2022), a startup building Slack bots for HR, Marcio was the Lead Frontend Engineer. He built the product frontend end to end, grew the frontend team from one to four, and later led the platform's migration into Deel.",
@@ -236,7 +236,7 @@ export function createCareerAnswers(kit: ResponseKit) {
             '### Technical direction\n' +
             '- Directed frontend strategy and architecture at **Roots**.\n' +
             '- Standardized HRIS frontend architecture and led the Roots migration at **Deel**.\n' +
-            '- Works across the teams of several products at **Way2B1**, migrating legacy code.\n\n' +
+            '- Works across the teams of several products at **Way2b1**, migrating legacy code.\n\n' +
             '### Delivery and people\n' +
             '- Defined technical trade-offs, delivery plans, OKRs and quarterly goals with Product at **Deel**.\n' +
             '- Coordinated sprint planning with managers and stakeholders at **Roots**.\n' +
@@ -257,7 +257,7 @@ export function createCareerAnswers(kit: ResponseKit) {
         sources: [
           'resume.roots',
           'resume.deel',
-          'notes.way2b1',
+          'resume.way2b1',
           'resume.maison',
           'resume.shall',
           'notes',
@@ -386,7 +386,7 @@ export function createCareerAnswers(kit: ResponseKit) {
         text(
           "Scaling shows up in Marcio's work at three levels — product, codebase and team:\n\n" +
             '- **Product** — at Deel he led the migration and scaling of the Roots platform into Deel, mitigating rollout risks; at Roots he shaped frontend architecture to support user base growth.\n' +
-            '- **Codebase** — he standardized HRIS frontend architecture at Deel, introduced advanced state management at Roots and migrates legacy code across several products at Way2B1.\n' +
+            '- **Codebase** — he standardized HRIS frontend architecture at Deel, introduced advanced state management at Roots and migrates legacy code across several products at Way2b1.\n' +
             '- **Team** — at Roots he grew the frontend team from one to four and set up GitLab CI pipelines deploying to Amazon S3.',
         ),
         metrics(['deel-critical-load', 'roots-team']),
@@ -400,7 +400,7 @@ export function createCareerAnswers(kit: ResponseKit) {
           'How does he approach frontend architecture?',
           'How did he optimize performance?',
         ],
-        sources: ['resume.deel', 'resume.roots', 'notes.way2b1', 'notes'],
+        sources: ['resume.deel', 'resume.roots', 'resume.way2b1', 'notes'],
         related: 'deel',
       },
     );
@@ -439,7 +439,7 @@ export function createCareerAnswers(kit: ResponseKit) {
       [
         text(
           `Yes. The most substantial enterprise example is **Deel** (2022 — 2026), where he helped lead the HRIS team behind the company's core HR tools, standardized its frontend architecture and led the migration of Roots into the platform.\n\n` +
-            'At **Way2B1**, a smaller startup, he works full stack across several products, migrating legacy code and improving performance.',
+            'At **Way2b1**, a smaller startup, he works full stack across several products, migrating legacy code and improving performance.',
         ),
         text(`### The enterprise problem at Deel\n${practice.caseStudies.deel?.problem ?? ''}`),
         metrics(['deel-web-vitals', 'deel-critical-load', 'deel-people-list']),
@@ -451,7 +451,7 @@ export function createCareerAnswers(kit: ResponseKit) {
           'How did he optimize performance?',
           'Has he led engineering teams?',
         ],
-        sources: ['profile', 'resume.deel', 'notes.way2b1', 'notes'],
+        sources: ['profile', 'resume.deel', 'resume.way2b1', 'notes'],
         related: 'deel',
       },
     );

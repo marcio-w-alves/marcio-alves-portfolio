@@ -38,7 +38,7 @@ source_policy: distinguir fatos curriculares, relatos e ideias ainda em desenvol
 
 **Apresentação curta (terceira pessoa).** Marcio Alves é engenheiro de software com mais de uma década de experiência, **especialização profunda em frontend e capacidade full-stack sólida**. Atua com React, TypeScript e Next.js, mas também possui experiência profissional em Node.js, APIs REST, microserviços e integração entre camadas. Trabalhou na construção de produtos desde o início e na evolução de plataformas empresariais complexas. Seu histórico combina arquitetura, performance, liderança, mentoria, integração de sistemas e **organização de processos de desenvolvimento com IA**. [CV-2026] [RELATO]
 
-**Apresentação ampliada.** Ao longo da carreira, Marcio transitou de entregas de desenvolvimento web e projetos completos como freelancer para posições com responsabilidade sobre arquitetura, estruturação de equipes e decisões de engenharia. Na Roots, ajudou a construir uma aplicação frontend e desenvolver o time. Na Deel, atuou em produtos centrais de HRIS, na integração da Roots e em melhorias quantificáveis de velocidade, qualidade e manutenção. Hoje atua como full stack na Way2B1, uma startup pequena, entre as equipes de vários produtos, migrando código legado e melhorando performance. Paralelamente, concebe e desenvolve produtos próprios em automação, fitness, mobilidade elétrica, escrita e jogos. [CV-2026] [RELATO]
+**Apresentação ampliada.** Ao longo da carreira, Marcio transitou de entregas de desenvolvimento web e projetos completos como freelancer para posições com responsabilidade sobre arquitetura, estruturação de equipes e decisões de engenharia. Na Roots, ajudou a construir uma aplicação frontend e desenvolver o time. Na Deel, atuou em produtos centrais de HRIS, na integração da Roots e em melhorias quantificáveis de velocidade, qualidade e manutenção. Hoje atua como full stack na Way2b1, uma startup pequena, entre as equipes de vários produtos, migrando código legado e melhorando performance. Paralelamente, concebe e desenvolve produtos próprios em automação, fitness, mobilidade elétrica, escrita e jogos. [CV-2026] [RELATO]
 
 **Em uma frase.** Um engenheiro de software com excelência em frontend, boa capacidade full-stack, experiência sólida em system design de aplicações, liderança técnica e competência para estruturar fluxos de IA que ampliem a produtividade sem abrir mão de arquitetura e qualidade.
 
@@ -81,15 +81,24 @@ Os pilares mais evidentes de sua atuação são:
 
 > **Nota cronológica:** existem períodos sobrepostos no currículo. Não presumir contratos exclusivos nem reorganizar datas sem confirmação. A versão de 27/10/2026 é a referência prioritária.
 
-### 3.1 Way2B1 — Full Stack Engineer
+### 3.1 Way2b1 — Senior Frontend Engineer
 
-**Período:** depois da Deel, de 2026 até o presente (relato de Marcio, 28/10/2026). Este cargo ainda não está no currículo publicado. [RELATO]
+**Período:** junho de 2026 até o presente, depois da Deel. [CV-2026]
 
-**A empresa:** a Way2B1 é uma startup pequena de San Francisco, fundada em 2015, que constrói uma plataforma para famílias e family offices: um ponto único de acesso a pessoas, serviços, documentos e fluxos de aprovação, com foco em segurança e privacidade. Seus produtos incluem o Source (a operação da família num lugar só), o Greenlight (decisões e aprovações de compras, investimentos e doações) e o Fixit (manutenção de imóveis, veículos, embarcações e aeronaves). Fonte: perfis públicos da empresa (Built In, Wellfound); não é informação de Marcio.
+**A empresa:** a Way2b1 é uma startup pequena de San Francisco, fundada em 2015, que constrói uma plataforma para famílias e family offices: um ponto único de acesso a pessoas, serviços, documentos e fluxos de aprovação, com foco em segurança e privacidade. Seus produtos incluem o Source (a operação da família num lugar só), o Greenlight (decisões e aprovações de compras, investimentos e doações) e o Fixit (manutenção de imóveis, veículos, embarcações e aeronaves). Fonte: perfis públicos da empresa (Built In, Wellfound); não é informação de Marcio.
 
-**O que Marcio faz (relato de 28/10/2026):** atua como **full stack**, trabalhando de forma transversal entre as equipes dos vários produtos da empresa. Seu foco é **migrar código legado** para uma base moderna e sustentável e **melhorar a performance** dos produtos. [RELATO]
+**O que o currículo registra:** [CV-2026]
 
-**Limite:** não há métricas publicadas desse período, e Marcio não detalhou em quais produtos trabalha nem a stack. Não atribuir resultados numéricos, cargo de liderança ou tamanho de time.
+- Redução de quase 50% no tamanho do bundle e tempos de carregamento reduzidos a algumas centenas de milissegundos.
+- Melhoria de performance em toda a plataforma, refatorando e otimizando fluxos críticos.
+- Entrega de funcionalidades de ponta a ponta: interfaces, serviços de backend e APIs.
+- Atuação como engenheiro full stack em toda a suíte de produtos da empresa.
+- Migração de código legado para uma arquitetura moderna e sustentável em vários produtos, reduzindo dívida técnica e mantendo a estabilidade em produção.
+- Colaboração entre as equipes de produto para alinhar decisões técnicas, compartilhar padrões e manter o código consistente entre os produtos.
+
+**Nas palavras de Marcio (28/10/2026):** trabalha como full stack, de forma transversal entre as equipes dos vários produtos, migrando código legado e melhorando performance. [RELATO]
+
+**Limite:** o currículo não detalha em quais produtos ele trabalha nem a stack; não atribuir cargo de liderança formal ou tamanho de time.
 
 ### 3.2 Deel — Senior Frontend Engineer
 
@@ -254,7 +263,7 @@ Sua força como profissional full-stack está em **conectar decisões entre cama
 | Área | Evidência concreta | Como apresentar |
 | --- | --- | --- |
 | Backend profissional | Node.js, APIs REST, sistemas com microserviços, múltiplos bancos, aplicações web/mobile na Shall And Partners | Experiência de implementação full-stack durante a carreira; não afirmar senioridade exclusiva de backend. |
-| Integração end-to-end | Produto inicial na Roots, integração ao ecossistema Deel, trabalho full stack entre produtos na Way2B1 | Capacidade de raciocinar além da UI e cooperar em sistemas reais. |
+| Integração end-to-end | Produto inicial na Roots, integração ao ecossistema Deel, trabalho full stack entre produtos na Way2b1 | Capacidade de raciocinar além da UI e cooperar em sistemas reais. |
 | Arquitetura de backend para projetos autorais | Serviços Node/TypeScript, BFF, autenticação, bancos, filas, Redis, arquivos e processos assíncronos discutidos | Repertório de arquitetura e desenvolvimento/prototipação; validar quais módulos chegaram a produção. |
 | Sistemas distribuídos e resiliência | Outbox, idempotência, RBAC, eventos, DLQ, rastreabilidade e separação de domínios explorados | Estudos e decisões de engenharia; não afirmar que todo padrão foi implementado em produção. |
 | Engenharia de IA | Agentes de programação, contexto, ferramentas, RAG, tool calling, dados e avaliação | Competência aplicada à organização de trabalho e exploração de funcionalidades de produtos. |
@@ -269,7 +278,7 @@ Sua força como profissional full-stack está em **conectar decisões entre cama
 
 **Deel (2022–2026).** Sua contribuição central foi frontend e HRIS; o aprendizado transversal envolve serviços, interfaces de dados, migração da Roots e dependências entre módulos. O currículo sustenta arquitetura e integração, mas **não especifica autoria de microserviços backend corporativos**; Marcio confirma que não trabalhou no backend da Deel, além de algumas decisões de arquitetura. [CV-2026] [RELATO]
 
-**Way2B1 (desde 2026).** Marcio relata atuar como full stack entre os vários produtos da empresa, migrando código legado e melhorando performance. É seu cargo atual com responsabilidade de backend, além do frontend. [RELATO]
+**Way2b1 (desde junho de 2026).** O currículo registra atuação full stack em toda a suíte de produtos, com entrega de ponta a ponta de interfaces, serviços de backend e APIs. É seu cargo atual com responsabilidade de backend, além do frontend. [CV-2026]
 
 ### 5.6 Node.js, TypeScript e arquitetura de serviços
 
@@ -353,7 +362,7 @@ Seu repertório pode ser organizado em quatro dimensões complementares:
 3. **Arquitetura de sistemas:** avaliar persistência, autenticação, integração, comunicação síncrona e assíncrona, falhas, segurança, infraestrutura, deploy e observabilidade.
 4. **Evolução organizacional:** sustentar uma arquitetura que possa ser entendida e desenvolvida por um time, com decisões documentadas, padrões compartilhados, revisões e migrações incrementais.
 
-**Evidências centrais:** frontend React construído e evoluído na Roots; migração da Roots ao ecossistema Deel e padronização de interfaces HRIS; migração de código legado entre vários produtos na Way2B1; APIs Node.js e microserviços em etapa anterior da carreira; e estudos amplos de sistemas distribuídos em produtos independentes. [CV-2026] [RELATO]
+**Evidências centrais:** frontend React construído e evoluído na Roots; migração da Roots ao ecossistema Deel e padronização de interfaces HRIS; migração de código legado entre vários produtos na Way2b1; APIs Node.js e microserviços em etapa anterior da carreira; e estudos amplos de sistemas distribuídos em produtos independentes. [CV-2026] [RELATO]
 
 ### 6.2 Processo de design: problema, restrições, alternativas e trade-offs
 
@@ -384,7 +393,7 @@ Seu trabalho e suas preferências são alinhados a **baixo acoplamento, responsa
 - Evolução incremental de sistemas legados: mudanças pequenas, monitoramento, feature flags quando apropriadas, compatibilidade e rollback.
 - Documentação de decisões técnicas, convenções de código, revisão, onboarding e redução de dependência de conhecimento tácito.
 
-**Experiência demonstrada:** arquitetura/estado/erros padronizados no HRIS da Deel, refatoração e performance; criação de aplicação e time na Roots; migração de código legado na Way2B1. **Princípios arquiteturais:** inferidos do comportamento e das discussões, não equivalentes a certificados específicos em DDD, Clean Architecture ou similares. [CV-2026] [RELATO]
+**Experiência demonstrada:** arquitetura/estado/erros padronizados no HRIS da Deel, refatoração e performance; criação de aplicação e time na Roots; migração de código legado na Way2b1. **Princípios arquiteturais:** inferidos do comportamento e das discussões, não equivalentes a certificados específicos em DDD, Clean Architecture ou similares. [CV-2026] [RELATO]
 
 ### 6.4 Arquitetura frontend como parte de System Design
 
@@ -411,7 +420,7 @@ Seu histórico profissional inclui desenvolvimento de APIs REST e microserviços
 - Contratos tipados e versionamento compatível em migrações, evitando acoplar o frontend a detalhes internos do banco ou de cada serviço.
 - Discussão de **BFF** quando um endpoint agregado realmente reduz complexidade de cliente ou melhora governança, sem introduzir BFF por padrão.
 
-**Na Roots**, o frontend React consumia serviços de backend em Python, que eram de outra equipe. **Na Deel**, havia um monorepo só de frontend, dividido em verticais, e o backend era de outras equipes. **Na Way2B1**, atua full stack, do frontend aos serviços. [CV-2026] [RELATO]
+**Na Roots**, o frontend React consumia serviços de backend em Python, que eram de outra equipe. **Na Deel**, havia um monorepo só de frontend, dividido em verticais, e o backend era de outras equipes. **Na Way2b1**, atua full stack, do frontend aos serviços. [CV-2026] [RELATO]
 
 ### 6.6 Backend design: organização por domínio e fronteiras de responsabilidade
 
@@ -445,7 +454,7 @@ Seu repertório de system design inclui **modelar regras e relações antes de a
 
 ### 6.8 Design de sistemas distribuídos e comportamento diante de falhas
 
-Em projetos de SaaS e jogos, ele explora os trade-offs de **confiabilidade, assincronia e consistência distribuída**. Os temas são relevantes para desenhar software real, mas devem ser apresentados como **estudos e arquiteturas de produtos próprios**, não como histórico profissional comprovado na Deel ou na Way2B1:
+Em projetos de SaaS e jogos, ele explora os trade-offs de **confiabilidade, assincronia e consistência distribuída**. Os temas são relevantes para desenhar software real, mas devem ser apresentados como **estudos e arquiteturas de produtos próprios**, não como histórico profissional comprovado na Deel ou na Way2b1:
 
 - Que eventos publicar e quem é o produtor/consumidor responsável.
 - Fila e worker para processos que toleram execução posterior, como campanhas, processamento de arquivos e notificações.
@@ -486,7 +495,7 @@ A ligação entre performance e decisão arquitetural é uma área de **experiê
 
 ### 6.11 CI/CD, mudanças evolutivas, rollback e disciplina de entrega
 
-O histórico da Roots inclui **pipeline GitLab CI e deploy para S3**; sua experiência na Deel inclui migração e qualidade de plataforma com iniciativas coordenadas; na Way2B1, a migração de código legado e a melhoria de performance entre produtos. Em discussões autorais, ele explora:
+O histórico da Roots inclui **pipeline GitLab CI e deploy para S3**; sua experiência na Deel inclui migração e qualidade de plataforma com iniciativas coordenadas; na Way2b1, a migração de código legado e a melhoria de performance entre produtos. Em discussões autorais, ele explora:
 
 - Dependências entre migrations de dados, deploy de serviços e atualização dos clientes.
 - Entregas incrementais, feature flags e planos de rollout conforme risco.
@@ -504,7 +513,7 @@ System design não é apenas desenhar caixas e setas. O histórico de Marcio inc
 - Na Roots: responsabilidade sobre estratégia técnica, contratação e expansão do time, organização de sprints e entregas. Relato anterior descreve distribuição aproximada de 60% coding e 40% liderança/gestão ao longo do trabalho.
 - Na Deel: trabalho em decisões arquiteturais de HRIS, colaboração com Produto, mentoria e hiring; relato anterior menciona um equilíbrio mais concentrado em implementação (aproximadamente 80% coding / 20% liderança) e liderança de 2–3 engenheiros em determinados contextos. Esses percentuais são **autorreferidos e históricos**, não descrições atuais nem indicadores auditados.
 
-**Capacidade demonstrada:** liderar decisões sem perder contato com implementação, traduzir restrições de produto em decisões técnicas, ensinar padrões e apoiar entrega por diferentes engenheiros. **Limite:** evitar inventar cargo formal de Engineering Manager ou tamanho de equipe na Way2B1. [CV-2026] [RELATO]
+**Capacidade demonstrada:** liderar decisões sem perder contato com implementação, traduzir restrições de produto em decisões técnicas, ensinar padrões e apoiar entrega por diferentes engenheiros. **Limite:** evitar inventar cargo formal de Engineering Manager ou tamanho de equipe na Way2b1. [CV-2026] [RELATO]
 
 ### 6.13 Estudo de caso de System Design — Roots: construir e preparar para crescer
 
@@ -541,7 +550,7 @@ System design não é apenas desenhar caixas e setas. O histórico de Marcio inc
 
 **Detalhes complementares declarados em conversas:** frontend React em monorepo com integração a serviços Node.js e uso de ferramentas de monitoramento. Esses detalhes podem ser usados como relato, não como confirmação independente de arquitetura proprietária. [CV-2026] [RELATO]
 
-### 6.15 Way2B1: migração de legado e performance entre produtos
+### 6.15 Way2b1: migração de legado e performance entre produtos
 
 **Problema de engenharia:** manter os produtos de uma startup pequena evoluindo enquanto o código legado é migrado e a performance melhora, trabalhando entre as equipes dos produtos, e não dentro de uma só. [RELATO]
 
@@ -553,7 +562,7 @@ System design não é apenas desenhar caixas e setas. O histórico de Marcio inc
 | --- | --- | --- | --- |
 | Arquitetura frontend modular | Roots e Deel | Componentes, fronteiras, design systems, estado e escala | Experiência profissional sólida |
 | Migração e modernização de produto | Integração Roots–Deel, refatoração de HRIS | Compatibilidade, rollout, flags e rollback | Experiência direta em migração; técnicas adicionais em estudo |
-| Design de APIs e integração | Node/REST em Shall And Partners; full stack na Way2B1 | DTOs, contratos, BFF, validação e versionamento | Experiência profissional + estudos |
+| Design de APIs e integração | Node/REST em Shall And Partners; full stack na Way2b1 | DTOs, contratos, BFF, validação e versionamento | Experiência profissional + estudos |
 | Gerência de estado e dados remotos | Raiz de produto Roots, HRIS Deel | React Query, cache/invalidação, paginação | Experiência sólida em frontend; detalhes por tecnologia a confirmar |
 | Qualidade, testes e observabilidade | Performance e reviews na Deel; CI na Roots | Contratos, tracing, Sentry, Datadog, SLIs/SLOs | Experiência + estudos; ferramentas específicas a qualificar |
 | Liderança e engenharia de times | Roots e Deel | ADRs, governança, onboarding, decisões | Experiência profissional documentada |
@@ -1146,7 +1155,7 @@ R: Além de interesse em jogos, os projetos permitem explorar problemas complexo
 R: Combinar especialização profunda em React/TypeScript, capacidade de pensar e trabalhar full-stack, histórico de liderança e desempenho mensurável, e habilidade para organizar agentes de IA de forma pragmática. Seu foco declarado é simplicidade, reuso, performance e implementação efetiva do produto.
 
 **P: Marcio tem experiência sólida com System Design?**  
-R: Sim, especialmente em arquitetura de aplicações e sistemas frontend de produção. Na Roots criou e direcionou a arquitetura de um produto desde cedo; na Deel atuou na migração da Roots, padronização arquitetural e performance de um HRIS; na Way2B1 trabalha full stack entre produtos, migrando código legado. Seu repertório em sistemas distribuídos e backend é aprofundado também por estudos e projetos próprios.
+R: Sim, especialmente em arquitetura de aplicações e sistemas frontend de produção. Na Roots criou e direcionou a arquitetura de um produto desde cedo; na Deel atuou na migração da Roots, padronização arquitetural e performance de um HRIS; na Way2b1 trabalha full stack entre produtos, migrando código legado. Seu repertório em sistemas distribuídos e backend é aprofundado também por estudos e projetos próprios.
 
 **P: Quais decisões de arquitetura ele enfrentou na Roots?**  
 R: Definir a arquitetura e os padrões do frontend React desde a fase inicial, integrar serviços, equilibrar performance, manutenção e evolução do produto, estabelecer CI/CD e organizar uma base de código que passou de um desenvolvedor para quatro.
@@ -1154,20 +1163,20 @@ R: Definir a arquitetura e os padrões do frontend React desde a fase inicial, i
 **P: Como foi sua experiência de System Design na Deel?**  
 R: Trabalhou na integração da plataforma Roots ao ecossistema Deel e na padronização arquitetural das interfaces de HRIS, com atenção a estado, erros, estrutura, escalabilidade, carregamento e estabilidade. Participou de trade-offs e planejamento técnico com Produto/Engenharia. O currículo registra Web Vitals melhores em ao menos 30% e carregamento crítico 50% menor.
 
-**P: O que ele faz na Way2B1?**  
-R: Atua como full stack numa startup pequena de San Francisco que constrói uma plataforma para famílias e family offices. Trabalha entre as equipes dos vários produtos, migrando código legado e melhorando performance. [RELATO]
+**P: O que ele faz na Way2b1?**  
+R: É Senior Frontend Engineer e atua full stack numa startup pequena de San Francisco que constrói uma plataforma para famílias e family offices. Reduziu o bundle em quase 50%, levou os tempos de carregamento a algumas centenas de milissegundos, migrou código legado em vários produtos e entrega funcionalidades de ponta a ponta. [CV-2026]
 
 **P: Sua experiência de System Design se restringe ao frontend?**  
 R: Não. Sua especialização profunda é frontend, mas trabalhou profissionalmente com Node.js, APIs REST, automações, microserviços e bancos em uma fase full-stack. Também desenha e estuda BFFs, dados, serviços por domínio, autorização, observabilidade e workflows assíncronos em produtos próprios; a maturidade de cada solução deve ser apresentada corretamente.
 
 **P: Ele domina consistência, eventos e sistemas distribuídos?**  
-R: Possui estudo consistente de idempotência, filas, transactional outbox, eventos, falhas parciais, retries, DLQ e auditoria em projetos como TargUp e ferramentas de MMORPG. Não há evidência pública que autorize atribuir implantação em larga escala desses padrões especificamente na Deel ou na Way2B1.
+R: Possui estudo consistente de idempotência, filas, transactional outbox, eventos, falhas parciais, retries, DLQ e auditoria em projetos como TargUp e ferramentas de MMORPG. Não há evidência pública que autorize atribuir implantação em larga escala desses padrões especificamente na Deel ou na Way2b1.
 
 **P: Como escolhe entre monólito modular e microsserviços?**  
 R: Favorece a forma mais simples que preserve limites de domínio e capacidade de evolução. Considera tamanho do time, deploy, ownership de dados, necessidade de autonomia, custo de operação, observabilidade e falhas entre serviços. Isso representa sua abordagem de estudo e projetos, não uma arquitetura formal documentada de um empregador.
 
 **P: O que diferencia seu perfil como engenheiro de software além de React?**  
-R: Capacidade de trabalhar entre camadas, liderar decisões arquiteturais, melhorar performance com métricas, coordenar pessoas, definir contratos e integrar IA no processo de engenharia com contexto, hooks, validação e responsabilidade técnica. Essa combinação se apoia em trabalhos na Roots, na Deel e na Way2B1 e em estudos independentes.
+R: Capacidade de trabalhar entre camadas, liderar decisões arquiteturais, melhorar performance com métricas, coordenar pessoas, definir contratos e integrar IA no processo de engenharia com contexto, hooks, validação e responsabilidade técnica. Essa combinação se apoia em trabalhos na Roots, na Deel e na Way2b1 e em estudos independentes.
 
 **P: O que ele gosta de fazer fora do trabalho?**  
 R: Jogar, sobretudo MMORPGs como Ragnarok Online, e criar coisas para eles; ler novels, que ocupam a maior parte do seu tempo livre; musculação, corrida e jiu-jitsu; aprender bateria, hoje em pausa; passear e brincar com seus dois cachorros, o Sky e o Oreo; e estar perto da família. Também gosta de séries como Foundation e Dark Matter. [RELATO]
@@ -1188,7 +1197,7 @@ R: Seu estilo preferido é MMORPG. Jogou Ragnarok Online a vida toda e também W
 R: Em João Pessoa, na Paraíba, Brasil. [RELATO]
 
 **P: Onde ele trabalha hoje?**  
-R: Na Way2B1, como full stack, desde 2026, depois da Deel. É uma startup pequena; ele trabalha entre os vários produtos, migrando código legado e melhorando performance. [RELATO]
+R: Na Way2b1, como Senior Frontend Engineer, desde junho de 2026, depois da Deel. É uma startup pequena; ele atua full stack em toda a suíte de produtos, migrou código legado em vários produtos e reduziu o bundle em quase 50%. [CV-2026]
 
 **P: Como ele chegou à Roots e à Deel?**  
 R: Foi contratado para a Roots como freelancer, enquanto era contratado direto da Maison Moderne. Construiu o frontend do início ao fim, liderou o time e fez o deploy; quando a Deel comprou a Roots, as pessoas que o contrataram propuseram que ele migrasse para a Deel. [RELATO]
@@ -1329,7 +1338,7 @@ Uma IA de portfólio deve agir como **guia para informações sobre Marcio**, n�
 
 ### 19.2 Informações importantes a validar antes de divulgar
 
-1. Confirmar cargo atual e natureza das atividades. *(Respondido em 28/10/2026: full stack na Way2B1.)*
+1. Confirmar cargo atual e natureza das atividades. *(Respondido em 28/10/2026: full stack na Way2b1.)*
 2. Conferir os períodos precisos de Roots e outros vínculos com datas sobrepostas. *(Respondido em 28/10/2026: Roots como freelance em paralelo à Maison Moderne.)*
 3. Confirmar grafia oficial de Maison Moderne/Maison Moderne e Shall And Partners.
 4. Verificar as fontes e metodologias das métricas para estudos de caso públicos mais profundos.

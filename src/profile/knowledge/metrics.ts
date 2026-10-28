@@ -1,6 +1,18 @@
 import type { MetricSource } from '@/core/knowledge/schema';
 
 export const metrics: Readonly<Record<string, MetricSource>> = {
+  'way2b1-bundle': {
+    value: '~50%',
+    label: { en: 'Smaller bundle size' },
+    context: 'Way2b1',
+    source: 'resume.way2b1',
+  },
+  'way2b1-load': {
+    value: '~100s of ms',
+    label: { en: 'Loading times, down to a few hundred milliseconds' },
+    context: 'Way2b1',
+    source: 'resume.way2b1',
+  },
   'deel-critical-load': {
     value: '50%',
     label: { en: 'Reduction in loading time on critical pages' },

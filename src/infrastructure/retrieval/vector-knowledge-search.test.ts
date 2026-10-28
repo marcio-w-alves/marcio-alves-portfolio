@@ -133,7 +133,7 @@ describe('vector knowledge search — résumé and notes together', () => {
       },
       corpus: Object.keys(ids).map((id): KnowledgeChunk =>
         id === 'resume'
-          ? { id, category: 'experience', text: id, source: 'notes.way2b1' }
+          ? { id, category: 'experience', text: id, source: 'resume.way2b1' }
           : { id, category: 'notes', text: id, source: 'notes' },
       ),
     });

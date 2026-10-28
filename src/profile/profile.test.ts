@@ -11,15 +11,13 @@ import { profile } from '.';
 const knowledge = localize(profile.knowledge, 'en');
 
 describe("the owner's record", () => {
-  it('has Way2B1 as the one current role', () => {
+  it('has Way2b1 as the one current role', () => {
     const current = knowledge.experience.filter((role) => role.current);
-    expect(current.map((role) => role.company)).toEqual(['Way2B1']);
+    expect(current.map((role) => role.company)).toEqual(['Way2b1']);
   });
 
-  it('cites each role against its own resume section, or the notes while the résumé lacks it', () => {
-    for (const role of knowledge.experience) {
-      expect([`resume.${role.id}`, `notes.${role.id}`]).toContain(role.source);
-    }
+  it('cites each role against its own resume section', () => {
+    for (const role of knowledge.experience) expect(role.source).toBe(`resume.${role.id}`);
   });
 
   it('cites every section of the résumé as the résumé itself', () => {
