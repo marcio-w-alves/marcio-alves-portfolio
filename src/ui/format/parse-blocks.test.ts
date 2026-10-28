@@ -23,7 +23,7 @@ describe('answer blocks', () => {
       {
         kind: 'list',
         ordered: false,
-        items: [text('React'), [{ kind: 'strong', text: 'TypeScript' }]],
+        items: [text('React'), [{ kind: 'strong', children: text('TypeScript') }]],
       },
       { kind: 'list', ordered: true, items: [text('First'), text('Second')] },
     ]);

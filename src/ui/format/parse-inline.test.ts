@@ -7,7 +7,7 @@ describe('parseInline', () => {
       parseInline('Led **HRIS** with `React` — see [LinkedIn](https://linkedin.com/in/x).'),
     ).toEqual([
       { kind: 'text', text: 'Led ' },
-      { kind: 'strong', text: 'HRIS' },
+      { kind: 'strong', children: [{ kind: 'text', text: 'HRIS' }] },
       { kind: 'text', text: ' with ' },
       { kind: 'code', text: 'React' },
       { kind: 'text', text: ' — see ' },
@@ -45,6 +45,43 @@ describe('parseInline', () => {
     ]);
   });
 
+  it('reads a link and code inside bold, as repository lists write them', () => {
+    expect(
+      parseInline('1. **[portfolio](https://github.com/marcio-w-alves/portfolio)** — `Next.js`'),
+    ).toEqual([
+      { kind: 'text', text: '1. ' },
+      {
+        kind: 'strong',
+        children: [
+          {
+            kind: 'link',
+            text: 'portfolio',
+            href: 'https://github.com/marcio-w-alves/portfolio',
+            external: true,
+          },
+        ],
+      },
+      { kind: 'text', text: ' — ' },
+      { kind: 'code', text: 'Next.js' },
+    ]);
+    expect(parseInline('**Built with `zod` here**')).toEqual([
+      {
+        kind: 'strong',
+        children: [
+          { kind: 'text', text: 'Built with ' },
+          { kind: 'code', text: 'zod' },
+          { kind: 'text', text: ' here' },
+        ],
+      },
+    ]);
+  });
+
+  it('leaves an unsafe link inside bold as bold plain text', () => {
+    expect(parseInline('**[click](javascript:alert(1))**')).toEqual([
+      { kind: 'strong', children: [{ kind: 'text', text: '[click](javascript:alert(1))' }] },
+    ]);
+  });
+
   it('does not let bold or code run across a line break', () => {
     expect(parseInline('**a\nb** `c\nd`')).toEqual([{ kind: 'text', text: 'a\nb `c\nd`' }]);
   });
@@ -53,7 +90,7 @@ describe('parseInline', () => {
     const source = 'Liderança 🚀 — 日本語 — **Ação**';
     expect(parseInline(source)).toEqual([
       { kind: 'text', text: 'Liderança 🚀 — 日本語 — ' },
-      { kind: 'strong', text: 'Ação' },
+      { kind: 'strong', children: [{ kind: 'text', text: 'Ação' }] },
     ]);
   });
 
@@ -65,9 +102,7 @@ describe('parseInline', () => {
     '[click](//evil.example.com)',
     '[click](/relative/path)',
   ])('leaves the unsafe link %s as plain text', (source) => {
-    const nodes = parseInline(source);
-    expect(nodes.every((node) => node.kind === 'text')).toBe(true);
-    expect(nodes.map((node) => node.text).join('')).toBe(source);
+    expect(parseInline(source)).toEqual([{ kind: 'text', text: source }]);
   });
 
   it('never turns HTML in the source into anything but text', () => {

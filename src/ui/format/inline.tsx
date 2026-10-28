@@ -16,7 +16,11 @@ function InlineElement({ node }: { readonly node: InlineNode }) {
     case 'text':
       return node.text;
     case 'strong':
-      return <strong className="font-semibold">{node.text}</strong>;
+      return (
+        <strong className="font-semibold">
+          <InlineNodes nodes={node.children} />
+        </strong>
+      );
     case 'code':
       return (
         <code className="rounded-code bg-fill px-1.5 py-0.5 font-mono text-code font-medium">
