@@ -93,9 +93,8 @@ describe('fast path — every intent is answered from the profile copy', () => {
 describe('fast path — facts come from the record, not from the code', () => {
   it("shows a role's changed dates", () => {
     const changed = withRole(fixtureKnowledge, 'globex', {
-      period: '2019 — 2023',
-      start: 2019,
-      end: 2023,
+      start: '2019',
+      end: '2023',
     });
 
     const result = fastPathOver(changed)('Tell me about her career.', FRESH);

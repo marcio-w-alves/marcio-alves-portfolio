@@ -1,3 +1,4 @@
+import type { Locale } from '../i18n/locale';
 import type { TopicId } from './topic-id';
 
 /** The longest question the composer takes and the endpoint accepts. */
@@ -24,4 +25,6 @@ export interface ChatRequest {
   readonly message: string;
   readonly history: readonly HistoryTurn[];
   readonly context: ConversationContext;
+  /** The language of the page the question was asked on. */
+  readonly locale: Locale;
 }

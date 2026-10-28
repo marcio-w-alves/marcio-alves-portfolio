@@ -9,6 +9,13 @@ import type { Plural, Template } from '@/core/i18n/format';
  * server; any other placeholder is filled where the message is shown.
  */
 export interface UiMessages {
+  /** How this language names itself in the language switcher. */
+  readonly language: {
+    /** Shown on the switcher: `EN`. */
+    readonly short: string;
+    /** Read by screen readers, in the language itself: `English`. */
+    readonly name: string;
+  };
   readonly shell: {
     readonly navigation: string;
     /** The first stop for a keyboard, past the topics to the conversation. */
@@ -30,6 +37,8 @@ export interface UiMessages {
       readonly dark: string;
       readonly system: string;
     };
+    /** The language switcher, as a whole. */
+    readonly language: string;
   };
   /** Read by screen readers after a link's own name. */
   readonly links: {

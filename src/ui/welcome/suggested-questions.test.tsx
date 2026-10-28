@@ -6,7 +6,7 @@ import { createSiteContent } from '@/site/site-content';
 import { fixtureAnswers, fixtureKnowledge } from '@/testing/fixture-profile';
 import { SuggestedQuestions } from './suggested-questions';
 
-const { topicCatalog } = createSiteContent(fixtureKnowledge, fixtureAnswers);
+const { topicCatalog } = createSiteContent(fixtureKnowledge, fixtureAnswers, 'en');
 
 const welcomeChoices = topicCatalog
   .suggestedQuestions('overview', 0, 4)

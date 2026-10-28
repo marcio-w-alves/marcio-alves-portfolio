@@ -32,7 +32,7 @@ export function interpolate(template: Template, values: MessageValues): string {
   );
 }
 
-/** The message for `count` under the language's plural rules, with `{count}` filled. */
+/** The message for `count` under the language's plural rules, with `{count}` written as the language writes numbers. */
 export function plural(
   locale: string,
   message: Plural,
@@ -40,7 +40,54 @@ export function plural(
   values: MessageValues = {},
 ): string {
   const category = new Intl.PluralRules(locale).select(count);
-  return interpolate(message[category] ?? message.other, { ...values, count });
+  return interpolate(message[category] ?? message.other, {
+    ...values,
+    count: formatNumber(count, locale),
+  });
+}
+
+export function formatNumber(value: number, locale: string): string {
+  return new Intl.NumberFormat(locale).format(value);
+}
+
+/** A date as a résumé gives it: `2026-03` where it names the month, `2026` where only the year. */
+export type CalendarDate = string;
+
+const CALENDAR_DATE = /^(\d{4})(?:-(0[1-9]|1[0-2]))?$/;
+
+export function isCalendarDate(value: string): value is CalendarDate {
+  return CALENDAR_DATE.test(value);
+}
+
+/**
+ * The month and year as the language abbreviates them (`Mar 2026`, `mar. 2026`),
+ * or the year alone. Only those two parts are kept, so no connective such as
+ * Portuguese "de" comes between them.
+ */
+export function formatCalendarDate(date: CalendarDate, locale: string): string {
+  const [, year = date, month] = CALENDAR_DATE.exec(date) ?? [];
+  if (!month) return year;
+  const format = new Intl.DateTimeFormat(locale, {
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+  return format
+    .formatToParts(Date.UTC(Number(year), Number(month) - 1))
+    .filter(({ type }) => type === 'month' || type === 'year')
+    .map(({ value }) => value)
+    .join(' ');
+}
+
+/** From the start to the end, or to `present` while it is still going on. */
+export function formatPeriod(
+  start: CalendarDate,
+  end: CalendarDate | null,
+  locale: string,
+  present: string,
+): string {
+  const until = end === null ? present : formatCalendarDate(end, locale);
+  return `${formatCalendarDate(start, locale)} — ${until}`;
 }
 
 function isCatalog(value: unknown): value is Readonly<Record<string, unknown>> {

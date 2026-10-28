@@ -8,7 +8,7 @@ import type { TopicId } from '@/core/chat/topic-id';
 import { addExchange, applyEvent } from '@/core/conversation/conversation';
 import type { Conversation, MessagePart } from '@/core/conversation/messages';
 import { mapMessages } from '@/core/i18n/format';
-import { createSite } from '@/site/create-site';
+import { fixtureSite } from '@/testing/fixture-site';
 import { englishSiteCopy } from '@/site/site-copy';
 import { createSiteContent } from '@/site/site-content';
 import { workspaceView } from '@/site/workspace-view';
@@ -46,7 +46,7 @@ function wrapData<T>(value: T): T {
   return visit(value) as T;
 }
 
-const content = createSiteContent(fixtureKnowledge, fixtureAnswers);
+const content = createSiteContent(fixtureKnowledge, fixtureAnswers, 'en');
 const kit = createResponseKit(content.knowledge);
 
 /** The page's props with every value from the record marked as data. */
@@ -218,9 +218,9 @@ describe('every text the interface shows comes from the catalog or the record', 
     expect(unmarkedText(container)).toEqual([]);
   });
 
-  it("on the site's own not-found page", () => {
-    const pseudoSite = createSite(
-      {
+  it("on the site's own not-found page", async () => {
+    const pseudoSite = fixtureSite({
+      profile: {
         ...fixtureSiteProfile,
         copy: {
           en: {
@@ -229,9 +229,8 @@ describe('every text the interface shows comes from the catalog or the record', 
           },
         },
       },
-      { fontClassName: '', siteUrl: () => new URL('https://ada.example') },
-    );
-    const { container } = render(<pseudoSite.NotFound />);
+    });
+    const { container } = render(await pseudoSite.NotFound());
     expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
     expect(unmarkedText(container)).toEqual([]);
   });

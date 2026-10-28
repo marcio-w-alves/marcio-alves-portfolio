@@ -1,11 +1,19 @@
+import type { Locale } from '@/core/i18n/locale';
 import type { Knowledge } from '@/core/knowledge/schema';
 
 const CONTEXT = 'https://schema.org';
 
-/** The owner as a schema.org Person, from the record. */
+/** A language's home page: where it is, the language it speaks, and its share image. */
+export interface HomePage {
+  readonly url: URL;
+  readonly locale: Locale;
+  readonly image: URL;
+}
+
+/** The owner as a schema.org Person, from the record, as a language's home page presents them. */
 export function personStructuredData(
   { profile, contact, skills, experience, education, languages }: Knowledge,
-  url: URL,
+  { url, image }: HomePage,
 ) {
   const current = experience.find((role) => role.current);
   const { city, country } = profile.location;
@@ -16,7 +24,7 @@ export function personStructuredData(
     jobTitle: profile.title,
     description: profile.summary,
     url: url.href,
-    image: new URL('/opengraph-image', url).href,
+    image: image.href,
     sameAs: [contact.linkedin, contact.github],
     knowsAbout: skills.flatMap(({ items }) => items),
     knowsLanguage: languages.map(({ name }) => name),
@@ -37,8 +45,9 @@ export function personStructuredData(
  * The home page as search engines read a portfolio: a ProfilePage about the
  * Person, on a WebSite that names them.
  */
-export function homeStructuredData(knowledge: Knowledge, url: URL) {
-  const person = personStructuredData(knowledge, url);
+export function homeStructuredData(knowledge: Knowledge, home: HomePage) {
+  const { url } = home;
+  const person = personStructuredData(knowledge, home);
   return {
     '@context': CONTEXT,
     '@graph': [
@@ -47,7 +56,7 @@ export function homeStructuredData(knowledge: Knowledge, url: URL) {
         '@id': new URL('#website', url).href,
         url: url.href,
         name: knowledge.profile.name,
-        inLanguage: 'en',
+        inLanguage: home.locale,
       },
       {
         '@type': 'ProfilePage',
@@ -62,14 +71,14 @@ export function homeStructuredData(knowledge: Knowledge, url: URL) {
   };
 }
 
-/** A topic page's place in the site, as a breadcrumb trail from the home page. */
-export function topicStructuredData(knowledge: Knowledge, url: URL, label: string, path: string) {
+/** A topic page's place in the site, as a breadcrumb trail from its language's home page. */
+export function topicStructuredData(knowledge: Knowledge, home: URL, label: string, page: URL) {
   return {
     '@context': CONTEXT,
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: knowledge.profile.name, item: url.href },
-      { '@type': 'ListItem', position: 2, name: label, item: new URL(path, url).href },
+      { '@type': 'ListItem', position: 1, name: knowledge.profile.name, item: home.href },
+      { '@type': 'ListItem', position: 2, name: label, item: page.href },
     ],
   };
 }

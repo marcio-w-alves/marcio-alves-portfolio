@@ -91,6 +91,10 @@ jobs:
 
       - run: pnpm test:e2e
 
+      # The same journeys can't reach a language the profile has not published,
+      # so it is built again with Portuguese previewed and its journeys run.
+      - run: pnpm test:e2e:preview
+
       - name: Keep the report and traces of a failed run
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

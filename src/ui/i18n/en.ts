@@ -2,6 +2,7 @@ import type { UiMessages } from './ui-messages';
 
 /** The interface in English, for anyone's portfolio. A profile overrides what it words differently. */
 export const englishUiMessages: UiMessages = {
+  language: { short: 'EN', name: 'English' },
   shell: {
     navigation: 'Portfolio navigation',
     skipToConversation: 'Skip to the conversation',
@@ -15,6 +16,7 @@ export const englishUiMessages: UiMessages = {
     resume: 'Resume',
     resumeSoon: 'Soon',
     theme: { label: 'Theme', light: 'Light', dark: 'Dark', system: 'Auto' },
+    language: 'Language',
   },
   links: {
     opensInNewTab: '(opens in a new tab)',

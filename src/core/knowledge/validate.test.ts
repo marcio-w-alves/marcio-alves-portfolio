@@ -57,8 +57,18 @@ describe('validating a record', () => {
     ],
     [
       'a role that ends before it starts',
-      withRoles(acme, { ...globex, end: 2010 }, initech),
+      withRoles(acme, { ...globex, end: '2010' }, initech),
       ['experience', 1, 'end'],
+    ],
+    [
+      'a role that ends in an earlier month of the year it starts',
+      withRoles(acme, { ...globex, start: '2018-09', end: '2018-03' }, initech),
+      ['experience', 1, 'end'],
+    ],
+    [
+      'a date that is neither a year nor a month',
+      withRoles({ ...acme, start: 'March 2022' }, globex, initech),
+      ['experience', 0, 'start'],
     ],
     [
       'two roles without an end',

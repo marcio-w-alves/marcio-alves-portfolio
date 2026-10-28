@@ -7,7 +7,7 @@ import { firstSuggestion, record, ui } from './support/profile';
  * a single violation, and what an attacker would inject is refused.
  */
 
-const ROUTES = ['/', '/api/health', '/opengraph-image', '/robots.txt', '/sitemap.xml'];
+const ROUTES = ['/', '/api/health', '/brand/share-image.png', '/robots.txt', '/sitemap.xml'];
 
 interface Violation {
   readonly directive: string;
@@ -60,7 +60,7 @@ test('the page, a streamed answer and the social image raise no policy violation
   const answer = page.getByRole('article', { name: ui.conversation.answer });
   await expect(answer.getByRole('group', { name: ui.actions.group })).toBeVisible();
   const image = await page.evaluate(async () => {
-    const response = await fetch('/opengraph-image');
+    const response = await fetch('/brand/share-image.png');
     return { status: response.status, type: response.headers.get('content-type') };
   });
 

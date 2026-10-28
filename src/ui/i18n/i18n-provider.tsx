@@ -1,11 +1,12 @@
 'use client';
 
 import { createContext, useContext, type ReactNode } from 'react';
+import type { Locale } from '@/core/i18n/locale';
 import type { UiMessages } from './ui-messages';
 
 interface I18n {
-  /** A BCP 47 tag, for the language's plural rules. */
-  readonly locale: string;
+  /** The page's language, which also picks its plural rules and number formats. */
+  readonly locale: Locale;
   readonly messages: UiMessages;
 }
 
@@ -30,6 +31,6 @@ export function useMessages(): UiMessages {
   return useI18n().messages;
 }
 
-export function useLocale(): string {
+export function useLocale(): Locale {
   return useI18n().locale;
 }

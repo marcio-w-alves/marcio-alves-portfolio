@@ -5,6 +5,7 @@ import { cn } from '../cn';
 import { useMessages } from '../i18n/i18n-provider';
 import { Icon, IconButton, VisuallyHidden, type IconName } from '../primitives';
 import { ThemeSwitcher } from '../theme/theme-switcher';
+import { LocaleSwitch, type LocaleLink } from './locale-switch';
 
 export interface SidebarProfile {
   readonly name: string;
@@ -43,6 +44,8 @@ interface SidebarProps {
   /** The page among `pages` being shown, if any. */
   readonly activePage?: string | undefined;
   readonly links: SidebarLinks;
+  /** The page in each language the site speaks; empty while it speaks one. */
+  readonly languages: readonly LocaleLink[];
   readonly onNewConversation: () => void;
   /** Only shown in the drawer layout. */
   readonly onClose: () => void;
@@ -58,6 +61,7 @@ export function Sidebar({
   pages = [],
   activePage,
   links,
+  languages,
   onNewConversation,
   onClose,
 }: SidebarProps) {
@@ -124,7 +128,7 @@ export function Sidebar({
         ) : null}
       </nav>
 
-      <SidebarFooter links={links} />
+      <SidebarFooter links={links} languages={languages} />
     </aside>
   );
 }
@@ -164,14 +168,21 @@ function TopicLink({
   );
 }
 
-function SidebarFooter({ links }: { links: SidebarLinks }) {
+function SidebarFooter({
+  links,
+  languages,
+}: {
+  links: SidebarLinks;
+  languages: readonly LocaleLink[];
+}) {
   const messages = useMessages();
   const { shell } = messages;
   const mailto = `mailto:${links.email}?subject=${encodeURIComponent(messages.emailSubject)}`;
   return (
     <div className="mt-auto flex flex-col gap-1 px-2.5">
-      <div className="mb-5">
+      <div className="mb-5 flex items-center justify-between gap-3">
         <ThemeSwitcher />
+        <LocaleSwitch languages={languages} className="-mr-3" />
       </div>
       <a
         href={mailto}

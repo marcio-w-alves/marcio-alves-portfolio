@@ -1,8 +1,11 @@
 import type { TopicId } from '@/core/chat/topic-id';
 import { interpolate, type Template } from '@/core/i18n/format';
+import { SUPPORTED_LOCALES, type Locale } from '@/core/i18n/locale';
 import { profile } from '@/profile';
+import { publishedLocales } from '@/site/published-locales';
 import { createSiteContent } from '@/site/site-content';
 import { siteMessages } from '@/site/site-messages';
+import { copyIn } from '@/site/site-profile';
 
 /**
  * What the journeys expect to see, read from the profile the site is built
@@ -12,14 +15,26 @@ import { siteMessages } from '@/site/site-messages';
  * oracle.
  */
 
-const content = createSiteContent(profile.knowledge, profile.copy.en.answers);
-const messages = siteMessages(content.knowledge, profile.copy.en);
+/** The pages of one language: its record, its topics and its catalogs, as the site builds them. */
+export function pagesIn(locale: Locale) {
+  const copy = copyIn(profile, locale);
+  const pages = createSiteContent(profile.knowledge, copy.answers, locale);
+  return { ...pages, ...siteMessages(pages.knowledge, copy, locale) };
+}
+
+/** The languages the build under test serves: the profile's, plus a preview's (`PREVIEW_LOCALES`). */
+export const published = publishedLocales(profile.locales, process.env);
+
+/** The languages the site can speak but this build does not publish. */
+export const unpublished = SUPPORTED_LOCALES.filter((locale) => !published.includes(locale));
+
+const content = pagesIn('en');
 
 /** The record, in English. */
 export const record = content.knowledge;
 
 /** The interface's catalog and the pages' copy, as the site renders them. */
-export const { ui, site } = messages;
+export const { ui, site } = content;
 
 export function topicLabel(topic: TopicId): string {
   return content.topicCatalog.topicById(topic).label;

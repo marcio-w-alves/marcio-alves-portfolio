@@ -22,6 +22,7 @@ const REQUEST: ChatRequest = {
   message: 'What did she do at Globex?',
   history: [],
   context: { topic: 'overview', lastIntent: null, ctaShown: false },
+  locale: 'en',
 };
 
 const ANSWER: AssistantEvent[] = [

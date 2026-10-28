@@ -6,7 +6,7 @@ import { fixtureAnswers, fixtureKnowledge } from '@/testing/fixture-profile';
 import { renderWithMessages } from '@/testing/ui-messages';
 import { Sidebar, type SidebarLinks } from './sidebar';
 
-const { knowledge, topicCatalog } = createSiteContent(fixtureKnowledge, fixtureAnswers);
+const { knowledge, topicCatalog } = createSiteContent(fixtureKnowledge, fixtureAnswers, 'en');
 
 const { profile, contact } = knowledge;
 
@@ -23,6 +23,7 @@ function renderSidebar(links: SidebarLinks = contact, photoUrl: string | null = 
       }))}
       activeTopic="overview"
       links={links}
+      languages={[]}
       {...handlers}
     />,
   );
@@ -65,6 +66,7 @@ describe('Sidebar', () => {
         pages={[{ label: 'About this site', icon: 'layers', href: '/about-this-site' }]}
         activePage="/about-this-site"
         links={contact}
+        languages={[]}
         onNewConversation={vi.fn()}
         onClose={vi.fn()}
       />,

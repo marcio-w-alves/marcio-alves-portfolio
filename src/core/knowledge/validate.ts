@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isCalendarDate, type CalendarDate } from '../i18n/format';
 import type { KnowledgeSource } from './schema';
 
 /**
@@ -10,7 +11,10 @@ import type { KnowledgeSource } from './schema';
  */
 
 const text = z.string().regex(/\S/, 'Must not be empty');
-const localized = z.strictObject({ en: text });
+const localized = z.strictObject({ en: text, 'pt-BR': text.optional() });
+const calendarDate = z
+  .string()
+  .refine(isCalendarDate, 'Must be a year (YYYY) or a month (YYYY-MM)');
 const texts = z.array(localized);
 const httpsUrl = z.url({ protocol: /^https$/, error: 'Must be an absolute https URL' });
 
@@ -26,9 +30,8 @@ const roleSchema = z.strictObject({
   company: text,
   aliases: z.array(text).optional(),
   role: text,
-  period: text,
-  start: z.number(),
-  end: z.number().nullable(),
+  start: calendarDate,
+  end: calendarDate.nullable(),
   current: z.boolean(),
   engagement: z.enum(['employment', 'contract']),
   summary: localized,
@@ -181,14 +184,20 @@ function checkUniqueIds(list: readonly { readonly id: string }[], at: string, re
   });
 }
 
+/** Earlier than, by the month where both give one, otherwise by the year. */
+function isBefore(date: CalendarDate, other: CalendarDate): boolean {
+  const precision = Math.min(date.length, other.length);
+  return date.slice(0, precision) < other.slice(0, precision);
+}
+
 function checkRoleDates(source: KnowledgeSource, report: Report) {
   let openEnded = 0;
   source.experience.forEach((role, index) => {
     const previous = source.experience[index - 1];
-    if (previous && role.start > previous.start) {
+    if (previous && isBefore(previous.start, role.start)) {
       report('Roles must be listed newest first', ['experience', index, 'start']);
     }
-    if (role.end !== null && role.start > role.end) {
+    if (role.end !== null && isBefore(role.end, role.start)) {
       report('A role cannot end before it starts', ['experience', index, 'end']);
     }
     if (role.current !== (role.end === null)) {

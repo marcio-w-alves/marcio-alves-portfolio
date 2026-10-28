@@ -45,13 +45,16 @@ describe('the app folder', () => {
   it('holds only routes and Next.js special files, and their tests', () => {
     const files = appFiles();
 
-    expect(files).toContain('layout.tsx');
+    expect(files).toContain(join('[locale]', 'layout.tsx'));
     expect(files.filter((path) => !SPECIAL_FILES.has(specialName(path)))).toEqual([]);
   });
 
   it('gives the five topic pages one shape, differing only in the topic', () => {
     const shapes = TOPIC_PAGES.map((topic) =>
-      readFileSync(join(app, topic, 'page.tsx'), 'utf8').replaceAll(`'${topic}'`, "'<topic>'"),
+      readFileSync(join(app, '[locale]', topic, 'page.tsx'), 'utf8').replaceAll(
+        `'${topic}'`,
+        "'<topic>'",
+      ),
     );
 
     expect(shapes[0]).toContain("'<topic>'");

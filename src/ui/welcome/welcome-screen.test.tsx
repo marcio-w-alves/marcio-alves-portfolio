@@ -7,7 +7,7 @@ import { fixtureAnswers, fixtureKnowledge } from '@/testing/fixture-profile';
 import { WelcomeLayout } from './welcome-layout';
 import { WelcomeScreen } from './welcome-screen';
 
-const { welcome, links } = workspaceView(createSiteContent(fixtureKnowledge, fixtureAnswers));
+const { welcome, links } = workspaceView(createSiteContent(fixtureKnowledge, fixtureAnswers, 'en'));
 
 function renderWelcome(contact = links) {
   return renderWithMessages(<WelcomeScreen welcome={welcome} links={contact} />);

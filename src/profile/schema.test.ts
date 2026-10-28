@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ZodError } from 'zod';
+import type { KnowledgeSource } from '@/core/knowledge/schema';
 import {
   fixtureAnswers,
   fixtureBrand,
@@ -22,6 +23,18 @@ const valid: Profile = {
   copy: { en: { answers: fixtureAnswers, ui: fixtureUiCopy, site: fixtureSiteCopy } },
   evaluation: [],
 };
+
+/** The record with a stand-in Portuguese text beside every English one. */
+function translateEveryText(knowledge: KnowledgeSource): KnowledgeSource {
+  const visit = (value: unknown): unknown => {
+    if (Array.isArray(value)) return value.map(visit);
+    if (value === null || typeof value !== 'object') return value;
+    if ('en' in value && typeof value.en === 'string')
+      return { ...value, 'pt-BR': `(pt) ${value.en}` };
+    return Object.fromEntries(Object.entries(value).map(([key, field]) => [key, visit(field)]));
+  };
+  return visit(knowledge) as KnowledgeSource;
+}
 
 function issuePaths(profile: Profile): PropertyKey[][] {
   try {
@@ -76,6 +89,39 @@ describe('validating a profile', () => {
 
   it('rejects a profile published in no language', () => {
     expect(issuePaths({ ...valid, locales: [] })).toContainEqual(['locales']);
+  });
+
+  it('rejects a profile that leaves out English, the language of the unprefixed addresses', () => {
+    expect(issuePaths({ ...valid, locales: ['pt-BR'] })).toContainEqual(['locales']);
+  });
+
+  it('rejects publishing Portuguese before its copy and the record are written in it', () => {
+    const paths = issuePaths({ ...valid, locales: ['en', 'pt-BR'] });
+
+    expect(paths).toContainEqual(['copy', 'pt-BR']);
+    expect(paths).toContainEqual(['knowledge', 'profile', 'title', 'pt-BR']);
+    expect(paths).toContainEqual(['knowledge', 'experience', 0, 'summary', 'pt-BR']);
+  });
+
+  it('publishes Portuguese once the copy and every text of the record are written in it', () => {
+    const translated = translateEveryText(fixtureKnowledge);
+
+    expect(
+      issuePaths({
+        ...valid,
+        locales: ['en', 'pt-BR'],
+        knowledge: translated,
+        copy: { ...valid.copy, 'pt-BR': valid.copy.en },
+      }),
+    ).toEqual([]);
+    expect(
+      issuePaths({
+        ...valid,
+        locales: ['en', 'pt-BR'],
+        knowledge: { ...translated, profile: { ...translated.profile, title: { en: 'Engineer' } } },
+        copy: { ...valid.copy, 'pt-BR': valid.copy.en },
+      }),
+    ).toEqual([['knowledge', 'profile', 'title', 'pt-BR']]);
   });
 
   it('rejects a brand colour that is not #rrggbb, naming the token', () => {

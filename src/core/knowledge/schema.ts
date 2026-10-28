@@ -1,3 +1,6 @@
+import type { CalendarDate } from '../i18n/format';
+import type { Translations } from '../i18n/locale';
+
 /**
  * The shape of the record the assistant and the pages answer from.
  *
@@ -9,11 +12,7 @@
  */
 
 /** A text as it reads in each language the site speaks. */
-export interface Localized {
-  readonly en: string;
-}
-
-export type Locale = keyof Localized;
+export type Localized = Translations<string>;
 
 /** A source type with every `Localized` text replaced by the text of one locale. */
 export type Monolingual<T> = T extends Localized
@@ -39,11 +38,10 @@ export interface RoleSource {
   readonly aliases?: readonly string[];
   /** The job title, as the résumé writes it. */
   readonly role: string;
-  /** The label visitors see. */
-  readonly period: string;
-  /** Fractional years, used to keep the roles in order. */
-  readonly start: number;
-  readonly end: number | null;
+  /** To the month where the résumé says it, otherwise the year. */
+  readonly start: CalendarDate;
+  /** Null while the role is held. */
+  readonly end: CalendarDate | null;
   readonly current: boolean;
   /** How the role was held; a contract is labelled as one wherever the role is shown. */
   readonly engagement: 'employment' | 'contract';
@@ -310,9 +308,13 @@ export interface KnowledgeSource {
   readonly references: ReferencesSource;
 }
 
-export type Knowledge = Monolingual<KnowledgeSource>;
+/** A role as one language reads it, its dates written out the way that language writes them. */
+export type Role = Monolingual<RoleSource> & { readonly period: string };
+export type Knowledge = Omit<Monolingual<KnowledgeSource>, 'experience'> & {
+  /** Newest first. */
+  readonly experience: readonly Role[];
+};
 export type Metric = Monolingual<MetricSource>;
-export type Role = Monolingual<RoleSource>;
 export type SkillGroup = Monolingual<SkillGroupSource>;
 export type Project = Monolingual<ProjectSource>;
 export type Principle = Monolingual<PrincipleSource>;

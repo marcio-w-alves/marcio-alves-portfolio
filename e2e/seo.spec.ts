@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { record, site } from './support/profile';
+import { record, site, topicLabel, ui } from './support/profile';
 
 /**
  * What a crawler and a link preview read from the production build. Absolute
@@ -21,7 +21,7 @@ test('the home page describes itself to search engines and link previews', async
 
   const ogImage = new URL(String(await meta('meta[property="og:image"]')));
   expect(ogImage.origin).toBe(new URL(String(canonical)).origin);
-  expect(ogImage.pathname).toBe('/opengraph-image');
+  expect(ogImage.pathname).toBe('/brand/share-image.png');
   expect(await meta('meta[name="twitter:image"]')).toBe(ogImage.href);
   expect(await meta('meta[property="og:image:alt"]')).toBe(site.shareImageAlt);
 });
@@ -60,7 +60,7 @@ test('a topic page is shared with its own address, the large card and the site i
   expect(await meta('meta[property="og:type"]')).toBe('website');
   expect(await meta('meta[property="og:url"]')).toBe(canonical);
   expect(new URL(String(await meta('meta[property="og:image"]'))).pathname).toBe(
-    '/opengraph-image',
+    '/brand/share-image.png',
   );
   expect(await meta('meta[name="twitter:card"]')).toBe('summary_large_image');
 
@@ -88,7 +88,7 @@ test('phones get a home-screen icon and the page colour for the browser bar', as
 });
 
 test('the social image is a 1200×630 PNG', async ({ request }) => {
-  const response = await request.get('/opengraph-image');
+  const response = await request.get('/brand/share-image.png');
   const png = await response.body();
 
   expect(response.headers()['content-type']).toBe('image/png');
@@ -153,4 +153,40 @@ test('the page about the site is listed, shared and readable without a chat', as
     page.getByRole('navigation', { name: 'Topics' }).getByRole('link', { name: 'About this site' }),
   ).toHaveAttribute('aria-current', 'page');
   expect(await page.locator('meta[property="og:type"]').getAttribute('content')).toBe('article');
+});
+
+test('every English page declares English', async ({ page }) => {
+  for (const path of ['/', '/experience', '/skills', '/projects', '/philosophy', '/education']) {
+    await page.goto(path);
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  }
+});
+
+test('/en addresses redirect permanently to the ones the site writes', async ({ request }) => {
+  const home = await request.get('/en', { maxRedirects: 0 });
+  const skills = await request.get('/en/skills', { maxRedirects: 0 });
+
+  expect(home.status()).toBe(308);
+  expect(new URL(String(home.headers().location), 'http://x').pathname).toBe('/');
+  expect(skills.status()).toBe(308);
+  expect(new URL(String(skills.headers().location), 'http://x').pathname).toBe('/skills');
+});
+
+test('browsing the site never requests an /en address', async ({ page }) => {
+  const requested: string[] = [];
+  page.on('request', (request) => {
+    const { pathname } = new URL(request.url());
+    if (/^\/en(\/|$)/.test(pathname)) requested.push(pathname);
+  });
+  const topics = page.getByRole('navigation', { name: ui.shell.topics });
+
+  await page.goto('/');
+  for (const topic of ['skills', 'projects', 'overview'] as const) {
+    const link = topics.getByRole('link', { name: topicLabel(topic) });
+    await link.hover();
+    await link.click();
+    await expect(link).toHaveAttribute('aria-current', 'page');
+  }
+
+  expect(requested).toEqual([]);
 });

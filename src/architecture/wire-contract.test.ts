@@ -68,6 +68,7 @@ async function roundTrip(events: readonly AssistantEvent[]): Promise<AssistantEv
         message: 'What did she do at Globex?',
         history: [],
         context: { topic: 'overview', lastIntent: null, ctaShown: false },
+        locale: 'en',
       },
       { endpoint: ENDPOINT, signal: new AbortController().signal },
     ),

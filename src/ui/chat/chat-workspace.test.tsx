@@ -19,7 +19,7 @@ import { renderWithMessages } from '@/testing/ui-messages';
 import { ChatWorkspace } from './chat-workspace';
 import { ConversationsProvider } from './conversation-store';
 
-const content = createSiteContent(fixtureKnowledge, fixtureAnswers);
+const content = createSiteContent(fixtureKnowledge, fixtureAnswers, 'en');
 const { knowledge, topicCatalog } = content;
 
 const CHAT_URL = `${window.location.origin}/api/chat`;

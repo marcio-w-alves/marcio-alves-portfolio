@@ -2,14 +2,14 @@ import { MAX_QUESTION_LENGTH } from '@/core/chat/request';
 import type { TopicId } from '@/core/chat/topic-id';
 import { createConversation } from '@/core/conversation/conversation';
 import type { Knowledge } from '@/core/knowledge/schema';
-import { topicPath } from './routes';
+import { pagePath } from './routes';
 import type { SiteContent } from './site-content';
 
 const SUGGESTION_COUNT = 4;
 
 /** What the chat workspace is rendered with, from the record. */
 export function workspaceView(
-  { knowledge, topicCatalog, topicIntro, pages }: SiteContent,
+  { locale, knowledge, topicCatalog, topicIntro, pages }: SiteContent,
   topic: TopicId = 'overview',
 ) {
   const { profile, contact, welcome, assistant } = knowledge;
@@ -21,7 +21,7 @@ export function workspaceView(
       id,
       label,
       icon,
-      href: topicPath(id),
+      href: pagePath(locale, id),
     })),
     pages,
     welcome: { heading, description, placeholder, helper, evidence: evidenceLine(knowledge) },

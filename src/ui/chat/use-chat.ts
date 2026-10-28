@@ -13,33 +13,35 @@ import {
   stopAnswer,
 } from '@/core/conversation/conversation';
 import type { Conversation, Feedback } from '@/core/conversation/messages';
-import { useMessages } from '../i18n/i18n-provider';
+import { useLocale, useMessages } from '../i18n/i18n-provider';
 import { streamAnswer } from './chat-client';
-import { useConversationStore } from './conversation-store';
+import { conversationKey, useConversationStore } from './conversation-store';
 
 /**
- * The live conversation of one page: the pure transitions from the core,
- * driven by the answer stream from `/api/chat`. One answer streams at a time
+ * The live conversation of one page — a topic, in the page's language: the
+ * pure transitions from the core, driven by the answer stream from `/api/chat`. One answer streams at a time
  * per page; starting over, retrying or editing cancels the one in flight.
  * The conversation itself lives in the store, so it outlasts the page.
  */
 export function useChat(topic: TopicId, opening: Conversation, initial?: Conversation) {
   const { announcements } = useMessages();
+  const locale = useLocale();
+  const page = conversationKey(locale, topic);
   const store = useConversationStore();
   const [seed] = useState(() => initial ?? opening);
-  const conversation = store.conversations.get(topic) ?? seed;
+  const conversation = store.conversations.get(page) ?? seed;
   const [announcement, setAnnouncement] = useState('');
 
   function setConversation(change: Conversation | ((current: Conversation) => Conversation)) {
-    store.update(topic, change, seed);
+    store.update(page, change, seed);
   }
 
   /** Aborts the answer on its way, if any, and marks it stopped so nothing waits on it. */
   function cancel() {
-    const inFlight = store.inFlight.get(topic);
+    const inFlight = store.inFlight.get(page);
     if (!inFlight) return;
     inFlight.controller.abort();
-    store.inFlight.delete(topic);
+    store.inFlight.delete(page);
     setConversation((current) => stopAnswer(current, inFlight.answerId));
     setAnnouncement(announcements.stopped);
   }
@@ -47,15 +49,20 @@ export function useChat(topic: TopicId, opening: Conversation, initial?: Convers
   async function stream(answerId: string, question: string, from: Conversation) {
     cancel();
     const controller = new AbortController();
-    store.inFlight.set(topic, { answerId, controller });
+    store.inFlight.set(page, { answerId, controller });
     setAnnouncement(announcements.generating);
-    const request = { message: question, history: historyOf(from), context: contextOf(from) };
+    const request = {
+      message: question,
+      history: historyOf(from),
+      context: contextOf(from),
+      locale,
+    };
     for await (const event of streamAnswer(request, { signal: controller.signal })) {
       setConversation((current) => applyEvent(current, answerId, event));
       if (event.type === 'finish') setAnnouncement(announcements.ready);
       if (event.type === 'error') setAnnouncement(announcements.failed);
     }
-    if (store.inFlight.get(topic)?.controller === controller) store.inFlight.delete(topic);
+    if (store.inFlight.get(page)?.controller === controller) store.inFlight.delete(page);
   }
 
   function ask(raw: string): boolean {

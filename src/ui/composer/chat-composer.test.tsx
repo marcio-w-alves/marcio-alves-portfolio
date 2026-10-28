@@ -8,7 +8,7 @@ import { MAX_QUESTION_LENGTH } from '@/core/chat/request';
 import { createSiteContent } from '@/site/site-content';
 import { ChatComposer, ComposerDock, JumpToLatest, type ChatComposerHandle } from '.';
 
-const { knowledge } = createSiteContent(fixtureKnowledge, fixtureAnswers);
+const { knowledge } = createSiteContent(fixtureKnowledge, fixtureAnswers, 'en');
 
 const { welcome } = knowledge;
 

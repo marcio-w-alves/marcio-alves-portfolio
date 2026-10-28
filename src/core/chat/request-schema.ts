@@ -5,6 +5,7 @@ import {
   MAX_QUESTION_LENGTH,
   type ChatRequest,
 } from './request';
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from '../i18n/locale';
 import { TOPIC_IDS } from './topic-id';
 
 /**
@@ -31,4 +32,5 @@ export const chatRequestSchema = z.strictObject({
       ctaShown: z.boolean(),
     })
     .default({ topic: 'overview', lastIntent: null, ctaShown: false }),
+  locale: z.enum(SUPPORTED_LOCALES).default(DEFAULT_LOCALE),
 }) satisfies z.ZodType<ChatRequest>;
