@@ -10,6 +10,7 @@ import type {
 } from '../ports/language-model.port';
 import type { ToolRegistry } from '../tools/registry';
 import type { ToolOutcome } from '../tools/tool';
+import { createLinkAllowList, createLinkFilter, urlsIn, type LinkAllowList } from './link-filter';
 import { createOfferFilter } from './offer-filter';
 import { systemPrompt } from './system-prompt';
 import { createUsageMeter } from './usage';
@@ -49,6 +50,11 @@ interface Options {
   readonly model: LanguageModelPort;
   readonly tools: ToolRegistry;
   readonly clock: ClockPort;
+  /**
+   * Addresses an answer may always link to — the record's own. Any other
+   * must have come back from an action during that answer.
+   */
+  readonly knownUrls?: readonly string[];
   /**
    * Called once per model call with what it cost, for the spending budget —
    * as reported, or estimated when the call was cut short.
@@ -147,8 +153,9 @@ function roundMessages(turn: ModelTurn, results: readonly ActionResult[]): Model
  * can be answered cleanly by the caller's fallback instead of leaving a
  * half-started reply.
  */
-function createReply() {
+function createReply(isLinkAllowed: (url: string) => boolean) {
   const offers = createOfferFilter();
+  const links = createLinkFilter(isLinkAllowed);
   let started = false;
   let wroteText = false;
 
@@ -170,9 +177,9 @@ function createReply() {
 
   return {
     begin,
-    write: (delta: string) => show(offers.push(delta)),
+    write: (delta: string) => show(links.push(offers.push(delta))),
     // A sentence never runs on into the next round's text.
-    endRound: () => show(offers.flush()),
+    endRound: () => show(links.push(offers.flush()) + links.flush()),
     /** Shown unfiltered when the answer would otherwise be empty. */
     fallback: (text: string) => show(text),
     *endText(): Generator<AssistantEvent> {
@@ -210,6 +217,12 @@ function collectEffects(): Effects {
   };
 }
 
+function allowLinksFrom(outcome: ToolOutcome, linkable: LinkAllowList): void {
+  if (!outcome.ok) return;
+  for (const { url } of outcome.result.sources) if (url) linkable.allow(url);
+  for (const url of urlsIn(outcome.result.data)) linkable.allow(url);
+}
+
 function* closeAnswer(
   reply: Reply,
   effects: Effects,
@@ -229,6 +242,7 @@ export function createModelAssistant({
   model,
   tools,
   clock,
+  knownUrls = [],
   onUsage,
   onToolResult,
 }: Options): ModelAssistant {
@@ -332,7 +346,8 @@ export function createModelAssistant({
   return {
     async *answer({ question, history, followUps }, signal) {
       const messages = startMessages(question, history, clock.now());
-      const reply = createReply();
+      const linkable = createLinkAllowList(knownUrls);
+      const reply = createReply((url) => linkable.allows(url));
       const effects = collectEffects();
       let searched = false;
 
@@ -353,6 +368,7 @@ export function createModelAssistant({
         for (const { call, outcome } of results) {
           onToolResult?.({ name: call.name, arguments: call.arguments, outcome });
           effects.add(outcome);
+          allowLinksFrom(outcome, linkable);
         }
       }
 

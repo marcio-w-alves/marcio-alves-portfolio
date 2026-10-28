@@ -110,6 +110,20 @@ describe('an answer’s text', () => {
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
     expect(screen.getByText(/<img src=x/)).toBeInTheDocument();
   });
+
+  it('links only a Markdown https link, leaving a bare address as text', () => {
+    renderMessage({
+      parts: [
+        {
+          type: 'text',
+          id: 'p0',
+          text: 'See [his GitHub](https://github.com/marcio-w-alves), not https://evil.example/login.',
+        },
+      ],
+    });
+    expect(screen.getByRole('link')).toHaveAttribute('href', 'https://github.com/marcio-w-alves');
+    expect(screen.getByText(/not https:\/\/evil\.example\/login\./)).toBeInTheDocument();
+  });
 });
 
 describe('while an answer arrives', () => {

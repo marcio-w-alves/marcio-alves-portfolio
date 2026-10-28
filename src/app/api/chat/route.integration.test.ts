@@ -8,6 +8,7 @@ import { assistantSettings } from '@/env';
 import { MAX_OUTPUT_TOKENS } from '@/core/assistant/system2/model-assistant';
 import { SEARCH_UNAVAILABLE } from '@/core/assistant/tools/search-tools';
 import knowledgeIndex from '@/infrastructure/retrieval/knowledge-index.json';
+import { knowledgeBase } from '@/core/knowledge/knowledge-base';
 import { createHealthHandler } from '../health/health-handler';
 import { createChatHandler } from './chat-handler';
 
@@ -357,6 +358,21 @@ describe('POST /api/chat — a model answer', () => {
       id: 'resume.toptal',
       label: 'Resume',
     });
+  });
+
+  it("links to the record's own addresses with no action, and to nothing else", async () => {
+    scriptedCompletions(
+      textRound(
+        'See [his GitHub](https://github.com/marcio-w-alves), [email him](mailto:',
+        `${knowledgeBase.contact.email}) or [log in](https://evil.example/login).`,
+      ),
+    );
+
+    const events = await allEventsOf(await postChat()(question(MODEL_QUESTION)));
+
+    expect(textOf(events)).toBe(
+      `See [his GitHub](https://github.com/marcio-w-alves), [email him](mailto:${knowledgeBase.contact.email}) or log in.`,
+    );
   });
 });
 

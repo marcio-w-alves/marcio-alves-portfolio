@@ -93,6 +93,12 @@ describe('assistant — choosing a path', () => {
     expect(events[0]).toEqual({ type: 'start', intent: 'career', related: 'deel' });
   });
 
+  it('keeps the links of a fast-path answer, which only the record writes', async () => {
+    const events = await collect(assistantWith(sentenceModel().model), 'Can I see his resume?');
+    const text = events.map((event) => (event.type === 'text-delta' ? event.delta : '')).join('');
+    expect(text).toContain('[open his resume as a PDF](/marcio-alves-resume.pdf)');
+  });
+
   it('hands everything else to the model, with follow-ups the fast path can answer', async () => {
     const { model, received } = fakeModel(async function* (modelRequest) {
       yield { type: 'start', intent: 'model', related: null };
