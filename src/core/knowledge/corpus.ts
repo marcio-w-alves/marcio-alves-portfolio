@@ -46,6 +46,19 @@ function conceptText(project: Project, owner: string): string {
   return `${project.name}, one of ${owner}'s product concepts (${project.category}): ${project.description} ${project.scopeLabel}: ${list(project.scope)}. Only planned scope is documented — no implementation, users, revenue or release dates.`;
 }
 
+/**
+ * One passage for a whole section of the record, credited to the section: its
+ * entries share one source. A section with no entries has nothing to say.
+ */
+function sectionPassage(
+  category: 'certifications' | 'languages',
+  entries: readonly { readonly source: string }[],
+  text: string,
+): KnowledgeChunk[] {
+  const [first] = entries;
+  return first ? [{ id: category, category, text, source: first.source }] : [];
+}
+
 export function buildCorpus({
   profile,
   experience,
@@ -82,26 +95,24 @@ export function buildCorpus({
       id: `skills:${group.id}`,
       category: 'skills',
       text: `Skills — ${group.title}: ${list(group.items)}.`,
-      source: 'resume.skills',
+      source: group.source,
     })),
-    {
-      id: 'certifications',
-      category: 'certifications',
-      text: `Certifications, which are courses and not professional experience: ${list(certifications.map((item) => `${item.name} (${item.issuer})`))}.`,
-      source: 'resume.certifications',
-    },
+    ...sectionPassage(
+      'certifications',
+      certifications,
+      `Certifications, which are courses and not professional experience: ${list(certifications.map((item) => `${item.name} (${item.issuer})`))}.`,
+    ),
     {
       id: 'education',
       category: 'education',
       text: `Education: ${education.degree} from ${education.school} (${education.schoolShort}), ${education.location}, completed in ${String(education.year)}.`,
       source: education.source,
     },
-    {
-      id: 'languages',
-      category: 'languages',
-      text: `Languages: ${list(languages.map((language) => `${language.name} (${language.level})`))}.`,
-      source: 'resume.languages',
-    },
+    ...sectionPassage(
+      'languages',
+      languages,
+      `Languages: ${list(languages.map((language) => `${language.name} (${language.level})`))}.`,
+    ),
     ...projects.map((project): KnowledgeChunk => ({
       id: `project:${project.id}`,
       category: 'projects',
@@ -114,13 +125,13 @@ export function buildCorpus({
       id: `principle:${String(index)}`,
       category: 'principles',
       text: `Engineering principle — ${principle.title}: ${principle.text}`,
-      source: 'principles',
+      source: principle.source,
     })),
-    ...notes.map((note): KnowledgeChunk => ({
+    ...notes.passages.map((note): KnowledgeChunk => ({
       id: `notes:${note.id}`,
       category: 'notes',
       text: note.text,
-      source: 'notes',
+      source: notes.source,
     })),
   ];
 }

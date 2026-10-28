@@ -112,11 +112,13 @@ const knowledgeSchema = z.strictObject({
     github: httpsUrl,
     resumeUrl: z.string().startsWith('/').nullable(),
   }),
-  principles: z.array(z.strictObject({ title: localized, text: localized })),
+  principles: z.array(z.strictObject({ title: localized, text: localized, source: text })),
   metrics: z.record(z.string(), metricSchema),
   experience: z.array(roleSchema).min(1),
-  skills: z.array(z.strictObject({ id: text, title: localized, items: texts })).min(1),
-  certifications: z.array(z.strictObject({ name: text, issuer: text })),
+  skills: z
+    .array(z.strictObject({ id: text, title: localized, items: texts, source: text }))
+    .min(1),
+  certifications: z.array(z.strictObject({ name: text, issuer: text, source: text })),
   projects: z.array(projectSchema).min(1),
   education: z.strictObject({
     degree: localized,
@@ -130,11 +132,15 @@ const knowledgeSchema = z.strictObject({
     z.strictObject({
       name: localized,
       level: z.enum(['Native', 'Fluent', 'Intermediate']),
+      source: text,
     }),
   ),
   practice: practiceSchema,
   sourceLabels: z.record(z.string(), localized),
-  notes: z.array(z.strictObject({ id: text, text })),
+  notes: z.strictObject({
+    source: text,
+    passages: z.array(z.strictObject({ id: text, text })),
+  }),
 });
 
 type Path = (string | number)[];
@@ -183,19 +189,25 @@ function checkMetrics(source: KnowledgeSource, report: Report) {
   });
 }
 
+type Citation = [id: string, path: Path];
+
+function citedBy(section: string, entries: readonly { readonly source: string }[]): Citation[] {
+  return entries.map((entry, index) => [entry.source, [section, index, 'source']]);
+}
+
+/** Every source the record cites has a label, so an answer can always credit it. */
 function checkSources(source: KnowledgeSource, report: Report) {
-  const cited: [string, Path][] = [
+  const cited: Citation[] = [
     [source.profile.source, ['profile', 'source']],
     [source.education.source, ['education', 'source']],
-    ...source.experience.map((role, index): [string, Path] => [
-      role.source,
-      ['experience', index, 'source'],
-    ]),
-    ...source.projects.map((project, index): [string, Path] => [
-      project.source,
-      ['projects', index, 'source'],
-    ]),
-    ...Object.entries(source.metrics).map(([id, metric]): [string, Path] => [
+    [source.notes.source, ['notes', 'source']],
+    ...citedBy('experience', source.experience),
+    ...citedBy('projects', source.projects),
+    ...citedBy('skills', source.skills),
+    ...citedBy('principles', source.principles),
+    ...citedBy('certifications', source.certifications),
+    ...citedBy('languages', source.languages),
+    ...Object.entries(source.metrics).map(([id, metric]): Citation => [
       metric.source,
       ['metrics', id, 'source'],
     ]),
@@ -203,6 +215,24 @@ function checkSources(source: KnowledgeSource, report: Report) {
   for (const [id, path] of cited) {
     if (!(id in source.sourceLabels)) report(`Unknown source "${id}"`, path);
   }
+}
+
+/** A section retrieval cites as one passage needs one source for all its entries. */
+function checkSharedSource(
+  section: 'certifications' | 'languages',
+  entries: readonly { readonly source: string }[],
+  report: Report,
+) {
+  const [first] = entries;
+  entries.forEach((entry, index) => {
+    if (first && entry.source !== first.source) {
+      report(`Must cite "${first.source}", like the rest of the section`, [
+        section,
+        index,
+        'source',
+      ]);
+    }
+  });
 }
 
 function checkPracticeReferences(source: KnowledgeSource, report: Report) {
@@ -228,6 +258,8 @@ const validated = knowledgeSchema.superRefine((parsed, context) => {
   checkRoleDates(source, report);
   checkMetrics(source, report);
   checkSources(source, report);
+  checkSharedSource('certifications', source.certifications, report);
+  checkSharedSource('languages', source.languages, report);
   checkPracticeReferences(source, report);
 });
 

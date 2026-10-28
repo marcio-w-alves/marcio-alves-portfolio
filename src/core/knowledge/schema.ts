@@ -62,6 +62,7 @@ export interface SkillGroupSource {
   readonly id: string;
   readonly title: Localized;
   readonly items: readonly Localized[];
+  readonly source: string;
 }
 
 export interface ProjectLinkSource {
@@ -90,6 +91,7 @@ export interface ProjectSource {
 export interface PrincipleSource {
   readonly title: Localized;
   readonly text: Localized;
+  readonly source: string;
 }
 
 export interface EducationSource {
@@ -104,11 +106,13 @@ export interface EducationSource {
 export interface LanguageSource {
   readonly name: Localized;
   readonly level: 'Native' | 'Fluent' | 'Intermediate';
+  readonly source: string;
 }
 
 export interface CertificationSource {
   readonly name: string;
   readonly issuer: string;
+  readonly source: string;
 }
 
 export interface LocationSource {
@@ -212,6 +216,11 @@ export interface Note {
   readonly text: string;
 }
 
+export interface NotesSource {
+  readonly source: string;
+  readonly passages: readonly Note[];
+}
+
 export interface KnowledgeSource {
   readonly profile: ProfileSource;
   readonly welcome: WelcomeSource;
@@ -229,9 +238,9 @@ export interface KnowledgeSource {
   readonly education: EducationSource;
   readonly languages: readonly LanguageSource[];
   readonly practice: PracticeSource;
-  /** How an answer credits each source, keyed by source id. */
+  /** How an answer credits each source, keyed by source id. Every `source` above is one. */
   readonly sourceLabels: Readonly<Record<string, Localized>>;
-  readonly notes: readonly Note[];
+  readonly notes: NotesSource;
 }
 
 export type Knowledge = Monolingual<KnowledgeSource>;

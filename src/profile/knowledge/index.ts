@@ -25,5 +25,5 @@ export const knowledge: KnowledgeSource = {
   languages,
   practice,
   sourceLabels,
-  notes,
+  notes: { source: 'notes', passages: notes },
 };

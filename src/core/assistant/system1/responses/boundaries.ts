@@ -103,6 +103,10 @@ export function createBoundaryAnswers(kit: ResponseKit) {
     return `I don't have documented information about Marcio working with **${technology.name}** in his roles, so I can't say how experienced he is with it.${study}`;
   }
 
+  const DOCUMENTED_STACK_GROUPS = ['frontend', 'backend'];
+  const stackSources = kit.knowledge.skills
+    .filter((group) => DOCUMENTED_STACK_GROUPS.includes(group.id))
+    .map((group) => group.source);
   const DOCUMENTED_STACK =
     'His documented stack is React, TypeScript and Next.js on the frontend, and Node.js and REST APIs on the backend.';
 
@@ -114,9 +118,10 @@ export function createBoundaryAnswers(kit: ResponseKit) {
     const documented = evidence.some((item) => item.work.length > 0 || item.skills.length > 0);
     const sources = new Set(
       evidence.flatMap((item) => [
-        ...item.work.map((entry) => `resume.${entry.role}` as const),
-        ...(item.skills.length > 0 || !documented ? ['resume.skills' as const] : []),
-        ...(item.coursework.length > 0 ? ['resume.certifications' as const] : []),
+        ...item.sources.work,
+        ...item.sources.skills,
+        ...(documented ? [] : stackSources),
+        ...item.sources.coursework,
       ]),
     );
     const answer = evidence.map(describe).join('\n\n');
@@ -124,7 +129,7 @@ export function createBoundaryAnswers(kit: ResponseKit) {
       'technology',
       [
         text(documented ? answer : `${answer} ${DOCUMENTED_STACK}`),
-        documented ? null : skills(['frontend', 'backend']),
+        documented ? null : skills(DOCUMENTED_STACK_GROUPS),
       ],
       {
         followUps: [

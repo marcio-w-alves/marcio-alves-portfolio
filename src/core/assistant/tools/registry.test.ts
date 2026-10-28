@@ -3,6 +3,8 @@ import { localize } from '@/core/knowledge/localize';
 import { profile } from '@/profile';
 import { fixtureKnowledge } from '@/testing/fixture-profile/knowledge';
 import { createResponseKit } from '../response-kit';
+import type { GithubPort } from '../ports/github.port';
+import { createExternalTools } from './external-tools';
 import { createToolRegistry } from './registry';
 import { defineTool, type ToolOutcome, type ToolResult } from './tool';
 
@@ -320,5 +322,58 @@ describe('the record the actions read', () => {
     const roles = succeeded(await fixture.run('getExperience', { company: 'globex' })).data;
     expect(roles).toMatchObject([{ company: 'Globex', role: 'Senior Platform Engineer' }]);
     expect((await fixture.run('getExperience', { company: 'umbrella' })).ok).toBe(false);
+  });
+
+  const fixtureKit = createResponseKit(localize(fixtureKnowledge, 'en'));
+  const unreachableGithub: GithubPort = {
+    profile: () => Promise.resolve(null),
+    repositories: () => Promise.resolve(null),
+  };
+  const fixtureRegistry = createToolRegistry({
+    kit: fixtureKit,
+    extra: createExternalTools({
+      kit: fixtureKit,
+      references: { summary: () => Promise.resolve(null) },
+      github: unreachableGithub,
+    }),
+    reportError: rethrow,
+  });
+
+  it('runs every action that needs no argument, citing only what the record labels', async () => {
+    const labelled = new Set(Object.keys(fixtureKnowledge.sourceLabels));
+    const argumentFree = fixtureRegistry.tools.filter(
+      (tool) => ((tool.parameters.required ?? []) as unknown[]).length === 0,
+    );
+    expect(argumentFree.length).toBeGreaterThan(10);
+
+    for (const tool of argumentFree) {
+      const outcome = await fixtureRegistry.run(tool.name, {});
+      expect(outcome, tool.name).toMatchObject({ ok: true });
+      if (!outcome.ok) continue;
+      for (const source of outcome.result.sources) {
+        expect(
+          source.url !== undefined || labelled.has(source.id),
+          `${tool.name}: ${source.id}`,
+        ).toBe(true);
+      }
+    }
+  });
+
+  it("cites each fact family by the record's own source ids", async () => {
+    const sourcesOf = async (name: string, args: unknown = {}) =>
+      succeeded(await fixtureRegistry.run(name, args)).sources.map((source) => source.id);
+
+    expect(await sourcesOf('getProfileSummary')).toEqual(['cv']);
+    expect(await sourcesOf('getSkills')).toEqual(['cv.skills']);
+    expect(await sourcesOf('getEducationAndLanguages')).toEqual([
+      'cv.education',
+      'cv.languages',
+      'cv.courses',
+    ]);
+    expect(await sourcesOf('getEngineeringPrinciples')).toEqual(['principles', 'cv']);
+    expect(await sourcesOf('getTechnologyEvidence', { technology: 'Bazel' })).toEqual([
+      'cv.skills',
+      'notes',
+    ]);
   });
 });

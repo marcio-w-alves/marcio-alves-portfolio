@@ -75,7 +75,15 @@ export function createDisplayTools(kit: ResponseKit): Tool[] {
         .min(1)
         .optional(),
     },
-    execute: ({ areas }) => display(kit.skills(areas), cite(['resume.skills'])),
+    execute: ({ areas }) =>
+      display(
+        kit.skills(areas),
+        cite(
+          knowledge.skills
+            .filter((group) => !areas || areas.includes(group.id))
+            .map((group) => group.source),
+        ),
+      ),
   });
 
   const showProjects = defineTool({
@@ -87,7 +95,15 @@ export function createDisplayTools(kit: ResponseKit): Tool[] {
         .min(1)
         .optional(),
     },
-    execute: ({ projects: ids }) => display(kit.projects(ids), cite(['projects'])),
+    execute: ({ projects: ids }) =>
+      display(
+        kit.projects(ids),
+        cite(
+          (ids ?? knowledge.projects.map((project) => project.id)).map(
+            (id) => kit.projectById(id).source,
+          ),
+        ),
+      ),
   });
 
   const showContactCard = defineTool({
@@ -95,7 +111,7 @@ export function createDisplayTools(kit: ResponseKit): Tool[] {
     description:
       'Show the contact card. Use it when the visitor wants to reach Marcio or hire him.',
     input: {},
-    execute: () => display(kit.contactCard(), cite(['profile'])),
+    execute: () => display(kit.contactCard(), cite([knowledge.profile.source])),
   });
 
   return [showMetrics, showTimeline, showSkills, showProjects, showContactCard];

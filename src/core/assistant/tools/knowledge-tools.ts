@@ -3,12 +3,23 @@ import type { ResponseKit } from '../response-kit';
 import { createEvidenceReporter } from './evidence-report';
 import { defineTool, oneOf, type Tool } from './tool';
 
+// The model reads the facts; their sources reach it as the call's citations.
+function withoutSources<Entry extends { readonly source: string }>(
+  entries: readonly Entry[],
+): Omit<Entry, 'source'>[] {
+  return entries.map(({ source: _source, ...entry }) => entry);
+}
+
 /** Read-only access to the knowledge base, one fact family per action. */
 export function createKnowledgeTools(kit: ResponseKit): Tool[] {
   const { knowledge, citation, roleById, projectById, metricById } = kit;
   const { profile, contact, experience, skills, certifications, education, languages } = knowledge;
   const evidenceReport = createEvidenceReporter(kit);
   const roleIds = oneOf(experience.map((role) => role.id));
+
+  function citeAll(entries: readonly { readonly source: string }[]) {
+    return [...new Set(entries.map((entry) => entry.source))].map(citation);
+  }
 
   const getProfileSummary = defineTool({
     name: 'getProfileSummary',
@@ -30,7 +41,7 @@ export function createKnowledgeTools(kit: ResponseKit): Tool[] {
           city: profile.location.city ?? 'not documented',
         },
       },
-      sources: [citation('profile')],
+      sources: [citation(profile.source)],
     }),
   });
 
@@ -81,14 +92,13 @@ export function createKnowledgeTools(kit: ResponseKit): Tool[] {
     description:
       'His skills grouped by area. There are no self-rated levels; evidence lives in the experience statements.',
     input: { area: oneOf(skills.map((group) => group.id)).optional() },
-    execute: ({ area }) => ({
-      data: (area ? skills.filter((group) => group.id === area) : skills).map((group) => ({
-        area: group.id,
-        title: group.title,
-        items: group.items,
-      })),
-      sources: [citation('resume.skills')],
-    }),
+    execute: ({ area }) => {
+      const groups = area ? skills.filter((group) => group.id === area) : skills;
+      return {
+        data: groups.map((group) => ({ area: group.id, title: group.title, items: group.items })),
+        sources: citeAll(groups),
+      };
+    },
   });
 
   const getTechnologyEvidence = defineTool({
@@ -104,12 +114,10 @@ export function createKnowledgeTools(kit: ResponseKit): Tool[] {
     description:
       "His own products: those with a public site (live: true) and concepts (live: false). Only what each product's public site states is documented: no users, revenue or release dates.",
     input: { project: oneOf(knowledge.projects.map((project) => project.id)).optional() },
-    execute: ({ project }) => ({
-      data: (project ? [projectById(project)] : knowledge.projects).map(
-        ({ source: _source, ...product }) => product,
-      ),
-      sources: [citation('projects')],
-    }),
+    execute: ({ project }) => {
+      const products = project ? [projectById(project)] : knowledge.projects;
+      return { data: withoutSources(products), sources: citeAll(products) };
+    },
   });
 
   const getEducationAndLanguages = defineTool({
@@ -125,14 +133,10 @@ export function createKnowledgeTools(kit: ResponseKit): Tool[] {
           location: education.location,
           year: education.year,
         },
-        languages,
-        certifications,
+        languages: withoutSources(languages),
+        certifications: withoutSources(certifications),
       },
-      sources: [
-        citation('resume.education'),
-        citation('resume.languages'),
-        citation('resume.certifications'),
-      ],
+      sources: citeAll([education, ...languages, ...certifications]),
     }),
   });
 
@@ -147,7 +151,7 @@ export function createKnowledgeTools(kit: ResponseKit): Tool[] {
         github: contact.github,
         resume: contact.resumeUrl ?? 'not published; request it by email',
       },
-      sources: [citation('profile')],
+      sources: [citation(profile.source)],
     }),
   });
 
@@ -156,8 +160,8 @@ export function createKnowledgeTools(kit: ResponseKit): Tool[] {
     description: 'The principles he says he works by, and his professional focus.',
     input: {},
     execute: () => ({
-      data: { focus: profile.focus, principles: knowledge.principles },
-      sources: [citation('principles'), citation('profile')],
+      data: { focus: profile.focus, principles: withoutSources(knowledge.principles) },
+      sources: citeAll([...knowledge.principles, profile]),
     }),
   });
 

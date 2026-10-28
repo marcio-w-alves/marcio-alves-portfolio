@@ -31,7 +31,7 @@ describe('knowledge corpus', () => {
   it('turns every note of the knowledge-base document into its own passage', () => {
     const notes = corpus.filter((chunk) => chunk.category === 'notes');
     expect(notes.map(({ id, text }) => [id, text])).toEqual(
-      knowledge.notes.map(({ id, text }) => [`notes:${id}`, text]),
+      knowledge.notes.passages.map(({ id, text }) => [`notes:${id}`, text]),
     );
   });
 
@@ -56,5 +56,13 @@ describe('knowledge corpus', () => {
     expect(corpus.find((chunk) => chunk.id === 'certifications')?.text).toContain(
       'not professional experience',
     );
+  });
+
+  it('credits every passage to a source the record labels', () => {
+    for (const chunk of corpus) {
+      expect(Object.keys(knowledge.sourceLabels), chunk.id).toContain(chunk.source);
+    }
+    expect(corpus.find((chunk) => chunk.id === 'skills:platform')?.source).toBe('cv.skills');
+    expect(corpus.find((chunk) => chunk.id === 'notes:1')?.source).toBe('notes');
   });
 });

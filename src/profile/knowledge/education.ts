@@ -10,8 +10,8 @@ export const education: EducationSource = {
 };
 
 export const languages: readonly LanguageSource[] = [
-  { name: { en: 'Portuguese' }, level: 'Native' },
-  { name: { en: 'English' }, level: 'Fluent' },
-  { name: { en: 'French' }, level: 'Intermediate' },
-  { name: { en: 'Spanish' }, level: 'Intermediate' },
+  { name: { en: 'Portuguese' }, level: 'Native', source: 'resume.languages' },
+  { name: { en: 'English' }, level: 'Fluent', source: 'resume.languages' },
+  { name: { en: 'French' }, level: 'Intermediate', source: 'resume.languages' },
+  { name: { en: 'Spanish' }, level: 'Intermediate', source: 'resume.languages' },
 ];

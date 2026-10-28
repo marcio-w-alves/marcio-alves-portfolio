@@ -66,53 +66,62 @@ export const principles: readonly PrincipleSource[] = [
     text: {
       en: 'Readable, explicit and predictable code, with long-term code health ahead of short-term convenience.',
     },
+    source: 'principles',
   },
   {
     title: { en: 'Composition over monoliths' },
     text: {
       en: 'Small primitives composed into higher-level components, with presentation kept apart from state, domain logic and side effects.',
     },
+    source: 'principles',
   },
   {
     title: { en: 'Reuse before rewriting' },
     text: {
       en: 'Shared logic such as validators, formatters and domain helpers is centralized instead of duplicated across features.',
     },
+    source: 'principles',
   },
   {
     title: { en: 'Architecture sized to the problem' },
     text: {
       en: "Growth, integration and maintenance are planned for, but each decision is calibrated to the product's real stage: explicit contracts, clear responsibilities, predictable state and low coupling.",
     },
+    source: 'principles',
   },
   {
     title: { en: 'Performance from the design' },
     text: {
       en: 'Loading, rendering, data flow and the experience of use are quality criteria from the start, not late optimization work.',
     },
+    source: 'principles',
   },
   {
     title: { en: 'UX and visual fidelity' },
     text: {
       en: 'Hierarchy, responsiveness, loading, error and empty states, accessibility and complete flows — not just a match with the screenshot.',
     },
+    source: 'principles',
   },
   {
     title: { en: 'Verifiable quality' },
     text: {
       en: 'Tests proportional to risk, reviews, documentation where it is needed, observability and real validation before anything is called done.',
     },
+    source: 'principles',
   },
   {
     title: { en: 'Explicit trade-offs' },
     text: {
       en: 'Alternatives, maintenance cost, dependencies, scalability, delivery speed and risk are discussed openly; no technology choice is treated as absolute.',
     },
+    source: 'principles',
   },
   {
     title: { en: 'Security on the server' },
     text: {
       en: 'Access is never assumed from what the UI allows: authentication, authorization and input are validated server-side.',
     },
+    source: 'principles',
   },
 ];

@@ -105,7 +105,7 @@ export function createExternalTools({ kit, references, github }: Dependencies): 
       if (!city) {
         return {
           data: { country, city: 'not documented', note: 'Do not guess or infer the city.' },
-          sources: [citation('profile')],
+          sources: [citation(knowledge.profile.source)],
         };
       }
       const summary = await lookUp(city);
@@ -115,7 +115,10 @@ export function createExternalTools({ kit, references, github }: Dependencies): 
           country,
           reference: summary ? clip(summary.extract, MAX_EXTRACT) : UNAVAILABLE,
         },
-        sources: [citation('profile'), ...(summary ? [referenceSource(summary)] : [])],
+        sources: [
+          citation(knowledge.profile.source),
+          ...(summary ? [referenceSource(summary)] : []),
+        ],
       };
     },
   });

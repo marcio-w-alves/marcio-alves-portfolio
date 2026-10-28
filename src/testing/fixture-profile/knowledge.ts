@@ -36,7 +36,13 @@ export const fixtureKnowledge: KnowledgeSource = {
     github: 'https://github.com/ada-rivera-example',
     resumeUrl: '/ada-rivera-cv.pdf',
   },
-  principles: [{ title: en('Paved roads'), text: en('Make the right way the easy way.') }],
+  principles: [
+    {
+      title: en('Paved roads'),
+      text: en('Make the right way the easy way.'),
+      source: 'principles',
+    },
+  ],
   metrics: {
     'acme-build-time': {
       value: '40%',
@@ -105,10 +111,22 @@ export const fixtureKnowledge: KnowledgeSource = {
     },
   ],
   skills: [
-    { id: 'platform', title: en('Platform'), items: [en('Bazel'), en('Kubernetes')] },
-    { id: 'languages', title: en('Languages'), items: [en('Go'), en('Rust')] },
+    {
+      id: 'platform',
+      title: en('Platform'),
+      items: [en('Bazel'), en('Kubernetes')],
+      source: 'cv.skills',
+    },
+    {
+      id: 'languages',
+      title: en('Languages'),
+      items: [en('Go'), en('Rust')],
+      source: 'cv.skills',
+    },
   ],
-  certifications: [{ name: 'Certified Platform Engineer', issuer: 'Platform Guild' }],
+  certifications: [
+    { name: 'Certified Platform Engineer', issuer: 'Platform Guild', source: 'cv.courses' },
+  ],
   projects: [
     {
       id: 'pipewright',
@@ -150,8 +168,8 @@ export const fixtureKnowledge: KnowledgeSource = {
     source: 'cv.education',
   },
   languages: [
-    { name: en('Portuguese'), level: 'Native' },
-    { name: en('English'), level: 'Fluent' },
+    { name: en('Portuguese'), level: 'Native', source: 'cv.languages' },
+    { name: en('English'), level: 'Fluent', source: 'cv.languages' },
   ],
   practice: {
     designProcess: [en('Start from the developer journey.')],
@@ -200,12 +218,18 @@ export const fixtureKnowledge: KnowledgeSource = {
     'cv.globex': en('CV'),
     'cv.initech': en('CV'),
     'cv.education': en('CV'),
+    'cv.skills': en('CV'),
+    'cv.courses': en('CV'),
+    'cv.languages': en('CV'),
     projects: en('Product sites'),
     principles: en('Principles'),
     notes: en('Notes'),
   },
-  notes: [
-    { id: '1', text: 'Notes — Platform:\nAda reports she migrated three monorepos to Bazel.' },
-    { id: '2', text: 'Notes — Studies:\nAda studies Nix for reproducible builds.' },
-  ],
+  notes: {
+    source: 'notes',
+    passages: [
+      { id: '1', text: 'Notes — Platform:\nAda reports she migrated three monorepos to Bazel.' },
+      { id: '2', text: 'Notes — Studies:\nAda studies Nix for reproducible builds.' },
+    ],
+  },
 };

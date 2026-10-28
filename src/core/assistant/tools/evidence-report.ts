@@ -68,10 +68,12 @@ function report(
       reportedInNotes: evidence.notes.slice(0, NOTES_SHOWN),
     },
     sources: [
-      ...new Set(evidence.work.map((item) => `resume.${item.role}` as const)),
-      ...(evidence.skills.length > 0 ? (['resume.skills'] as const) : []),
-      ...(evidence.coursework.length > 0 ? (['resume.certifications'] as const) : []),
-      ...(evidence.notes.length > 0 ? (['notes'] as const) : []),
+      ...new Set([
+        ...evidence.sources.work,
+        ...evidence.sources.skills,
+        ...evidence.sources.coursework,
+        ...evidence.sources.notes,
+      ]),
     ].map(citation),
   };
 }

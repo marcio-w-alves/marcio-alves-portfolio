@@ -83,6 +83,48 @@ describe('validating a record', () => {
       },
       ['practice', 'productDepth', 'pipewright'],
     ],
+    [
+      'a skill group citing a source nobody labels',
+      {
+        ...fixtureKnowledge,
+        skills: fixtureKnowledge.skills.map((group) => ({ ...group, source: 'cv.nowhere' })),
+      },
+      ['skills', 0, 'source'],
+    ],
+    [
+      'a principle citing a source nobody labels',
+      {
+        ...fixtureKnowledge,
+        principles: fixtureKnowledge.principles.map((item) => ({ ...item, source: 'cv.nowhere' })),
+      },
+      ['principles', 0, 'source'],
+    ],
+    [
+      'notes citing a source nobody labels',
+      { ...fixtureKnowledge, notes: { ...fixtureKnowledge.notes, source: 'cv.nowhere' } },
+      ['notes', 'source'],
+    ],
+    [
+      'certifications split across sources, though they are cited as one section',
+      {
+        ...fixtureKnowledge,
+        certifications: [
+          ...fixtureKnowledge.certifications,
+          { name: 'Another course', issuer: 'Guild', source: 'cv.skills' },
+        ],
+      },
+      ['certifications', 1, 'source'],
+    ],
+    [
+      'languages split across sources, though they are cited as one section',
+      {
+        ...fixtureKnowledge,
+        languages: fixtureKnowledge.languages.map((language, index) =>
+          index === 1 ? { ...language, source: 'cv.skills' } : language,
+        ),
+      },
+      ['languages', 1, 'source'],
+    ],
   ])('rejects %s, naming where it is', (_case, source, path) => {
     expect(issuesOf(source).map((issue) => issue.path)).toContainEqual(path);
   });
