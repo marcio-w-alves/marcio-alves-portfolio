@@ -1,11 +1,12 @@
 import type { NoteTone } from '@/core/chat/components';
 import { InlineText } from '../format/inline';
+import { useMessages } from '../i18n/i18n-provider';
 import { Icon, type IconName } from '../primitives';
 
-const TONES: Readonly<Record<NoteTone, { readonly label: string; readonly icon: IconName }>> = {
-  inference: { label: 'Assessment', icon: 'compass' },
-  example: { label: 'Illustrative example', icon: 'code' },
-  info: { label: 'Note', icon: 'info' },
+const ICONS: Readonly<Record<NoteTone, IconName>> = {
+  inference: 'compass',
+  example: 'code',
+  info: 'info',
 };
 
 interface NoteProps {
@@ -14,7 +15,8 @@ interface NoteProps {
 }
 
 export function Note({ tone, text }: NoteProps) {
-  const { label, icon } = TONES[tone];
+  const label = useMessages().rich.notes[tone];
+  const icon = ICONS[tone];
   return (
     <aside className="flex animate-block-enter items-start gap-2.5 rounded-md bg-ice px-4 py-3 text-13.5 leading-reading text-ink-muted shadow-ring">
       <Icon name={icon} size="sm" className="mt-0.5 text-ink-faint" />

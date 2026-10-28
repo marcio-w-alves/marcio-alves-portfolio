@@ -1,9 +1,8 @@
 import { z } from 'zod';
-import type { AnswerSet } from '@/core/assistant/answer-set';
 import type { KnowledgeSource, Locale, SiteSubject } from '@/core/knowledge/schema';
 import { excludePattern } from '@/core/knowledge/product-sites';
 import { knowledgeRecordSchema } from '@/core/knowledge/validate';
-import type { Brand } from '@/site/site-profile';
+import type { Brand, LocaleCopy } from '@/site/site-profile';
 import type { EvaluationCase } from './evaluation/cases';
 
 /** Who the site is about. Every value here identifies the owner, which is why it lives in one place. */
@@ -55,7 +54,7 @@ export interface Profile {
   /** The colours and image face the pages, the share image and the tab icon are drawn in. */
   readonly brand: Brand;
   /** What the site writes around the record's facts, per language. */
-  readonly copy: Readonly<Record<Locale, { readonly answers: AnswerSet }>>;
+  readonly copy: Readonly<Record<Locale, LocaleCopy>>;
   /** The conversations `pnpm eval:assistant` holds the assistant to. */
   readonly evaluation: readonly EvaluationCase[];
 }
@@ -73,8 +72,14 @@ const identitySchema = z.strictObject({
   nonIdentifyingTerms: z.array(z.string()),
 });
 
+const fontStackSchema = z.strictObject({
+  fallbacks: z.array(z.string().regex(/\S/)),
+  featureSettings: z.string().regex(/\S/).optional(),
+});
+
 const brandSchema = z.strictObject({
   colors: z.record(z.string(), z.string().regex(/^#[0-9a-f]{6}$/, 'Must be a #rrggbb colour')),
+  fonts: z.strictObject({ sans: fontStackSchema, display: fontStackSchema, mono: fontStackSchema }),
   imageFont: z.strictObject({
     family: z.string().regex(/\S/),
     files: z.strictObject({ 400: z.string().endsWith('.woff'), 600: z.string().endsWith('.woff') }),
@@ -132,7 +137,13 @@ const profileSchema = z
     siteAllowList: z.array(siteEntrySchema),
     brand: brandSchema,
     // Its shape is the type's to check: copy is code, written against the record.
-    copy: z.strictObject({ en: z.strictObject({ answers: z.looseObject({}) }) }),
+    copy: z.strictObject({
+      en: z.strictObject({
+        answers: z.looseObject({}),
+        ui: z.looseObject({}),
+        site: z.looseObject({}),
+      }),
+    }),
     evaluation: z.array(z.looseObject({ id: z.string().regex(/\S/) })),
   })
   .superRefine(checkSitePassagesAllowed);

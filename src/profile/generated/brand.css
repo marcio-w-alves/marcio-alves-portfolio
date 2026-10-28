@@ -1,0 +1,29 @@
+/*
+ * Generated from src/profile/brand.ts by `pnpm brand:css`. Do not edit:
+ * change the profile and run the command again.
+ */
+@theme {
+  --color-bg: #ffffff;
+  --color-ice: #f9fafb;
+  --color-surface: #ffffff;
+  --color-fill: #f4f6f8;
+  --color-fill-hover: #eef1f4;
+  --color-selection: #e2e8f0;
+  --color-ink: #0f1115;
+  --color-ink-muted: #5b616b;
+  --color-ink-faint: #a3a9b1;
+  --color-border: #eceff2;
+  --color-border-strong: #dfe3e8;
+  --color-border-hover: #c7ced6;
+  --color-accent: #0f1115;
+  --color-accent-hover: #2b2f36;
+  --color-accent-soft: #eef2f6;
+  --color-danger: #b42318;
+  --color-danger-soft: #fef5f4;
+  --color-danger-ring: #f9dcd8;
+
+  --font-sans: var(--font-face-text), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-sans--font-feature-settings: 'cv11', 'ss01', 'ss03';
+  --font-display: var(--font-face-display), var(--font-face-text), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-face-code), ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}

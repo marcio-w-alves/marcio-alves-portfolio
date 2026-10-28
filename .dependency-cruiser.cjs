@@ -142,11 +142,11 @@ module.exports = {
       name: 'global-error-reads-only-fonts',
       comment:
         'The global error page replaces the root layout, so it brings its own document and ' +
-        'cannot use the server-only site-root. Of the profile it may read the font loaders, ' +
-        'which are safe in the browser, and nothing else.',
+        'cannot use the server-only site-root. Of the profile it may read the font loaders and ' +
+        'the name it titles the tab with, which are safe in the browser, and nothing else.',
       severity: 'error',
       from: { path: '^src/app/global-error\\.tsx$' },
-      to: { path: '^src/profile/', pathNot: '^src/profile/fonts\\.ts$' },
+      to: { path: '^src/profile/', pathNot: '^src/profile/(fonts|global-error-copy)\\.ts$' },
     },
     {
       name: 'profile-is-configuration',

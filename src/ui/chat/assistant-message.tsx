@@ -1,5 +1,6 @@
 import type { AssistantMessage as Message, Feedback } from '@/core/conversation/messages';
 import { cn } from '../cn';
+import { useLocale, useMessages } from '../i18n/i18n-provider';
 import { Button, Eyebrow, Icon, Tag } from '../primitives';
 import { SuggestedQuestions } from '../welcome';
 import { AnswerActions, type RelatedRoleAction } from './answer-actions';
@@ -8,17 +9,21 @@ import { AssistantAvatar } from './assistant-avatar';
 import { errorText } from './error-text';
 import { ThinkingStatus } from './thinking-status';
 
+/** How the assistant appears beside its answers. */
+export interface AssistantIdentity {
+  readonly name: string;
+  /** Its monogram. */
+  readonly initials: string;
+}
+
 interface AssistantMessageProps {
   readonly message: Message;
-  /** The name the assistant goes by beside its answers. */
-  readonly assistantName: string;
-  /** How the thinking status names the owner. */
-  readonly ownerFirstName: string;
+  readonly assistant: AssistantIdentity;
   /** Follow-ups are only offered under the newest answer. */
   readonly isLatest: boolean;
   /** Shown beside the name on a topic's introduction. */
   readonly topicLabel?: string | undefined;
-  /** "View Deel experience", when the answer is about one role. */
+  /** "View <company> experience", when the answer is about one role. */
   readonly related?: RelatedRoleAction | undefined;
   readonly onFollowUp: (question: string) => void;
   readonly onCopy: (message: Message) => Promise<boolean>;
@@ -36,8 +41,7 @@ interface AssistantMessageProps {
  */
 export function AssistantMessage({
   message,
-  assistantName,
-  ownerFirstName,
+  assistant,
   isLatest,
   topicLabel,
   related,
@@ -49,16 +53,18 @@ export function AssistantMessage({
   onAskFollowUp,
   busy = false,
 }: AssistantMessageProps) {
+  const messages = useMessages();
+  const locale = useLocale();
   const isIntro = message.kind === 'intro';
   const done = message.status === 'done';
 
   return (
     <article
-      aria-label="Answer from Marcio's portfolio assistant"
+      aria-label={messages.conversation.answer}
       className="grid grid-cols-answer gap-x-4 @max-phone/ma:grid-cols-1 @max-phone/ma:gap-y-2"
     >
       <div className="@max-phone/ma:hidden">
-        <AssistantAvatar />
+        <AssistantAvatar initials={assistant.initials} />
       </div>
       <div className="flex min-w-0 flex-col gap-4">
         <div
@@ -68,20 +74,20 @@ export function AssistantMessage({
           )}
         >
           <span className="hidden @max-phone/ma:grid">
-            <AssistantAvatar inline />
+            <AssistantAvatar initials={assistant.initials} inline />
           </span>
-          <strong className="font-medium text-ink">{assistantName}</strong>
+          <strong className="font-medium text-ink">{assistant.name}</strong>
           {topicLabel && <Tag tone="accent">{topicLabel}</Tag>}
         </div>
 
-        {message.status === 'pending' && <ThinkingStatus ownerFirstName={ownerFirstName} />}
+        {message.status === 'pending' && <ThinkingStatus />}
 
         {message.parts.length > 0 && (
           <AnswerBody parts={message.parts} streaming={message.status === 'streaming'} />
         )}
 
         {message.status === 'stopped' && (
-          <p className="m-0 text-12.5 text-ink-muted">Response stopped</p>
+          <p className="m-0 text-12.5 text-ink-muted">{messages.conversation.stopped}</p>
         )}
 
         {message.status === 'error' && (
@@ -91,11 +97,13 @@ export function AssistantMessage({
           >
             <p className="m-0 flex items-center gap-2 text-14.5 font-semibold">
               <Icon name="alert" size="sm" />
-              Couldn&apos;t load this answer
+              {messages.failure.title}
             </p>
             <p className="m-0 text-14 leading-reading text-ink">
-              {message.error ? errorText(message.error) : 'Something went wrong.'} Your question is
-              saved, so you can try again or edit it first.
+              {message.error
+                ? errorText(message.error, messages.errors, locale)
+                : messages.failure.unknown}{' '}
+              {messages.failure.saved}
             </p>
             <div className="flex flex-wrap gap-2">
               {message.error?.retryable !== false && (
@@ -107,7 +115,7 @@ export function AssistantMessage({
                   }}
                 >
                   <Icon name="refresh" size="sm" />
-                  Try again
+                  {messages.failure.retry}
                 </Button>
               )}
               <Button
@@ -117,7 +125,7 @@ export function AssistantMessage({
                 }}
               >
                 <Icon name="pencil" size="sm" />
-                Edit question
+                {messages.failure.edit}
               </Button>
             </div>
           </div>
@@ -126,7 +134,7 @@ export function AssistantMessage({
         {done && !isIntro && message.sources.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5">
             <Eyebrow as="span" className="mr-0.5 text-12 leading-label">
-              Sources
+              {messages.conversation.sources}
             </Eyebrow>
             {[...new Set(message.sources.map((source) => source.label))].map((label) => (
               <span
@@ -156,7 +164,9 @@ export function AssistantMessage({
         {done && isLatest && message.followUps.length > 0 && (
           <div className="flex flex-col gap-2.5 pt-0.5">
             <SuggestedQuestions
-              title={isIntro ? 'Suggested questions' : 'Ask a follow-up'}
+              title={
+                isIntro ? messages.welcome.suggestedQuestions : messages.conversation.followUps
+              }
               questions={message.followUps.map((question) => ({ question }))}
               onPick={onFollowUp}
               disabled={busy}

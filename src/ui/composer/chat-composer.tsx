@@ -11,6 +11,8 @@ import {
   type SyntheticEvent,
 } from 'react';
 import { cn } from '../cn';
+import { formatNodes } from '../i18n/format-nodes';
+import { useMessages } from '../i18n/i18n-provider';
 import { Icon } from '../primitives';
 
 /**
@@ -62,6 +64,7 @@ export function ChatComposer({
   ref,
   looksFocused = false,
 }: ChatComposerProps) {
+  const { composer } = useMessages();
   const generatedId = useId();
   const id = inputId ?? generatedId;
   const helperId = `${id}-helper`;
@@ -99,7 +102,7 @@ export function ChatComposer({
   return (
     <form className="flex w-full flex-col gap-3" onSubmit={handleSubmit}>
       <label className="sr-only" htmlFor={id}>
-        Ask the portfolio assistant a question
+        {composer.label}
       </label>
       <div
         className={cn(
@@ -151,9 +154,13 @@ export function ChatComposer({
 }
 
 function KeyboardHint() {
+  const { composer } = useMessages();
   return (
     <span aria-hidden="true" className="text-12 text-ink-muted @max-phone/ma:hidden">
-      <Key>Enter</Key> to send · <Key>Shift</Key> + <Key>Enter</Key> for a new line
+      {formatNodes(composer.keyboardHint, {
+        enter: <Key>{composer.enterKey}</Key>,
+        shift: <Key>{composer.shiftKey}</Key>,
+      })}
     </span>
   );
 }
@@ -173,10 +180,11 @@ const SEND_CONTROL = cn(
 );
 
 function SendButton({ disabled }: { readonly disabled: boolean }) {
+  const { composer } = useMessages();
   return (
     <button
       type="submit"
-      aria-label="Send question"
+      aria-label={composer.send}
       disabled={disabled}
       className={cn(
         SEND_CONTROL,
@@ -189,8 +197,9 @@ function SendButton({ disabled }: { readonly disabled: boolean }) {
 }
 
 function StopButton({ onStop }: { readonly onStop: () => void }) {
+  const { composer } = useMessages();
   return (
-    <button type="button" aria-label="Stop generating" onClick={onStop} className={SEND_CONTROL}>
+    <button type="button" aria-label={composer.stop} onClick={onStop} className={SEND_CONTROL}>
       <Icon name="stop" size="sm" className="fill-current" />
     </button>
   );

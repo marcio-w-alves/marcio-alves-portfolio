@@ -1,7 +1,8 @@
-import { render, screen, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { AssistantMessage as Message } from '@/core/conversation/messages';
+import { renderWithMessages } from '@/testing/ui-messages';
 import { AssistantMessage } from './assistant-message';
 
 function message(fields: Partial<Message>): Message {
@@ -23,6 +24,8 @@ function message(fields: Partial<Message>): Message {
   };
 }
 
+const ASSISTANT = { name: "Ada's assistant", initials: 'AR' };
+
 function renderMessage(fields: Partial<Message>) {
   const handlers = {
     onFollowUp: vi.fn(),
@@ -32,14 +35,8 @@ function renderMessage(fields: Partial<Message>) {
     onRate: vi.fn(),
     onAskFollowUp: vi.fn(),
   };
-  render(
-    <AssistantMessage
-      message={message(fields)}
-      assistantName="Ada's assistant"
-      ownerFirstName="Ada"
-      isLatest
-      {...handlers}
-    />,
+  renderWithMessages(
+    <AssistantMessage message={message(fields)} assistant={ASSISTANT} isLatest {...handlers} />,
   );
   return handlers;
 }
@@ -48,17 +45,18 @@ describe('an answer', () => {
   it('is signed with the name the knowledge base gives the assistant', () => {
     renderMessage({ parts: [{ type: 'text', id: 'p0', text: 'Hello.' }] });
     const answer = screen.getByRole('article', {
-      name: "Answer from Marcio's portfolio assistant",
+      name: "Answer from Ada's portfolio assistant",
     });
     expect(within(answer).getByText("Ada's assistant").tagName).toBe('STRONG');
+    expect(within(answer).getAllByText('AR').length).toBeGreaterThan(0);
   });
 
   it('cites the résumé once, however many of its sections the answer drew on', () => {
     renderMessage({
-      parts: [{ type: 'text', id: 'p0', text: 'He led teams at Deel and Roots.' }],
+      parts: [{ type: 'text', id: 'p0', text: 'She led teams at Acme and Globex.' }],
       sources: [
-        { id: 'resume.deel', label: 'Resume' },
-        { id: 'resume.roots', label: 'Resume' },
+        { id: 'cv.acme', label: 'Resume' },
+        { id: 'cv.globex', label: 'Resume' },
         { id: 'principles', label: 'Engineering principles' },
       ],
     });
@@ -70,13 +68,13 @@ describe('an answer', () => {
     const user = userEvent.setup();
     const handlers = renderMessage({
       parts: [{ type: 'text', id: 'p0', text: 'Hello.' }],
-      followUps: ['How did he optimize performance?'],
+      followUps: ['How did she speed up the builds?'],
     });
     const followUps = screen.getByRole('list', { name: 'Ask a follow-up' });
     await user.click(
-      within(followUps).getByRole('button', { name: 'How did he optimize performance?' }),
+      within(followUps).getByRole('button', { name: 'How did she speed up the builds?' }),
     );
-    expect(handlers.onFollowUp).toHaveBeenCalledWith('How did he optimize performance?');
+    expect(handlers.onFollowUp).toHaveBeenCalledWith('How did she speed up the builds?');
   });
 });
 
@@ -84,13 +82,13 @@ describe('an answer’s text', () => {
   it('renders headings, lists and inline formatting from the answer’s Markdown', () => {
     renderMessage({
       parts: [
-        { type: 'text', id: 'p0', text: '### At Deel\n- Led **HRIS**\n- Cut load time by 50%' },
+        { type: 'text', id: 'p0', text: '### At Acme\n- Led **payroll**\n- Cut build time by 40%' },
       ],
     });
-    expect(screen.getByRole('heading', { level: 2, name: 'At Deel' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'At Acme' })).toBeInTheDocument();
     const items = within(screen.getByRole('list')).getAllByRole('listitem');
-    expect(items.map((item) => item.textContent)).toEqual(['Led HRIS', 'Cut load time by 50%']);
-    expect(screen.getByText('HRIS').tagName).toBe('STRONG');
+    expect(items.map((item) => item.textContent)).toEqual(['Led payroll', 'Cut build time by 40%']);
+    expect(screen.getByText('payroll').tagName).toBe('STRONG');
   });
 
   it('shows code verbatim and copies it', async () => {
@@ -123,11 +121,14 @@ describe('an answer’s text', () => {
         {
           type: 'text',
           id: 'p0',
-          text: 'See [his GitHub](https://github.com/marcio-w-alves), not https://evil.example/login.',
+          text: 'See [her GitHub](https://github.com/ada-rivera-example), not https://evil.example/login.',
         },
       ],
     });
-    expect(screen.getByRole('link')).toHaveAttribute('href', 'https://github.com/marcio-w-alves');
+    expect(screen.getByRole('link')).toHaveAttribute(
+      'href',
+      'https://github.com/ada-rivera-example',
+    );
     expect(screen.getByText(/not https:\/\/evil\.example\/login\./)).toBeInTheDocument();
   });
 
@@ -148,10 +149,10 @@ describe('while an answer arrives', () => {
   it('holds back actions and follow-ups until it is done', () => {
     renderMessage({
       status: 'streaming',
-      parts: [{ type: 'text', id: 'p0', text: 'At Roots he' }],
+      parts: [{ type: 'text', id: 'p0', text: 'At Globex she' }],
       followUps: ['Next?'],
     });
-    expect(screen.getByText(/At Roots he/)).toBeInTheDocument();
+    expect(screen.getByText(/At Globex she/)).toBeInTheDocument();
     expect(screen.queryByRole('group', { name: 'Answer actions' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Next\?/ })).not.toBeInTheDocument();
   });
@@ -174,17 +175,16 @@ describe('a failed answer', () => {
 
 describe('a topic introduction', () => {
   it('carries the topic and its suggestions, but no rating or sources', () => {
-    render(
+    renderWithMessages(
       <AssistantMessage
         message={message({
           kind: 'intro',
           topicId: 'experience',
-          parts: [{ type: 'text', id: 'intro', text: 'Here is his experience.' }],
-          followUps: ['What did he do at Roots?'],
+          parts: [{ type: 'text', id: 'intro', text: 'Here is her experience.' }],
+          followUps: ['What did she do at Globex?'],
           sources: [{ id: 'profile', label: 'Professional profile' }],
         })}
-        assistantName="Ada's assistant"
-        ownerFirstName="Ada"
+        assistant={ASSISTANT}
         isLatest
         topicLabel="Experience"
         onFollowUp={vi.fn()}

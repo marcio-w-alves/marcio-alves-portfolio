@@ -9,7 +9,7 @@ import type { InlineNode } from './parse-inline';
  * and a link that is not a web or mail address stays on this site.
  */
 
-const ALLOWED = 'https://github.com/marcio-w-alves';
+const ALLOWED = 'https://github.com/ada-rivera-example';
 const SITE = 'https://site.example';
 const allowList = createLinkAllowList([ALLOWED]);
 
@@ -91,7 +91,7 @@ describe('links the page renders from a filtered answer', () => {
     ],
     [
       'look-alike addresses',
-      '[x](https://github.com@evil.example/marcio-w-alves) [y](//evil.example)',
+      '[x](https://github.com@evil.example/ada-rivera-example) [y](//evil.example)',
     ],
     ['paths that name another host', '[x](//evil.example/cv.pdf) [y](/\\evil.example/cv.pdf)'],
   ])('are only allowed ones, whatever the chunk size: %s', (_case, answer) => {
@@ -140,12 +140,12 @@ describe('links the page renders from a filtered answer', () => {
 
   it('keeps an allowed link a link, however it streams', () => {
     for (const chunk of CHUNK_SIZES) {
-      expect(renderedHrefs(filtered(`See [his GitHub](${ALLOWED}).`, chunk))).toEqual([ALLOWED]);
+      expect(renderedHrefs(filtered(`See [her GitHub](${ALLOWED}).`, chunk))).toEqual([ALLOWED]);
     }
   });
 
   it('keeps an allowed link in bold a link, and turns an unlisted one into its label', () => {
-    const answer = `1. **[his GitHub](${ALLOWED})**\n2. **[elsewhere](https://evil.example)**`;
+    const answer = `1. **[her GitHub](${ALLOWED})**\n2. **[elsewhere](https://evil.example)**`;
     for (const chunk of CHUNK_SIZES) {
       const shown = filtered(answer, chunk);
       expect(renderedHrefs(shown)).toEqual([ALLOWED]);

@@ -68,7 +68,7 @@ async function ask({
   const answer = Array.fromAsync(
     streamAnswer(
       {
-        message: 'Compare Roots and Deel.',
+        message: 'Compare Globex and Acme.',
         history: [],
         context: { topic: 'overview', lastIntent: null, ctaShown: false },
       },

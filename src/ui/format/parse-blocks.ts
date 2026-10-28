@@ -77,7 +77,7 @@ export function parseBlocks(markdown: string): Block[] {
     if (open.code) {
       blocks.push({
         kind: 'code',
-        language: open.code.language || 'text',
+        language: open.code.language,
         code: open.code.lines.join('\n'),
       });
     }

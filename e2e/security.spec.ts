@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { firstSuggestion, record, ui } from './support/profile';
 
 /**
  * The security headers as the production server sends them, and the content
@@ -55,9 +56,9 @@ test('the page, a streamed answer and the social image raise no policy violation
   });
 
   await page.goto('/');
-  await page.getByRole('button', { name: 'His career' }).click();
-  const answer = page.getByRole('article', { name: "Answer from Marcio's portfolio assistant" });
-  await expect(answer.getByRole('group', { name: 'Answer actions' })).toBeVisible();
+  await page.getByRole('button', { name: firstSuggestion().label }).click();
+  const answer = page.getByRole('article', { name: ui.conversation.answer });
+  await expect(answer.getByRole('group', { name: ui.actions.group })).toBeVisible();
   const image = await page.evaluate(async () => {
     const response = await fetch('/opengraph-image');
     return { status: response.status, type: response.headers.get('content-type') };
@@ -94,7 +95,7 @@ async function embedOnAnotherSite(page: Page, siteUrl: string) {
   );
   await page.goto('https://embedder.example/');
   await expect(page).toHaveTitle('settled');
-  return page.frameLocator('iframe').getByRole('heading', { name: "Hi, I'm Marcio" });
+  return page.frameLocator('iframe').getByRole('heading', { name: record.welcome.heading });
 }
 
 test('another site cannot frame the page', async ({ page, baseURL }) => {

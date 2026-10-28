@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fixtureKnowledge } from '@/testing/fixture-profile/knowledge';
+import { fixtureIdentity, fixtureKnowledge } from '@/testing/fixture-profile';
 import {
   findFigureLiterals,
   findOwnerLiterals,
@@ -8,23 +8,21 @@ import {
   ownerWords,
   recordFigures,
   repositoryFiles,
+  type SourceFile,
 } from '@/testing/whitelabel';
-import { profile } from '@/profile';
+// The profile on disk, never the one a test run binds in its place: this
+// checks the files a fork keeps against the profile it actually ships.
+import { profile } from '../profile';
 
 /**
- * Owner literals belong in the profile alone. The scan widens as the work
- * moves them there: for now it covers the core — the record's types, the
- * assistant and its answers' engine — what already left for the profile —
- * the retrieval index, the evaluation cases — and the adapters, which name
- * the site through the profile.
+ * Owner literals belong in the profile alone. Everything else a fork keeps —
+ * the code, its tests, the scripts, the end-to-end journeys and the public
+ * files — must hold for anyone's profile, so it reads the owner from there.
  */
-const SCOPE = [
-  'src/core',
-  'src/infrastructure',
-  'scripts/evaluation',
-  'scripts/build-knowledge-index.mts',
-  'scripts/build-knowledge-notes.mts',
-];
+const SCOPE = ['src', 'scripts', 'e2e', 'public'];
+const OWNED = /^src\/(profile|testing\/fixture-profile)\//;
+
+const outsideProfile = repositoryFiles(SCOPE).filter(({ path }) => !OWNED.test(path));
 
 const terms = ownerTerms(profile.identity, profile.knowledge);
 
@@ -81,25 +79,43 @@ describe('owner literals outside the profile', () => {
     expect(findOwnerLiterals([{ path: 'src/y.ts', text: lookalikes }], [company])).toEqual([]);
   });
 
-  it('finds none where the data moved from', () => {
-    const files = repositoryFiles(SCOPE);
-    expect(files.length).toBeGreaterThan(10);
-    expect(findOwnerLiterals(files, terms)).toEqual([]);
+  it('finds none anywhere outside the profile and the fictional fixture', () => {
+    expect(outsideProfile.length).toBeGreaterThan(200);
+    expect(outsideProfile.some(({ path }) => path.startsWith('e2e/'))).toBe(true);
+    expect(findOwnerLiterals(outsideProfile, terms)).toEqual([]);
   });
 
   it('keeps the fictional fixture apart from the owner, so a test of one never passes on the other', () => {
     const owner = new Set(terms.map((term) => term.text));
-    const fixtureTerms = [
-      fixtureKnowledge.profile.name,
-      fixtureKnowledge.profile.firstName,
-      fixtureKnowledge.contact.email,
-      fixtureKnowledge.contact.github,
-      fixtureKnowledge.contact.linkedin,
-      fixtureKnowledge.education.school,
-      ...fixtureKnowledge.experience.flatMap((role) => [role.company, ...(role.aliases ?? [])]),
-      ...fixtureKnowledge.projects.map((project) => project.name),
-    ];
+    const fixtureTerms = ownerTerms(fixtureIdentity, fixtureKnowledge).map((term) => term.text);
+    expect(fixtureTerms.length).toBeGreaterThan(5);
     expect(fixtureTerms.filter((term) => owner.has(term))).toEqual([]);
+  });
+});
+
+/** Every `#rrggbb` written in a file, lowercased. */
+function hexColours({ text }: SourceFile): string[] {
+  return (text.match(/#[0-9a-f]{6}\b/gi) ?? []).map((hex) => hex.toLowerCase());
+}
+
+describe('the brand colours outside the profile', () => {
+  const brandColours = new Set<string>(Object.values(profile.brand.colors));
+
+  it('finds a planted copy of a brand colour', () => {
+    const [colour = ''] = brandColours;
+    const planted = { path: 'src/ui/x.css', text: `.x { color: ${colour.toUpperCase()}; }` };
+    expect(hexColours(planted).filter((hex) => brandColours.has(hex))).toEqual([colour]);
+  });
+
+  it('are written nowhere else, so the generated tokens are their only copy', () => {
+    const copies = outsideProfile
+      .filter(({ path }) => path.startsWith('src/'))
+      .flatMap((file) =>
+        hexColours(file)
+          .filter((hex) => brandColours.has(hex))
+          .map((hex) => `${file.path}: ${hex}`),
+      );
+    expect(copies).toEqual([]);
   });
 });
 

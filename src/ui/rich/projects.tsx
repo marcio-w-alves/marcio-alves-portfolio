@@ -1,4 +1,6 @@
 import type { ProjectView } from '@/core/chat/components';
+import { interpolate } from '@/core/i18n/format';
+import { useMessages } from '../i18n/i18n-provider';
 import { ButtonLink, Icon, Tag, VisuallyHidden } from '../primitives';
 import { BulletList } from './bullet-list';
 import { SectionTitle } from './section-title';
@@ -17,10 +19,12 @@ export function Projects({ projects }: { readonly projects: readonly ProjectView
 // Each section renders only when documented, and the scope keeps its own label, so a concept's
 // planned scope never reads as a live product's features.
 function ProjectPreview({ project }: { readonly project: ProjectView }) {
+  const messages = useMessages();
+  const { rich } = messages;
   const links = project.links.filter((link) => isWebUrl(link.url));
   return (
     <article
-      aria-label={`Project: ${project.name}`}
+      aria-label={interpolate(rich.project, { project: project.name })}
       className="@container/project flex h-full animate-block-enter flex-col gap-3.5 rounded-lg bg-surface px-5 py-4.5 shadow-ring"
     >
       {/* A narrow card puts the status beneath the name rather than squeezing both. */}
@@ -50,25 +54,25 @@ function ProjectPreview({ project }: { readonly project: ProjectView }) {
       ) : null}
       {project.platforms.length > 0 ? (
         <div>
-          <SectionTitle>Platforms</SectionTitle>
+          <SectionTitle>{rich.platforms}</SectionTitle>
           <TagList tags={project.platforms} />
         </div>
       ) : null}
       {project.technologies.length > 0 ? (
         <div>
-          <SectionTitle>Main technologies</SectionTitle>
+          <SectionTitle>{rich.technologies}</SectionTitle>
           <TagList tags={project.technologies} />
         </div>
       ) : null}
       {project.considerations.length > 0 ? (
         <div>
-          <SectionTitle>Engineering considerations</SectionTitle>
+          <SectionTitle>{rich.considerations}</SectionTitle>
           <BulletList items={project.considerations} marker="disc" />
         </div>
       ) : null}
       {project.outcomes.length > 0 ? (
         <div>
-          <SectionTitle>Outcomes</SectionTitle>
+          <SectionTitle>{rich.outcomes}</SectionTitle>
           <BulletList items={project.outcomes} marker="disc" />
         </div>
       ) : null}
@@ -77,7 +81,7 @@ function ProjectPreview({ project }: { readonly project: ProjectView }) {
           {links.map(({ label, url }) => (
             <ButtonLink key={url} href={url} size="sm" target="_blank" rel="noopener noreferrer">
               {label}
-              <VisuallyHidden> (opens in a new tab)</VisuallyHidden>
+              <VisuallyHidden> {messages.links.opensInNewTab}</VisuallyHidden>
               <Icon name="arrowUpRight" size="xs" />
             </ButtonLink>
           ))}

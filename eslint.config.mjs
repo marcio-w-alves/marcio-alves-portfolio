@@ -48,6 +48,21 @@ export default defineConfig([
     rules: { '@typescript-eslint/require-await': 'off' },
   },
 
+  // Interface text comes from the catalog (src/ui/i18n) or the record, never
+  // from a literal in the markup, so the site reads in its owner's words and
+  // its language. Attributes and strings in expressions are covered by the
+  // pseudo-locale test (src/ui/i18n/no-hardcoded-copy.test.tsx).
+  {
+    files: ['src/{ui,site,app}/**/*.tsx'],
+    ignores: ['**/*.test.tsx'],
+    rules: {
+      'react/jsx-no-literals': [
+        'error',
+        { noStrings: false, allowedStrings: ['…', '·', '+', '—', '/', '(', ')'] },
+      ],
+    },
+  },
+
   // Config and tooling files run in Node, outside the app's type program.
   {
     files: ['**/*.{js,mjs,cjs}'],

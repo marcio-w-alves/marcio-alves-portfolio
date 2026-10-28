@@ -1,5 +1,5 @@
 /**
- * Holds the assistant to its own promise: every claim about Marcio comes from
+ * Holds the assistant to its own promise: every claim about the owner comes from
  * the record, anything else is declined.
  *
  * Each case runs through the production wiring. The answer, and the exact
@@ -27,6 +27,7 @@ import { createToolRegistry } from '../src/core/assistant/tools/registry';
 import { localize } from '../src/core/knowledge/localize';
 import { createOpenAIClient } from '../src/infrastructure/openai/openai-client';
 import { profile } from '../src/profile';
+import { CALIBRATION, type CalibrationItem } from '../src/profile/evaluation/calibration';
 import type { EvaluationCase } from '../src/profile/evaluation/cases';
 import { sourcesOutsideTrace } from './evaluation/citations';
 import { runsFor } from './evaluation/grading';
@@ -65,7 +66,7 @@ const judge = createOpenAIClient(apiKey).withOptions({ timeout: 120_000 });
 
 interface JudgedClaim {
   readonly claim: string;
-  /** Only facts are checked; a decline or an offer to help asserts nothing about Marcio. */
+  /** Only facts are checked; a decline or an offer to help asserts nothing about the owner. */
   readonly kind: 'fact' | 'not_a_claim';
   /** Copied from the evidence; null when nothing in it supports the claim. */
   readonly quote: string | null;
@@ -84,13 +85,15 @@ interface RunOutcome extends RunReport {
   readonly verdict: Verdict;
 }
 
+const { firstName } = profile.identity;
+
 const JUDGE_INSTRUCTIONS = `You audit an assistant on a person's portfolio website. You receive a QUESTION, the assistant's ANSWER, and the EVIDENCE — everything the assistant was given to answer with.
 
-Today is ${new Date().toISOString().slice(0, 10)}. The EVIDENCE is Marcio's own record: the roles, projects and achievements in it are his — except passages marked about: "product", which come from a product's or a company's public website. Those support claims about what the product or the company does, never a claim about what Marcio built, did or achieved.
+Today is ${new Date().toISOString().slice(0, 10)}. The EVIDENCE is ${firstName}'s own record: the roles, projects and achievements in it are his — except passages marked about: "product", which come from a product's or a company's public website. Those support claims about what the product or the company does, never a claim about what ${firstName} built, did or achieved.
 
 Go through the ANSWER statement by statement. Split compound sentences: every fact and every characterization is its own claim, so a true fact never carries an unsupported one along with it.
 
-Label a statement "not_a_claim" when it asserts nothing about Marcio: saying something is not documented, does not appear in his record, or a field is not specified, declining, explaining what the assistant can help with, offers to help, suggestions of what to ask, and remarks about the answer's own structure ("his role covered four areas", "here are three examples") that introduce what follows.
+Label a statement "not_a_claim" when it asserts nothing about ${firstName}: saying something is not documented, does not appear in his record, or a field is not specified, declining, explaining what the assistant can help with, offers to help, suggestions of what to ask, and remarks about the answer's own structure ("his role covered four areas", "here are three examples") that introduce what follows.
 
 Label every other statement "fact": names, titles, dates, numbers, technologies, companies, what he did — and qualitative characterizations ("innovative", "a solid background", "a strong focus on technical excellence", "a diverse career"), which are claims too.
 
@@ -142,7 +145,7 @@ function quoteIsInEvidence(quote: string | null, haystack: string): boolean {
   return fragments.length > 0 && fragments.every((fragment) => isInEvidence(fragment, haystack));
 }
 
-const RECHECK_INSTRUCTIONS = `You receive one CLAIM about Marcio and the EVIDENCE an assistant had. The EVIDENCE is Marcio's own record: the roles, projects and achievements in it are his, so the passage describing a project supports a claim that it is his. A passage marked about: "product" is from a product's or a company's website: it supports what the product or company does, never what Marcio built, did or achieved. Find the passage of the EVIDENCE that supports the CLAIM and copy it character for character. A faithful paraphrase or translation is supported by the passage it restates; when the claim rests on several passages, join them with " ... ". A characterization ("brilliant", "an innovative leader", "a solid background") is supported only if the EVIDENCE makes that same characterization, not merely facts one could admire. If nothing in the EVIDENCE supports the claim, the quote is null.
+const RECHECK_INSTRUCTIONS = `You receive one CLAIM about ${firstName} and the EVIDENCE an assistant had. The EVIDENCE is ${firstName}'s own record: the roles, projects and achievements in it are his, so the passage describing a project supports a claim that it is his. A passage marked about: "product" is from a product's or a company's website: it supports what the product or company does, never what ${firstName} built, did or achieved. Find the passage of the EVIDENCE that supports the CLAIM and copy it character for character. A faithful paraphrase or translation is supported by the passage it restates; when the claim rests on several passages, join them with " ... ". A characterization ("brilliant", "an innovative leader", "a solid background") is supported only if the EVIDENCE makes that same characterization, not merely facts one could admire. If nothing in the EVIDENCE supports the claim, the quote is null.
 
 Reply with JSON only: {"quote": string | null}`;
 
@@ -311,50 +314,6 @@ async function pool<T, R>(
   await Promise.all(Array.from({ length: size }, worker));
   return results;
 }
-
-interface CalibrationItem {
-  readonly answer: string;
-  /** How many of its claims the evidence does not support. */
-  readonly planted: number;
-  /** The actions whose results are the evidence; without one, the whole knowledge base is. */
-  readonly actions?: readonly { readonly name: string; readonly arguments: object }[];
-}
-
-// The judge is checked before it judges: a true answer must pass, and every
-// planted fabrication must be caught. Otherwise its verdicts mean nothing.
-// The model path is judged against an action trace, not the knowledge base,
-// so the judge is also checked on traces: a fact that is in the record but
-// not in the trace is as unsupported as an invented one.
-const CALIBRATION: readonly CalibrationItem[] = [
-  {
-    answer: 'At Deel he improved Web Vitals by 30% and cut critical page load time by 50%.',
-    planted: 0,
-  },
-  { answer: 'Marcio worked at Google from 2012 to 2014, and he is an expert in Rust.', planted: 2 },
-  {
-    answer:
-      'At Roots he grew the team to twelve engineers and was widely recognized as an innovative leader.',
-    planted: 2,
-  },
-  { answer: 'Ele liderou o time de HRIS na Deel e tem uma carreira brilhante.', planted: 1 },
-  {
-    answer:
-      "At Deel he helped lead the HRIS team responsible for the company's core HR tools product.",
-    planted: 0,
-    actions: [{ name: 'getExperience', arguments: { company: 'deel' } }],
-  },
-  {
-    answer: 'At Deel he managed fifteen engineers and was promoted to Staff Engineer.',
-    planted: 2,
-    actions: [{ name: 'getExperience', arguments: { company: 'deel' } }],
-  },
-  {
-    answer:
-      'At Roots he grew the frontend team by recruiting three developers, and at Deel he improved web vitals by 30%.',
-    planted: 1,
-    actions: [{ name: 'getExperience', arguments: { company: 'roots' } }],
-  },
-];
 
 /** Runs the actions for real, so the trace is exactly what the model would have received. */
 async function traceOf(actions: NonNullable<CalibrationItem['actions']>): Promise<ToolTrace[]> {

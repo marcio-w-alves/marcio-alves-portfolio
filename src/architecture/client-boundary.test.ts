@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { clientPathsTo, cruiseFixture, cruiseRepository } from '@/testing/dependency-graph';
 
-// The font loaders are the one part of the profile safe in the browser: the global error page uses them.
-// The knowledge base, the assistant engine and the page builders hold the record, so they stay on the server too.
+// The global error page brings its own document, so the parts of the profile it reads — the font
+// loaders, and the name it titles the tab with — are the ones safe in the browser. The identity is
+// what every page already shows. The knowledge base, the assistant engine and the page builders
+// hold the record, so they stay on the server too.
 const isServerOnly = (source: string) =>
-  /^src\/(infrastructure\/|http\/|site\/|core\/(knowledge|assistant)\/|profile\/(?!fonts\.ts$)|composition-root\.|site-root\.|env\.)/.test(
+  /^src\/(infrastructure\/|http\/|site\/|core\/(knowledge|assistant)\/|profile\/(?!(fonts|global-error-copy|identity)\.ts$)|composition-root\.|site-root\.|env\.)/.test(
     source,
   );
 

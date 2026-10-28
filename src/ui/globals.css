@@ -1,53 +1,21 @@
 @import 'tailwindcss';
+/*
+ * The brand: every --color-* and the --font-sans, --font-display and
+ * --font-mono families, generated from src/profile/brand.ts. `ink-faint` is
+ * for icons, rules and decoration only; text uses `ink-muted`, which a brand
+ * keeps at 4.5:1 or better on every surface.
+ */
+@import '../profile/generated/brand.css';
 
 /**
  * Design tokens, ported from the approved design prototype.
  *
- * Everything the interface is allowed to look like is declared here, so every
- * visual decision can be written as a utility over a token. A value that
- * cannot be expressed as a utility is a missing token, not a licence to write
- * a stylesheet.
+ * Everything the interface is allowed to look like is declared here or in the
+ * brand above, so every visual decision can be written as a utility over a
+ * token. A value that cannot be expressed as a utility is a missing token, not
+ * a licence to write a stylesheet.
  */
 @theme {
-  /*
-   * "White & Ice": white surfaces, cool ice neutrals, and ink as the only
-   * accent. `ink-faint` is for icons, rules and decoration only; text uses
-   * `ink-muted`, which holds 5.5:1 or better on every surface.
-   */
-  --color-bg: #ffffff;
-  --color-ice: #f9fafb;
-  --color-surface: #ffffff;
-  --color-fill: #f4f6f8;
-  --color-fill-hover: #eef1f4;
-  --color-selection: #e2e8f0;
-
-  --color-ink: #0f1115;
-  --color-ink-muted: #5b616b;
-  --color-ink-faint: #a3a9b1;
-
-  --color-border: #eceff2;
-  --color-border-strong: #dfe3e8;
-
-  --color-accent: #0f1115;
-  --color-accent-hover: #2b2f36;
-  --color-accent-soft: #eef2f6;
-
-  --color-danger: #b42318;
-  --color-danger-soft: #fef5f4;
-
-  /*
-   * Type: Inter for text, Inter Tight for display, Geist Mono for code, all
-   * self-hosted by next/font with the faces in src/profile/fonts.ts. Inter's
-   * character variants come with the stack.
-   */
-  --font-sans:
-    var(--font-face-text), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-sans--font-feature-settings: 'cv11', 'ss01', 'ss03';
-  --font-display:
-    var(--font-face-display), var(--font-face-text), ui-sans-serif, system-ui, -apple-system,
-    sans-serif;
-  --font-mono: var(--font-face-code), ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-
   /*
    * Type scale. The prototype works in half-pixel steps, so each size is named
    * for its value: `text-13.5` is 13.5px, and fidelity can be read off the
@@ -131,10 +99,11 @@
   --shadow-ring: 0 0 0 1px var(--color-border);
   --shadow-ring-strong: 0 0 0 1px var(--color-border-strong);
   --shadow-float:
-    0 0 0 1px var(--color-border), 0 1px 2px rgb(15 17 21 / 0.03),
-    0 10px 30px -18px rgb(15 17 21 / 0.16);
-  --shadow-drawer: 0 0 0 1px var(--color-border), 0 24px 60px rgb(15 17 21 / 0.12);
-  --shadow-focus: 0 0 0 4px rgb(15 17 21 / 0.05);
+    0 0 0 1px var(--color-border), 0 1px 2px color-mix(in srgb, var(--color-ink) 3%, transparent),
+    0 10px 30px -18px color-mix(in srgb, var(--color-ink) 16%, transparent);
+  --shadow-drawer:
+    0 0 0 1px var(--color-border), 0 24px 60px color-mix(in srgb, var(--color-ink) 12%, transparent);
+  --shadow-focus: 0 0 0 4px color-mix(in srgb, var(--color-ink) 5%, transparent);
 
   /* Timeline and planned-scope markers */
   --inset-shadow-dot: inset 0 0 0 1.5px var(--color-ink-faint);
@@ -249,8 +218,8 @@
   /*
    * The app shell: the sidebar column beside the conversation, the drawer it
    * becomes in the compact layout, the hairlines that separate the regions
-   * without taking up layout space, and Marcio's name in the sidebar and the
-   * mobile bar.
+   * without taking up layout space, and the owner's name in the sidebar and
+   * the mobile bar.
    */
   --grid-template-columns-shell: var(--container-sidebar) minmax(0, 1fr);
   --width-drawer: min(300px, calc(100% - 56px));
@@ -270,11 +239,11 @@
   --tracking-hero: -0.04em;
   --container-hero-text: 46ch;
   --spacing-welcome-end: 10vh;
-  --color-border-hover: #c7ced6;
   --shadow-ring-hover: 0 0 0 1px var(--color-border-hover);
   --shadow-composer-focus:
-    0 0 0 1px var(--color-border-hover), 0 0 0 4px rgb(15 17 21 / 0.05),
-    0 10px 30px -18px rgb(15 17 21 / 0.2);
+    0 0 0 1px var(--color-border-hover),
+    0 0 0 4px color-mix(in srgb, var(--color-ink) 5%, transparent),
+    0 10px 30px -18px color-mix(in srgb, var(--color-ink) 20%, transparent);
 
   /*
    * The revised answer and its rich blocks: the inline avatar's 8px mark, the
@@ -292,7 +261,6 @@
   --tracking-heading: -0.025em;
   --inset-shadow-rule-top-strong: inset 0 1px 0 var(--color-border-strong);
   --inset-shadow-rule-y: inset 0 1px 0 var(--color-border), inset 0 -1px 0 var(--color-border);
-  --color-danger-ring: #f9dcd8;
   --shadow-danger-ring: 0 0 0 1px var(--color-danger-ring);
   --animate-panel-rise: rise 240ms var(--ease-standard);
   --font-code-block: monospace;

@@ -6,8 +6,13 @@ const SIZES = {
   inline: 'size-5.5 text-8 leading-none',
 } as const;
 
-/** The assistant's mark: a hairline, where Marcio's own monogram is solid ink. */
-export function AssistantAvatar({ inline = false }: { readonly inline?: boolean }) {
+interface AssistantAvatarProps {
+  readonly initials: string;
+  readonly inline?: boolean;
+}
+
+/** The assistant's mark: a hairline, where the owner's own monogram is solid ink. */
+export function AssistantAvatar({ initials, inline = false }: AssistantAvatarProps) {
   return (
     <span
       aria-hidden="true"
@@ -16,7 +21,7 @@ export function AssistantAvatar({ inline = false }: { readonly inline?: boolean 
         SIZES[inline ? 'inline' : 'default'],
       )}
     >
-      MA
+      {initials}
     </span>
   );
 }

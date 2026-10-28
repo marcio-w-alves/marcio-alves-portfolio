@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { delay, http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
@@ -6,7 +6,6 @@ import { Fragment } from 'react';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createChatHandler } from '@/http/chat-handler';
 import { EVENT_STREAM_HEADERS, eventStream } from '@/http/event-stream';
-import { profile } from '@/profile';
 import { createSiteContent } from '@/site/site-content';
 import { workspaceView } from '@/site/workspace-view';
 import type { AssistantEvent } from '@/core/chat/events';
@@ -15,10 +14,12 @@ import { createFastPath } from '@/core/assistant/system1/fast-path';
 import type { TopicId } from '@/core/chat/topic-id';
 import { createAnswerCache } from '@/infrastructure/budget/answer-cache';
 import { createModelBudget } from '@/infrastructure/budget/model-budget';
+import { fixtureAnswers, fixtureKnowledge } from '@/testing/fixture-profile';
+import { renderWithMessages } from '@/testing/ui-messages';
 import { ChatWorkspace } from './chat-workspace';
 import { ConversationsProvider } from './conversation-store';
 
-const content = createSiteContent(profile.knowledge, profile.copy.en.answers);
+const content = createSiteContent(fixtureKnowledge, fixtureAnswers);
 const { knowledge, topicCatalog } = content;
 
 const CHAT_URL = `${window.location.origin}/api/chat`;
@@ -26,7 +27,7 @@ const CHAT_URL = `${window.location.origin}/api/chat`;
 /** The real endpoint, answering from the fast path: what production does without a model key. */
 const chatHandler = createChatHandler({
   assistant: createAssistant({
-    fastPath: createFastPath(knowledge, profile.copy.en.answers),
+    fastPath: createFastPath(knowledge, fixtureAnswers),
     modelAssistant: null,
     clock: { now: () => new Date() },
     reportError: () => undefined,
@@ -77,7 +78,7 @@ function workspace(topic: TopicId = 'overview') {
 
 /** One page of the site, inside the store every page shares. */
 function renderWorkspace(topic: TopicId = 'overview') {
-  const view = render(workspace(topic), { wrapper: ConversationsProvider });
+  const view = renderWithMessages(workspace(topic), { wrapper: ConversationsProvider });
   return Object.assign(userEvent.setup(), {
     /** Swaps the page, as navigating does, keeping the store. */
     navigate: (to: TopicId) => {
@@ -107,18 +108,20 @@ describe('the welcome screen', () => {
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(knowledge.welcome.heading);
     expect(composer()).toBeInTheDocument();
     expect(screen.getByRole('list', { name: 'Suggested questions' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'His career' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Her career' })).toBeInTheDocument();
   });
 });
 
 describe('asking a question', () => {
   it('shows the question and streams the answer from the server, with sources and follow-ups', async () => {
     const user = renderWorkspace();
-    await user.type(composer(), 'What did he do at Roots?{Enter}');
+    await user.type(composer(), 'What did she do at Globex?{Enter}');
 
-    expect(await within(conversation()).findByText('What did he do at Roots?')).toBeInTheDocument();
+    expect(
+      await within(conversation()).findByText('What did she do at Globex?'),
+    ).toBeInTheDocument();
     const answer = await screen.findByRole('group', { name: 'Answer actions' });
-    expect(latestAnswer()).toHaveTextContent('Roots');
+    expect(latestAnswer()).toHaveTextContent('Globex');
     expect(within(latestAnswer()).getByText('Sources')).toBeInTheDocument();
     expect(
       within(latestAnswer()).getByRole('list', { name: 'Ask a follow-up' }),
@@ -149,33 +152,35 @@ describe('asking a question', () => {
       ),
     );
     const user = renderWorkspace();
-    await user.type(composer(), "Tell me about Marcio's career.{Enter}");
+    await user.type(composer(), "Tell me about Ada's career.{Enter}");
     await screen.findByRole('group', { name: 'Answer actions' });
 
-    await user.type(composer(), 'What did he do at Roots?{Enter}');
+    await user.type(composer(), 'What did she do at Globex?{Enter}');
 
-    expect(await within(conversation()).findByText(/grew the frontend team/)).toBeInTheDocument();
+    expect(
+      await within(conversation()).findByText(/Senior Platform Engineer at/),
+    ).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('empties the composer once the question is sent', async () => {
     const user = renderWorkspace();
-    await user.type(composer(), "Tell me about Marcio's career.{Enter}");
+    await user.type(composer(), "Tell me about Ada's career.{Enter}");
     await screen.findByRole('group', { name: 'Answer actions' });
     expect(composer()).toHaveValue('');
   });
 
   it('asks a suggested question in one click', async () => {
     const user = renderWorkspace();
-    await user.click(screen.getByRole('button', { name: 'His career' }));
+    await user.click(screen.getByRole('button', { name: 'Her career' }));
     await screen.findByRole('group', { name: 'Answer actions' });
-    expect(within(conversation()).getByText("Tell me about Marcio's career.")).toBeInTheDocument();
+    expect(within(conversation()).getByText("Tell me about Ada's career.")).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Conversation');
   });
 
   it('asks a follow-up from under the answer', async () => {
     const user = renderWorkspace();
-    await user.click(screen.getByRole('button', { name: 'His career' }));
+    await user.click(screen.getByRole('button', { name: 'Her career' }));
     await screen.findByRole('group', { name: 'Answer actions' });
     const followUps = within(latestAnswer()).getByRole('list', { name: 'Ask a follow-up' });
     const [first] = within(followUps).getAllByRole('button');
@@ -188,16 +193,16 @@ describe('asking a question', () => {
 
   it('offers the related experience', async () => {
     const user = renderWorkspace();
-    await user.type(composer(), 'What did he do at Roots?{Enter}');
-    await user.click(await screen.findByRole('button', { name: 'View Roots experience' }));
-    expect(
-      await within(conversation()).findByText('Tell me about his time at Roots.'),
-    ).toBeInTheDocument();
+    await user.type(composer(), 'What did she do at Globex?{Enter}');
+    await user.click(await screen.findByRole('button', { name: 'View Globex experience' }));
+    expect(await within(conversation()).findAllByText('What did she do at Globex?')).toHaveLength(
+      2,
+    );
   });
 
   it('records a rating and lets it be taken back', async () => {
     const user = renderWorkspace();
-    await user.type(composer(), 'What did he do at Roots?{Enter}');
+    await user.type(composer(), 'What did she do at Globex?{Enter}');
     const helpful = await screen.findByRole('button', { name: 'Helpful' });
     await user.click(helpful);
     expect(helpful).toHaveAttribute('aria-pressed', 'true');
@@ -208,11 +213,11 @@ describe('asking a question', () => {
 
   it('copies the answer as plain text', async () => {
     const user = renderWorkspace();
-    await user.type(composer(), 'What did he do at Roots?{Enter}');
+    await user.type(composer(), 'What did she do at Globex?{Enter}');
     await user.click(await screen.findByRole('button', { name: 'Copy' }));
     expect(await screen.findByRole('button', { name: 'Copied' })).toBeInTheDocument();
     const copied = await navigator.clipboard.readText();
-    expect(copied).toContain('Roots');
+    expect(copied).toContain('Globex');
     expect(copied).not.toContain('**');
   });
 });
@@ -226,37 +231,35 @@ describe('an answer as it is typed', () => {
 
   it('thinks first, then types the answer out, and offers its actions once it is all there', async () => {
     const user = renderWorkspace();
-    await user.type(composer(), 'How did he grow the team at Roots?{Enter}');
+    await user.type(composer(), "Tell me about Ada's career.{Enter}");
 
-    expect(
-      within(latestAnswer()).getByText(/Reading Marcio.s documented experience/),
-    ).toBeVisible();
+    expect(within(latestAnswer()).getByText(/Reading Ada.s documented experience/)).toBeVisible();
     expect(screen.getByRole('button', { name: 'Stop generating' })).toBeInTheDocument();
 
     await waitFor(() => {
       const typed = latestAnswer().textContent;
-      expect(typed).toContain('As Lead');
-      expect(typed).not.toContain('grew the frontend team');
+      expect(typed).toContain('[career]');
+      expect(typed).not.toContain('Where she is headed');
     });
     expect(actions()).not.toBeInTheDocument();
 
     expect(
       await screen.findByRole('group', { name: 'Answer actions' }, { timeout: 8000 }),
     ).toBeVisible();
-    expect(latestAnswer()).toHaveTextContent(/grew the frontend team/);
+    expect(latestAnswer()).toHaveTextContent(/Where she is headed/);
     expect(screen.getByRole('button', { name: 'Send question' })).toBeInTheDocument();
   }, 10_000);
 
   it('shows the rest at once when the visitor stops it mid-typing', async () => {
     const user = renderWorkspace();
-    await user.type(composer(), 'How did he grow the team at Roots?{Enter}');
+    await user.type(composer(), "Tell me about Ada's career.{Enter}");
     await waitFor(() => {
-      expect(latestAnswer()).toHaveTextContent('As Lead');
+      expect(latestAnswer()).toHaveTextContent('[career]');
     });
 
     await user.click(screen.getByRole('button', { name: 'Stop generating' }));
 
-    expect(latestAnswer()).toHaveTextContent(/grew the frontend team/);
+    expect(latestAnswer()).toHaveTextContent(/Where she is headed/);
     expect(actions()).toBeVisible();
   });
 });
@@ -270,12 +273,12 @@ describe('one question at a time', () => {
       }),
     );
     const user = renderWorkspace('skills');
-    await user.type(composer(), 'How does he approach testing?{Enter}');
+    await user.type(composer(), 'Which skills does she have?{Enter}');
 
     user.navigate('overview');
 
-    expect(screen.getByRole('button', { name: 'His career' })).toBeDisabled();
-    await user.type(composer(), 'What did he do at Roots?');
+    expect(screen.getByRole('button', { name: 'Her career' })).toBeDisabled();
+    await user.type(composer(), 'What did she do at Globex?');
     expect(screen.getByRole('button', { name: 'Send question' })).toBeDisabled();
     expect(
       screen.getByText('Another answer is on its way. Send this once it is done.'),
@@ -294,8 +297,8 @@ describe('stopping an answer', () => {
       }),
     );
     const user = renderWorkspace();
-    await user.type(composer(), 'What did he do at Roots?{Enter}');
-    expect(await screen.findByText(/Reading Marcio.s documented experience/)).toBeInTheDocument();
+    await user.type(composer(), 'What did she do at Globex?{Enter}');
+    expect(await screen.findByText(/Reading Ada.s documented experience/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Stop generating' }));
     expect(within(latestAnswer()).getByText('Response stopped')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Send question' })).toBeInTheDocument();
@@ -303,8 +306,8 @@ describe('stopping an answer', () => {
 });
 
 describe('an answer in flight when another is retried, edited or dropped', () => {
-  const failedQuestion = 'What did he do at Roots?';
-  const streamingQuestion = 'How does he approach testing?';
+  const failedQuestion = 'What did she do at Globex?';
+  const streamingQuestion = 'Which skills does she have?';
 
   /** Answers each request with the next responder, in the order the questions are sent. */
   function respondInTurn(...responders: ((request: Request) => Response | Promise<Response>)[]) {
@@ -398,7 +401,7 @@ describe('an answer in flight when another is retried, edited or dropped', () =>
     expect(
       await within(latestAnswer()).findByRole('group', { name: 'Answer actions' }),
     ).toBeInTheDocument();
-    expect(latestAnswer()).toHaveTextContent('Roots');
+    expect(latestAnswer()).toHaveTextContent('Globex');
     expect(interrupted).not.toHaveTextContent('arrived late');
     expect(conversation()).toHaveAttribute('aria-busy', 'false');
     expect(screen.getByRole('button', { name: 'Send question' })).toBeInTheDocument();
@@ -447,7 +450,7 @@ describe('an answer in flight when another is retried, edited or dropped', () =>
 
     await user.click(control());
     streaming.releaseRest();
-    await user.type(composer(), 'What did he do at Roots?{Enter}');
+    await user.type(composer(), 'What did she do at Globex?{Enter}');
 
     expect(
       await within(latestAnswer()).findByRole('group', { name: 'Answer actions' }),
@@ -470,13 +473,13 @@ describe('when an answer fails', () => {
   it('says what failed and retries the same question', async () => {
     failOnce();
     const user = renderWorkspace();
-    await user.type(composer(), 'What did he do at Roots?{Enter}');
+    await user.type(composer(), 'What did she do at Globex?{Enter}');
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent("Couldn't load this answer");
     await user.click(within(alert).getByRole('button', { name: 'Try again' }));
     await screen.findByRole('group', { name: 'Answer actions' });
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-    expect(within(conversation()).getAllByText('What did he do at Roots?')).toHaveLength(1);
+    expect(within(conversation()).getAllByText('What did she do at Globex?')).toHaveLength(1);
   });
 
   it('words an answer the server broke off by its error code, and offers to retry it', async () => {
@@ -494,7 +497,7 @@ describe('when an answer fails', () => {
       ),
     );
     const user = renderWorkspace();
-    await user.type(composer(), 'What did he do at Roots?{Enter}');
+    await user.type(composer(), 'What did she do at Globex?{Enter}');
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('The answer was interrupted. Please try again.');
     expect(within(alert).getByRole('button', { name: 'Try again' })).toBeInTheDocument();
@@ -513,7 +516,7 @@ describe('when an answer fails', () => {
       ),
     );
     const user = renderWorkspace();
-    await user.type(composer(), 'What did he do at Roots?{Enter}');
+    await user.type(composer(), 'What did she do at Globex?{Enter}');
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Too many questions in a short time. Try again in 2 minutes.',
     );
@@ -522,17 +525,17 @@ describe('when an answer fails', () => {
   it('hands the question back to the composer to edit', async () => {
     failOnce();
     const user = renderWorkspace();
-    await user.type(composer(), 'What did he do at Roots?{Enter}');
+    await user.type(composer(), 'What did she do at Globex?{Enter}');
     await user.click(
       within(await screen.findByRole('alert')).getByRole('button', { name: 'Edit question' }),
     );
-    expect(composer()).toHaveValue('What did he do at Roots?');
+    expect(composer()).toHaveValue('What did she do at Globex?');
     expect(composer()).toHaveFocus();
   });
 
   it('puts the visitor in the composer to ask a follow-up', async () => {
     const user = renderWorkspace();
-    await user.type(composer(), 'What did he do at Roots?{Enter}');
+    await user.type(composer(), 'What did she do at Globex?{Enter}');
     await user.click(await screen.findByRole('button', { name: 'Ask follow-up' }));
     expect(composer()).toHaveFocus();
   });
@@ -544,7 +547,7 @@ describe('topic pages', () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     expect(() =>
-      render(
+      renderWithMessages(
         <ChatWorkspace {...props} topics={props.topics.filter((item) => item.id !== 'skills')} />,
         { wrapper: ConversationsProvider },
       ),
@@ -565,7 +568,7 @@ describe('topic pages', () => {
     expect(topicLink('Experience')).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Experience');
     expect(latestAnswer()).toHaveTextContent(topicCatalog.topicById('experience').intro);
-    expect(within(latestAnswer()).getByText('Way2b1')).toBeInTheDocument();
+    expect(within(latestAnswer()).getByText('Acme')).toBeInTheDocument();
     expect(
       within(latestAnswer()).getByRole('list', { name: 'Suggested questions' }),
     ).toBeInTheDocument();
@@ -573,32 +576,32 @@ describe('topic pages', () => {
 
   it('keeps each page to its own conversation, and finds each as it was on coming back', async () => {
     const user = renderWorkspace();
-    await user.type(composer(), 'What did he do at Roots?{Enter}');
-    await within(conversation()).findByText(/grew the frontend team/);
+    await user.type(composer(), 'What did she do at Globex?{Enter}');
+    await within(conversation()).findByText(/Senior Platform Engineer at/);
 
     user.navigate('projects');
-    expect(screen.queryByText('What did he do at Roots?')).not.toBeInTheDocument();
+    expect(screen.queryByText('What did she do at Globex?')).not.toBeInTheDocument();
     expect(introduction()).toHaveTextContent(topicCatalog.topicById('projects').intro);
 
     user.navigate('overview');
-    expect(within(conversation()).getByText('What did he do at Roots?')).toBeInTheDocument();
+    expect(within(conversation()).getByText('What did she do at Globex?')).toBeInTheDocument();
   });
 
   it('answers a question asked on a topic page beneath that page', async () => {
     const user = renderWorkspace('skills');
-    await user.type(composer(), 'How did he grow the team at Roots?{Enter}');
-    await within(conversation()).findByText(/grew the frontend team/);
+    await user.type(composer(), 'What did she do at Globex?{Enter}');
+    await within(conversation()).findByText(/Senior Platform Engineer at/);
     expect(introduction()).toHaveTextContent(topicCatalog.topicById('skills').intro);
   });
 
   it('starts a topic page over on its introduction, not on the welcome screen', async () => {
     const user = renderWorkspace('projects');
-    await user.type(composer(), 'What did he do at Roots?{Enter}');
-    await within(conversation()).findByText(/grew the frontend team/);
+    await user.type(composer(), 'What did she do at Globex?{Enter}');
+    await within(conversation()).findByText(/Senior Platform Engineer at/);
     const [sidebarButton] = screen.getAllByRole('button', { name: 'New conversation' });
     if (!sidebarButton) throw new Error('no new conversation button');
     await user.click(sidebarButton);
-    expect(screen.queryByText('What did he do at Roots?')).not.toBeInTheDocument();
+    expect(screen.queryByText('What did she do at Globex?')).not.toBeInTheDocument();
     expect(introduction()).toHaveTextContent(topicCatalog.topicById('projects').intro);
     expect(screen.getByRole('status')).toHaveTextContent('New conversation started');
   });

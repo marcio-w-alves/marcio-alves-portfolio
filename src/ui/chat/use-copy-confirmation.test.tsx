@@ -1,5 +1,6 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { renderWithMessages } from '@/testing/ui-messages';
 import { AnswerActions } from './answer-actions';
 import { CodeBlock } from './code-block';
 import { copyText } from './copy-text';
@@ -10,7 +11,7 @@ const COPIERS = [
     label: 'Copy',
     copied: 'He led the HRIS team.',
     render: () =>
-      render(
+      renderWithMessages(
         <AnswerActions
           feedback={null}
           onCopy={() => copyText('He led the HRIS team.')}
@@ -24,7 +25,7 @@ const COPIERS = [
     name: 'a code block',
     label: 'Copy code',
     copied: 'const a = 1;',
-    render: () => render(<CodeBlock language="ts" code="const a = 1;" />),
+    render: () => renderWithMessages(<CodeBlock language="ts" code="const a = 1;" />),
   },
 ];
 

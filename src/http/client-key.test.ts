@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { clientIdOf, clientKey } from './client-key';
 
 function request(headers: Record<string, string>): Request {
-  return new Request('https://marciomariani.dev/api/chat', { method: 'POST', headers });
+  return new Request('https://portfolio.example/api/chat', { method: 'POST', headers });
 }
 
 describe('client key', () => {

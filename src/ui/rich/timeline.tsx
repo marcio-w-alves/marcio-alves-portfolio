@@ -1,4 +1,5 @@
 import type { MetricItem, RoleSection, RoleView } from '@/core/chat/components';
+import { useMessages } from '../i18n/i18n-provider';
 import { BulletList } from './bullet-list';
 import { SectionTitle } from './section-title';
 import { TagList } from './tag-list';
@@ -11,8 +12,9 @@ interface TimelineProps {
 }
 
 export function Timeline({ roles, expanded }: TimelineProps) {
+  const { rich } = useMessages();
   return (
-    <section aria-label="Career timeline" className="@container/timeline animate-block-enter">
+    <section aria-label={rich.timeline} className="@container/timeline animate-block-enter">
       <ol>
         {roles.map((role, index) => (
           <TimelineRole

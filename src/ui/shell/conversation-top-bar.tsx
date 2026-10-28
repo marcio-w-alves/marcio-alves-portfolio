@@ -1,3 +1,4 @@
+import { useMessages } from '../i18n/i18n-provider';
 import { Button, Icon, type IconName } from '../primitives';
 
 interface ConversationTopBarProps {
@@ -7,6 +8,7 @@ interface ConversationTopBarProps {
 
 /** Above the conversation on wide layouts; the compact layout has its own top bar. */
 export function ConversationTopBar({ topic, onNewConversation }: ConversationTopBarProps) {
+  const { shell } = useMessages();
   return (
     <div className="flex h-14 shrink-0 items-center justify-between gap-3 pr-4 pl-6 @max-compact/ma:hidden">
       <p className="inline-flex items-center gap-2 text-13 font-medium text-ink-muted">
@@ -15,7 +17,7 @@ export function ConversationTopBar({ topic, onNewConversation }: ConversationTop
       </p>
       <Button variant="ghost" size="sm" onClick={onNewConversation}>
         <Icon name="compose" size="sm" />
-        New conversation
+        {shell.newConversation}
       </Button>
     </div>
   );

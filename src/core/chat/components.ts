@@ -87,6 +87,8 @@ export type RichComponent =
   | {
       readonly component: 'contact';
       readonly props: {
+        /** The monogram of the person to contact. */
+        readonly initials: string;
         readonly heading: string;
         readonly text: string;
         readonly availability: string;

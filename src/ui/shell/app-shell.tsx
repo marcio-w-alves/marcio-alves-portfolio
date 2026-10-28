@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, type ReactNode } from 'react';
 import { cn } from '../cn';
+import { useMessages } from '../i18n/i18n-provider';
 import { IconButton } from '../primitives';
 
 interface AppShellProps {
@@ -36,6 +37,7 @@ export function AppShell({
   onNewConversation,
   children,
 }: AppShellProps) {
+  const { shell } = useMessages();
   const rootRef = useRef<HTMLDivElement>(null);
   const navigationRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -79,7 +81,7 @@ export function AppShell({
         href={`#${MAIN_ID}`}
         className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:top-3 focus-visible:left-3 focus-visible:z-40 focus-visible:rounded-control focus-visible:bg-surface focus-visible:px-3 focus-visible:py-2 focus-visible:text-13.5 focus-visible:font-medium focus-visible:text-ink focus-visible:shadow-ring"
       >
-        Skip to the conversation
+        {shell.skipToConversation}
       </a>
       <div className="grid h-full grid-cols-shell @max-compact/ma:grid-cols-1">
         <button
@@ -124,7 +126,7 @@ export function AppShell({
             <IconButton
               ref={menuButtonRef}
               icon="menu"
-              label="Open navigation"
+              label={shell.openNavigation}
               size="touch"
               aria-controls={NAVIGATION_ID}
               aria-expanded={drawerOpen}
@@ -137,7 +139,7 @@ export function AppShell({
             </p>
             <IconButton
               icon="compose"
-              label="New conversation"
+              label={shell.newConversation}
               size="touch"
               onClick={onNewConversation}
             />

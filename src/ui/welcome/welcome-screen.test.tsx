@@ -1,36 +1,33 @@
-import { render, screen, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { profile } from '@/profile';
+import { renderWithMessages } from '@/testing/ui-messages';
 import { createSiteContent } from '@/site/site-content';
+import { fixtureAnswers, fixtureKnowledge } from '@/testing/fixture-profile';
 import { WelcomeLayout } from './welcome-layout';
 import { WelcomeScreen } from './welcome-screen';
 
-const { knowledge } = createSiteContent(profile.knowledge, profile.copy.en.answers);
+const { knowledge } = createSiteContent(fixtureKnowledge, fixtureAnswers);
 
 const { welcome } = knowledge;
 
 describe('WelcomeScreen', () => {
   it('makes the greeting the page heading', () => {
-    render(<WelcomeScreen welcome={welcome} />);
+    renderWithMessages(<WelcomeScreen welcome={welcome} />);
 
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent("Hi, I'm Marcio");
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent("Hi, I'm Ada");
     expect(screen.getAllByRole('heading')).toHaveLength(1);
   });
 
-  it('introduces Marcio with the documented copy', () => {
-    render(<WelcomeScreen welcome={welcome} />);
+  it('introduces the person with the documented copy', () => {
+    renderWithMessages(<WelcomeScreen welcome={welcome} />);
 
-    expect(
-      screen.getByText(
-        'Senior frontend engineer with tech-lead responsibilities and 10+ years in React, TypeScript and frontend architecture. Ask anything about my work.',
-      ),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Platform engineer. Ask about my work.')).toBeInTheDocument();
   });
 });
 
 describe('WelcomeLayout', () => {
   it('is a labelled region holding what it is given, in order', () => {
-    render(
+    renderWithMessages(
       <WelcomeLayout>
         <WelcomeScreen welcome={welcome} />
         <p>Composer</p>

@@ -18,10 +18,11 @@
     "format:check": "prettier --check .",
     "boundaries": "depcruise src",
     "boundaries:graph": "depcruise src --output-type dot",
-    "verify": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm boundaries && pnpm test",
+    "verify": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm boundaries && pnpm test && pnpm test:fork",
     "prepare": "lefthook install",
     "release": "semantic-release",
     "test": "vitest run",
+    "test:fork": "PROFILE_UNDER_TEST=fixture vitest run",
     "test:watch": "vitest",
     "test:motion": "playwright test --project=motion",
     "test:coverage": "vitest run --coverage",
@@ -31,7 +32,9 @@
     "rag:build": "pnpm notes:build && tsx --env-file=.env.local scripts/build-knowledge-index.mts",
     "eval:assistant": "tsx --conditions=react-server --env-file=.env.local scripts/evaluate-assistant.mts",
     "notes:build": "tsx scripts/build-knowledge-notes.mts",
-    "sites:ingest": "tsx scripts/ingest-sites.mts"
+    "sites:ingest": "tsx scripts/ingest-sites.mts",
+    "brand:css": "tsx scripts/generate-brand-css.mts",
+    "fixture:index": "tsx scripts/build-fixture-index.mts"
   },
   "dependencies": {
     "@fontsource/inter-tight": "5.3.0",

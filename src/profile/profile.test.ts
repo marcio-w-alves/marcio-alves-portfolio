@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createResponseKit } from '@/core/assistant/response-kit';
 import { localize } from '@/core/knowledge/localize';
 import { rootMetadata } from '@/site/metadata';
-import { shareImageAlt } from '@/site/share-image';
+import { siteMessages } from '@/site/site-messages';
 import { createSiteContent } from '@/site/site-content';
 import { profile } from '.';
 
@@ -96,7 +96,12 @@ describe("the owner's record", () => {
 describe("the owner's headline", () => {
   const HEADLINE = 'Senior Frontend Engineer with tech-lead responsibilities';
   const site = createSiteContent(profile.knowledge, profile.copy.en.answers);
-  const metadata = rootMetadata(site.knowledge, new URL(`https://${profile.identity.siteHost}`));
+  const copy = siteMessages(site.knowledge, profile.copy.en).site;
+  const metadata = rootMetadata(
+    site.knowledge,
+    copy,
+    new URL(`https://${profile.identity.siteHost}`),
+  );
   const overview = site.topicCatalog.topicById('overview');
 
   it('is the headline he chose, on every surface that introduces him', () => {
@@ -105,7 +110,7 @@ describe("the owner's headline", () => {
     expect(metadata.description).toContain(HEADLINE);
     expect(metadata.openGraph).toMatchObject({ title: metadata.title });
     expect(metadata.twitter).toMatchObject({ title: metadata.title });
-    expect(shareImageAlt(site.knowledge)).toBe(`Marcio Alves, ${HEADLINE}`);
+    expect(copy.shareImageAlt).toBe(`Marcio Alves, ${HEADLINE}`);
     expect(knowledge.welcome.description).toMatch(/^Senior frontend engineer with tech-lead/);
     expect(overview.intro).toContain(HEADLINE);
   });
@@ -116,7 +121,7 @@ describe("the owner's headline", () => {
       knowledge.profile.summary,
       knowledge.welcome.description,
       JSON.stringify([metadata.title, metadata.description]),
-      shareImageAlt(site.knowledge),
+      copy.shareImageAlt,
       overview.intro,
       ...overview.questions.flatMap(({ question, tag, short }) => [question, tag, short ?? '']),
     ];

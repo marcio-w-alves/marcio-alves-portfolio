@@ -4,10 +4,10 @@ import { isSafeHref, parseInline } from './parse-inline';
 describe('parseInline', () => {
   it('splits bold, code and links out of the surrounding text', () => {
     expect(
-      parseInline('Led **HRIS** with `React` — see [LinkedIn](https://linkedin.com/in/x).'),
+      parseInline('Led **payroll** with `React` — see [LinkedIn](https://linkedin.com/in/x).'),
     ).toEqual([
       { kind: 'text', text: 'Led ' },
-      { kind: 'strong', children: [{ kind: 'text', text: 'HRIS' }] },
+      { kind: 'strong', children: [{ kind: 'text', text: 'payroll' }] },
       { kind: 'text', text: ' with ' },
       { kind: 'code', text: 'React' },
       { kind: 'text', text: ' — see ' },
@@ -17,8 +17,8 @@ describe('parseInline', () => {
   });
 
   it('keeps a mailto link on the page rather than marking it external', () => {
-    expect(parseInline('[Email](mailto:marcio@example.com)')).toEqual([
-      { kind: 'link', text: 'Email', href: 'mailto:marcio@example.com', external: false },
+    expect(parseInline('[Email](mailto:ada@example.com)')).toEqual([
+      { kind: 'link', text: 'Email', href: 'mailto:ada@example.com', external: false },
     ]);
   });
 
@@ -47,7 +47,9 @@ describe('parseInline', () => {
 
   it('reads a link and code inside bold, as repository lists write them', () => {
     expect(
-      parseInline('1. **[portfolio](https://github.com/marcio-w-alves/portfolio)** — `Next.js`'),
+      parseInline(
+        '1. **[portfolio](https://github.com/ada-rivera-example/portfolio)** — `Next.js`',
+      ),
     ).toEqual([
       { kind: 'text', text: '1. ' },
       {
@@ -56,7 +58,7 @@ describe('parseInline', () => {
           {
             kind: 'link',
             text: 'portfolio',
-            href: 'https://github.com/marcio-w-alves/portfolio',
+            href: 'https://github.com/ada-rivera-example/portfolio',
             external: true,
           },
         ],
@@ -107,12 +109,12 @@ describe('parseInline', () => {
   });
 
   it('links a path on this site, such as the résumé the fast path offers, without leaving it', () => {
-    expect(parseInline('You can [open his resume as a PDF](/marcio-alves-resume.pdf).')).toEqual([
+    expect(parseInline('You can [open her CV as a PDF](/ada-rivera-cv.pdf).')).toEqual([
       { kind: 'text', text: 'You can ' },
       {
         kind: 'link',
-        text: 'open his resume as a PDF',
-        href: '/marcio-alves-resume.pdf',
+        text: 'open her CV as a PDF',
+        href: '/ada-rivera-cv.pdf',
         external: false,
       },
       { kind: 'text', text: '.' },
@@ -139,10 +141,10 @@ describe('parseInline', () => {
 
 describe('isSafeHref', () => {
   it('allows only web and mail links, and paths on this site', () => {
-    expect(isSafeHref('https://github.com/marcio-w-alves')).toBe(true);
+    expect(isSafeHref('https://github.com/ada-rivera-example')).toBe(true);
     expect(isSafeHref('http://example.com')).toBe(true);
     expect(isSafeHref('mailto:a@b.co')).toBe(true);
-    expect(isSafeHref('/marcio-alves-resume.pdf')).toBe(true);
+    expect(isSafeHref('/ada-rivera-cv.pdf')).toBe(true);
     expect(isSafeHref('javascript:alert(1)')).toBe(false);
     expect(isSafeHref(' https://example.com')).toBe(false);
   });

@@ -14,7 +14,6 @@ export function workspaceView(
   const { profile, contact, welcome, assistant } = knowledge;
   return {
     profile: { name: profile.name, title: profile.title },
-    ownerFirstName: profile.firstName,
     links: contact,
     topics: topicCatalog.topics.map(({ id, label, icon }) => ({
       id,
@@ -23,7 +22,7 @@ export function workspaceView(
       href: topicPath(id),
     })),
     welcome,
-    assistantName: assistant.name,
+    assistant: { name: assistant.name, initials: assistant.initials },
     suggestions: topicCatalog
       .suggestedQuestions(topic, 0, SUGGESTION_COUNT)
       .map(({ question, short }) => ({ question, label: short })),

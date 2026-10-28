@@ -1,9 +1,12 @@
+import { interpolate } from '@/core/i18n/format';
+import type { UiMessages } from '../i18n/ui-messages';
 import { Button } from '../primitives';
 import { StatusNotice } from './status-notice';
 
 interface PageFailedProps {
   readonly error: unknown;
   readonly retry: () => void;
+  readonly messages: UiMessages['pageFailed'];
 }
 
 /** Server errors reach the browser stripped of detail, with a digest that matches the server log. */
@@ -13,18 +16,20 @@ function digestOf(error: unknown): string | null {
     : null;
 }
 
-export function PageFailed({ error, retry }: PageFailedProps) {
+export function PageFailed({ error, retry, messages }: PageFailedProps) {
   const digest = digestOf(error);
   return (
     <StatusNotice
-      failure="Error"
-      title="This page failed to load"
-      description="Something broke on our side while showing it. Try again; if it keeps failing, come back in a few minutes."
+      failure={messages.failure}
+      title={messages.title}
+      description={messages.description}
     >
       <Button variant="primary" onClick={retry}>
-        Try again
+        {messages.retry}
       </Button>
-      {digest ? <p className="text-sm text-ink-muted">Reference {digest}</p> : null}
+      {digest ? (
+        <p className="text-sm text-ink-muted">{interpolate(messages.reference, { digest })}</p>
+      ) : null}
     </StatusNotice>
   );
 }

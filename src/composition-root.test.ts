@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createChatHandler } from '@/http/chat-handler';
 import { localize } from '@/core/knowledge/localize';
+import { profile } from '@/profile';
 import { fixtureAnswers, fixtureKnowledge } from '@/testing/fixture-profile';
 import { buildContainer } from './composition-root';
 
@@ -21,7 +22,7 @@ function captureLogs() {
 
 async function ask(handle: (request: Request) => Promise<Response>, message: string) {
   const response = await handle(
-    new Request('https://marciomariani.dev/api/chat', {
+    new Request('https://portfolio.example/api/chat', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-real-ip': VISITOR_IP },
       body: JSON.stringify({ message }),
@@ -43,9 +44,11 @@ afterEach(() => {
 describe('production logs of a chat request', () => {
   it('records how each question was answered, as one JSON object per line', async () => {
     const logs = captureLogs();
-    const handle = createChatHandler(buildContainer());
+    const handle = createChatHandler(
+      buildContainer({ knowledge: localize(fixtureKnowledge, 'en'), answers: fixtureAnswers }),
+    );
 
-    await ask(handle, "Tell me about Marcio's career.");
+    await ask(handle, "Tell me about Ada's career.");
     await ask(handle, UNRECOGNIZED);
 
     expect(logs.records()).toEqual([
@@ -132,9 +135,11 @@ describe('the record the container answers from', () => {
   it("binds the profile's record when given none", async () => {
     captureLogs();
 
-    const answer = await answerText(buildContainer(), 'Tell me more about Pipewright.');
+    const [project] = profile.knowledge.projects;
+    if (!project) throw new Error('The profile documents no project.');
 
-    expect(answer).not.toContain('project:pipewright');
-    expect(answer).toContain('"intent":"unknown"');
+    const answer = await answerText(buildContainer(), `Tell me more about ${project.name}.`);
+
+    expect(answer).toContain(`"intent":"project:${project.id}"`);
   });
 });

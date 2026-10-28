@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
+import { firstSuggestion, record, ui } from './support/profile';
 
 /**
  * Every key state of the home page, scanned by axe against WCAG 2.1 A and AA.
@@ -24,7 +25,7 @@ async function violations(page: Page) {
 
 async function askSuggestedQuestion(page: Page, label: string) {
   await page.getByRole('button', { name: label }).click();
-  return page.getByRole('article', { name: "Answer from Marcio's portfolio assistant" });
+  return page.getByRole('article', { name: ui.conversation.answer });
 }
 
 test.describe('on a desktop', () => {
@@ -32,15 +33,17 @@ test.describe('on a desktop', () => {
 
   test('the welcome screen has no WCAG 2.1 AA violations', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('heading', { level: 1, name: "Hi, I'm Marcio" })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 1, name: record.welcome.heading }),
+    ).toBeVisible();
 
     expect(await violations(page)).toEqual([]);
   });
 
   test('a fast-path answer with rich blocks has no WCAG 2.1 AA violations', async ({ page }) => {
     await page.goto('/');
-    const answer = await askSuggestedQuestion(page, 'His career');
-    await expect(answer.getByRole('group', { name: 'Answer actions' })).toBeVisible();
+    const answer = await askSuggestedQuestion(page, firstSuggestion().label);
+    await expect(answer.getByRole('group', { name: ui.actions.group })).toBeVisible();
     await expect(answer.getByRole('list').first()).toBeVisible();
 
     expect(await violations(page)).toEqual([]);
@@ -49,7 +52,7 @@ test.describe('on a desktop', () => {
   test('a failed answer has no WCAG 2.1 AA violations', async ({ page }) => {
     await page.route('**/api/chat', (route) => route.fulfill({ status: 500 }));
     await page.goto('/');
-    const answer = await askSuggestedQuestion(page, 'His career');
+    const answer = await askSuggestedQuestion(page, firstSuggestion().label);
     await expect(answer.getByRole('alert')).toContainText("Couldn't load this answer");
 
     expect(await violations(page)).toEqual([]);
@@ -58,7 +61,7 @@ test.describe('on a desktop', () => {
   test('every topic page has no WCAG 2.1 AA violations', async ({ page }) => {
     for (const path of ['/experience', '/skills', '/projects', '/philosophy', '/education']) {
       await page.goto(path);
-      await expect(page.getByRole('list', { name: 'Conversation' })).toBeVisible();
+      await expect(page.getByRole('list', { name: ui.conversation.label })).toBeVisible();
       expect(await violations(page), path).toEqual([]);
     }
   });
@@ -69,10 +72,10 @@ test.describe('on a phone', () => {
 
   test('the open navigation drawer has no WCAG 2.1 AA violations', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('button', { name: 'Open navigation' }).click();
-    await expect(page.getByRole('navigation', { name: 'Topics' })).toBeVisible();
+    await page.getByRole('button', { name: ui.shell.openNavigation }).click();
+    await expect(page.getByRole('navigation', { name: ui.shell.topics })).toBeVisible();
     await expect(
-      page.getByRole('navigation', { name: 'Topics' }).getByRole('link').first(),
+      page.getByRole('navigation', { name: ui.shell.topics }).getByRole('link').first(),
     ).toBeFocused();
 
     expect(await violations(page)).toEqual([]);
@@ -101,7 +104,7 @@ test.describe('beyond WCAG AA', () => {
   }) => {
     await page.goto('/experience');
     await page.keyboard.press('Tab');
-    const skip = page.getByRole('link', { name: 'Skip to the conversation' });
+    const skip = page.getByRole('link', { name: ui.shell.skipToConversation });
     await expect(skip).toBeFocused();
     await expect(skip).toBeVisible();
 
@@ -112,7 +115,7 @@ test.describe('beyond WCAG AA', () => {
 
   test('the contact link in the sidebar is a comfortable touch target', async ({ page }) => {
     await page.goto('/');
-    const box = await page.getByRole('link', { name: 'Get in touch' }).boundingBox();
+    const box = await page.getByRole('link', { name: ui.shell.getInTouch }).boundingBox();
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
   });
 });

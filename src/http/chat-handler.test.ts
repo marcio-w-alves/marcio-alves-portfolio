@@ -13,11 +13,11 @@ import { createSlidingWindowLimiter } from '@/infrastructure/rate-limit/sliding-
 import { createToolRegistry } from '@/core/assistant/tools/registry';
 import { localize } from '@/core/knowledge/localize';
 import { assistantSettings } from '@/env';
-import { profile } from '@/profile';
+import { fixtureAnswers, fixtureKnowledge } from '@/testing/fixture-profile';
 import { createChatHandler, MAX_BODY_BYTES } from './chat-handler';
 
-const knowledge = localize(profile.knowledge, 'en');
-const fastPath = createFastPath(knowledge, profile.copy.en.answers);
+const knowledge = localize(fixtureKnowledge, 'en');
+const fastPath = createFastPath(knowledge, fixtureAnswers);
 const reported: unknown[] = [];
 const reportError = (error: unknown) => reported.push(error);
 const rateLimited: string[] = [];
@@ -69,7 +69,7 @@ const fastPathOnly = createAssistant({
 });
 
 function post(body: unknown, contentType = 'application/json', ip = '203.0.113.7'): Request {
-  return new Request('https://marciomariani.dev/api/chat', {
+  return new Request('https://portfolio.example/api/chat', {
     method: 'POST',
     headers: { 'content-type': contentType, 'x-real-ip': ip },
     body: typeof body === 'string' ? body : JSON.stringify(body),
@@ -88,16 +88,12 @@ async function readEvents(response: Response): Promise<AssistantEvent[]> {
 describe('POST /api/chat — answering', () => {
   it('streams a fast-path answer as server-sent events', async () => {
     const response = await handlerWith(fastPathOnly)(
-      post({ message: "Tell me about Marcio's career." }),
+      post({ message: "Tell me about Ada's career." }),
     );
     expect(response.status).toBe(200);
     expect(response.headers.get('content-type')).toBe('text/event-stream; charset=utf-8');
     const events = await readEvents(response);
-    expect(events[0]).toEqual({
-      type: 'start',
-      intent: 'career',
-      related: { id: 'deel', company: 'Deel' },
-    });
+    expect(events[0]).toEqual({ type: 'start', intent: 'career', related: null });
     expect(events.at(-1)?.type).toBe('finish');
   });
 
@@ -106,8 +102,8 @@ describe('POST /api/chat — answering', () => {
       fastPath,
       modelAssistant: createModelAssistant({
         model: scriptedModel(
-          { id: 'c1', name: 'getExperience', arguments: '{"company":"roots"}' },
-          'He led the Roots frontend.',
+          { id: 'c1', name: 'getExperience', arguments: '{"company":"globex"}' },
+          'She built the Globex pipeline.',
         ),
         tools: createToolRegistry({ kit: createResponseKit(knowledge), reportError }),
         clock,
@@ -118,14 +114,14 @@ describe('POST /api/chat — answering', () => {
       ...spending(),
     });
     const events = await readEvents(
-      await handlerWith(assistant)(post({ message: 'Compare Roots and Deel.' })),
+      await handlerWith(assistant)(post({ message: 'Compare Globex and Acme.' })),
     );
     expect(events.map((event) => (event.type === 'text-delta' ? event.delta : '')).join('')).toBe(
-      'He led the Roots frontend.',
+      'She built the Globex pipeline.',
     );
     expect(events.at(-1)).toMatchObject({
       type: 'finish',
-      sources: [{ id: 'resume.roots', label: 'Resume' }],
+      sources: [{ id: 'cv.globex', label: 'CV' }],
     });
   });
 
@@ -285,7 +281,7 @@ describe('POST /api/chat — pacing', () => {
 
 describe('POST /api/chat — clients behind one IPv6 /64', () => {
   function forwardedFor(address: string): Request {
-    return new Request('https://marciomariani.dev/api/chat', {
+    return new Request('https://portfolio.example/api/chat', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-forwarded-for': address },
       body: JSON.stringify({ message: 'hi' }),

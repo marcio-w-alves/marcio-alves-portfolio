@@ -66,9 +66,9 @@ function escaped(text: string): string {
 }
 
 /**
- * Case-sensitive, and only as a whole word: "Roots" is a name, "uproots" is
- * not. The line is source text, so an escape before the term — the "\\n" of
- * 'a.\\nRoots' — ends the word before it like a space would.
+ * Case-sensitive, and only as a whole word: "Globex" is a name, "unGlobexed"
+ * is not. The line is source text, so an escape before the term — the "\\n"
+ * of 'a.\\nGlobex' — ends the word before it like a space would.
  */
 function matcher(term: Term): RegExp {
   return new RegExp(

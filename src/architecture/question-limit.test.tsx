@@ -1,13 +1,14 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { fixtureUiMessages, renderWithMessages } from '@/testing/ui-messages';
 import { createAssistant } from '@/core/assistant/assistant';
 import { createFastPath } from '@/core/assistant/system1/fast-path';
 import { createChatHandler } from '@/http/chat-handler';
 import { createAnswerCache } from '@/infrastructure/budget/answer-cache';
 import { createModelBudget } from '@/infrastructure/budget/model-budget';
-import { profile } from '@/profile';
 import { createSiteContent } from '@/site/site-content';
+import { fixtureAnswers, fixtureKnowledge } from '@/testing/fixture-profile';
 import { workspaceView } from '@/site/workspace-view';
 import { ChatWorkspace } from '@/ui/chat/chat-workspace';
 import { ConversationsProvider } from '@/ui/chat/conversation-store';
@@ -19,11 +20,11 @@ vi.mock('@/core/chat/request', async (original) => ({
   MAX_QUESTION_LENGTH: 7,
 }));
 
-const content = createSiteContent(profile.knowledge, profile.copy.en.answers);
+const content = createSiteContent(fixtureKnowledge, fixtureAnswers);
 
 const handle = createChatHandler({
   assistant: createAssistant({
-    fastPath: createFastPath(content.knowledge, profile.copy.en.answers),
+    fastPath: createFastPath(content.knowledge, fixtureAnswers),
     modelAssistant: null,
     clock: { now: () => new Date() },
     reportError: () => undefined,
@@ -49,10 +50,10 @@ function ask(message: string): Promise<Response> {
 describe('one question limit', () => {
   it('caps what the composer takes', async () => {
     const user = userEvent.setup();
-    render(<ChatWorkspace {...workspaceView(content)} />, { wrapper: ConversationsProvider });
-    const composer = screen.getByRole('textbox', {
-      name: 'Ask the portfolio assistant a question',
+    renderWithMessages(<ChatWorkspace {...workspaceView(content)} />, {
+      wrapper: ConversationsProvider,
     });
+    const composer = screen.getByRole('textbox', { name: fixtureUiMessages.composer.label });
 
     await user.type(composer, 'abcdefgh');
 

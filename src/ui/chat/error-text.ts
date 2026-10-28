@@ -1,22 +1,25 @@
-import type { AssistantError, AssistantErrorCode } from '@/core/chat/events';
+import type { AssistantError } from '@/core/chat/events';
+import { interpolate, plural } from '@/core/i18n/format';
+import type { UiMessages } from '../i18n/ui-messages';
 
-const TEXT: Readonly<Record<Exclude<AssistantErrorCode, 'rate_limited'>, string>> = {
-  network: "The assistant couldn't be reached. Check your connection and try again.",
-  timeout: 'The answer is taking too long. Please try again.',
-  interrupted: 'The answer was interrupted. Please try again.',
-  rejected: 'That question could not be sent. Try a shorter one.',
-  internal: 'Something failed on our side. Please try again.',
-};
+type ErrorMessages = UiMessages['errors'];
 
-function whenToRetry(retryAfterSeconds: number | undefined): string {
-  if (retryAfterSeconds === undefined) return 'Try again in a few minutes.';
-  const minutes = Math.ceil(retryAfterSeconds / 60);
-  return `Try again in ${String(minutes)} minute${minutes > 1 ? 's' : ''}.`;
+const SECONDS_PER_MINUTE = 60;
+
+function whenToRetry(messages: ErrorMessages, locale: string, retryAfterSeconds?: number): string {
+  if (retryAfterSeconds === undefined) return messages.retryLater;
+  return plural(locale, messages.retryIn, Math.ceil(retryAfterSeconds / SECONDS_PER_MINUTE));
 }
 
 /** What the visitor reads for a failed answer; the error itself carries only its code. */
-export function errorText({ code, retryAfterSeconds }: AssistantError): string {
+export function errorText(
+  { code, retryAfterSeconds }: AssistantError,
+  messages: ErrorMessages,
+  locale: string,
+): string {
   return code === 'rate_limited'
-    ? `Too many questions in a short time. ${whenToRetry(retryAfterSeconds)}`
-    : TEXT[code];
+    ? interpolate(messages.rateLimited, {
+        retry: whenToRetry(messages, locale, retryAfterSeconds),
+      })
+    : messages[code];
 }
