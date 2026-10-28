@@ -32,10 +32,6 @@ export function react(): AssistantResponse {
           '- **Modernization** — refactored a codebase to React Hooks at Shall And Partners.',
       ),
       skillGroups(['frontend', 'architecture']),
-      note(
-        'gap',
-        'His resume lists React work per role rather than years per technology, so I describe the span of documented roles instead of a precise number.',
-      ),
     ],
     {
       followUps: [
@@ -131,7 +127,6 @@ export function performance(): AssistantResponse {
           '- **Deel** — targeted refactoring and optimization of critical pages; the People List page went from six seconds to three on a cold run.\n' +
           '- **Maison Modern** — server-side rendering to improve SEO and initial load speed for editorial products read by thousands daily.',
       ),
-      note('gap', "The specific profiling tools behind each change aren't documented."),
     ],
     {
       followUps: [
@@ -271,10 +266,6 @@ export function accessibility(): AssistantResponse {
           '- **Roots** — integrated accessibility standards together with UX designers.\n' +
           '- **Maison Modern** — built intuitive, accessible interfaces from complex requirements with UX designers.',
       ),
-      note(
-        'gap',
-        "The specific standard levels (for example, WCAG 2.1 AA) aren't named in his resume.",
-      ),
     ],
     {
       followUps: [
@@ -294,10 +285,6 @@ export function testing(): AssistantResponse {
     [
       text(
         "Frontend testing strategies are listed among Marcio's core skills. In practice, his documented quality work includes standardized error handling at Deel, code reviews and pair programming, and coding standards he set at Maison Modern to reduce bugs.",
-      ),
-      note(
-        'gap',
-        "The specific testing frameworks and coverage practices he uses aren't documented.",
       ),
     ],
     {
@@ -383,27 +370,14 @@ export function project(projectId: ProjectId): AssistantResponse {
   const lead = subject.live
     ? `**${subject.name}** is one of Marcio's own products. ${subject.description}`
     : `**${subject.name}** is one of Marcio's product concepts: ${subject.description.charAt(0).toLowerCase()}${subject.description.slice(1)}`;
-  return response(
-    `project:${projectId}`,
-    [
-      text(lead),
-      projectCards([projectId]),
-      note(
-        'gap',
-        subject.live
-          ? "Usage numbers and business metrics aren't published, so I won't speculate about them."
-          : "It's at the concept stage, so there is no implementation to describe yet.",
-      ),
+  return response(`project:${projectId}`, [text(lead), projectCards([projectId])], {
+    followUps: [
+      next ? `Tell me more about ${next.name}.` : 'What projects is he working on?',
+      'What projects is he working on?',
+      'Has he ever built something from scratch?',
     ],
-    {
-      followUps: [
-        next ? `Tell me more about ${next.name}.` : 'What projects is he working on?',
-        'What projects is he working on?',
-        'Has he ever built something from scratch?',
-      ],
-      sources: ['projects'],
-    },
-  );
+    sources: ['projects'],
+  });
 }
 
 function languageTable() {

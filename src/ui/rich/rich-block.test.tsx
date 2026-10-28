@@ -216,7 +216,6 @@ describe('note', () => {
   it.each([
     ['inference', 'Assessment'],
     ['example', 'Illustrative example'],
-    ['gap', 'Not documented'],
     ['info', 'Note'],
   ] as const)('labels a %s note "%s" and shows its text', (tone, label) => {
     renderBlock(note(tone, "The HRIS team's size isn't documented."));

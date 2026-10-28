@@ -5,7 +5,6 @@ import { Icon, type IconName } from '../primitives';
 const TONES: Readonly<Record<NoteTone, { readonly label: string; readonly icon: IconName }>> = {
   inference: { label: 'Assessment', icon: 'compass' },
   example: { label: 'Illustrative example', icon: 'code' },
-  gap: { label: 'Not documented', icon: 'info' },
   info: { label: 'Note', icon: 'info' },
 };
 
