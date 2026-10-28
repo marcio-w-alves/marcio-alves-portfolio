@@ -2,7 +2,8 @@
 export type ThemeChoice = 'light' | 'dark' | 'system';
 export type Theme = 'light' | 'dark';
 
-export const THEME_CHOICES: readonly ThemeChoice[] = ['light', 'dark', 'system'];
+// Auto first: it is the default, and the one most visitors should keep.
+export const THEME_CHOICES: readonly ThemeChoice[] = ['system', 'light', 'dark'];
 
 const STORAGE_KEY = 'theme';
 const DARK_QUERY = '(prefers-color-scheme: dark)';

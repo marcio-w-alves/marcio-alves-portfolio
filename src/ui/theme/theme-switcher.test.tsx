@@ -31,7 +31,7 @@ describe('ThemeSwitcher', () => {
       within(group)
         .getAllByRole('radio')
         .map((radio) => radio.getAttribute('value')),
-    ).toEqual(['light', 'dark', 'system']);
+    ).toEqual(['system', 'light', 'dark']);
     expect(within(group).getByRole('radio', { name: 'Auto' })).toBeChecked();
   });
 
