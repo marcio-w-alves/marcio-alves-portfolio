@@ -56,14 +56,7 @@ test.describe('on a desktop', () => {
   });
 
   test('every topic page has no WCAG 2.1 AA violations', async ({ page }) => {
-    for (const path of [
-      '/experience',
-      '/skills',
-      '/projects',
-      '/achievements',
-      '/philosophy',
-      '/education',
-    ]) {
+    for (const path of ['/experience', '/skills', '/projects', '/philosophy', '/education']) {
       await page.goto(path);
       await expect(page.getByRole('list', { name: 'Conversation' })).toBeVisible();
       expect(await violations(page), path).toEqual([]);

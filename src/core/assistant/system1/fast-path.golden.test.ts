@@ -45,8 +45,6 @@ describe('fast path — golden answers', () => {
       - A deliberate choice between local, global and server state — with caching, invalidation, optimistic updates, deduplication and pagination.
       - SSR, client rendering, progressive loading, bundle splitting and preloading sized to UX and metrics.
       {"type":"component","component":"skills","props":{"groups":[{"title":"Frontend","items":["React","TypeScript","Next.js","JavaScript","Responsive Design"]},{"title":"Architecture","items":["Scalable Frontend Architecture","State Management","Server-Side Rendering","Developer Experience"]}]}}",
-        "Does he speak French?": "Yes — French at an intermediate level.
-      {"type":"component","component":"table","props":{"columns":["Language","Level"],"rows":[["Portuguese","Native"],["English","Fluent"],["French","Intermediate"],["Spanish","Intermediate"]],"caption":"Languages"}}",
         "Has he built mobile apps?": "Yes. At **Shall And Partners**, Marcio built web and mobile applications — including one that received the Golden Award in 2019 — and led development of a progressive web app before the product moved to a native Android app.
 
       His own products are mobile-first too: **EvCopilot** is in an invite-only iPhone beta, and **FormDaily** lists web, iOS and Android. In his own products he has also prototyped with React Native and Tamagui and shipped iOS beta builds through TestFlight.
@@ -88,10 +86,6 @@ describe('fast path — golden answers', () => {
 
       He describes his time at Roots as roughly 60% coding and 40% leadership, and at Deel as closer to 80% coding and 20% leadership, at times leading two or three engineers — his own estimates, not audited figures.
       {"type":"component","component":"metrics","props":{"items":[{"value":"1 → 4","label":"Frontend team grown from a solo setup","context":"Roots"}]}}",
-        "Has he received any awards?": "At **Shall And Partners**, Marcio contributed to a web and mobile application that received the **Golden Award in 2019**.
-
-      Other documented business results include the Maison Moderne newsletter project, which achieved a 20% increase in income, and helping smaller WEBFI clients grow sales by over 30%.
-      {"type":"component","component":"note","props":{"tone":"inference","text":"The Golden Award went to the product he worked on, not to him personally."}}",
         "Has he worked with backend systems?": "Yes, with a clear distinction: Marcio is a frontend specialist who also has hands-on full-stack experience. Strong full-stack with deep frontend specialization: his strength is connecting decisions across layers — the business flow, entities and responsibilities, the API contract, the interface, failure cases and operation.
       ### Company by company
       - **Shall And Partners** — the main professional backend record: Node.js, RESTful APIs, microservices with multiple databases, internal automation, and a PWA before the move to native Android.
@@ -102,17 +96,6 @@ describe('fast path — golden answers', () => {
       In his own products he designs Node.js/TypeScript services with domain boundaries, a Backend for Frontend, authentication and RBAC, PostgreSQL with Prisma, Redis, queues, idempotency and the transactional outbox pattern. These are designs and prototypes at different stages, not production systems at an employer.
       {"type":"component","component":"skills","props":{"groups":[{"title":"Backend & Infrastructure","items":["Node.js","REST APIs","Microservices","PostgreSQL","Redis","CI/CD","AWS"]}]}}
       {"type":"component","component":"note","props":{"tone":"inference","text":"His deepest specialization is frontend; his current role at Way2b1 is full stack, and at Roots and Deel the backend belonged to other teams."}}",
-        "How did he grow the team at Roots?": "As Lead Frontend Engineer at **Roots** (2020 — 2022), Marcio grew the frontend team from a solo setup to four developers by recruiting and integrating three. He then led frontend development for nearly two years, organizing and delegating work and coordinating sprint planning and deliverables with managers and stakeholders.
-
-      At Deel he also contributed to hiring and onboarding engineers.
-      ### What growing the team required
-      Take a young HR product built around Slack, with the frontend essentially in one person’s hands, and create a base that could absorb new features, engineers and users without depending on its original author.
-
-      - **Boundaries that scale** — components and state organized to support functional growth.
-      - **Frontend and services** — integration with the product’s services with attention to request efficiency.
-      - **Delivery** — GitLab CI pipelines deploying to Amazon S3, and knowledge spread across a growing team.
-      - **Architecture during growth** — changing the structure while keeping product pace and maintainability.
-      {"type":"component","component":"metrics","props":{"items":[{"value":"1 → 4","label":"Frontend team grown from a solo setup","context":"Roots"}]}}",
         "How did he optimize performance?": "Performance is one of the most consistently documented themes in Marcio's work:
       {"type":"component","component":"metrics","props":{"items":[{"value":"30%+","label":"Improvement in Web Vitals","context":"Deel"},{"value":"50%","label":"Reduction in loading time on critical pages","context":"Deel"},{"value":"6s → 3s","label":"People List load time on a cold run","context":"Deel"},{"value":"~50%","label":"Smaller bundle size","context":"Way2b1"}]}}
       ### How he got there
@@ -188,17 +171,6 @@ describe('fast path — golden answers', () => {
       - **Watched after release** — error monitoring and Web Vitals to catch regressions.
 
       Tools in his practice: Vitest, frontend testing strategies, code review, pair programming, lint and formatting, error monitoring, Web Vitals.",
-        "How does he raise code quality?": "Marcio's engineering principles treat quality as a structural concern: readable, explicit code; small composable components; shared logic centralized instead of duplicated; and security enforced on the server.
-
-      In practice that has meant standardized error handling and state management, code reviews and pair programming, coding standards at Maison Moderne, and a move to React Hooks at Shall And Partners. Frontend testing strategies are part of his core skills.
-      ### What a healthy codebase means to him
-      - Modules organized by domain, with stable public interfaces and controlled dependencies.
-      - Presentation, business rules and data access kept apart where that removes real coupling.
-      - Loading, failure, empty, retry and authorization states handled explicitly.
-      - TypeScript for contracts, with runtime validation for data that comes from outside.
-      - Unit, integration, contract and end-to-end tests sized to the risk of each flow.
-      - Small, monitored changes to legacy code, with feature flags where useful and a way to roll back.
-      - Decisions, conventions and onboarding written down, so knowledge does not stay in one head.",
         "How does he think about code quality?": "Marcio's engineering principles treat quality as a structural concern: readable, explicit code; small composable components; shared logic centralized instead of duplicated; and security enforced on the server.
 
       In practice that has meant standardized error handling and state management, code reviews and pair programming, coding standards at Maison Moderne, and a move to React Hooks at Shall And Partners. Frontend testing strategies are part of his core skills.
@@ -255,55 +227,6 @@ describe('fast path — golden answers', () => {
       Evolve the HRIS interfaces and integrate an acquired product (Roots) into a much larger ecosystem with existing users, domains, standards and dependencies — keeping compatibility, performance and consistency while the system changes.
       {"type":"component","component":"metrics","props":{"items":[{"value":"30%+","label":"Improvement in Web Vitals","context":"Deel"},{"value":"50%","label":"Reduction in loading time on critical pages","context":"Deel"},{"value":"6s → 3s","label":"People List load time on a cold run","context":"Deel"}]}}
       {"type":"component","component":"contact","props":{"heading":"Interested in working together?","text":"Get in touch with Marcio to discuss engineering, architecture, and product opportunities.","email":"marcio.welben@gmail.com","linkedin":"https://www.linkedin.com/in/marcio-montenegro","github":"https://github.com/marcio-w-alves","resumeUrl":"/marcio-alves-resume.pdf"}}",
-        "Show me examples of architectural decisions.": "Marcio's architecture work follows a consistent thread: standardize the foundations, keep components modular, and tie structural decisions to measurable product outcomes.
-
-      ### Documented decisions
-      - **Way2b1** — migrates legacy code to a modern, maintainable base across several products.
-      - **Deel** — standardized HRIS frontend architecture to improve structure, state management, error handling and scalability.
-      - **Roots** — directed frontend strategy, introduced advanced state management and set up GitLab CI pipelines deploying to Amazon S3.
-      - **Maison Moderne** — implemented SSR with Next.js and integrated the frontend with external publishing platforms.
-      - **Shall And Partners** — moved the codebase to React Hooks and built apps within a microservices architecture.
-      ### What he treats as frontend architecture
-      - Presentation components kept apart from state orchestration and service calls.
-      - Module boundaries and reuse rules that avoid circular dependencies and an over-coupled design system.
-      - A deliberate choice between local, global and server state — with caching, invalidation, optimistic updates, deduplication and pagination.
-      - SSR, client rendering, progressive loading, bundle splitting and preloading sized to UX and metrics.
-      - Permissions reflected in the UI without mistaking a hidden button for server-side authorization.
-      - Reusable components that are accessible, responsive and easy to test.
-      ### How he designs a system
-      1. **Start from the product** — the goal, who uses the system and what success looks like, before choosing any tool.
-      2. **Map what is critical** — key journeys, permissions, sensitive data, latency expectations and external limits.
-      3. **Model the domain** — entities, states and transitions, who owns which data, and the real dependencies between modules.
-      4. **Begin simple** — propose the simplest architecture that fits the real scope, and say where it stops scaling.
-      5. **Plan for failure** — integration errors, retries, consistency, concurrency and what to observe.
-      6. **Choose how to ship** — incremental milestones, migrations, rollout and rollback, sized to who will maintain it.
-      7. **Make it concrete** — contracts, examples, acceptance criteria, tests and documentation.
-      8. **Measure, then adjust** — let real metrics and incidents justify further investment, not preference.
-
-      The trade-offs he weighs most often: modular application or separate services; synchronous request or a queue; cache or a direct query; relational storage or a specialized store; a direct API or a Backend for Frontend.
-      {"type":"component","component":"details","props":{"summary":"The engineering problem at Roots, Deel and Way2b1","text":"**Roots** — Take a young HR product built around Slack, with the frontend essentially in one person’s hands, and create a base that could absorb new features, engineers and users without depending on its original author.\\n\\n- **Boundaries that scale** — components and state organized to support functional growth.\\n- **Frontend and services** — integration with the product’s services with attention to request efficiency.\\n- **Delivery** — GitLab CI pipelines deploying to Amazon S3, and knowledge spread across a growing team.\\n- **Architecture during growth** — changing the structure while keeping product pace and maintainability.\\n\\n**Deel** — Evolve the HRIS interfaces and integrate an acquired product (Roots) into a much larger ecosystem with existing users, domains, standards and dependencies — keeping compatibility, performance and consistency while the system changes.\\n\\n- **Integration between platforms** — adapting existing modules and flows to new standards while reducing rollout and maintenance risk.\\n- **Architecture in a large product** — consistent structure, state and error handling to reduce variation between teams.\\n- **Dense corporate data** — fetching cost, pagination, loading behaviour and perceived performance in core screens.\\n- **Trade-offs and delivery** — when to refactor, keep compatibility or stage a change without disrupting users.\\n\\n**Way2b1** — Keep the products of a small startup moving while migrating their legacy code and improving their performance — working across the products' teams rather than inside one of them.\\n\\n- **Legacy migration** — moving old code to a modern, maintainable base while the products keep running.\\n- **Performance** — finding what slows each product down and fixing it.\\n- **Across products** — working with each product's team so changes stay consistent between them.\\n- **Full stack** — from the interfaces to the services behind them."}}
-      {"type":"component","component":"note","props":{"tone":"example","text":"The snippet below illustrates the composition principle. It is not taken from any employer's codebase."}}
-      \`\`\`tsx
-      // Illustrative: the feature component only orchestrates primitives.
-      // Layout, data access and side effects live elsewhere.
-      export function ProductCard({ product, onAddToCart }: ProductCardProps) {
-        return (
-          <Card>
-            <Card.Media>
-              <Image src={product.imageUrl} alt={product.name} />
-            </Card.Media>
-            <Card.Body>
-              <Text variant="title">{product.name}</Text>
-              <Price amount={product.price} />
-            </Card.Body>
-            <Card.Actions>
-              <Button onClick={() => onAddToCart(product.id)}>Add to cart</Button>
-            </Card.Actions>
-            <CommentList comments={product.comments} />
-          </Card>
-        );
-      }
-      \`\`\`",
         "Tell me about Marcio's career.": "Marcio is a frontend engineer with **over 10 years** of professional experience. He started in 2015 as a freelance web developer and grew into senior and lead frontend roles — helping lead the HRIS team at **Deel** (2022 — 2026) and, since June 2026, as a Senior Frontend Engineer at **Way2b1**, working full stack across a small startup's product suite.
 
       Across those roles the thread is consistent: React and Next.js architecture, performance, developer experience and technical leadership, with engineering work tied to product needs and user impact.
@@ -345,29 +268,6 @@ describe('fast path — golden answers', () => {
       - Helped smaller industry clients at WEBFI grow sales by **over 30%**.
       {"type":"component","component":"details","props":{"summary":"How the Deel performance gains were achieved","text":"Targeted refactoring and optimization of critical pages. His approach to a performance problem:\\n\\n- Start from real measurement and usage, not premature optimization.\\n- Tell network, server, database, rendering, bundle, data-access and request-waterfall bottlenecks apart.\\n- Use caching and invalidation, pagination, lazy loading and code splitting where they pay off.\\n- Prioritize what users perceive, without losing backend latency and error metrics.\\n- Design logs, tracing, error monitoring and alerts in, especially around integrations and async work."}}
       {"type":"component","component":"note","props":{"tone":"inference","text":"These are results reported in his resume from team work; none is claimed as his alone. Productivity, ROI or revenue attributable only to him are not documented."}}",
-        "What are his strongest technical skills?": "Here are Marcio's skills grouped by area. There are no self-rated percentages — the experience timeline holds the evidence for each one.
-      {"type":"component","component":"skills","props":{"groups":[{"title":"Frontend","items":["React","TypeScript","Next.js","JavaScript","Responsive Design"]},{"title":"Architecture","items":["Scalable Frontend Architecture","State Management","Server-Side Rendering","Developer Experience"]},{"title":"Performance & Quality","items":["Core Web Vitals","SEO","Accessibility","Frontend Testing Strategies"]},{"title":"Leadership","items":["Technical Strategy","Technical Trade-offs","Mentoring","Code Reviews","Hiring","OKR Planning","Agile"]},{"title":"Backend & Infrastructure","items":["Node.js","REST APIs","Microservices","PostgreSQL","Redis","CI/CD","AWS"]}]}}
-      His strongest documented areas are **React and Next.js architecture** and **performance**, both backed by measurable results at Deel and Roots.
-      ### How deep the evidence goes
-      - **Strong professional evidence** — React, frontend architecture, performance, Next.js, UI/UX collaboration, technical leadership
-      - **Complementary professional evidence** — Node.js, REST APIs, microservices, automation, PWAs, system integration
-      - **Explored in his own products** — Message queues (NATS/JetStream), RAG and agent workflows, EV charging data (OCPI), game servers and Unreal Engine 5, iOS apps
-      ### Toolset
-      - **Frontend and UI** — React, Next.js, TypeScript, JavaScript, HTML, CSS, MUI, Tailwind CSS, Formik, Redux, Context API, Zustand, TanStack Query, SWR, design tokens
-      - **Testing and quality** — Vitest, frontend testing strategies, code review, pair programming, lint and formatting, error monitoring, Web Vitals
-      - **Backend and data** — Node.js, TypeScript, REST APIs, PostgreSQL, Prisma, Redis, authentication and authorization, events and queues
-      - **Infrastructure** — Git, GitHub, GitLab CI, AWS (S3, CloudFront), Docker, Nx monorepos, pnpm, Sentry, Datadog",
-        "What courses and certifications does he have?": "Marcio holds a **Bachelor's degree in Computer Engineering** from Universidade Federal da Paraíba (UFPB), Paraíba, Brazil, completed in 2019.
-      {"type":"component","component":"table","props":{"columns":["Language","Level"],"rows":[["Portuguese","Native"],["English","Fluent"],["French","Intermediate"],["Spanish","Intermediate"]],"caption":"Languages"}}
-      {"type":"component","component":"details","props":{"summary":"Courses and certifications","text":"- The Complete React Web Developer Course (with Redux) (Udemy)\\n- Angular 2 and 4 Course: From Basic to Pro (Udemy)\\n- Learn and Understand AngularJS (Udemy)\\n- Android Studio — Curso Completo: Crie 10 Apps (Udemy)\\n- Entendendo e Documentando REST / RESTful APIs (Udemy)"}}
-      ### Continuous learning
-      Problem-driven: he picks a hard user experience, expands its flows end to end, works out which data and services it needs, and researches the technology to build it — connecting tools to a product instead of learning them in isolation.
-
-      - **Backend and system design** — domain-oriented services, BFFs, authentication, databases, queues and events, idempotency, auditing and observability.
-      - **AI-assisted engineering** — agent workflows, context retrieval, tools, implementation loops and how to evaluate LLM features.
-      - **Data products** — trip and battery data for EvCopilot, training progression for FormDaily, campaign analytics for TargUp.
-      - **Platform and tooling** — AWS, CI/CD, Vercel, Docker, Sentry and Datadog, Nx and pnpm monorepos.
-      - **Online games** — authoritative servers, entity synchronization, inventories, snapshots and rollback, explored with Unreal Engine 5.",
         "What did he do at Roots?": "At **Roots** (2020 — 2022), a startup building Slack bots for HR, Marcio was the Lead Frontend Engineer. He built the product frontend end to end, grew the frontend team from one to four, and later led the platform's migration into Deel.
       ### Impact
       {"type":"component","component":"metrics","props":{"items":[{"value":"1 → 4","label":"Frontend team grown from a solo setup","context":"Roots"}]}}
@@ -439,8 +339,6 @@ describe('fast path — golden answers', () => {
       - **Performance** — finding what slows each product down and fixing it.
       - **Across products** — working with each product's team so changes stay consistent between them.
       - **Full stack** — from the interfaces to the services behind them.",
-        "What languages does he speak?": "Marcio works in four languages:
-      {"type":"component","component":"table","props":{"columns":["Language","Level"],"rows":[["Portuguese","Native"],["English","Fluent"],["French","Intermediate"],["Spanish","Intermediate"]],"caption":"Languages"}}",
         "What makes Marcio a strong Staff Engineer?": "Marcio has several characteristics associated with Staff-level frontend engineering: deep technical expertise, ownership of architectural decisions, measurable product improvements and a track record of mentoring engineers.
 
       At **Deel**, he helped lead the HRIS team, standardized architecture across its interfaces and led the migration of Roots into the platform — while improving Web Vitals by at least 30% and cutting critical page loading time by 50%. At **Roots**, he directed frontend strategy and grew the frontend team from one developer to four.
@@ -451,14 +349,6 @@ describe('fast path — golden answers', () => {
       His formal titles were Senior and Lead Frontend Engineer; Staff-level describes the scope of his work, not a title he held.
       {"type":"component","component":"note","props":{"tone":"inference","text":"This is an assessment drawn from his documented experience. Whether he fits a specific role depends on that team's needs."}}
       {"type":"component","component":"contact","props":{"heading":"Interested in working together?","text":"Get in touch with Marcio to discuss engineering, architecture, and product opportunities.","email":"marcio.welben@gmail.com","linkedin":"https://www.linkedin.com/in/marcio-montenegro","github":"https://github.com/marcio-w-alves","resumeUrl":"/marcio-alves-resume.pdf"}}",
-        "What measurable improvements has he delivered?": "The clearest documented results come from performance, quality and team-building work:
-      {"type":"component","component":"metrics","props":{"items":[{"value":"50%","label":"Reduction in loading time on critical pages","context":"Deel"},{"value":"30%+","label":"Improvement in Web Vitals","context":"Deel"},{"value":"6s → 3s","label":"People List load time on a cold run","context":"Deel"},{"value":"1 → 4","label":"Frontend team grown from a solo setup","context":"Roots"}]}}
-      ### Other recognition
-      - Contributed to a web and mobile application that received the **Golden Award in 2019** at Shall And Partners.
-      - Contributed to the newsletter project at Maison Moderne, which achieved a **20% increase in income**.
-      - Helped smaller industry clients at WEBFI grow sales by **over 30%**.
-      {"type":"component","component":"details","props":{"summary":"How the Deel performance gains were achieved","text":"Targeted refactoring and optimization of critical pages. His approach to a performance problem:\\n\\n- Start from real measurement and usage, not premature optimization.\\n- Tell network, server, database, rendering, bundle, data-access and request-waterfall bottlenecks apart.\\n- Use caching and invalidation, pagination, lazy loading and code splitting where they pay off.\\n- Prioritize what users perceive, without losing backend latency and error metrics.\\n- Design logs, tracing, error monitoring and alerts in, especially around integrations and async work."}}
-      {"type":"component","component":"note","props":{"tone":"inference","text":"These are results reported in his resume from team work; none is claimed as his alone. Productivity, ROI or revenue attributable only to him are not documented."}}",
         "What projects is he working on?": "Alongside his professional work, Marcio builds his own products. Three already have public sites — **EvCopilot** (iPhone beta), **FormDaily** (invite-only) and **TargUp** (in development) — and **FictionDraft** is still a concept.
       {"type":"component","component":"projects","props":{"projects":[{"id":"evcopilot","name":"EvCopilot","category":"Electric mobility · Brazil","status":"iPhone beta · invite only","description":"A trip-planning app for electric-vehicle drivers in Brazil: compatible chargers, predicted battery at every stop and a backup charger for each one.","scopeLabel":"Key features","scope":["Chargers filtered by connector and power","Battery prediction per stop","Backup charger for every stop","Offline itinerary","Handoff to Apple Maps, Google Maps or Waze","Station status with source and date"],"platforms":["iPhone (beta)"],"technologies":[],"considerations":[],"links":[{"label":"Visit evcopilotapp.io","url":"https://evcopilotapp.io"}]},{"id":"formdaily","name":"FormDaily","category":"Fitness & coaching","status":"Invite-only access","description":"A workout app for personal trainers and their students: trainers build workouts, run sessions and track progress; students follow their plan and log every set.","scopeLabel":"Key features","scope":["Workout builder with loads, rest and videos","Scheduling with Google Meet for online sessions","Live session tracking, even offline","AI workout suggestions reviewed by the trainer","Student progress charts","Verified trainer badge"],"platforms":["Web","iOS","Android"],"technologies":[],"considerations":[],"links":[{"label":"Visit formdaily.app","url":"https://formdaily.app"}]},{"id":"targup","name":"TargUp","category":"Business automation","status":"In development · live preview","description":"A business automation platform that replaces repetitive manual work with connected workflows, AI-assisted automation and operational visibility.","scopeLabel":"Key features","scope":["Workflow automation","AI that classifies, drafts and recommends within business rules","Integrations and analytics","Role-based permissions and human approval","WhatsApp appointment booking","Chat, Social and Affiliate products"],"platforms":["Web"],"technologies":[],"considerations":[],"links":[{"label":"Visit TargUp","url":"https://dev.targup.com/"}]},{"id":"fictiondraft","name":"FictionDraft","category":"AI writing & publishing","status":"In development · not published","description":"An AI writing assistant for novels, books, documents and scripts: a template for each kind of text, with an AI that checks it against what was already written.","scopeLabel":"Planned scope","scope":["Editing","Review","Translation","Document consistency"],"platforms":[],"technologies":[],"considerations":[],"links":[]}]}}
       ### The engineering behind them
@@ -495,17 +385,6 @@ describe('fast path — golden answers', () => {
       6. Check design, accessibility, tests, performance and behaviour across devices.
       7. Find the gaps, fix them and repeat until the result matches what was specified.
       {"type":"component","component":"note","props":{"tone":"inference","text":"The process and the day-to-day loop summarize how he describes his work; they are not a formal method any one employer adopted."}}",
-        "Where did he study?": "Marcio holds a **Bachelor's degree in Computer Engineering** from Universidade Federal da Paraíba (UFPB), Paraíba, Brazil, completed in 2019.
-      {"type":"component","component":"table","props":{"columns":["Language","Level"],"rows":[["Portuguese","Native"],["English","Fluent"],["French","Intermediate"],["Spanish","Intermediate"]],"caption":"Languages"}}
-      {"type":"component","component":"details","props":{"summary":"Courses and certifications","text":"- The Complete React Web Developer Course (with Redux) (Udemy)\\n- Angular 2 and 4 Course: From Basic to Pro (Udemy)\\n- Learn and Understand AngularJS (Udemy)\\n- Android Studio — Curso Completo: Crie 10 Apps (Udemy)\\n- Entendendo e Documentando REST / RESTful APIs (Udemy)"}}
-      ### Continuous learning
-      Problem-driven: he picks a hard user experience, expands its flows end to end, works out which data and services it needs, and researches the technology to build it — connecting tools to a product instead of learning them in isolation.
-
-      - **Backend and system design** — domain-oriented services, BFFs, authentication, databases, queues and events, idempotency, auditing and observability.
-      - **AI-assisted engineering** — agent workflows, context retrieval, tools, implementation loops and how to evaluate LLM features.
-      - **Data products** — trip and battery data for EvCopilot, training progression for FormDaily, campaign analytics for TargUp.
-      - **Platform and tooling** — AWS, CI/CD, Vercel, Docker, Sentry and Datadog, Nx and pnpm monorepos.
-      - **Online games** — authoritative servers, entity synchronization, inventories, snapshots and rollback, explored with Unreal Engine 5.",
       }
     `);
   });

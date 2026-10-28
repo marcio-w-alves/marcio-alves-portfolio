@@ -28,7 +28,7 @@ const SPECIAL_FILES = new Set([
   'manifest',
 ]);
 
-const TOPIC_PAGES = ['experience', 'skills', 'projects', 'achievements', 'philosophy', 'education'];
+const TOPIC_PAGES = ['experience', 'skills', 'projects', 'philosophy', 'education'];
 
 function appFiles(): string[] {
   return readdirSync(app, { recursive: true, withFileTypes: true })
@@ -49,7 +49,7 @@ describe('the app folder', () => {
     expect(files.filter((path) => !SPECIAL_FILES.has(specialName(path)))).toEqual([]);
   });
 
-  it('gives the six topic pages one shape, differing only in the topic', () => {
+  it('gives the five topic pages one shape, differing only in the topic', () => {
     const shapes = TOPIC_PAGES.map((topic) =>
       readFileSync(join(app, topic, 'page.tsx'), 'utf8').replaceAll(`'${topic}'`, "'<topic>'"),
     );

@@ -395,7 +395,6 @@ export const TOPIC_DEFAULT: Readonly<Record<TopicId, ScoredIntent>> = {
   experience: 'career',
   skills: 'skills',
   projects: 'projects',
-  achievements: 'achievements',
   philosophy: 'philosophy',
   education: 'education',
 };

@@ -7,7 +7,6 @@ it('lists every page at the canonical origin, the overview as the home page', ()
     'https://ada.example/experience',
     'https://ada.example/skills',
     'https://ada.example/projects',
-    'https://ada.example/achievements',
     'https://ada.example/philosophy',
     'https://ada.example/education',
   ]);
