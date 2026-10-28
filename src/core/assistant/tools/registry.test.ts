@@ -137,6 +137,15 @@ describe('display actions', () => {
     });
   });
 
+  it('cites the facts a card shows, since a card is an answer too', async () => {
+    const metrics = succeeded(
+      await registry.run('showMetrics', { ids: ['deel-backlog', 'roots-team'] }),
+    );
+    expect(metrics.sources.map((source) => source.id)).toEqual(['resume.deel', 'resume.roots']);
+    const timeline = succeeded(await registry.run('showTimeline', { companies: ['toptal'] }));
+    expect(timeline.sources.map((source) => source.id)).toEqual(['resume.toptal']);
+  });
+
   it('refuses a metric the knowledge base does not have', async () => {
     expect((await registry.run('showMetrics', { ids: ['made-up-metric'] })).ok).toBe(false);
   });

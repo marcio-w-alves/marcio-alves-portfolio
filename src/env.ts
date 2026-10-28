@@ -3,11 +3,19 @@ import { z } from 'zod';
 /**
  * Server secrets, validated once at the system boundary.
  *
- * Resolved lazily so a build never fails for lack of runtime secrets.
+ * Resolved lazily so a build never fails for lack of runtime secrets. Both
+ * are optional: without the model credential the assistant degrades to the
+ * fast path instead of failing.
  */
+// `KEY=` in an env file means "not set", not "set to nothing".
+const optionalSecret = z.preprocess(
+  (value) => (value === '' ? undefined : value),
+  z.string().min(1).optional(),
+);
+
 const serverEnvSchema = z.object({
-  OPENAI_API_KEY: z.string().min(1),
-  GITHUB_TOKEN: z.string().min(1).optional(),
+  OPENAI_API_KEY: optionalSecret,
+  GITHUB_TOKEN: optionalSecret,
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;

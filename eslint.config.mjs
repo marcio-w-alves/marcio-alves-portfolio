@@ -31,6 +31,13 @@ export default defineConfig([
     },
   },
 
+  // A test double implements an async interface without doing anything
+  // asynchronous — that is the point of a double.
+  {
+    files: ['**/*.test.{ts,tsx}'],
+    rules: { '@typescript-eslint/require-await': 'off' },
+  },
+
   // Config and tooling files run in Node, outside the app's type program.
   {
     files: ['**/*.{js,mjs,cjs}'],

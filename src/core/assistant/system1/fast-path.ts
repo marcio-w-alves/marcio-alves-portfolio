@@ -75,3 +75,15 @@ export function fastPath(question: string, context: ConversationContext): FastPa
       return answered(SCORED_ANSWERS[routed.intent](context, question));
   }
 }
+
+/**
+ * The follow-ups the fast path would offer for an intent — every one of them a
+ * question it can answer — so an escalated answer still suggests only
+ * questions that cost nothing.
+ */
+export function followUpsFor(
+  intent: ScoredIntent | null,
+  context: ConversationContext,
+): readonly string[] {
+  return intent ? SCORED_ANSWERS[intent](context, '').followUps : boundaries.greeting().followUps;
+}

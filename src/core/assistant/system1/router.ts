@@ -58,18 +58,37 @@ export type Route =
   | { readonly intent: 'technology'; readonly technologies: readonly Technology[] }
   | { readonly intent: 'escalate'; readonly nearest: ScoredIntent | null };
 
+// English only: a question in another language is escalated before these run,
+// and the model applies the same rules in the visitor's language.
 const GUARDS: Readonly<Record<Guard, RegExp>> = {
   offPurpose:
-    /\b(ignore (all |any )?(the )?(previous|prior|above|earlier)|system prompt|you are now|pretend (to be|you)|jailbreak|developer mode|disregard (your|the|all)|reveal (your|the) (instructions|prompt|rules)|act as (a|an|my)|ignore (as|todas as) (instruções|regras)|esqueça (as|suas) instruções|prompt do sistema|finja (ser|que)|modo desenvolvedor|aja como)\b/,
+    /\b(ignore (all |any )?(the )?(previous|prior|above|earlier)|system prompt|you are now|pretend (to be|you)|jailbreak|developer mode|disregard (your|the|all)|reveal (your|the) (instructions|prompt|rules)|act as (a|an|my))\b/,
   // City-level location is shareable; a home address is not.
   privateInfo:
-    /\b(salary|salaries|compensation|hourly rate|how much (does|do|did) he (charge|make|earn)|home address|street address|phone number|how old|his age|birthday|married|wife|husband|girlfriend|boyfriend|his kids|children|religio\w*|politic\w*|health|password|salário|remuneração|quanto (ele )?(ganha|cobra)|endereço|telefone|celular|quantos anos (ele )?tem|aniversário|casado|esposa|marido|namorad[ao]|filhos|religião|política|saúde|senha)\b/,
+    /\b(salary|salaries|compensation|hourly rate|how much (does|do|did) he (charge|make|earn)|home address|street address|phone number|how old|his age|birthday|married|wife|husband|girlfriend|boyfriend|his kids|children|religio\w*|politic\w*|health|password)\b/,
 };
 
 // No \b: without the u flag it is ASCII-only, so it never matches after the "á"
 // of "olá". The trailing [!. ]*$ already keeps "hint" from reading as "hi".
-const GREETING =
-  /^(hi|hello|hey|hola|olá|oi|good (morning|afternoon|evening)|bom dia|boa tarde|boa noite)[!. ]*$/;
+const GREETING = /^(hi|hello|hey|hola|olá|oi|good (morning|afternoon|evening))[!. ]*$/;
+
+// The fast path's answers are written in English, so a question in another
+// language goes to the model, which replies in the visitor's language. Only
+// unambiguous markers count: "do", "no" and "com" are English too, and "é"
+// appears in "résumé". A word ending in an accented letter cannot be listed —
+// \b never closes after it — which is why the accents are a class of their own.
+const NON_ENGLISH =
+  /[ãõçâêôàñ¿¡]|\b(ele|ela|voce|sobre|qual|quais|quanto|onde|como|tem|não|nao|são|sao|dele|dela|seu|sua|uma|que|para|trabalhou|fala|carreira|experiência|experiencia|cuál|cómo|dónde|tiene|usted|habla|carrera)\b/;
+
+// A request to do something — write code, a poem, an email — is not a
+// question about Marcio a keyword can answer; the model decides whether it is
+// in scope.
+const TASK_REQUEST =
+  /^(can you |could you |would you |please |pls )?(write|create|generate|code|make|draft|compose|implement|build|translate)\b/;
+
+// "Why did he leave Deel?" asks for a reason the record rarely documents; a
+// keyword match would answer about the company instead of saying so.
+const WHY_DECISION = /^why (did|does|do|is|was|has|would) (he|marcio)\b/;
 
 type Rule = readonly [RegExp, number];
 
@@ -82,7 +101,8 @@ const INTENT_RULES: Readonly<Record<ScoredIntent, readonly Rule[]>> = {
     [/\bam i (talking|speaking) to\b/, 4],
   ],
   resume: [
-    [/\b(resume|résumé|cv)\b/, 5],
+    // \b cannot close after the accented "é" (ASCII-only without the u flag).
+    [/\b(resume|cv)\b|\brésumé/, 5],
     [/\bpdf\b/, 2],
   ],
   contact: [
@@ -213,7 +233,8 @@ const INTENT_RULES: Readonly<Record<ScoredIntent, readonly Rule[]>> = {
     [/\btechnolog\w*\b/, 2],
     [/\bexpertise\b/, 2],
     [/\bgood at\b/, 2],
-    [/\btools?\b/, 1.5],
+    // Alone, "tools" is too weak to answer on: "internal tools" is not his stack.
+    [/\btools?\b/, 1],
     [/\bstrongest\b/, 1],
   ],
   leadership: [
@@ -374,14 +395,16 @@ function fromContext(context: ConversationContext): ScoredIntent {
 
 export function route(question: string, context: ConversationContext): Route {
   const text = normalize(question);
-  if (!text) return { intent: 'escalate', nearest: null };
+  if (!text || NON_ENGLISH.test(text)) return { intent: 'escalate', nearest: null };
   if (GUARDS.offPurpose.test(text)) return { intent: 'offPurpose' };
   if (GUARDS.privateInfo.test(text)) return { intent: 'privateInfo' };
   if (GREETING.test(text)) return { intent: 'greeting' };
 
   const companies = mentionedCompanies(text);
   const best = scoreIntents(text);
-  if (isCompound(text, companies)) return { intent: 'escalate', nearest: best.intent };
+  if (isCompound(text, companies) || TASK_REQUEST.test(text) || WHY_DECISION.test(text)) {
+    return { intent: 'escalate', nearest: best.intent };
+  }
 
   const project = matchProject(text);
   if (project) return { intent: 'project', project };
