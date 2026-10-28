@@ -72,4 +72,15 @@ describe('InlineText', () => {
     expect(screen.getByText('TypeScript').tagName).toBe('STRONG');
     expect(screen.getByText('zod').tagName).toBe('CODE');
   });
+
+  it('links a repository named in bold, keeping it bold', () => {
+    render(
+      <p>
+        <InlineText text="**[portfolio](https://github.com/marcio-w-alves/portfolio)**" />
+      </p>,
+    );
+    const link = screen.getByRole('link', { name: opensInNewTab('portfolio') });
+    expect(link).toHaveAttribute('href', 'https://github.com/marcio-w-alves/portfolio');
+    expect(link.closest('strong')).not.toBeNull();
+  });
 });
