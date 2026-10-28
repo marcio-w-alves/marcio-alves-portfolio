@@ -1,11 +1,9 @@
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
-import { APIConnectionTimeoutError } from 'openai';
 import { Agent, getGlobalDispatcher, setGlobalDispatcher } from 'undici';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildContainer } from '@/composition-root';
 import type { AnswerSource, AssistantEvent } from '@/core/assistant/assistant-event';
-import { ModelStreamStalledError } from '@/infrastructure/openai/openai-language-model';
 import knowledgeIndex from '@/infrastructure/retrieval/knowledge-index.json';
 import { createChatHandler } from './chat-handler';
 
@@ -22,8 +20,8 @@ const TEST_TIMEOUT_MS = 50;
 
 const server = setupServer();
 const outbound: Request[] = [];
-/** What the composition reported to whoever operates the site. */
-let reported: unknown[] = [];
+/** The failures the site logged for whoever operates it, as structured log lines. */
+let reported: Record<string, unknown>[] = [];
 
 // A fresh connection pool per test: MSW's emulated socket for an exchange
 // aborted mid-stream can still be tearing down when the next test connects.
@@ -37,8 +35,9 @@ beforeAll(() => {
 beforeEach(() => {
   outbound.length = 0;
   reported = [];
-  vi.spyOn(console, 'error').mockImplementation((_label: unknown, error: unknown) => {
-    reported.push(error);
+  vi.spyOn(console, 'error').mockImplementation((line: unknown) => {
+    const entry = JSON.parse(String(line)) as Record<string, unknown>;
+    if (entry.event === 'assistant.failed') reported.push(entry);
   });
   connections = new Agent();
   setGlobalDispatcher(connections);
@@ -358,7 +357,11 @@ describe('POST /api/chat — when OpenAI fails', () => {
       expect(events[0]).toEqual(FALLBACK_START);
       expect(events.at(-1)).toMatchObject({ type: 'finish', sources: [] });
       expect(events.some((event) => event.type === 'error')).toBe(false);
-      expect(reported).toEqual([expect.objectContaining({ status })]);
+      expect(reported).toEqual([
+        expect.objectContaining({
+          errorMessage: expect.stringContaining(String(status)) as unknown,
+        }),
+      ]);
     },
   );
 
@@ -372,7 +375,7 @@ describe('POST /api/chat — when OpenAI fails', () => {
     expect(attempts.every((attempt) => attempt.signal.aborted)).toBe(true);
     expect(events[0]).toEqual(FALLBACK_START);
     expect(events.at(-1)).toMatchObject({ type: 'finish', sources: [] });
-    expect(reported).toEqual([expect.any(APIConnectionTimeoutError)]);
+    expect(reported).toEqual([expect.objectContaining({ errorMessage: 'Request timed out.' })]);
   });
 
   it('ends an answer whose stream goes quiet, with a retryable error, after the configured timeout', async () => {
@@ -403,7 +406,7 @@ describe('POST /api/chat — when OpenAI fails', () => {
       },
     });
     expect(signals.map((signal) => signal.aborted)).toEqual([true]);
-    expect(reported).toEqual([expect.any(ModelStreamStalledError)]);
+    expect(reported).toEqual([expect.objectContaining({ errorName: 'ModelStreamStalledError' })]);
   });
 });
 

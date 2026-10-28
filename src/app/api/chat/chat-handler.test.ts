@@ -11,6 +11,8 @@ import { createChatHandler, MAX_BODY_BYTES } from './chat-handler';
 
 const reported: unknown[] = [];
 const reportError = (error: unknown) => reported.push(error);
+const rateLimited: string[] = [];
+const clock = { now: () => new Date('2026-10-28T00:00:00Z') };
 
 /** A model that calls one action, then answers from it. */
 function scriptedModel(call: ToolCall, answer: string): LanguageModelPort {
@@ -32,7 +34,13 @@ function handlerWith(
   requestLimiter: { admit(key: string): { allowed: boolean; retryAfterMs: number } } = ALWAYS,
 ) {
   reported.length = 0;
-  return createChatHandler({ assistant, reportError, requestLimiter });
+  rateLimited.length = 0;
+  return createChatHandler({
+    assistant,
+    reportError,
+    requestLimiter,
+    reportRateLimited: (clientId) => rateLimited.push(clientId),
+  });
 }
 
 function spending() {
@@ -42,7 +50,12 @@ function spending() {
   };
 }
 
-const fastPathOnly = createAssistant({ modelAssistant: null, reportError, ...spending() });
+const fastPathOnly = createAssistant({
+  modelAssistant: null,
+  clock,
+  reportError,
+  ...spending(),
+});
 
 function post(body: unknown, contentType = 'application/json', ip = '203.0.113.7'): Request {
   return new Request('https://marciomariani.dev/api/chat', {
@@ -81,8 +94,9 @@ describe('POST /api/chat — answering', () => {
           'He led the Roots frontend.',
         ),
         tools: createToolRegistry(),
-        clock: { now: () => new Date('2026-10-28T00:00:00Z') },
+        clock,
       }),
+      clock,
       reportError,
       ...spending(),
     });
@@ -198,6 +212,7 @@ describe('POST /api/chat — pacing', () => {
     expect(await refused.json()).toEqual({
       error: { code: 'rate_limited', message: 'Too many questions in a short time.' },
     });
+    expect(rateLimited).toEqual(['203.0.113.7']);
   });
 
   it('paces each client separately', async () => {

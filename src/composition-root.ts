@@ -1,4 +1,4 @@
-import { createAssistant, type Assistant } from '@/core/assistant/assistant';
+import { createAssistant, type AnswerReport, type Assistant } from '@/core/assistant/assistant';
 import {
   createModelAssistant,
   type ModelAssistant,
@@ -13,12 +13,16 @@ import { serverEnv, type ServerEnv } from '@/env';
 import { createAnswerCache } from '@/infrastructure/budget/answer-cache';
 import { createModelBudget } from '@/infrastructure/budget/model-budget';
 import { createGithubApi } from '@/infrastructure/github/github-api';
+import { createClientTagger } from '@/infrastructure/logging/client-tag';
+import { errorFields, logger } from '@/infrastructure/logging/logger';
 import { createOpenAIClient, OPENAI_TIMEOUT_MS } from '@/infrastructure/openai/openai-client';
 import { createOpenAIEmbeddings } from '@/infrastructure/openai/openai-embeddings';
 import { createOpenAILanguageModel } from '@/infrastructure/openai/openai-language-model';
 import {
   createCircuitBreaker,
   withCircuitBreaker,
+  type CircuitBreaker,
+  type CircuitState,
 } from '@/infrastructure/resilience/circuit-breaker';
 import { EMBEDDING_DIMENSIONS, EMBEDDING_MODEL } from '@/infrastructure/retrieval/index-spec';
 import knowledgeIndex from '@/infrastructure/retrieval/knowledge-index.json';
@@ -52,25 +56,63 @@ const MODEL_ANSWERS_PER_TEN_MINUTES = 15;
  */
 const DAILY_MODEL_TOKENS = 2_000_000;
 
+/** What the health check may say about the model: whether it is configured, and whether it is reachable. */
+export interface ModelStatus {
+  readonly model: 'enabled' | 'disabled';
+  /** Null when there is no model to guard. */
+  readonly circuit: CircuitState | null;
+}
+
 export interface Container {
   readonly assistant: Assistant;
   readonly reportError: (error: unknown) => void;
   readonly requestLimiter: SlidingWindowLimiter;
+  readonly reportRateLimited: (clientId: string) => void;
+  readonly modelStatus: () => ModelStatus;
 }
 
+const tagClient = createClientTagger();
+
 function reportError(error: unknown): void {
-  console.error('[assistant]', error);
+  logger.error('assistant.failed', errorFields(error));
+}
+
+function reportAnswered({ clientId, ...handling }: AnswerReport): void {
+  logger.info('chat.answered', { ...handling, client: tagClient(clientId) });
+}
+
+function reportRateLimited(clientId: string): void {
+  logger.warn('chat.rate_limited', { client: tagClient(clientId) });
 }
 
 const budget = createModelBudget({
   answersPerWindow: MODEL_ANSWERS_PER_TEN_MINUTES,
   windowMs: TEN_MINUTES,
   dailyTokens: DAILY_MODEL_TOKENS,
+  onExhausted: () => {
+    logger.warn('model.budget_exhausted', { dailyTokens: DAILY_MODEL_TOKENS });
+  },
 });
+
+function createModelCircuitBreaker(): CircuitBreaker {
+  return createCircuitBreaker({
+    failureThreshold: 3,
+    cooldownMs: 30_000,
+    onTransition: (to) => {
+      if (to === 'open') logger.warn('model.circuit_opened');
+      else logger.info('model.circuit_closed');
+    },
+  });
+}
 
 export interface Observers {
   /** Every action the model ran; the evaluation reads the evidence from here. */
   readonly onToolResult?: (result: ToolTrace) => void;
+}
+
+interface GuardedModelAssistant {
+  readonly assistant: ModelAssistant;
+  readonly breaker: CircuitBreaker;
 }
 
 export interface ContainerOptions extends Observers {
@@ -80,18 +122,12 @@ export interface ContainerOptions extends Observers {
   readonly openAITimeoutMs?: number;
 }
 
-interface ModelAssistantOptions extends Observers {
-  readonly apiKey: string;
-  readonly githubToken: string | undefined;
-  readonly openAITimeoutMs: number;
-}
-
-function buildModelAssistant({
-  apiKey,
-  githubToken,
-  openAITimeoutMs,
-  onToolResult,
-}: ModelAssistantOptions): ModelAssistant {
+function buildModelAssistant(
+  apiKey: string,
+  githubToken: string | undefined,
+  openAITimeoutMs: number,
+  observers: Observers,
+): GuardedModelAssistant {
   const client = createOpenAIClient(apiKey, { timeoutMs: openAITimeoutMs });
   const search = createVectorKnowledgeSearch({
     embeddings: createOpenAIEmbeddings({
@@ -110,6 +146,7 @@ function buildModelAssistant({
     ...createSearchTools(search),
     ...createExternalTools({ references: createWikipediaReferences(), github }),
   ]);
+  const breaker = createModelCircuitBreaker();
   const model = withCircuitBreaker(
     createOpenAILanguageModel({
       client,
@@ -117,17 +154,18 @@ function buildModelAssistant({
       temperature: TEMPERATURE,
       idleTimeoutMs: openAITimeoutMs,
     }),
-    createCircuitBreaker({ failureThreshold: 3, cooldownMs: 30_000 }),
+    breaker,
   );
-  return createModelAssistant({
+  const assistant = createModelAssistant({
     model,
     tools,
     clock: systemClock,
     onUsage: (usage) => {
       budget.record(usage);
     },
-    ...(onToolResult ? { onToolResult } : {}),
+    ...(observers.onToolResult ? { onToolResult: observers.onToolResult } : {}),
   });
+  return { assistant, breaker };
 }
 
 /**
@@ -140,23 +178,26 @@ export function buildContainer({
   openAITimeoutMs = OPENAI_TIMEOUT_MS,
   ...observers
 }: ContainerOptions = {}): Container {
+  // Without a credential the site still answers everything the fast path
+  // recognizes, and says plainly what it cannot.
+  const model = env.OPENAI_API_KEY
+    ? buildModelAssistant(env.OPENAI_API_KEY, env.GITHUB_TOKEN, openAITimeoutMs, observers)
+    : null;
   return {
     assistant: createAssistant({
-      // Without a credential the site still answers everything the fast
-      // path recognizes, and says plainly what it cannot.
-      modelAssistant: env.OPENAI_API_KEY
-        ? buildModelAssistant({
-            apiKey: env.OPENAI_API_KEY,
-            githubToken: env.GITHUB_TOKEN,
-            openAITimeoutMs,
-            ...observers,
-          })
-        : null,
+      modelAssistant: model?.assistant ?? null,
       budget,
       answerCache: createAnswerCache({ ttlMs: 60 * 60 * 1000, maxEntries: 500 }),
+      clock: systemClock,
       reportError,
+      onAnswered: reportAnswered,
     }),
     reportError,
+    reportRateLimited,
+    modelStatus: () => ({
+      model: model ? 'enabled' : 'disabled',
+      circuit: model?.breaker.state() ?? null,
+    }),
     requestLimiter: createSlidingWindowLimiter({
       limit: REQUESTS_PER_TEN_MINUTES,
       windowMs: TEN_MINUTES,
