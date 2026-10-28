@@ -57,7 +57,7 @@ export function staffFit(context: ConversationContext): AssistantResponse {
     'staffFit',
     [
       text(
-        'Marcio has several characteristics associated with Staff-level frontend engineering: deep technical expertise, experience leading architectural decisions, measurable product improvements, and a track record of mentoring engineers.\n\n' +
+        'His documented experience shows several signals associated with Staff-level frontend engineering: architecture ownership, standards set across product areas, measurable product improvements, and mentoring and hiring.\n\n' +
           `At **Deel**, for example, he led the HRIS team responsible for the company's core HR tools product and standardized its frontend architecture, while improving Web Vitals by at least 30% and reducing critical page loading time by ${metricValue('deel-critical-load')}. At **Roots**, he led frontend technical development and grew the team from a solo setup to four developers.`,
       ),
       table(
@@ -191,7 +191,7 @@ export function hrisRole(): AssistantResponse {
     'hrisRole',
     [
       text(
-        "At **Deel**, Marcio was a Senior Frontend Engineer who **led and maintained the HRIS team** responsible for the company's core HR tools product. His role went beyond feature delivery:\n\n" +
+        "At **Deel**, Marcio was a Senior Frontend Engineer who **led and maintained the HRIS team** responsible for the company's core HR tools product. His documented responsibilities:\n\n" +
           '- **Technical ownership** — standardized frontend architecture for HRIS interfaces, covering structure, state management, error handling and scalability.\n' +
           '- **Integration** — led the migration and scaling of the Roots platform into Deel, mitigating rollout risks.\n' +
           '- **People** — mentored junior engineers through knowledge-sharing sessions and code walkthroughs, and took part in hiring and onboarding.\n' +

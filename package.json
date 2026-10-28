@@ -23,7 +23,8 @@
     "release": "semantic-release",
     "test": "vitest run",
     "test:watch": "vitest",
-    "rag:build": "tsx --env-file=.env.local scripts/build-knowledge-index.mts"
+    "rag:build": "tsx --env-file=.env.local scripts/build-knowledge-index.mts",
+    "eval:assistant": "tsx --env-file=.env.local scripts/evaluate-assistant.mts"
   },
   "dependencies": {
     "geist": "1.8.2",

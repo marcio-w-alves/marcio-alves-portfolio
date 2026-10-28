@@ -48,6 +48,14 @@ interface Options {
   readonly clock: ClockPort;
   /** Called once per model call with what it cost, for the spending budget. */
   readonly onUsage?: (usage: ModelUsage) => void;
+  /** Called with every action the model ran and what it got back — the evidence an answer rests on. */
+  readonly onToolResult?: (result: ToolTrace) => void;
+}
+
+export interface ToolTrace {
+  readonly name: string;
+  readonly arguments: string;
+  readonly outcome: ToolOutcome;
 }
 
 function parseArguments(raw: string): unknown {
@@ -58,7 +66,13 @@ function parseArguments(raw: string): unknown {
   }
 }
 
-export function createModelAssistant({ model, tools, clock, onUsage }: Options): ModelAssistant {
+export function createModelAssistant({
+  model,
+  tools,
+  clock,
+  onUsage,
+  onToolResult,
+}: Options): ModelAssistant {
   const definitions = tools.tools.map(({ name, description, parameters }) => ({
     name,
     description,
@@ -141,6 +155,7 @@ export function createModelAssistant({ model, tools, clock, onUsage }: Options):
         );
         for (const [index, call] of calls.entries()) {
           const outcome = outcomes[index] ?? { ok: false, error: 'The action did not run.' };
+          onToolResult?.({ name: call.name, arguments: call.arguments, outcome });
           messages.push({
             role: 'tool',
             toolCallId: call.id,

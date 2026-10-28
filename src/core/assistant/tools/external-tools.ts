@@ -80,7 +80,12 @@ export function createExternalTools({ references, github }: Dependencies): Tool[
           reference: summary
             ? { title: summary.title, summary: clip(summary.extract, MAX_EXTRACT) }
             : UNAVAILABLE,
-          marcioRole: { role: role.role, period: role.period, summary: role.summary },
+          marcioRole: {
+            role: role.role,
+            period: role.period,
+            current: role.current,
+            summary: role.summary,
+          },
         },
         sources: [...(summary ? [referenceSource(summary)] : []), sourceOf(role.source)],
       };

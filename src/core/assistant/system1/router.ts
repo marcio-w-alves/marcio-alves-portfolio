@@ -90,6 +90,10 @@ const TASK_REQUEST =
 // keyword match would answer about the company instead of saying so.
 const WHY_DECISION = /^why (did|does|do|is|was|has|would) (he|marcio)\b/;
 
+// A grade or an exact figure is a detail the fast path's fixed answers do not
+// carry; matching "university" or "typescript" would answer around it.
+const NARROW_DETAIL = /\b(gpa|grades?|exact|exactly)\b/;
+
 type Rule = readonly [RegExp, number];
 
 /** Ordered by specificity: on equal scores the earlier intent wins. */
@@ -301,8 +305,10 @@ const COMPANY_WEIGHT = 2.5;
 /** Below this score the router is guessing, and a guess is worse than escalating. */
 const CONFIDENCE_THRESHOLD = 1.5;
 
+// The whole message, not its first word: "how many repositories…" and "and
+// what did he do there…" are questions of their own, not "tell me more".
 const GENERIC_FOLLOW_UP =
-  /^(tell me more|more|go on|continue|and\??|why\??|how\??|explain( more)?|elaborate|details?|more details|can you elaborate)\b/;
+  /^(tell me more|more|go on|continue|and|why|how|explain( more)?|elaborate|details?|more details|can you elaborate)[?.! ]*$/;
 
 // A keyword router answers one intent. Questions that compare, or that are
 // long enough to carry several asks, go to the model so they are answered
@@ -314,6 +320,8 @@ const MAX_FAST_PATH_WORDS = 25;
 // brief tool, not an account of Marcio's experience. Questions about him
 // ("what is he working on", "what are his skills") are not definitions.
 const DEFINITION = /^(what is|what's|what are|o que é|define|explain what) (?!(he|his|marcio)\b)/;
+const COMPANY_PROFILE =
+  /\b(what (kind|type|sort) of (company|business|startup)|what does (the company|toptal|deel|roots|maison( modern)?|webfi) do)\b/;
 
 const NEXT_INTENT: Partial<Record<string, ScoredIntent>> = {
   career: 'achievements',
@@ -402,13 +410,19 @@ export function route(question: string, context: ConversationContext): Route {
 
   const companies = mentionedCompanies(text);
   const best = scoreIntents(text);
-  if (isCompound(text, companies) || TASK_REQUEST.test(text) || WHY_DECISION.test(text)) {
+  if (
+    isCompound(text, companies) ||
+    TASK_REQUEST.test(text) ||
+    WHY_DECISION.test(text) ||
+    NARROW_DETAIL.test(text)
+  ) {
     return { intent: 'escalate', nearest: best.intent };
   }
 
   const project = matchProject(text);
   if (project) return { intent: 'project', project };
-  if (DEFINITION.test(text)) return { intent: 'escalate', nearest: best.intent };
+  if (DEFINITION.test(text) || COMPANY_PROFILE.test(text))
+    return { intent: 'escalate', nearest: best.intent };
 
   const technologies = matchTechnologies(text);
   if (technologies.length > 0) return { intent: 'technology', technologies };
