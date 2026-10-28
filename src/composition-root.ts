@@ -23,7 +23,6 @@ import { createModelBudget } from '@/infrastructure/budget/model-budget';
 import { createGithubApi } from '@/infrastructure/github/github-api';
 import { createClientTagger } from '@/infrastructure/logging/client-tag';
 import { errorFields, logger } from '@/infrastructure/logging/logger';
-import { CHAT_MODEL } from '@/infrastructure/openai/chat-model';
 import { createOpenAIClient } from '@/infrastructure/openai/openai-client';
 import { createOpenAIEmbeddings } from '@/infrastructure/openai/openai-embeddings';
 import { createOpenAILanguageModel } from '@/infrastructure/openai/openai-language-model';
@@ -130,12 +129,13 @@ export interface ContainerOptions extends Observers {
 interface ModelWiring {
   readonly apiKey: string;
   readonly githubToken: string | undefined;
+  readonly chatModel: string;
   readonly openAITimeoutMs: number;
   readonly budget: ModelBudgetPort;
 }
 
 function buildModelAssistant(
-  { apiKey, githubToken, openAITimeoutMs, budget }: ModelWiring,
+  { apiKey, githubToken, chatModel, openAITimeoutMs, budget }: ModelWiring,
   observers: Observers,
 ): GuardedModelAssistant {
   const client = createOpenAIClient(apiKey, { timeoutMs: openAITimeoutMs });
@@ -163,7 +163,7 @@ function buildModelAssistant(
   const model = withCircuitBreaker(
     createOpenAILanguageModel({
       client,
-      model: CHAT_MODEL,
+      model: chatModel,
       temperature: TEMPERATURE,
       idleTimeoutMs: openAITimeoutMs,
     }),
@@ -206,6 +206,7 @@ export function buildContainer({
         {
           apiKey: env.OPENAI_API_KEY,
           githubToken: env.GITHUB_TOKEN,
+          chatModel: settings.chatModel,
           openAITimeoutMs,
           budget,
         },
