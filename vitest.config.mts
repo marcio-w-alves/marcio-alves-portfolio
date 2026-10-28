@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 
 const alias = {
   '@': fileURLToPath(new URL('./src', import.meta.url)),
@@ -12,6 +12,8 @@ export default defineConfig({
   resolve: { alias },
   test: {
     restoreMocks: true,
+    // Boundary fixtures are source trees the architecture tests cruise, not suites to run.
+    exclude: [...configDefaults.exclude, 'src/architecture/fixtures/**'],
     // Listing every source file shows the untested ones at 0% instead of
     // leaving them out. Only the core and the adapters are gated, each a little
     // below its measured baseline so the gate catches regressions, not effort.

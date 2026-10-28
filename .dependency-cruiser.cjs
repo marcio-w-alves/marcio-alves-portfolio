@@ -6,7 +6,8 @@
  * network, or the composition root that wires it. A convention nobody checks
  * is a convention that erodes, so the claim is enforced here and in CI.
  */
-const TESTS = '\\.(test|spec)\\.tsx?$';
+// Only what Vitest runs counts as a test; any other name is shipped code and obeys every rule.
+const TESTS = '\\.test\\.tsx?$';
 const ROOTS = 'composition-root|env';
 // A folder (`ui/`) or a single module (`env.ts`), never a prefix of a longer name.
 const MODULE_END = '(/|\\.)';
@@ -79,6 +80,15 @@ module.exports = {
       severity: 'error',
       from: { path: '^src/', pathNot: [TESTS, '^src/testing/'] },
       to: { path: '^src/testing/' },
+    },
+    {
+      name: 'shipped-code-never-imports-tests',
+      comment:
+        'Tests are exempt from the layer rules because nothing ships them. A shipped module that ' +
+        'imports one would carry that exemption into the bundle.',
+      severity: 'error',
+      from: { path: '^src/', pathNot: TESTS },
+      to: { path: TESTS },
     },
     {
       name: 'src-never-imports-scripts',

@@ -62,7 +62,7 @@ adapters, the composition root or `env`; adapters never reach the routes, the
 UI or the root; routes reach adapters only through the root. Cycles and
 unresolvable imports are rejected. Zod is the single allowed dependency inside
 `src/core`, because the assistant's tool contracts are Zod schemas and those
-schemas are policy, not an adapter. Each rule has a fixture under
+schemas are policy, not an adapter. Each boundary rule has a fixture under
 `src/architecture/fixtures` that breaks it, and a test proves the rule reports
 it.
 

@@ -5,7 +5,7 @@ const isServerOnly = (source: string) =>
   /^src\/(infrastructure\/|composition-root\.|env\.)/.test(source);
 
 describe('the client bundle boundary', () => {
-  it('finds a client module that reaches the composition root through a helper', async () => {
+  it('finds a client module that reaches the composition root through a helper, and only that one', async () => {
     const paths = clientPathsTo(await cruiseFixture('client-reaches-server'), isServerOnly);
 
     expect(paths).toEqual([['src/app/widget.ts', 'src/app/label.ts', 'src/composition-root.ts']]);

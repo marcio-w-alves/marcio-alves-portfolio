@@ -53,6 +53,12 @@ const FORBIDDEN_EDGES = [
     to: 'src/testing/double.ts',
   },
   {
+    fixture: 'shipped-to-test',
+    rule: 'shipped-code-never-imports-tests',
+    from: 'src/ui/shown.ts',
+    to: 'src/ui/format.test.ts',
+  },
+  {
     fixture: 'src-to-scripts',
     rule: 'src-never-imports-scripts',
     from: 'src/ui/panel.ts',
