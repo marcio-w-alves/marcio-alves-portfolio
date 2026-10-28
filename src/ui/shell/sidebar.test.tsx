@@ -10,11 +10,11 @@ const { knowledge, topicCatalog } = createSiteContent(fixtureKnowledge, fixtureA
 
 const { profile, contact } = knowledge;
 
-function renderSidebar(links: SidebarLinks = contact) {
+function renderSidebar(links: SidebarLinks = contact, photoUrl: string | null = null) {
   const handlers = { onNewConversation: vi.fn(), onClose: vi.fn() };
   renderWithMessages(
     <Sidebar
-      profile={{ name: profile.name, title: profile.title }}
+      profile={{ name: profile.name, title: profile.title, photoUrl }}
       topics={topicCatalog.topics.map(({ id, label, icon }) => ({
         id,
         label,
@@ -35,6 +35,20 @@ describe('Sidebar', () => {
     const sidebar = screen.getByRole('complementary', { name: 'Portfolio navigation' });
     expect(within(sidebar).getByText(profile.name)).toBeInTheDocument();
     expect(within(sidebar).getByText(profile.title)).toBeInTheDocument();
+  });
+
+  it('shows the profile photo beside the name, as decoration the name already explains', () => {
+    renderSidebar(contact, '/ada.jpg');
+    const sidebar = screen.getByRole('complementary', { name: 'Portfolio navigation' });
+    const photo = sidebar.querySelector('img');
+    expect(photo?.getAttribute('src')).toContain('ada.jpg');
+    expect(photo).toHaveAttribute('alt', '');
+  });
+
+  it('shows no picture when the profile has none', () => {
+    renderSidebar(contact, null);
+    const sidebar = screen.getByRole('complementary', { name: 'Portfolio navigation' });
+    expect(sidebar.querySelector('img')).toBeNull();
   });
 
   it('links every topic to its page and marks only the current one', () => {

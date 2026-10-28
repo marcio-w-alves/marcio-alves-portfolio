@@ -8,6 +8,7 @@ import { Icon, IconButton, VisuallyHidden, type IconName } from '../primitives';
 export interface SidebarProfile {
   readonly name: string;
   readonly title: string;
+  readonly photoUrl: string | null;
 }
 
 export interface SidebarTopic {
@@ -53,6 +54,20 @@ export function Sidebar({
       className="flex h-full flex-col gap-7 overflow-y-auto px-3 pt-5.5 pb-4.5"
     >
       <div className="flex items-start gap-2 pr-1 pl-2.5">
+        {profile.photoUrl ? (
+          // The name beside it says who this is, so the picture itself is decorative.
+          // A plain img: the photo is a few kilobytes already, and next/image would
+          // add its client code to every page's budget.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={profile.photoUrl}
+            alt=""
+            width={40}
+            height={40}
+            decoding="async"
+            className="mt-0.5 size-10 shrink-0 rounded-full object-cover shadow-ring"
+          />
+        ) : null}
         <div className="min-w-0 flex-1 pt-1">
           <p className="font-display text-15 leading-heading font-semibold tracking-identity">
             {profile.name}

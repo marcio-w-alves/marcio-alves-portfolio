@@ -22,6 +22,7 @@ export const fixtureKnowledge: KnowledgeSource = {
     focus: en('She plans platform roadmaps with product teams.'),
     location: { country: en('Portugal'), city: 'Porto' },
     availability: en('Portugal · hybrid · UTC+0 · open to platform roles'),
+    photoUrl: null,
     source: 'cv',
   },
   welcome: {

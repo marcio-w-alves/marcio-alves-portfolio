@@ -37,6 +37,7 @@ export const profile: ProfileSource = {
   },
   location: { country: { en: 'Brazil' }, city: 'João Pessoa, Paraíba' },
   availability: { en: 'Brazil · remote · UTC−3 · open to opportunities' },
+  photoUrl: '/marcio-alves.jpg',
   source: 'profile',
 };
 
