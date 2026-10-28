@@ -49,7 +49,10 @@ export const welcome: WelcomeSource = {
   },
   placeholder: { en: 'Ask about my experience, skills or projects…' },
   helper: { en: 'AI answers grounded in my professional experience' },
-  evidence: { roles: ['way2b1', 'deel', 'roots'], metrics: ['deel-critical-load', 'roots-team'] },
+  evidence: {
+    roles: ['way2b1', 'deel', 'roots'],
+    metrics: ['deel-critical-load', 'deel-web-vitals'],
+  },
 };
 
 export const assistant: AssistantIdentitySource = {
