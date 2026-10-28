@@ -1,71 +1,59 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { suggestions } from '@/core/assistant/topics';
+import { suggestedQuestions } from '@/core/assistant/topics';
 import { SuggestedQuestions } from './suggested-questions';
 
-const questions = suggestions('overview', 0, 4);
+const welcomeChoices = suggestedQuestions('overview', 0, 4).map(({ question, short }) => ({
+  question,
+  label: short,
+}));
 
 describe('SuggestedQuestions', () => {
-  it('lists every question as a button named by the question, under its title', () => {
-    render(
-      <SuggestedQuestions title="Suggested questions" questions={questions} onPick={vi.fn()} />,
-    );
-
-    const list = screen.getByRole('list', { name: 'Suggested questions' });
-    const buttons = within(list).getAllByRole('button');
-    expect(buttons.map((button) => button.textContent)).toEqual(questions);
-  });
-
-  it('hands the picked question to the parent', async () => {
-    const onPick = vi.fn();
-    render(
-      <SuggestedQuestions title="Suggested questions" questions={questions} onPick={onPick} />,
-    );
-
-    await userEvent.click(screen.getByRole('button', { name: "Tell me about Marcio's career." }));
-
-    expect(onPick).toHaveBeenCalledExactlyOnceWith("Tell me about Marcio's career.");
-  });
-
-  it('asks the parent for other questions when "More questions" is pressed', async () => {
-    const onPick = vi.fn();
-    const onShuffle = vi.fn();
+  it('shows each suggestion by its short label, under its title', () => {
     render(
       <SuggestedQuestions
         title="Suggested questions"
-        questions={questions}
-        onPick={onPick}
-        onShuffle={onShuffle}
+        questions={welcomeChoices}
+        onPick={vi.fn()}
       />,
     );
 
-    await userEvent.click(screen.getByRole('button', { name: 'More questions' }));
-
-    expect(onShuffle).toHaveBeenCalledOnce();
-    expect(onPick).not.toHaveBeenCalled();
+    const list = screen.getByRole('list', { name: 'Suggested questions' });
+    const chips = within(list).getAllByRole('button');
+    expect(chips.map((chip) => chip.textContent)).toEqual([
+      'His career',
+      'Why Staff-level',
+      'Work at Deel',
+      'React & TypeScript',
+    ]);
   });
 
-  it('offers no "More questions" control when the parent cannot shuffle', () => {
+  it('asks the full question when its short label is picked', async () => {
+    const onPick = vi.fn();
     render(
-      <SuggestedQuestions title="Suggested questions" questions={questions} onPick={vi.fn()} />,
+      <SuggestedQuestions title="Suggested questions" questions={welcomeChoices} onPick={onPick} />,
     );
 
-    expect(screen.queryByRole('button', { name: 'More questions' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Work at Deel' }));
+
+    expect(onPick).toHaveBeenCalledExactlyOnceWith('What has he built at Deel?');
   });
 
-  it('works the same as chips', async () => {
+  it('shows the question itself where no label is given', async () => {
     const onPick = vi.fn();
     render(
       <SuggestedQuestions
-        variant="chips"
-        title="Follow-up questions"
-        questions={['What did he do at Roots?', 'Has he led engineering teams?']}
+        title="Ask a follow-up"
+        questions={[
+          { question: 'What did he do at Roots?' },
+          { question: 'Has he led engineering teams?' },
+        ]}
         onPick={onPick}
       />,
     );
 
-    const list = screen.getByRole('list', { name: 'Follow-up questions' });
+    const list = screen.getByRole('list', { name: 'Ask a follow-up' });
     await userEvent.click(
       within(list).getByRole('button', { name: 'Has he led engineering teams?' }),
     );
@@ -73,20 +61,37 @@ describe('SuggestedQuestions', () => {
     expect(onPick).toHaveBeenCalledExactlyOnceWith('Has he led engineering teams?');
   });
 
+  it('still names the list for screen readers when the title is hidden', () => {
+    render(
+      <SuggestedQuestions
+        title="Suggested questions"
+        hideTitle
+        align="center"
+        questions={welcomeChoices}
+        onPick={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('list', { name: 'Suggested questions' })).toBeInTheDocument();
+  });
+
   it('keeps two lists on one page labelled by their own titles', () => {
     render(
       <>
-        <SuggestedQuestions title="Suggested questions" questions={questions} onPick={vi.fn()} />
         <SuggestedQuestions
-          variant="chips"
-          title="Follow-up questions"
-          questions={['Where did he study?']}
+          title="Suggested questions"
+          questions={welcomeChoices}
+          onPick={vi.fn()}
+        />
+        <SuggestedQuestions
+          title="Ask a follow-up"
+          questions={[{ question: 'Where did he study?' }]}
           onPick={vi.fn()}
         />
       </>,
     );
 
     expect(screen.getByRole('list', { name: 'Suggested questions' })).toBeInTheDocument();
-    expect(screen.getByRole('list', { name: 'Follow-up questions' })).toBeInTheDocument();
+    expect(screen.getByRole('list', { name: 'Ask a follow-up' })).toBeInTheDocument();
   });
 });

@@ -117,7 +117,7 @@
 
   /* Shape */
   --radius-hairline: 1px;
-  --radius-kbd: 4px;
+  --radius-kbd: 5px;
   --radius-mark: 9px;
   --radius-control: 10px;
   --radius-mark-lg: 11px;
@@ -163,7 +163,7 @@
   --animate-turn: rise 320ms var(--ease-standard) both;
 
   /* The welcome state settles in more slowly than a message does. */
-  --animate-fade-slow: fade 450ms var(--ease-standard);
+  --animate-fade-slow: fade 600ms var(--ease-standard);
   /* The "Jump to latest" pill rises a little faster than the default. */
   --animate-rise-short: rise 200ms var(--ease-standard);
 
@@ -227,7 +227,7 @@
   --container-compact: 861px;
   --container-phone: 601px;
 
-  --container-welcome: 760px;
+  --container-welcome: 680px;
   --container-measure: 62ch;
   --container-bubble: min(78%, 560px);
   --container-bubble-phone: 88%;
@@ -267,6 +267,23 @@
   --inset-shadow-rule-right: inset -1px 0 0 var(--color-border);
   --inset-shadow-rule-bottom: inset 0 -1px 0 var(--color-border);
   --tracking-identity: -0.02em;
+
+  /*
+   * The welcome hero, the composer and the suggestion chips. The hero title
+   * scales with the app's width like the old display size did; the welcome
+   * column keeps a tenth of the viewport free below it; the cooler hairline
+   * is what a composer or a chip turns to under focus or the pointer.
+   */
+  --text-hero: clamp(38px, 4.2cqi, 52px);
+  --leading-hero: 1.05;
+  --tracking-hero: -0.04em;
+  --container-hero-text: 46ch;
+  --spacing-welcome-end: 10vh;
+  --color-border-hover: #c7ced6;
+  --shadow-ring-hover: 0 0 0 1px var(--color-border-hover);
+  --shadow-composer-focus:
+    0 0 0 1px var(--color-border-hover), 0 0 0 4px rgb(15 17 21 / 0.05),
+    0 10px 30px -18px rgb(15 17 21 / 0.2);
 }
 
 /* The two named durations, so a component writes the token and not a number. */

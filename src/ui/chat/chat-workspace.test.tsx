@@ -71,17 +71,8 @@ describe('the welcome screen', () => {
       knowledgeBase.welcome.heading,
     );
     expect(composer()).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: "Tell me about Marcio's career." }),
-    ).toBeInTheDocument();
-  });
-
-  it('offers other questions on request', async () => {
-    const user = renderWorkspace();
-    await user.click(screen.getByRole('button', { name: 'More questions' }));
-    expect(
-      screen.queryByRole('button', { name: "Tell me about Marcio's career." }),
-    ).not.toBeInTheDocument();
+    expect(screen.getByRole('list', { name: 'Suggested questions' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'His career' })).toBeInTheDocument();
   });
 });
 
@@ -110,7 +101,7 @@ describe('asking a question', () => {
 
   it('asks a suggested question in one click', async () => {
     const user = renderWorkspace();
-    await user.click(screen.getByRole('button', { name: "Tell me about Marcio's career." }));
+    await user.click(screen.getByRole('button', { name: 'His career' }));
     await screen.findByRole('group', { name: 'Answer actions' });
     expect(within(conversation()).getByText("Tell me about Marcio's career.")).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Conversation');
@@ -118,7 +109,7 @@ describe('asking a question', () => {
 
   it('asks a follow-up from under the answer', async () => {
     const user = renderWorkspace();
-    await user.click(screen.getByRole('button', { name: "Tell me about Marcio's career." }));
+    await user.click(screen.getByRole('button', { name: 'His career' }));
     await screen.findByRole('group', { name: 'Answer actions' });
     const followUps = within(latestAnswer()).getByRole('list', { name: 'Ask a follow-up' });
     const [first] = within(followUps).getAllByRole('button');
