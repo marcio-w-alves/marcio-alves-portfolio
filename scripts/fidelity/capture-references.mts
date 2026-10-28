@@ -6,6 +6,7 @@
  */
 import { mkdir } from 'node:fs/promises';
 import { chromium } from '@playwright/test';
+import { knowledgeBase } from '../../src/core/knowledge/knowledge-base';
 import { BOARDS, FREEZE_CSS } from './boards';
 
 const DESIGN_URL = process.env.DESIGN_URL ?? 'http://localhost:4410';
@@ -18,12 +19,28 @@ const SETTLE_MS = 2500;
 // leaves the layout exactly as if it were never rendered.
 const WITHOUT_PROTOTYPE_NOTICE = '.ma-helper-note{display:none!important}';
 
+/**
+ * The design renders with its own sample contact data, which differs from
+ * production on purpose in two places: GitHub is linked (an explicit
+ * requirement the design's data leaves out) and the résumé is not published
+ * yet. The design's own logic is run with the production contact, so the
+ * reference shows what the design does with the real data.
+ */
+const PRODUCTION_CONTACT = `Object.assign(window.MAPortfolio.kb.contact, ${JSON.stringify({
+  github: knowledgeBase.contact.github,
+  resumeUrl: knowledgeBase.contact.resumeUrl,
+})});`;
+
 await mkdir(OUT, { recursive: true });
 const browser = await chromium.launch();
 const only = new Set(process.argv.slice(2));
 
 for (const board of BOARDS.filter(({ name }) => only.size === 0 || only.has(name))) {
   const page = await browser.newPage({ viewport: { width: board.width, height: board.height } });
+  await page.route('**/lib/knowledge-base.js', async (route) => {
+    const response = await route.fetch();
+    await route.fulfill({ response, body: `${await response.text()}\n${PRODUCTION_CONTACT}` });
+  });
   await page.goto(`${DESIGN_URL}/${board.name}.dc.html`, { waitUntil: 'networkidle' });
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(SETTLE_MS);
