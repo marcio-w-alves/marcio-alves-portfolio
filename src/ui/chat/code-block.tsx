@@ -19,7 +19,7 @@ export function CodeBlock({
   return (
     <figure className="m-0 animate-block-enter overflow-hidden rounded-md bg-ice shadow-ring">
       <figcaption className="flex items-center justify-between gap-3 py-1 pr-1 pl-4 text-12 text-ink-muted inset-shadow-rule-bottom">
-        <span>{language}</span>
+        <span>{language || actions.plainCode}</span>
         <button type="button" className={ACTION} onClick={copy}>
           <Icon name={copied ? 'check' : 'copy'} size="xs" />
           {copied ? actions.copied : actions.copyCode}

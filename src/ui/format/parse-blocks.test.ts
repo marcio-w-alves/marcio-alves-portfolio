@@ -38,7 +38,7 @@ describe('answer blocks', () => {
   it('shows a fence that is still streaming in', () => {
     expect(parseBlocks('Look:\n```\nconst a')).toEqual([
       { kind: 'paragraph', content: text('Look:') },
-      { kind: 'code', language: 'text', code: 'const a' },
+      { kind: 'code', language: '', code: 'const a' },
     ]);
   });
 
@@ -101,7 +101,7 @@ describe('answer blocks', () => {
 
   it('keeps blank lines and markdown-looking lines inside fenced code', () => {
     expect(parseBlocks('```\n# not a heading\n\n- not a list\n```\nAfter.')).toEqual([
-      { kind: 'code', language: 'text', code: '# not a heading\n\n- not a list' },
+      { kind: 'code', language: '', code: '# not a heading\n\n- not a list' },
       { kind: 'paragraph', content: text('After.') },
     ]);
   });

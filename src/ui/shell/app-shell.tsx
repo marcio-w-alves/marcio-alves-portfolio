@@ -81,7 +81,7 @@ export function AppShell({
         href={`#${MAIN_ID}`}
         className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:top-3 focus-visible:left-3 focus-visible:z-40 focus-visible:rounded-control focus-visible:bg-surface focus-visible:px-3 focus-visible:py-2 focus-visible:text-13.5 focus-visible:font-medium focus-visible:text-ink focus-visible:shadow-ring"
       >
-        Skip to the conversation
+        {shell.skipToConversation}
       </a>
       <div className="grid h-full grid-cols-shell @max-compact/ma:grid-cols-1">
         <button

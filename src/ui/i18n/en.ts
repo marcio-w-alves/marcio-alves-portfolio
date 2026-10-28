@@ -4,6 +4,7 @@ import type { UiMessages } from './ui-messages';
 export const englishUiMessages: UiMessages = {
   shell: {
     navigation: 'Portfolio navigation',
+    skipToConversation: 'Skip to the conversation',
     topics: 'Topics',
     newConversation: 'New conversation',
     openNavigation: 'Open navigation',
@@ -65,6 +66,7 @@ export const englishUiMessages: UiMessages = {
     group: 'Answer actions',
     copy: 'Copy',
     copyCode: 'Copy code',
+    plainCode: 'text',
     copied: 'Copied',
     askFollowUp: 'Ask follow-up',
     viewRole: 'View {company} experience',

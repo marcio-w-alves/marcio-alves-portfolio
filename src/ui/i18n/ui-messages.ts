@@ -11,6 +11,8 @@ import type { Plural, Template } from '@/core/i18n/format';
 export interface UiMessages {
   readonly shell: {
     readonly navigation: string;
+    /** The first stop for a keyboard, past the topics to the conversation. */
+    readonly skipToConversation: string;
     readonly topics: string;
     readonly newConversation: string;
     readonly openNavigation: string;
@@ -74,6 +76,8 @@ export interface UiMessages {
     readonly group: string;
     readonly copy: string;
     readonly copyCode: string;
+    /** A code block's caption when the answer names no language. */
+    readonly plainCode: string;
     readonly copied: string;
     readonly askFollowUp: string;
     /** `{company}`: the role the answer is about. */

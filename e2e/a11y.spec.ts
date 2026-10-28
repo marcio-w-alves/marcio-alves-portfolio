@@ -104,7 +104,7 @@ test.describe('beyond WCAG AA', () => {
   }) => {
     await page.goto('/experience');
     await page.keyboard.press('Tab');
-    const skip = page.getByRole('link', { name: 'Skip to the conversation' });
+    const skip = page.getByRole('link', { name: ui.shell.skipToConversation });
     await expect(skip).toBeFocused();
     await expect(skip).toBeVisible();
 
@@ -115,7 +115,7 @@ test.describe('beyond WCAG AA', () => {
 
   test('the contact link in the sidebar is a comfortable touch target', async ({ page }) => {
     await page.goto('/');
-    const box = await page.getByRole('link', { name: 'Get in touch' }).boundingBox();
+    const box = await page.getByRole('link', { name: ui.shell.getInTouch }).boundingBox();
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
   });
 });
