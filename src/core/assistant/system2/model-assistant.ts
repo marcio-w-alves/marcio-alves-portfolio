@@ -234,7 +234,7 @@ export function createModelAssistant({
     const usage = createUsageMeter(request, (spent) => onUsage?.(spent));
     try {
       for await (const event of model.stream(request)) {
-        usage.answering();
+        usage.accepted();
         if (event.type === 'text-delta' && event.delta) {
           text += event.delta;
           yield* reply.write(event.delta);

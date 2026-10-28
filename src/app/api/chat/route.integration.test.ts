@@ -61,7 +61,10 @@ afterAll(() => {
   server.close();
 });
 
-function postChat({ dailyModelTokens }: { dailyModelTokens?: number } = {}): (
+function postChat({
+  dailyModelTokens,
+  openAITimeoutMs = TEST_TIMEOUT_MS,
+}: { dailyModelTokens?: number; openAITimeoutMs?: number } = {}): (
   request: Request,
 ) => Promise<Response> {
   const settings = assistantSettings();
@@ -69,7 +72,7 @@ function postChat({ dailyModelTokens }: { dailyModelTokens?: number } = {}): (
     buildContainer({
       env: { OPENAI_API_KEY: 'test-key', GITHUB_TOKEN: undefined },
       settings: { ...settings, dailyModelTokens: dailyModelTokens ?? settings.dailyModelTokens },
-      openAITimeoutMs: TEST_TIMEOUT_MS,
+      openAITimeoutMs,
     }),
   );
 }
@@ -490,6 +493,23 @@ describe('POST /api/chat — pacing', () => {
 
 describe('POST /api/chat — the spending budget', () => {
   const DELTAS = ['He led ', 'the Roots ', 'frontend at the time'];
+  const SEARCH_ARGUMENTS = '{"query":"did he work on the Roots backend"}';
+  /** What a round streams before it is cut short, and how many characters of it the visitor's answer used. */
+  const ROUNDS = {
+    'a written answer': {
+      chunks: [
+        chunk({ role: 'assistant', content: '' }),
+        ...DELTAS.map((content) => chunk({ content })),
+      ],
+      receivedChars: DELTAS.join('').length,
+    },
+    'an action call': {
+      // The fragments of a call, without the chunk that ends the round or reports usage.
+      chunks: toolCallRound('searchKnowledge', SEARCH_ARGUMENTS).slice(0, 3),
+      receivedChars: SEARCH_ARGUMENTS.length,
+    },
+  } as const;
+  type RoundKind = keyof typeof ROUNDS;
   const INTERRUPTIONS = [
     'the visitor leaving',
     'a provider failure mid-stream',
@@ -497,25 +517,31 @@ describe('POST /api/chat — the spending budget', () => {
   ] as const;
   type Interruption = (typeof INTERRUPTIONS)[number];
 
-  const deltaChunks = [
-    chunk({ role: 'assistant', content: '' }),
-    ...DELTAS.map((content) => chunk({ content })),
-  ];
+  // Long enough that an answer the visitor abandons cannot also stall.
+  const PATIENT_TIMEOUT_MS = 10_000;
 
-  function failingCompletion(): HttpResponse<ReadableStream> {
+  let openAIResponses = 0;
+  beforeEach(() => {
+    openAIResponses = 0;
+    const realFetch = globalThis.fetch;
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
+      const response = await realFetch(input, init);
+      openAIResponses += 1;
+      return response;
+    });
+  });
+
+  /** Streams the round's chunks, then cuts the round short as `how` says; returns the bodies OpenAI got. */
+  function interruptedCompletions(kind: RoundKind, how: Interruption): string[] {
+    const { chunks } = ROUNDS[kind];
     const failure = { error: { message: 'The server had an error.', type: 'server_error' } };
-    return completion([...deltaChunks, failure]);
-  }
-
-  /** Answers with the deltas, then cuts the answer short as `how` says; returns the body OpenAI got. */
-  function interruptedCompletions(how: Interruption): string[] {
     const bodies: string[] = [];
     server.use(
       http.post(COMPLETIONS, async ({ request }) => {
         bodies.push(await request.text());
         return how === 'a provider failure mid-stream'
-          ? failingCompletion()
-          : stalledCompletion(deltaChunks);
+          ? completion([...chunks, failure])
+          : stalledCompletion(chunks);
       }),
     );
     return bodies;
@@ -530,16 +556,22 @@ describe('POST /api/chat — the spending budget', () => {
       return;
     }
     const leaving = new AbortController();
-    const answer = eventsOf(await handle(question(MODEL_QUESTION, { signal: leaving.signal })));
-    for (let seen = 0; seen < 2 + DELTAS.length; seen += 1) await answer.next();
+    const responsesBefore = openAIResponses;
+    const answer = allEventsOf(await handle(question(MODEL_QUESTION, { signal: leaving.signal })));
+    await vi.waitFor(() => {
+      expect(openAIResponses).toBe(responsesBefore + 1);
+    });
     leaving.abort();
-    await Array.fromAsync(answer);
+    await answer.catch(() => undefined);
   }
 
   /** Runs one interrupted answer through a fresh container and waits until its cost is recorded. */
-  async function interruptedAnswer(how: Interruption, dailyModelTokens?: number) {
-    const handle = postChat(dailyModelTokens === undefined ? {} : { dailyModelTokens });
-    const bodies = interruptedCompletions(how);
+  async function interruptedAnswer(kind: RoundKind, how: Interruption, dailyModelTokens?: number) {
+    const handle = postChat({
+      ...(dailyModelTokens === undefined ? {} : { dailyModelTokens }),
+      ...(how === 'the visitor leaving' ? { openAITimeoutMs: PATIENT_TIMEOUT_MS } : {}),
+    });
+    const bodies = interruptedCompletions(kind, how);
     const estimatesBefore = loggedEvents('model.usage_estimated').length;
     await askAndInterrupt(handle, how);
     await vi.waitFor(() => {
@@ -557,14 +589,18 @@ describe('POST /api/chat — the spending budget', () => {
     return paced;
   }
 
-  it.each(INTERRUPTIONS)(
-    'an answer cut short by %s still spends at least what it exchanged',
-    async (how) => {
-      const measured = await interruptedAnswer(how);
-      const exchanged = measured.body.length + DELTAS.join('').length;
+  const CASES = (Object.keys(ROUNDS) as RoundKind[]).flatMap((kind) =>
+    INTERRUPTIONS.map((how) => [kind, how] as const),
+  );
+
+  it.each(CASES)(
+    'a round streaming %s, cut short by %s, still spends at least what it exchanged',
+    async (kind, how) => {
+      const measured = await interruptedAnswer(kind, how);
+      const exchanged = measured.body.length + ROUNDS[kind].receivedChars;
       const atLeast = Math.ceil(exchanged / 3);
 
-      const { handle, body } = await interruptedAnswer(how, atLeast);
+      const { handle, body } = await interruptedAnswer(kind, how, atLeast);
 
       expect(body).toBe(measured.body);
       expect(await nextModelAnswerIsPaced(handle)).toBe(true);
@@ -573,6 +609,23 @@ describe('POST /api/chat — the spending budget', () => {
       });
     },
   );
+
+  it('charges nothing for a call OpenAI refused', async () => {
+    const handle = postChat({ dailyModelTokens: 1 });
+    server.use(
+      http.post(COMPLETIONS, () =>
+        HttpResponse.json(
+          { error: { message: 'stubbed failure', type: 'invalid_request_error' } },
+          { status: 400 },
+        ),
+      ),
+    );
+
+    await allEventsOf(await handle(question(MODEL_QUESTION)));
+
+    expect(loggedEvents('model.usage_estimated')).toEqual([]);
+    expect(await nextModelAnswerIsPaced(handle)).toBe(false);
+  });
 
   it('counts reported usage exactly once', async () => {
     const reportedTotal = USAGE.usage.prompt_tokens + USAGE.usage.completion_tokens;

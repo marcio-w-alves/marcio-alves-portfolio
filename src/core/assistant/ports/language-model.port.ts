@@ -29,8 +29,11 @@ export interface ModelUsage {
 }
 
 export type ModelEvent =
+  /** The provider accepted the call: from here on it may be billed, whatever happens next. */
+  | { readonly type: 'started' }
   | { readonly type: 'text-delta'; readonly delta: string }
   | { readonly type: 'tool-calls'; readonly calls: readonly ToolCall[] }
+  /** Only when the provider reported what the call cost. */
   | { readonly type: 'finish'; readonly usage: ModelUsage };
 
 export interface ModelRequest {

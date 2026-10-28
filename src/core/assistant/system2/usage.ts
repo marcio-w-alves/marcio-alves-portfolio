@@ -21,18 +21,19 @@ function ceilingOf({ messages, tools, maxOutputTokens }: ModelRequest): ModelUsa
 
 /**
  * What one model call cost. The provider reports usage only in the stream's
- * final chunk, so a call cut short once the provider had started answering —
- * the visitor leaving, a stall, a provider error — would otherwise cost
- * nothing at all; it is charged its ceiling instead. A call refused before
- * the provider answered is not charged.
+ * final chunk, so a call cut short once the provider had accepted it — the
+ * visitor leaving, a stall, a provider error, even before anything was
+ * streamed — would otherwise cost nothing at all; it is charged its ceiling
+ * instead, as is a call that ended without a report. A call the provider
+ * refused is not charged.
  */
 export function createUsageMeter(request: ModelRequest, record: (usage: ModelUsage) => void) {
-  let answering = false;
+  let accepted = false;
   let reported = false;
 
   return {
-    answering(): void {
-      answering = true;
+    accepted(): void {
+      accepted = true;
     },
     report(usage: ModelUsage): void {
       reported = true;
@@ -40,7 +41,7 @@ export function createUsageMeter(request: ModelRequest, record: (usage: ModelUsa
     },
     /** Called once the call is over, however it ended. */
     settle(): void {
-      if (answering && !reported) record(ceilingOf(request));
+      if (accepted && !reported) record(ceilingOf(request));
     },
   };
 }

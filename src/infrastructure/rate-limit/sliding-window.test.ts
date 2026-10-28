@@ -110,6 +110,15 @@ describe('sliding window limiter — bounded memory', () => {
     expect(admit('client-3').allowed).toBe(false);
   });
 
+  it('forgets the client admitted least recently first', () => {
+    const { admit } = limiter(2, 1000, 3);
+    admitMany(admit, 3);
+    admit('client-0');
+    admit('newcomer');
+    expect(admit('client-0').allowed).toBe(false);
+    expect(admit('client-1').allowed).toBe(true);
+  });
+
   it('reports forced evictions once per window, not once per client', () => {
     const { admit, evictions, at } = limiter(1, 1000, 3);
     admitMany(admit, 6);

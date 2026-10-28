@@ -290,6 +290,34 @@ describe('model assistant — spending', () => {
     expect(usage[0]?.inputTokens).toBeGreaterThan(1000);
   });
 
+  it('charges a round the provider accepted, even if it failed before sending anything', async () => {
+    const port: LanguageModelPort = {
+      async *stream() {
+        yield { type: 'started' };
+        throw new Error('stream reset while the action call was arriving');
+      },
+    };
+    const { usage, answer } = spendingOf(port);
+
+    await expect(Array.fromAsync(answer)).rejects.toThrow('stream reset');
+
+    expect(usage).toMatchObject([{ outputTokens: MAX_OUTPUT_TOKENS, estimated: true }]);
+  });
+
+  it('charges a round that ended without the provider reporting usage', async () => {
+    const port: LanguageModelPort = {
+      async *stream() {
+        yield { type: 'started' };
+        yield { type: 'text-delta', delta: 'Done.' };
+      },
+    };
+    const { usage, answer } = spendingOf(port);
+
+    await Array.fromAsync(answer);
+
+    expect(usage).toMatchObject([{ outputTokens: MAX_OUTPUT_TOKENS, estimated: true }]);
+  });
+
   it('charges a round the visitor walked away from', async () => {
     const port: LanguageModelPort = {
       async *stream() {

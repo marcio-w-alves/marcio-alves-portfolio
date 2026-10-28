@@ -631,9 +631,10 @@ z.strictObject({
 ### 8.3 Interrupted tokens (FR-38, AC-38.1)
 
 - OpenAI reports usage only in the final stream chunk (`include_usage`), so an aborted or failed round reports nothing today.
-- In `core/assistant/system2`, each round tracks `sentChars` (serialized messages + tool definitions) and `receivedChars` (text deltas + tool-call argument fragments).
-- In the round's `finally`, if no `finish` usage was observed, call `onUsage(estimateUsage(sentChars, receivedChars))` with `estimated: true`. `estimateTokens(chars) = Math.ceil(chars / 3)` deliberately **over-estimates** (EN ≈ 4 chars/token, PT and JSON ≈ 3–3.5). The budget protects spend, so erring high is correct.
-- It is logged as `model.usage_estimated`. This covers visitor-left (generator `return()`), deadline, idle-timeout and provider errors.
+- The port gains a `{ type: 'started' }` event, yielded by the adapter as soon as `chat.completions.create(…)` resolves: from then on the call may be billed. A rejected `create()` (open circuit, 4xx/5xx, connection failure) yields nothing and is not charged. The adapter yields `finish` only when a usage chunk arrived; it never reports a missing usage as zero.
+- In `core/assistant/system2/usage.ts`, a meter per round notes the `started` event and any reported usage. In the round's `finally`, if the call was started and no usage was reported, it calls `onUsage({ inputTokens: estimateTokens(sentChars), outputTokens: maxOutputTokens, estimated: true })`, where `sentChars` is the serialized messages plus tool definitions and `estimateTokens(chars) = Math.ceil(chars / 3)` deliberately **over-estimates** input (EN ≈ 4 chars/token, PT and JSON ≈ 3–3.5).
+- **Implemented deviation (POR-45):** the output side is the round's ceiling (`MAX_OUTPUT_TOKENS`), not `receivedChars / 3`. A call cut short may already have generated tokens it never delivered, and those are billed; the provider can never bill more than the ceiling, so input/3 + ceiling is a sound upper bound. `receivedChars / 3` also fell short of the AC bound, because the wire body carries provider framing (~850 chars on the current prompt) that the core never sees. Cost: an abandoned round may be over-counted by up to 700 output tokens.
+- It is logged as `model.usage_estimated`. This covers visitor-left (generator `return()`), deadline, idle-timeout, provider errors mid-stream — including a round that was only streaming tool-call fragments — and a stream that ended without a usage chunk.
 - AC-38.1 accepts "reduced by at least the tokens consumed (estimated)".
 
 ### 8.4 Embeddings: timeout, abort, breaker; tool exceptions (FR-39)

@@ -1,7 +1,7 @@
 interface Options {
   readonly limit: number;
   readonly windowMs: number;
-  /** The most clients tracked at once; past it, the longest-tracked is forgotten. */
+  /** The most clients tracked at once; past it, the one admitted least recently is forgotten. */
   readonly maxKeys?: number;
   readonly now?: () => number;
   /** Told at most once per window, when the cap forces out a client still inside it. */
@@ -34,7 +34,7 @@ export function createSlidingWindowLimiter({
   now = Date.now,
   onEvicted,
 }: Options) {
-  // Each key's times are in ascending order, and the map in insertion order.
+  // Each key's times are in ascending order, and the map in order of last admission.
   const history = new Map<string, number[]>();
   let lastSweep = now();
   let evictionReported = false;
@@ -57,8 +57,8 @@ export function createSlidingWindowLimiter({
 
   function makeRoomFor(key: string): void {
     if (history.has(key) || history.size < maxKeys) return;
-    const longestTracked = history.keys().next().value;
-    if (longestTracked !== undefined) history.delete(longestTracked);
+    const leastRecent = history.keys().next().value;
+    if (leastRecent !== undefined) history.delete(leastRecent);
     if (!evictionReported) {
       evictionReported = true;
       onEvicted?.();
@@ -75,6 +75,8 @@ export function createSlidingWindowLimiter({
         return { allowed: false, retryAfterMs: windowMs - (at - oldest) };
       }
       makeRoomFor(key);
+      // Moved to the end, so the cap forgets the client admitted least recently.
+      history.delete(key);
       history.set(key, [...recent, at]);
       return { allowed: true, retryAfterMs: 0 };
     },
