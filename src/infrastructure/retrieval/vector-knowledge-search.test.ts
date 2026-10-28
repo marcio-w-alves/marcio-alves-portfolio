@@ -133,7 +133,7 @@ describe('vector knowledge search — résumé and notes together', () => {
       },
       corpus: Object.keys(ids).map((id): KnowledgeChunk =>
         id === 'resume'
-          ? { id, category: 'experience', text: id, source: 'resume.toptal' }
+          ? { id, category: 'experience', text: id, source: 'resume.way2b1' }
           : { id, category: 'notes', text: id, source: 'notes' },
       ),
     });
@@ -250,7 +250,7 @@ describe('vector knowledge search — when embeddings fail', () => {
           : HttpResponse.json({
               object: 'list',
               model: 'text-embedding-3-small',
-              data: [{ object: 'embedding', index: 0, embedding: vectorOf('role:toptal') }],
+              data: [{ object: 'embedding', index: 0, embedding: vectorOf('role:way2b1') }],
               usage: { prompt_tokens: 1, total_tokens: 1 },
             }),
       ),
@@ -294,7 +294,7 @@ describe('vector knowledge search — when embeddings fail', () => {
     advance(30_000);
     status = 200;
     const [best] = await search();
-    expect(best?.id).toBe('role:toptal');
+    expect(best?.id).toBe('role:way2b1');
     expect(outbound).toBe(4);
     expect(breaker.state()).toBe('closed');
   });

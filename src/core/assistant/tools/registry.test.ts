@@ -263,8 +263,8 @@ describe('display actions', () => {
       await registry.run('showMetrics', { ids: ['deel-people-list', 'roots-team'] }),
     );
     expect(metrics.sources.map((source) => source.id)).toEqual(['resume.deel', 'resume.roots']);
-    const timeline = succeeded(await registry.run('showTimeline', { companies: ['toptal'] }));
-    expect(timeline.sources.map((source) => source.id)).toEqual(['resume.toptal']);
+    const timeline = succeeded(await registry.run('showTimeline', { companies: ['way2b1'] }));
+    expect(timeline.sources.map((source) => source.id)).toEqual(['resume.way2b1']);
   });
 
   it('refuses a metric the knowledge base does not have', async () => {

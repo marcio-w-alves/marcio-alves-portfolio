@@ -11,9 +11,9 @@ import { profile } from '.';
 const knowledge = localize(profile.knowledge, 'en');
 
 describe("the owner's record", () => {
-  it('has Toptal as the one current role', () => {
+  it('has Way2b1 as the one current role', () => {
     const current = knowledge.experience.filter((role) => role.current);
-    expect(current.map((role) => role.company)).toEqual(['Toptal']);
+    expect(current.map((role) => role.company)).toEqual(['Way2b1']);
   });
 
   it('cites each role against its own resume section', () => {

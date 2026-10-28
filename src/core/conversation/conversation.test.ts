@@ -71,7 +71,7 @@ describe('asking a question', () => {
     const { conversation, answerId } = ask(createConversation(), "Tell me about Marcio's career.");
     const done = answer(conversation, answerId);
     expect(done.status).toBe('done');
-    expect(done.parts.some((part) => part.type === 'text' && part.text.includes('Toptal'))).toBe(
+    expect(done.parts.some((part) => part.type === 'text' && part.text.includes('Way2b1'))).toBe(
       true,
     );
     expect(

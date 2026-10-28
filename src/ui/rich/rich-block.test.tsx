@@ -62,7 +62,7 @@ describe('timeline', () => {
 
   it('marks the current role, and overlapping ones as concurrent', () => {
     renderBlock(exampleBlock('timeline'));
-    expect(screen.getByRole('button', { name: /^Toptal/ })).toHaveTextContent('Current');
+    expect(screen.getByRole('button', { name: /^Way2b1/ })).toHaveTextContent('Current');
     expect(screen.getByRole('button', { name: /^Roots/ })).toHaveTextContent('Concurrent');
     expect(screen.getByRole('button', { name: /^Deel/ })).not.toHaveTextContent(
       /Current|Concurrent/,
@@ -96,7 +96,7 @@ describe('timeline', () => {
     const { props } = exampleBlock('timeline');
     renderBlock({ component: 'timeline', props: { ...props, expanded: ['deel'] } });
     expect(screen.getByRole('button', { name: /^Deel/ })).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('button', { name: /^Toptal/ })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: /^Way2b1/ })).toHaveAttribute(
       'aria-expanded',
       'false',
     );

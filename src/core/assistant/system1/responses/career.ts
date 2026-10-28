@@ -28,7 +28,7 @@ export function createCareerAnswers(kit: ResponseKit) {
       'career',
       [
         text(
-          `Marcio is a frontend engineer with **over 10 years** of professional experience. He started in ${String(knowledge.profile.careerStartYear)} as a freelance web developer and grew into senior and lead frontend roles — helping lead the HRIS team at **Deel** (2022 — 2026) and, since March 2026, building component architecture at **Toptal**.\n\n` +
+          `Marcio is a frontend engineer with **over 10 years** of professional experience. He started in ${String(knowledge.profile.careerStartYear)} as a freelance web developer and grew into senior and lead frontend roles — helping lead the HRIS team at **Deel** (2022 — 2026) and, since June 2026, as a Senior Frontend Engineer at **Way2b1**, working full stack across a small startup's product suite.\n\n` +
             'Across those roles the thread is consistent: React and Next.js architecture, performance, developer experience and technical leadership, with engineering work tied to product needs and user impact.',
         ),
         text(`### How his scope grew\n${bullets(practice.careerArc)}`),
@@ -62,8 +62,8 @@ export function createCareerAnswers(kit: ResponseKit) {
           [
             [
               'Architecture ownership',
-              'Architected a React/TypeScript component library used across multiple product teams; planned the initial architecture for a new product',
-              'Toptal',
+              'Directed frontend technical strategy and architecture for a growing product',
+              'Roots',
             ],
             [
               'Standards at scale',
@@ -86,9 +86,9 @@ export function createCareerAnswers(kit: ResponseKit) {
               'Deel',
             ],
             [
-              'Product partnership',
-              'Works with the Director and CEO on product decisions',
-              'Toptal',
+              'Across products',
+              'Bundle size cut by nearly 50% and legacy code migrated across a product suite',
+              'Way2b1',
             ],
           ],
           'Staff-level signals in his experience',
@@ -108,15 +108,15 @@ export function createCareerAnswers(kit: ResponseKit) {
           'Show me examples of architectural decisions.',
           'What are his strongest technical skills?',
         ],
-        sources: ['resume.toptal', 'resume.deel', 'resume.roots', 'notes'],
+        sources: ['resume.way2b1', 'resume.deel', 'resume.roots', 'notes'],
         related: 'deel',
       },
     );
   }
 
   const COMPANY_INTROS: Readonly<Record<string, string>> = {
-    toptal:
-      'Marcio joined **Toptal** in March 2026 as a Senior Frontend Engineer, working directly with the Director and CEO on product decisions.',
+    way2b1:
+      'Since June 2026, Marcio has been a Senior Frontend Engineer at **Way2b1**, a small San Francisco startup building a platform for families and family offices. He works full stack across its product suite: he cut bundle size by nearly 50%, brought loading times down to a few hundred milliseconds and migrated legacy code across multiple products.',
     deel: "Marcio worked at **Deel** from 2022 to 2026 as a Senior Frontend Engineer, helping lead the HRIS team behind the company's core HR tools and leading the migration of Roots into Deel.",
     roots:
       "At **Roots** (2020 — 2022), a startup building Slack bots for HR, Marcio was the Lead Frontend Engineer. He built the product frontend end to end, grew the frontend team from one to four, and later led the platform's migration into Deel.",
@@ -125,9 +125,9 @@ export function createCareerAnswers(kit: ResponseKit) {
   };
 
   const COMPANY_FOLLOW_UPS: Readonly<Record<string, readonly string[]>> = {
-    toptal: [
+    way2b1: [
+      'How did he optimize performance?',
       'How does he approach frontend architecture?',
-      'How does he approach accessibility?',
       'Would he fit a technical leadership position?',
     ],
     deel: [
@@ -236,7 +236,7 @@ export function createCareerAnswers(kit: ResponseKit) {
             '### Technical direction\n' +
             '- Directed frontend strategy and architecture at **Roots**.\n' +
             '- Standardized HRIS frontend architecture and led the Roots migration at **Deel**.\n' +
-            '- Planned the initial architecture for a new product at **Toptal**.\n\n' +
+            '- Works across the teams of several products at **Way2b1**, migrating legacy code.\n\n' +
             '### Delivery and people\n' +
             '- Defined technical trade-offs, delivery plans, OKRs and quarterly goals with Product at **Deel**.\n' +
             '- Coordinated sprint planning with managers and stakeholders at **Roots**.\n' +
@@ -257,7 +257,7 @@ export function createCareerAnswers(kit: ResponseKit) {
         sources: [
           'resume.roots',
           'resume.deel',
-          'resume.toptal',
+          'resume.way2b1',
           'resume.maison',
           'resume.shall',
           'notes',
@@ -386,7 +386,7 @@ export function createCareerAnswers(kit: ResponseKit) {
         text(
           "Scaling shows up in Marcio's work at three levels — product, codebase and team:\n\n" +
             '- **Product** — at Deel he led the migration and scaling of the Roots platform into Deel, mitigating rollout risks; at Roots he shaped frontend architecture to support user base growth.\n' +
-            '- **Codebase** — he standardized HRIS frontend architecture at Deel, introduced advanced state management at Roots and built a component library shared by multiple product teams at Toptal.\n' +
+            '- **Codebase** — he standardized HRIS frontend architecture at Deel, introduced advanced state management at Roots and migrates legacy code across several products at Way2b1.\n' +
             '- **Team** — at Roots he grew the frontend team from one to four and set up GitLab CI pipelines deploying to Amazon S3.',
         ),
         metrics(['deel-critical-load', 'roots-team']),
@@ -400,7 +400,7 @@ export function createCareerAnswers(kit: ResponseKit) {
           'How does he approach frontend architecture?',
           'How did he optimize performance?',
         ],
-        sources: ['resume.deel', 'resume.roots', 'resume.toptal', 'notes'],
+        sources: ['resume.deel', 'resume.roots', 'resume.way2b1', 'notes'],
         related: 'deel',
       },
     );
@@ -413,7 +413,6 @@ export function createCareerAnswers(kit: ResponseKit) {
         text(
           'Yes, several times:\n\n' +
             '- At **Roots**, he built an end-to-end React frontend for a startup creating Slack bots for HR, with its architecture, state management and CI pipelines.\n' +
-            '- At **Toptal**, he planned the initial architecture for a new company product.\n' +
             '- At **Shall And Partners**, he led development of a progressive web app.\n' +
             '- On his own, he builds products such as **EvCopilot**, **FormDaily** and **TargUp**.',
         ),
@@ -428,7 +427,7 @@ export function createCareerAnswers(kit: ResponseKit) {
           'What did he do at Roots?',
           'How does he approach frontend architecture?',
         ],
-        sources: ['resume.roots', 'resume.toptal', 'resume.shall', 'projects', 'notes'],
+        sources: ['resume.roots', 'resume.shall', 'projects', 'notes'],
         related: 'roots',
       },
     );
@@ -440,7 +439,7 @@ export function createCareerAnswers(kit: ResponseKit) {
       [
         text(
           `Yes. The most substantial enterprise example is **Deel** (2022 — 2026), where he helped lead the HRIS team behind the company's core HR tools, standardized its frontend architecture and led the migration of Roots into the platform.\n\n` +
-            'At **Toptal** he architected a React/TypeScript component library used across multiple product teams and led accessibility standards.',
+            'At **Way2b1**, a smaller startup, he works full stack across several products, migrating legacy code and improving performance.',
         ),
         text(`### The enterprise problem at Deel\n${practice.caseStudies.deel?.problem ?? ''}`),
         metrics(['deel-web-vitals', 'deel-critical-load', 'deel-people-list']),
@@ -452,7 +451,7 @@ export function createCareerAnswers(kit: ResponseKit) {
           'How did he optimize performance?',
           'Has he led engineering teams?',
         ],
-        sources: ['profile', 'resume.deel', 'resume.toptal', 'notes'],
+        sources: ['profile', 'resume.deel', 'resume.way2b1', 'notes'],
         related: 'deel',
       },
     );
@@ -464,7 +463,6 @@ export function createCareerAnswers(kit: ResponseKit) {
       [
         text(
           'Close collaboration with product, design and leadership runs through his roles:\n\n' +
-            '- At **Toptal**, he works with the Director and CEO to coordinate product decisions and implement new features.\n' +
             '- At **Deel**, he defined technical trade-offs and delivery plans with Product and Engineering, and planned OKRs and quarterly goals with Product Managers.\n' +
             '- At **Roots**, he coordinated sprint planning with managers and stakeholders and built accessibility in with UX designers.\n' +
             '- At **Maison Moderne**, he turned complex requirements into accessible interfaces with UX designers.\n\n' +
@@ -480,14 +478,7 @@ export function createCareerAnswers(kit: ResponseKit) {
           'Would he fit a technical leadership position?',
           'What has he built at Deel?',
         ],
-        sources: [
-          'resume.toptal',
-          'resume.deel',
-          'resume.roots',
-          'resume.maison',
-          'profile',
-          'notes',
-        ],
+        sources: ['resume.deel', 'resume.roots', 'resume.maison', 'profile', 'notes'],
       },
     );
   }

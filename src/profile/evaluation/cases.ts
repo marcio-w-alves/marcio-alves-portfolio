@@ -60,7 +60,7 @@ export const evaluation: readonly EvaluationCase[] = [
     id: 'career-overview',
     category: 'career',
     question: "Tell me about Marcio's career.",
-    expect: { path: 'fast', mentions: ['Deel', 'Toptal'] },
+    expect: { path: 'fast', mentions: ['Deel', 'Way2b1'] },
   },
   {
     id: 'deel-backlog',
@@ -95,8 +95,8 @@ export const evaluation: readonly EvaluationCase[] = [
   {
     id: 'current-role',
     category: 'career',
-    question: 'What is he working on at Toptal?',
-    expect: { path: 'fast', mentions: ['Toptal'] },
+    question: 'What is he working on at Way2b1?',
+    expect: { path: 'fast', mentions: ['Way2b1'] },
   },
   {
     id: 'achievements',
@@ -150,7 +150,7 @@ export const evaluation: readonly EvaluationCase[] = [
     id: 'what-is-typescript',
     category: 'technology',
     question: 'What is TypeScript, and how has he used it?',
-    expect: { path: 'model', mentions: ['TypeScript', 'Toptal'] },
+    expect: { path: 'model', mentions: ['TypeScript'] },
   },
   {
     id: 'what-is-nextjs',
@@ -202,10 +202,10 @@ export const evaluation: readonly EvaluationCase[] = [
     expect: { path: 'model', mentions: ['payroll'] },
   },
   {
-    id: 'what-is-toptal',
+    id: 'what-is-way2b1',
     category: 'company',
-    question: 'What kind of company is Toptal?',
-    expect: { path: 'model', mentions: ['Toptal'] },
+    question: 'What kind of company is Way2b1?',
+    expect: { path: 'model', mentions: ['Way2b1'] },
   },
   {
     id: 'what-is-roots',
@@ -458,7 +458,7 @@ export const evaluation: readonly EvaluationCase[] = [
     category: 'language',
     // Once answered with "se precisar de mais informações, estou à disposição".
     question: 'Ele já trabalhou com acessibilidade em algum projeto?',
-    expect: { path: 'model', language: 'pt', mentions: ['Toptal'] },
+    expect: { path: 'model', language: 'pt', mentions: ['Roots'] },
   },
   {
     id: 'pt-salary',

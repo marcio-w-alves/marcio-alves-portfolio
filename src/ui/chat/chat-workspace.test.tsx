@@ -484,7 +484,7 @@ describe('topic pages', () => {
     expect(topicLink('Experience')).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Experience');
     expect(latestAnswer()).toHaveTextContent(topicCatalog.topicById('experience').intro);
-    expect(within(latestAnswer()).getByText('Toptal')).toBeInTheDocument();
+    expect(within(latestAnswer()).getByText('Way2b1')).toBeInTheDocument();
     expect(
       within(latestAnswer()).getByRole('list', { name: 'Suggested questions' }),
     ).toBeInTheDocument();

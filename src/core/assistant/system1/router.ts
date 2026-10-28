@@ -322,7 +322,7 @@ const INTENT_RULES: Readonly<Record<ScoredIntent, readonly Rule[]>> = {
 
 /** How the questions name each employer, as regular-expression source. */
 const COMPANY_NAMES: Readonly<Record<string, string>> = {
-  toptal: 'toptal',
+  way2b1: 'way ?2 ?b ?1',
   deel: 'deel',
   roots: 'roots',
   maison: 'maison( moderne?)?',

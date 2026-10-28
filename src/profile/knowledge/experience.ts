@@ -3,62 +3,62 @@ import type { RoleSource } from '@/core/knowledge/schema';
 /** Newest first. */
 export const experience: readonly RoleSource[] = [
   {
-    id: 'toptal',
-    company: 'Toptal',
+    id: 'way2b1',
+    company: 'Way2b1',
     role: 'Senior Frontend Engineer',
-    period: 'Mar 2026 — Present',
-    start: 2026.17,
+    period: 'Jun 2026 — Present',
+    start: 2026.42,
     end: null,
     current: true,
     summary: {
-      en: 'Component library architecture, accessibility leadership and the initial architecture for a new product.',
+      en: 'Full-stack work across the product suite of a small startup: performance, legacy migration and end-to-end features.',
     },
     responsibilities: [
       {
-        en: 'Architected and implemented a modular React and TypeScript component library that speeds up feature work and keeps UI consistent across multiple product teams.',
+        en: "Works as a full-stack engineer across Way2b1's product suite, at a small San Francisco startup building a platform for families and family offices.",
       },
       {
-        en: 'Planned the initial architecture for a new company product scheduled for an upcoming release.',
+        en: 'Cut bundle size by nearly 50% and brought loading times down to a few hundred milliseconds.',
       },
       {
-        en: 'Led the integration of advanced accessibility standards, broadening the product to users with diverse accessibility needs.',
+        en: 'Migrated legacy code to a modern, maintainable architecture across multiple products, keeping features stable in production.',
       },
-      {
-        en: 'Worked with backend engineers to design and optimize RESTful APIs, making frontend data fetching more efficient.',
-      },
+      { en: 'Delivers features end to end: frontend interfaces, backend services and APIs.' },
     ],
     leadership: [
       {
-        en: 'Collaborates with the Director and CEO to coordinate product decisions and implement new requirements and features.',
+        en: 'Collaborates across product teams to align technical decisions, share patterns and keep the codebases consistent.',
       },
     ],
     achievements: [],
     focus: [
-      { en: 'React' },
-      { en: 'TypeScript' },
-      { en: 'Component library' },
-      { en: 'Accessibility' },
-      { en: 'REST APIs' },
+      { en: 'Performance' },
+      { en: 'Legacy code migration' },
+      { en: 'Full stack' },
+      { en: 'Cross-team work' },
     ],
-    metrics: [],
+    metrics: ['way2b1-bundle', 'way2b1-load'],
     highlights: [
       {
-        en: 'Collaborated with Director and CEO to coordinate product decisions and implement new requirements and features.',
+        en: 'Reduced bundle size by nearly 50% and decreased loading times to a few hundred milliseconds.',
       },
       {
-        en: 'Led integration of advanced accessibility standards, enhancing compliance and expanding the user base to accommodate diverse accessibility needs.',
+        en: 'Enhanced application performance platform-wide by refactoring and optimizing critical workflows.',
       },
       {
-        en: 'Architected and implemented a modular React and TypeScript component library to accelerate feature development and ensure UI consistency across multiple product teams.',
+        en: 'Delivered end-to-end features encompassing frontend interfaces, backend services, and APIs.',
       },
       {
-        en: 'Planned the initial architecture for a new company product scheduled for upcoming release.',
+        en: "Contributed as a full-stack engineer across Way2b1's product suite at a small San Francisco startup developing a platform for families and family offices.",
       },
       {
-        en: 'Collaborated with backend engineers to design and optimize RESTful APIs, enhancing frontend data fetching efficiency.',
+        en: 'Migrated legacy code to a modern, maintainable architecture across multiple products, reducing technical debt and maintaining feature stability in production.',
+      },
+      {
+        en: 'Collaborated across product teams to align technical decisions, share patterns, and maintain codebase consistency between products.',
       },
     ],
-    source: 'resume.toptal',
+    source: 'resume.way2b1',
   },
   {
     id: 'deel',
