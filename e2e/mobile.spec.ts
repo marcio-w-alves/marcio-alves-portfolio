@@ -35,3 +35,23 @@ test('the navigation drawer opens from the menu, closes on Escape and leads to a
     'page',
   );
 });
+
+test('project cards fit a narrow phone: features wrap inside their chip, the status sits under the name', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 700 });
+  await page.goto('/projects');
+  const card = page.getByRole('article', { name: 'Project: EvCopilot' });
+  await expect(card).toBeVisible();
+
+  for (const chip of await card.getByRole('listitem').all()) {
+    const fits = await chip.evaluate((item) => item.scrollHeight <= item.clientHeight + 1);
+    expect(fits, await chip.innerText()).toBe(true);
+  }
+
+  const name = await card.getByRole('heading', { name: 'EvCopilot' }).boundingBox();
+  const status = await card.getByText('iPhone beta · invite only').boundingBox();
+  const category = await card.getByText('Electric mobility · Brazil').boundingBox();
+  expect(status && name && status.y).toBeGreaterThan((name?.y ?? 0) + (name?.height ?? 0));
+  expect(category?.height ?? 0).toBeLessThan(24);
+});
