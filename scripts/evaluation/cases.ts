@@ -330,6 +330,13 @@ export const CASES: readonly EvaluationCase[] = [
     expect: { path: 'model', language: 'pt', mentions: ['Shall'] },
   },
   {
+    id: 'pt-accessibility',
+    category: 'language',
+    // Once answered with "se precisar de mais informações, estou à disposição".
+    question: 'Ele já trabalhou com acessibilidade em algum projeto?',
+    expect: { path: 'model', language: 'pt', mentions: ['Toptal'] },
+  },
+  {
     id: 'pt-salary',
     category: 'language',
     question: 'Quanto ele ganha?',
