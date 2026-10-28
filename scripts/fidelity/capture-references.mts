@@ -38,6 +38,16 @@ const PRODUCTION_CONTACT = `Object.assign(window.MAPortfolio.kb.contact, ${JSON.
  * the prototype's own sizing again (height from the content, capped at
  * 200px) once the fonts are in.
  */
+/**
+ * The prototype scrolls a conversation to its end while its answers are
+ * still rendering in, so a state board freezes wherever that scroll landed.
+ * The reference reads every conversation from its start, as the app opens
+ * one.
+ */
+function readFromTheStart() {
+  for (const scroller of document.querySelectorAll('.ma-scroll')) scroller.scrollTop = 0;
+}
+
 function remeasureTextareas() {
   for (const textarea of document.querySelectorAll('textarea')) {
     textarea.style.height = 'auto';
@@ -59,6 +69,7 @@ for (const board of BOARDS.filter(({ name }) => only.size === 0 || only.has(name
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(SETTLE_MS);
   await page.evaluate(remeasureTextareas);
+  await page.evaluate(readFromTheStart);
   await page.addStyleTag({ content: FREEZE_CSS + WITHOUT_PROTOTYPE_NOTICE });
   await page.screenshot({ path: new URL(`${board.name}.png`, OUT).pathname });
   await page.close();

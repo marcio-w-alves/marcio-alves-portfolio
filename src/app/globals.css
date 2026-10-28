@@ -31,7 +31,6 @@
   --color-accent: #0f1115;
   --color-accent-hover: #2b2f36;
   --color-accent-soft: #eef2f6;
-  --color-accent-ring: #dce2e9;
 
   --color-danger: #b42318;
   --color-danger-soft: #fef5f4;
@@ -73,9 +72,7 @@
   --text-subhead: clamp(20px, 2.8cqi, 26px);
 
   /* Rich answer blocks. `code` is relative to the text it sits in. */
-  --text-17: 17px;
   --text-18: 18px;
-  --text-26: 26px;
   --text-30: 30px;
   --text-code: 0.86em;
   --text-code--line-height: normal;
@@ -111,17 +108,13 @@
   /* Rich answer blocks */
   --tracking-figure: -0.035em;
   --tracking-title: -0.015em;
-  --tracking-caps: 0.06em;
 
   --font-weight-book: 450;
 
   /* Shape */
-  --radius-hairline: 1px;
+  --radius-bubble: 18px;
   --radius-kbd: 5px;
-  --radius-mark: 9px;
   --radius-control: 10px;
-  --radius-mark-lg: 11px;
-  --radius-xs: 6px;
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
@@ -141,11 +134,6 @@
   --shadow-drawer: 0 0 0 1px var(--color-border), 0 24px 60px rgb(15 17 21 / 0.12);
   --shadow-focus: 0 0 0 4px rgb(15 17 21 / 0.05);
 
-  /* The "Jump to latest" pill floats over the conversation. */
-  --shadow-floating:
-    0 1px 2px rgb(32 36 32 / 0.05), 0 0 0 1px var(--color-border),
-    0 8px 20px -12px rgb(32 36 32 / 0.3);
-
   /* Timeline and planned-scope markers */
   --inset-shadow-dot: inset 0 0 0 1.5px var(--color-ink-faint);
   --shadow-dot-current: 0 0 0 4px var(--color-fill);
@@ -156,11 +144,10 @@
   --duration-medium: 260ms;
 
   --animate-rise: rise var(--duration-medium) var(--ease-standard) both;
-  --animate-fade: fade var(--duration-medium) var(--ease-standard) both;
   --animate-blink: blink 1s steps(1, end) infinite;
   /* The thinking dots stagger through --dot-delay, set per dot. */
   --animate-pulse-dot: pulse-dot 1.2s ease-in-out var(--dot-delay, 0ms) infinite;
-  --animate-turn: rise 320ms var(--ease-standard) both;
+  --animate-turn: rise 360ms var(--ease-standard) both;
 
   /* The welcome state settles in more slowly than a message does. */
   --animate-fade-slow: fade 600ms var(--ease-standard);
@@ -228,11 +215,9 @@
   --container-phone: 601px;
 
   --container-welcome: 680px;
-  --container-measure: 62ch;
-  --container-bubble: min(78%, 560px);
+  --container-bubble: min(78%, 520px);
   --container-bubble-phone: 88%;
   --grid-template-columns-answer: 28px minmax(0, 1fr);
-  --grid-template-columns-suggestions: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
 
   /*
    * Rich answer blocks. Each block is its own size container, so it
@@ -248,7 +233,6 @@
   --grid-template-columns-metrics: repeat(auto-fill, minmax(min(150px, 100%), 1fr));
   --grid-template-columns-skills: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
   --grid-template-columns-projects: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
-  --grid-template-columns-scope: repeat(auto-fit, minmax(min(170px, 100%), 1fr));
   --grid-template-columns-timeline: 132px 20px minmax(0, 1fr);
   --grid-template-columns-timeline-narrow: 16px minmax(0, 1fr);
   --grid-template-columns-impact: 84px minmax(0, 1fr);
@@ -316,36 +300,14 @@
   transition-duration: var(--duration-medium);
 }
 
-/* A suggestion's arrow moves at the medium pace but recolours at the fast one. */
-@utility transition-nudge {
-  transition:
-    translate var(--duration-medium) var(--ease-standard),
-    color var(--duration-fast) var(--ease-standard);
-}
-
-/* A row that scrolls sideways without showing a scrollbar. */
 /* The streaming caret, a dot, sits just above the text's baseline. */
 @utility align-caret {
   vertical-align: 1px;
 }
 
-/* The streaming caret sits on the text's baseline, a line tall. */
-@utility caret-line {
-  height: 1.05em;
-  vertical-align: -2px;
-}
-
 /* Code in an answer indents by two columns. */
 @utility tab-2 {
   tab-size: 2;
-}
-
-@utility scrollbar-none {
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
 }
 
 /*

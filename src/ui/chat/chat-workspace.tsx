@@ -65,9 +65,12 @@ export function ChatWorkspace({
   const inConversation = conversation.messages.length > 0;
   const latestId = latestAnswerId(conversation);
 
-  // New content is followed only while the visitor is already at the bottom.
+  // New content is followed only while the visitor is already at the bottom;
+  // a conversation the page opens with is read from its start.
+  const openedWith = useRef(conversation);
   useLayoutEffect(() => {
     const scroller = scrollRef.current;
+    if (conversation === openedWith.current) return;
     if (scroller && pinned.current && inConversation) scroller.scrollTop = scroller.scrollHeight;
   }, [conversation, inConversation]);
 
@@ -179,13 +182,13 @@ export function ChatWorkspace({
           <ol
             aria-label="Conversation"
             aria-busy={chat.streaming}
-            className="mx-auto flex max-w-column list-none flex-col gap-8 px-8 pt-3 pb-8 @max-phone/ma:gap-6.5 @max-phone/ma:px-4 @max-phone/ma:pt-4 @max-phone/ma:pb-6"
+            className="mx-auto flex max-w-column list-none flex-col gap-10 px-8 pt-3 pb-8 @max-phone/ma:gap-7.5 @max-phone/ma:px-4 @max-phone/ma:pt-4 @max-phone/ma:pb-6"
           >
             {conversation.messages.map((message) => {
               if (message.role === 'user') {
                 return (
                   <li key={message.id} className="flex animate-turn justify-end">
-                    <p className="bg-accent-bg m-0 max-w-bubble rounded-xl rounded-br-xs px-3.5 py-2.5 text-15 leading-body wrap-anywhere whitespace-pre-wrap text-ink @max-phone/ma:max-w-bubble-phone">
+                    <p className="m-0 max-w-bubble rounded-bubble bg-fill px-4 py-2.5 text-15 leading-reading wrap-anywhere whitespace-pre-wrap text-ink @max-phone/ma:max-w-bubble-phone">
                       <span className="sr-only">You asked: </span>
                       {message.text}
                     </p>
