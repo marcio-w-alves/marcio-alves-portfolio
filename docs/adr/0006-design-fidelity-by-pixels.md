@@ -1,6 +1,8 @@
 # 0006 — Design fidelity is proven by pixels
 
-**Status:** Accepted
+**Status:** Retired (POR-75). The UI was built and verified against the design; the
+references, the workbench pages and `pnpm fidelity` were then removed, and
+changes are checked in the browser and by the end-to-end tests.
 
 ## Context
 

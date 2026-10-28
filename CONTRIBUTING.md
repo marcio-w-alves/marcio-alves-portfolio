@@ -43,7 +43,6 @@ gate is fixed, never bypassed.
 | Build                                                     | `pnpm build`                                     | CI                                                  |
 | Browser journeys, motion, accessibility, security, search | `pnpm test:e2e`                                  | CI                                                  |
 | Performance budget                                        | `pnpm lighthouse` (after `pnpm build`)           | CI                                                  |
-| Design fidelity                                           | `pnpm fidelity` (with `pnpm dev` running)        | locally, for any change that can affect rendering   |
 | Assistant grounding                                       | `pnpm eval:assistant` (needs the key)            | locally, when answers, prompts or the record change |
 
 `pnpm verify` runs the commit and push gates in CI's order.
@@ -75,11 +74,7 @@ gate is fixed, never bypassed.
 ## Changing the design
 
 1. Port the change into the tokens and components.
-2. If the design itself changed, serve its files locally with their runtime
-   and run `pnpm fidelity:references`.
-3. `pnpm fidelity`: every board at 99.9% or better
-   ([ADR 0006](docs/adr/0006-design-fidelity-by-pixels.md)). After the
-   deployment, `pnpm fidelity:live`.
+2. Check it in the browser at desktop and phone widths, then `pnpm test:e2e`.
 
 ## Tests
 

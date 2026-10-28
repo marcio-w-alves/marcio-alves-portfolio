@@ -132,7 +132,7 @@ function SidebarFooter({ links }: { links: SidebarLinks }) {
     <div className="mt-auto flex flex-col gap-1 px-2.5">
       <a
         href={mailto}
-        className="group mb-2 inline-flex w-fit items-center gap-1.5 text-13.5 leading-label font-medium text-ink no-underline"
+        className="group mb-3 inline-flex w-fit items-center gap-1.5 text-13.5 leading-label font-medium text-ink no-underline"
       >
         Get in touch
         <Icon
@@ -141,7 +141,6 @@ function SidebarFooter({ links }: { links: SidebarLinks }) {
           className="transition-[translate] duration-medium ease-standard group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
         />
       </a>
-      <p className="-mt-1.5 mb-2.5 text-12.5 wrap-anywhere text-ink-muted">{links.email}</p>
       <ul className="flex flex-wrap gap-x-4 gap-y-1 pt-3 inset-shadow-rule-top">
         <li>
           <ExternalLink href={links.linkedin}>LinkedIn</ExternalLink>

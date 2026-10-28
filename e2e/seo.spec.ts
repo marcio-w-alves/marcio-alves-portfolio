@@ -63,13 +63,10 @@ test('the page declares a tab icon the server delivers', async ({ page, request 
   expect(icon.headers()['content-type']).toBe('image/png');
 });
 
-test('robots.txt keeps crawlers out of the workbench and the API, and points to the sitemap', async ({
-  request,
-}) => {
+test('robots.txt keeps crawlers out of the API and points to the sitemap', async ({ request }) => {
   const robots = await (await request.get('/robots.txt')).text();
 
   expect(robots).toMatch(/^Allow: \/$/m);
-  expect(robots).toMatch(/^Disallow: \/workbench$/m);
   expect(robots).toMatch(/^Disallow: \/api$/m);
   expect(robots).toMatch(/^Sitemap: https?:\/\/[^/]+\/sitemap\.xml$/m);
 });

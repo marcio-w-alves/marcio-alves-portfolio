@@ -11,7 +11,7 @@ are not rewritten.
 | [0003](0003-the-model-never-holds-the-record.md)       | The model never holds the record; it acts through an allow-list        | Accepted |
 | [0004](0004-committed-retrieval-index.md)              | The retrieval index is built offline and committed                     | Accepted |
 | [0005](0005-grading-answers-against-their-evidence.md) | Answers are graded against the evidence they had                       | Accepted |
-| [0006](0006-design-fidelity-by-pixels.md)              | Design fidelity is proven by pixels                                    | Accepted |
+| [0006](0006-design-fidelity-by-pixels.md)              | Design fidelity is proven by pixels                                    | Retired  |
 | [0007](0007-contrast-over-decoration.md)               | Text contrast is a token rule, decoration has its own ink              | Accepted |
 | [0008](0008-no-persistent-build-cache.md)              | No persistent Turbopack cache                                          | Accepted |
 | [0009](0009-static-content-security-policy.md)         | A static Content-Security-Policy, without nonces                       | Accepted |
