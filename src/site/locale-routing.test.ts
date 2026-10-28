@@ -22,7 +22,6 @@ afterEach(() => {
 
 describe('the routing the real next.config.ts declares', () => {
   it('serves every unprefixed page address from the English segment, query included', async () => {
-    expect(await rewrittenPath('/')).toBe('/en');
     expect(await rewrittenPath('/skills')).toBe('/en/skills');
     expect(await rewrittenPath('/nope')).toBe('/en/nope');
     expect(await rewrittenPath('/ptx')).toBe('/en/ptx');

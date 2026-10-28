@@ -3,10 +3,9 @@ import { DEFAULT_LOCALE, LOCALE_SEGMENT, type Locale } from '../core/i18n/locale
 const ENGLISH = LOCALE_SEGMENT[DEFAULT_LOCALE];
 
 /**
- * Paths the second rewrite leaves alone: the API, Next's own assets, and the
- * English segment itself. Without that last one the rewrites chained on a
- * client navigation to the home page — `/` became `/en`, then `/en/en` — and
- * Overview opened the not-found page.
+ * Paths the rewrite leaves alone: the API, Next's own assets, and the English
+ * segment itself, which the proxy's rewrite of the home page arrives at.
+ * Without it `/en` was rewritten again, to `/en/en`, and answered not-found.
  */
 const NOT_PAGES = ['api', '_next', ENGLISH];
 
@@ -22,8 +21,11 @@ export function localeRedirects() {
   ];
 }
 
+/** Where the home page is served from: the English segment. `src/proxy.ts` rewrites to it. */
+export const HOME_DESTINATION = `/${ENGLISH}`;
+
 /**
- * Every page address without a published language's prefix is English, served
+ * Every other page address without a published language's prefix is English, served
  * from the `en` segment. They run after the filesystem, so files in `public`
  * and routes outside `[locale]` (the sitemap, robots.txt, the icons) are
  * served as they are. A language that is not published keeps no prefix, so
@@ -36,10 +38,10 @@ export function localeRewrites(published: readonly Locale[]) {
   const excluded = [...NOT_PAGES, ...prefixed].map((segment) => `${segment}(?:/|$)`).join('|');
   return {
     beforeFiles: [],
-    afterFiles: [
-      { source: '/', destination: `/${ENGLISH}` },
-      { source: `/:path((?!${excluded}).+)`, destination: `/${ENGLISH}/:path` },
-    ],
+    // The home page is not here: on Vercel this rewrite of `/` sent a client
+    // navigation's data requests to `/en/index.segments/…`, which the
+    // catch-all answered with not-found. `src/proxy.ts` rewrites it instead.
+    afterFiles: [{ source: `/:path((?!${excluded}).+)`, destination: `/${ENGLISH}/:path` }],
     fallback: [],
   };
 }
