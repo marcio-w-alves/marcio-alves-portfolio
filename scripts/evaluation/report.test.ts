@@ -10,12 +10,16 @@ import {
   type RunReport,
 } from './report';
 
+function rethrow(error: unknown): never {
+  throw error;
+}
+
 /** Runs a real action, so the trace holds what the model would have received. */
 async function traced(name: string, input: object): Promise<ToolTrace> {
   return {
     name,
     arguments: JSON.stringify(input),
-    outcome: await createToolRegistry().run(name, input),
+    outcome: await createToolRegistry({ reportError: rethrow }).run(name, input),
   };
 }
 

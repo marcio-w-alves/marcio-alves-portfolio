@@ -1,6 +1,7 @@
-import { http, HttpResponse } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { createLogger } from '../logging/logger';
 import { createGithubApi } from './github-api';
 
 const server = setupServer();
@@ -14,6 +15,18 @@ afterEach(() => {
 afterAll(() => {
   server.close();
 });
+
+const PROFILE_URL = 'https://api.github.com/users/marcio-w-alves';
+const REPOS_URL = 'https://api.github.com/users/marcio-w-alves/repos';
+
+/** The adapter, with what it logs kept as parsed lines. */
+function github(options: { token?: string; timeoutMs?: number } = {}) {
+  const logged: Record<string, unknown>[] = [];
+  const logger = createLogger({
+    write: (level, line) => logged.push({ ...(JSON.parse(line) as object), level }),
+  });
+  return { api: createGithubApi({ username: 'marcio-w-alves', logger, ...options }), logged };
+}
 
 const USER = {
   login: 'marcio-w-alves',
@@ -43,7 +56,7 @@ describe('GitHub API adapter', () => {
     server.use(
       http.get('https://api.github.com/users/marcio-w-alves', () => HttpResponse.json(USER)),
     );
-    expect(await createGithubApi({ username: 'marcio-w-alves' }).profile()).toEqual({
+    expect(await github().api.profile()).toEqual({
       login: 'marcio-w-alves',
       name: 'Marcio Montenegro',
       bio: 'Frontend engineer',
@@ -62,7 +75,7 @@ describe('GitHub API adapter', () => {
         return HttpResponse.json([repository('a'), repository('b'), repository('c')]);
       }),
     );
-    const repositories = await createGithubApi({ username: 'marcio-w-alves' }).repositories(2);
+    const repositories = await github().api.repositories(2);
     expect(repositories?.map((repo) => repo.name)).toEqual(['a', 'b']);
     expect(query).toContain('sort=pushed');
   });
@@ -75,8 +88,8 @@ describe('GitHub API adapter', () => {
         return HttpResponse.json(USER);
       }),
     );
-    await createGithubApi({ username: 'marcio-w-alves' }).profile();
-    await createGithubApi({ username: 'marcio-w-alves', token: 'ghp_test' }).profile();
+    await github().api.profile();
+    await github({ token: 'ghp_test' }).api.profile();
     expect(seen).toEqual([null, 'Bearer ghp_test']);
   });
 
@@ -86,6 +99,96 @@ describe('GitHub API adapter', () => {
         HttpResponse.json({ message: 'API rate limit exceeded' }, { status: 403 }),
       ),
     );
-    expect(await createGithubApi({ username: 'marcio-w-alves' }).profile()).toBeNull();
+    expect(await github().api.profile()).toBeNull();
+  });
+
+  it('reads a valid profile and ignores fields it does not use', async () => {
+    server.use(
+      http.get(PROFILE_URL, () =>
+        HttpResponse.json({ ...USER, site_admin: false, plan: { name: 'pro' } }),
+      ),
+    );
+    const { api, logged } = github();
+    expect(await api.profile()).toMatchObject({ login: 'marcio-w-alves', followers: 3 });
+    expect(logged).toEqual([]);
+  });
+
+  it.each([
+    [
+      'a 5xx',
+      'profile',
+      PROFILE_URL,
+      () => HttpResponse.json({ message: 'Server Error' }, { status: 502 }),
+      { cause: 'status', status: 502 },
+    ],
+    [
+      'a profile of the wrong shape',
+      'profile',
+      PROFILE_URL,
+      () => HttpResponse.json({ ...USER, followers: 'many' }),
+      { cause: 'shape', status: 200 },
+    ],
+    [
+      'a body that is not JSON',
+      'profile',
+      PROFILE_URL,
+      () => new HttpResponse('<html>rate limited</html>', { status: 200 }),
+      { cause: 'shape', status: 200 },
+    ],
+    [
+      'a repository list that is not a list',
+      'repositories',
+      REPOS_URL,
+      () => HttpResponse.json({ items: [] }),
+      { cause: 'shape', status: 200 },
+    ],
+    [
+      'a network error',
+      'profile',
+      PROFILE_URL,
+      () => HttpResponse.error(),
+      { cause: 'network', status: null },
+    ],
+  ])('degrades to unavailable on %s, logging why', async (_label, operation, url, reply, why) => {
+    server.use(http.get(url, reply));
+    const { api, logged } = github();
+
+    const result = operation === 'profile' ? await api.profile() : await api.repositories(3);
+
+    expect(result).toBeNull();
+    expect(logged).toEqual([
+      expect.objectContaining({
+        level: 'warn',
+        event: 'adapter.degraded',
+        adapter: 'github',
+        operation,
+        ...why,
+      }),
+    ]);
+  });
+
+  it('degrades to unavailable on a response that never comes, logging a timeout', async () => {
+    server.use(
+      http.get(PROFILE_URL, async () => {
+        await delay('infinite');
+        return HttpResponse.json(USER);
+      }),
+    );
+    const { api, logged } = github({ timeoutMs: 50 });
+
+    expect(await api.profile()).toBeNull();
+    expect(logged).toEqual([
+      expect.objectContaining({ event: 'adapter.degraded', cause: 'timeout', status: null }),
+    ]);
+  });
+
+  it('logs nothing that identifies the request beyond the operation', async () => {
+    server.use(http.get(PROFILE_URL, () => HttpResponse.json({}, { status: 500 })));
+    const { api, logged } = github({ token: 'ghp_secret' });
+    await api.profile();
+    expect(Object.keys(logged[0] ?? {}).sort()).toEqual(
+      ['adapter', 'cause', 'event', 'level', 'operation', 'status', 'time'].sort(),
+    );
+    expect(JSON.stringify(logged)).not.toContain('ghp_secret');
   });
 });

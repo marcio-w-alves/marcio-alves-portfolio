@@ -97,6 +97,13 @@ interface ActionResult {
   readonly outcome: ToolOutcome;
 }
 
+/** What every action in a round runs against. */
+interface RoundContext {
+  readonly searched: boolean;
+  readonly question: string;
+  readonly signal?: AbortSignal;
+}
+
 const SKIPPED_ACTION: ToolOutcome = {
   ok: false,
   error: 'Too many actions in one step; this one was not run.',
@@ -266,10 +273,10 @@ export function createModelAssistant({
     return { text, calls };
   }
 
-  async function execute(call: ToolCall): Promise<ToolOutcome> {
+  async function execute(call: ToolCall, signal?: AbortSignal): Promise<ToolOutcome> {
     const parsed = parseArguments(call.arguments);
     if (parsed === undefined) return { ok: false, error: 'The arguments were not valid JSON.' };
-    return tools.run(call.name, parsed);
+    return tools.run(call.name, parsed, signal);
   }
 
   const canSearch = tools.tools.some((tool) => tool.name === SEARCH);
@@ -288,9 +295,15 @@ export function createModelAssistant({
     return parsed?.reason === 'not_documented' || parsed?.reason === 'private';
   }
 
-  async function searchInstead(question: string, decline: ToolCall): Promise<ToolOutcome> {
-    const outcome = await tools.run(SEARCH, { query: question.slice(0, MAX_QUERY) });
-    if (!outcome.ok || bestRelevance(outcome.result.data) < ANSWERABLE) return execute(decline);
+  async function searchInstead(
+    question: string,
+    decline: ToolCall,
+    signal?: AbortSignal,
+  ): Promise<ToolOutcome> {
+    const outcome = await tools.run(SEARCH, { query: question.slice(0, MAX_QUERY) }, signal);
+    if (!outcome.ok || bestRelevance(outcome.result.data) < ANSWERABLE) {
+      return execute(decline, signal);
+    }
     return {
       ok: true,
       result: { ...outcome.result, data: { note: SEARCH_FIRST, results: outcome.result.data } },
@@ -301,26 +314,18 @@ export function createModelAssistant({
   function outcomeOf(
     call: ToolCall,
     index: number,
-    searched: boolean,
-    question: string,
+    { searched, question, signal }: RoundContext,
   ): Promise<ToolOutcome> {
     if (index >= MAX_CALLS_PER_ROUND) return Promise.resolve(SKIPPED_ACTION);
-    if (declinesUnsearched(call, searched)) return searchInstead(question, call);
-    return execute(call);
+    if (declinesUnsearched(call, searched)) return searchInstead(question, call, signal);
+    return execute(call, signal);
   }
 
   // Actions in one round are independent, so they run concurrently: an
   // encyclopedia lookup and a GitHub read should not wait on each other.
-  function runActions(
-    calls: readonly ToolCall[],
-    searched: boolean,
-    question: string,
-  ): Promise<ActionResult[]> {
+  function runActions(calls: readonly ToolCall[], context: RoundContext): Promise<ActionResult[]> {
     return Promise.all(
-      calls.map(async (call, index) => ({
-        call,
-        outcome: await outcomeOf(call, index, searched, question),
-      })),
+      calls.map(async (call, index) => ({ call, outcome: await outcomeOf(call, index, context) })),
     );
   }
 
@@ -336,7 +341,11 @@ export function createModelAssistant({
         if (turn.calls.length === 0) break;
 
         const searchedBefore: boolean = searched || turn.calls.some((call) => call.name === SEARCH);
-        const results = await runActions(turn.calls, searchedBefore, question);
+        const results = await runActions(turn.calls, {
+          searched: searchedBefore,
+          question,
+          ...(signal ? { signal } : {}),
+        });
         // A decline replaced by a search counts as that search.
         searched =
           searchedBefore || turn.calls.some((call) => declinesUnsearched(call, searchedBefore));

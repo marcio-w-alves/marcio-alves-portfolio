@@ -1,6 +1,12 @@
-import { describe, expect, it } from 'vitest';
+import { delay, http, HttpResponse } from 'msw';
+import { setupServer } from 'msw/node';
+import { Agent, getGlobalDispatcher, setGlobalDispatcher } from 'undici';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { EmbeddingPort } from '@/core/assistant/ports/embedding.port';
 import { buildCorpus, type KnowledgeChunk } from '@/core/knowledge/corpus';
+import { createOpenAIClient } from '../openai/openai-client';
+import { createOpenAIEmbeddings, EmbeddingsTimeoutError } from '../openai/openai-embeddings';
+import { CircuitOpenError, createCircuitBreaker } from '../resilience/circuit-breaker';
 import { EMBEDDING_DIMENSIONS, type KnowledgeIndex } from './index-spec';
 import committed from './knowledge-index.json';
 import {
@@ -12,6 +18,10 @@ import {
 
 const index: KnowledgeIndex = committed;
 const corpus = buildCorpus();
+
+function newBreaker(now: () => number = Date.now) {
+  return createCircuitBreaker({ failureThreshold: 3, cooldownMs: 30_000, now });
+}
 
 /** Embeds every query as the given vector, standing in for the model. */
 function embeddingsReturning(vector: readonly number[]): EmbeddingPort {
@@ -46,6 +56,7 @@ describe('cosine', () => {
 describe('vector knowledge search', () => {
   it('ranks the passage the query points at first', async () => {
     const search = createVectorKnowledgeSearch({
+      breaker: newBreaker(),
       embeddings: embeddingsReturning(vectorOf('role:shall:4')),
       index,
       corpus,
@@ -61,6 +72,7 @@ describe('vector knowledge search', () => {
 
   it('returns best matches first, no more than asked from the résumé plus a few notes', async () => {
     const search = createVectorKnowledgeSearch({
+      breaker: newBreaker(),
       embeddings: embeddingsReturning(vectorOf('languages')),
       index,
       corpus,
@@ -75,6 +87,7 @@ describe('vector knowledge search', () => {
 
   it('searches only the category asked for', async () => {
     const search = createVectorKnowledgeSearch({
+      breaker: newBreaker(),
       embeddings: embeddingsReturning(vectorOf('role:deel:7')),
       index,
       corpus,
@@ -86,6 +99,7 @@ describe('vector knowledge search', () => {
   it('returns nothing for a question unrelated to the record, rather than the least bad passages', async () => {
     for (const seed of [1, 2, 3]) {
       const search = createVectorKnowledgeSearch({
+        breaker: newBreaker(),
         embeddings: embeddingsReturning(unrelatedVector(seed)),
         index,
         corpus,
@@ -101,6 +115,7 @@ describe('vector knowledge search — résumé and notes together', () => {
     const at = (similarity: number) => [100 * similarity, 100 * Math.sqrt(1 - similarity ** 2)];
     const ids = { 'note-a': 0.9, 'note-b': 0.85, 'note-c': 0.8, 'note-d': 0.75, resume: 0.4 };
     const search = createVectorKnowledgeSearch({
+      breaker: newBreaker(),
       embeddings: embeddingsReturning(query),
       index: {
         ...index,
@@ -140,6 +155,7 @@ describe('vector knowledge search — the relevance floor', () => {
   function searchOver(similarities: Record<string, number>) {
     const ids = Object.keys(similarities);
     return createVectorKnowledgeSearch({
+      breaker: newBreaker(),
       embeddings: embeddingsReturning(QUERY),
       index: {
         ...index,
@@ -165,6 +181,7 @@ describe('vector knowledge search — the relevance floor', () => {
 
   it('never returns a passage the index has no vector for, as after an unrebuilt change', async () => {
     const search = createVectorKnowledgeSearch({
+      breaker: newBreaker(),
       embeddings: embeddingsReturning(QUERY),
       index: { ...index, vectors: { indexed: vectorAt(0.5) } },
       corpus: [chunk('indexed'), chunk('added-since')],
@@ -174,10 +191,124 @@ describe('vector knowledge search — the relevance floor', () => {
 
   it('returns nothing when the query could not be embedded', async () => {
     const search = createVectorKnowledgeSearch({
+      breaker: newBreaker(),
       embeddings: { embed: () => Promise.resolve([]) },
       index: { ...index, vectors: { indexed: vectorAt(0.9) } },
       corpus: [chunk('indexed')],
     });
     expect(await search.search({ query: 'q', limit: 5 })).toEqual([]);
+  });
+});
+
+describe('vector knowledge search — when embeddings fail', () => {
+  const EMBEDDINGS_URL = 'https://api.openai.com/v1/embeddings';
+  const server = setupServer();
+  let outbound = 0;
+  // A fresh connection pool per test: MSW's emulated socket for a request
+  // that timed out can still be tearing down when the next test connects.
+  const sharedConnections = getGlobalDispatcher();
+  let connections: Agent;
+
+  beforeAll(() => {
+    server.listen({ onUnhandledFrame: 'error' });
+    server.events.on('request:start', () => {
+      outbound += 1;
+    });
+  });
+  beforeEach(() => {
+    connections = new Agent();
+    setGlobalDispatcher(connections);
+  });
+  afterEach(async () => {
+    server.resetHandlers();
+    outbound = 0;
+    await connections.destroy();
+  });
+  afterAll(() => {
+    setGlobalDispatcher(sharedConnections);
+    server.close();
+  });
+
+  function embeddingsAnswer(status: () => 200 | 500) {
+    server.use(
+      http.post(EMBEDDINGS_URL, () =>
+        status() === 500
+          ? HttpResponse.json({ error: { message: 'stubbed outage' } }, { status: 500 })
+          : HttpResponse.json({
+              object: 'list',
+              model: 'text-embedding-3-small',
+              data: [{ object: 'embedding', index: 0, embedding: vectorOf('role:toptal') }],
+              usage: { prompt_tokens: 1, total_tokens: 1 },
+            }),
+      ),
+    );
+  }
+
+  function searchThroughOpenAI({ timeoutMs }: { timeoutMs?: number } = {}) {
+    let clock = 0;
+    const breaker = newBreaker(() => clock);
+    const search = createVectorKnowledgeSearch({
+      embeddings: createOpenAIEmbeddings({
+        client: createOpenAIClient('test-key'),
+        model: 'text-embedding-3-small',
+        dimensions: EMBEDDING_DIMENSIONS,
+        ...(timeoutMs ? { timeoutMs } : {}),
+      }),
+      index,
+      corpus,
+      breaker,
+    });
+    return {
+      search: (signal?: AbortSignal) =>
+        search.search({ query: 'talent marketplace', limit: 3, ...(signal ? { signal } : {}) }),
+      breaker,
+      advance: (ms: number) => {
+        clock += ms;
+      },
+    };
+  }
+
+  it('stops calling embeddings after repeated failures, and probes again after the cooldown', async () => {
+    let status: 200 | 500 = 500;
+    embeddingsAnswer(() => status);
+    const { search, breaker, advance } = searchThroughOpenAI();
+    for (let i = 0; i < 3; i += 1) await expect(search()).rejects.toThrow('stubbed outage');
+
+    await expect(search()).rejects.toBeInstanceOf(CircuitOpenError);
+    expect(outbound).toBe(3);
+
+    advance(30_000);
+    status = 200;
+    const [best] = await search();
+    expect(best?.id).toBe('role:toptal');
+    expect(outbound).toBe(4);
+    expect(breaker.state()).toBe('closed');
+  });
+
+  it('opens the retrieval circuit after embeddings time out repeatedly', async () => {
+    server.use(
+      http.post(EMBEDDINGS_URL, async () => {
+        await delay('infinite');
+        return HttpResponse.json({});
+      }),
+    );
+    const { search } = searchThroughOpenAI({ timeoutMs: 50 });
+    for (let i = 0; i < 3; i += 1) {
+      await expect(search()).rejects.toBeInstanceOf(EmbeddingsTimeoutError);
+    }
+
+    await expect(search()).rejects.toBeInstanceOf(CircuitOpenError);
+    expect(outbound).toBe(3);
+  });
+
+  it('does not count searches the visitor cancelled as embeddings failing', async () => {
+    embeddingsAnswer(() => 200);
+    const { search, breaker } = searchThroughOpenAI();
+    for (let i = 0; i < 3; i += 1) {
+      await expect(search(AbortSignal.abort())).rejects.toMatchObject({ name: 'AbortError' });
+    }
+
+    expect(breaker.state()).toBe('closed');
+    expect((await search()).length).toBeGreaterThan(0);
   });
 });

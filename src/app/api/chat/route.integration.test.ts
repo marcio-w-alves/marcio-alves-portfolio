@@ -6,7 +6,9 @@ import { buildContainer } from '@/composition-root';
 import type { AnswerSource, AssistantEvent } from '@/core/assistant/assistant-event';
 import { assistantSettings } from '@/env';
 import { MAX_OUTPUT_TOKENS } from '@/core/assistant/system2/model-assistant';
+import { SEARCH_UNAVAILABLE } from '@/core/assistant/tools/search-tools';
 import knowledgeIndex from '@/infrastructure/retrieval/knowledge-index.json';
+import { createHealthHandler } from '../health/health-handler';
 import { createChatHandler } from './chat-handler';
 
 /**
@@ -428,6 +430,59 @@ describe('POST /api/chat — when OpenAI fails', () => {
     });
     expect(signals.map((signal) => signal.aborted)).toEqual([true]);
     expect(reported).toEqual([expect.objectContaining({ errorName: 'ModelStreamStalledError' })]);
+  });
+});
+
+describe('POST /api/chat — when retrieval is down', () => {
+  it('still answers without search, opening only the retrieval circuit', async () => {
+    server.use(
+      http.post(EMBEDDINGS, () =>
+        HttpResponse.json({ error: { message: 'stubbed outage' } }, { status: 500 }),
+      ),
+    );
+    // Each question searches, then answers from what the search returned.
+    const sent: CompletionRequest[] = [];
+    server.use(
+      http.post(COMPLETIONS, async ({ request }) => {
+        sent.push((await request.json()) as CompletionRequest);
+        return completion(
+          sent.length % 2 === 1
+            ? toolCallRound('searchKnowledge', '{"query":"Roots backend"}')
+            : textRound('That is not something I can look up right now.'),
+        );
+      }),
+    );
+    const container = buildContainer({
+      env: { OPENAI_API_KEY: 'test-key', GITHUB_TOKEN: undefined },
+      openAITimeoutMs: TEST_TIMEOUT_MS,
+    });
+    const ask = createChatHandler(container);
+
+    const answers: AssistantEvent[][] = [];
+    for (const company of ['Roots', 'Deel', 'Toptal', 'Shall']) {
+      answers.push(await allEventsOf(await ask(question(`Compare ${company} and Deel.`))));
+    }
+
+    for (const events of answers) {
+      expect(events[0]).toEqual({ type: 'start', intent: 'model', related: null });
+      expect(textOf(events)).toBe('That is not something I can look up right now.');
+      expect(events.at(-1)?.type).toBe('finish');
+    }
+    expect(outbound.filter((request) => request.url === EMBEDDINGS)).toHaveLength(3);
+    const lastToolReply = sent.at(-1)?.messages.at(-1);
+    expect(JSON.parse(lastToolReply?.content ?? 'null')).toEqual({
+      passages: [],
+      note: SEARCH_UNAVAILABLE,
+    });
+    expect(await createHealthHandler(container)().json()).toMatchObject({
+      circuit: 'closed',
+      retrieval: 'open',
+    });
+    expect(loggedEvents('retrieval.circuit_opened')).toHaveLength(1);
+    expect(loggedEvents('tool.failed').map((entry) => entry.tool)).toEqual(
+      Array.from({ length: 4 }, () => 'searchKnowledge'),
+    );
+    expect(reported).toEqual([]);
   });
 });
 
