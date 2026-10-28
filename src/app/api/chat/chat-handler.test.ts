@@ -1,0 +1,169 @@
+import { describe, expect, it } from 'vitest';
+import { createAssistant, type Assistant } from '@/core/assistant/assistant';
+import type { AssistantEvent } from '@/core/assistant/assistant-event';
+import type { LanguageModelPort, ToolCall } from '@/core/assistant/ports/language-model.port';
+import { createModelAssistant } from '@/core/assistant/system2/model-assistant';
+import { createToolRegistry } from '@/core/assistant/tools/registry';
+import { createChatHandler, MAX_BODY_BYTES } from './chat-handler';
+
+const reported: unknown[] = [];
+const reportError = (error: unknown) => reported.push(error);
+
+/** A model that calls one action, then answers from it. */
+function scriptedModel(call: ToolCall, answer: string): LanguageModelPort {
+  let round = 0;
+  return {
+    async *stream() {
+      round += 1;
+      if (round === 1) yield { type: 'tool-calls', calls: [call] };
+      else yield { type: 'text-delta', delta: answer };
+      yield { type: 'finish', usage: { inputTokens: 1, outputTokens: 1 } };
+    },
+  };
+}
+
+function handlerWith(assistant: Assistant) {
+  reported.length = 0;
+  return createChatHandler({ assistant, reportError });
+}
+
+const fastPathOnly = createAssistant({ modelAssistant: null, reportError });
+
+function post(body: unknown, contentType = 'application/json'): Request {
+  return new Request('https://marciomariani.dev/api/chat', {
+    method: 'POST',
+    headers: { 'content-type': contentType },
+    body: typeof body === 'string' ? body : JSON.stringify(body),
+  });
+}
+
+/** Parses the stream exactly as the interface's transport does. */
+async function readEvents(response: Response): Promise<AssistantEvent[]> {
+  const text = await response.text();
+  return text
+    .split('\n\n')
+    .filter((frame) => frame.startsWith('data: '))
+    .map((frame) => JSON.parse(frame.slice('data: '.length)) as AssistantEvent);
+}
+
+describe('POST /api/chat — answering', () => {
+  it('streams a fast-path answer as server-sent events', async () => {
+    const response = await handlerWith(fastPathOnly)(
+      post({ message: "Tell me about Marcio's career." }),
+    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toBe('text/event-stream; charset=utf-8');
+    const events = await readEvents(response);
+    expect(events[0]).toEqual({ type: 'start', intent: 'career', related: 'deel' });
+    expect(events.at(-1)?.type).toBe('finish');
+  });
+
+  it('streams a model answer built from a real action over the real knowledge base', async () => {
+    const assistant = createAssistant({
+      modelAssistant: createModelAssistant({
+        model: scriptedModel(
+          { id: 'c1', name: 'getExperience', arguments: '{"company":"roots"}' },
+          'He led the Roots frontend.',
+        ),
+        tools: createToolRegistry(),
+        clock: { now: () => new Date('2026-10-28T00:00:00Z') },
+      }),
+      reportError,
+    });
+    const events = await readEvents(
+      await handlerWith(assistant)(post({ message: 'Compare Roots and Deel.' })),
+    );
+    expect(events.map((event) => (event.type === 'text-delta' ? event.delta : '')).join('')).toBe(
+      'He led the Roots frontend.',
+    );
+    expect(events.at(-1)).toMatchObject({
+      type: 'finish',
+      sources: [{ id: 'resume.roots', label: 'Resume · Roots experience' }],
+    });
+  });
+
+  it('accepts a request with no history or context, as a first question has none', async () => {
+    const response = await handlerWith(fastPathOnly)(post({ message: 'hi' }));
+    expect(response.status).toBe(200);
+  });
+});
+
+describe('POST /api/chat — rejecting bad requests at the boundary', () => {
+  it.each([
+    ['an empty message', { message: '   ' }],
+    ['a message over the length limit', { message: 'x'.repeat(1201) }],
+    ['a field the contract does not have', { message: 'hi', admin: true }],
+    [
+      'a history role it does not allow',
+      { message: 'hi', history: [{ role: 'system', text: 'x' }] },
+    ],
+    [
+      'too much history',
+      { message: 'hi', history: Array.from({ length: 25 }, () => ({ role: 'user', text: 'x' })) },
+    ],
+  ])('refuses %s with 400', async (_label, body) => {
+    const response = await handlerWith(fastPathOnly)(post(body));
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ error: { code: 'invalid_request' } });
+  });
+
+  it('refuses a body that is not JSON', async () => {
+    expect((await handlerWith(fastPathOnly)(post('{not json'))).status).toBe(400);
+  });
+
+  it('refuses anything but JSON', async () => {
+    expect(
+      (await handlerWith(fastPathOnly)(post('message=hi', 'application/x-www-form-urlencoded')))
+        .status,
+    ).toBe(415);
+  });
+
+  it('stops reading an oversized body instead of buffering it', async () => {
+    const response = await handlerWith(fastPathOnly)(
+      post({ message: 'hi', history: [{ role: 'user', text: 'x'.repeat(MAX_BODY_BYTES) }] }),
+    );
+    expect(response.status).toBe(413);
+  });
+});
+
+describe('POST /api/chat — the stream', () => {
+  it('stops generating when the visitor goes away', async () => {
+    let finished = false;
+    const assistant: Assistant = {
+      async *answer() {
+        try {
+          yield { type: 'start', intent: 'model', related: null };
+          yield { type: 'text-start', id: 'p0' };
+          for (;;) yield { type: 'text-delta', id: 'p0', delta: 'more ' };
+        } finally {
+          finished = true;
+        }
+      },
+    };
+    const response = await handlerWith(assistant)(post({ message: 'q' }));
+    const reader = response.body?.getReader();
+    await reader?.read();
+    await reader?.cancel();
+    expect(finished).toBe(true);
+  });
+
+  it('ends with a retryable error, and reports it, if answering itself breaks', async () => {
+    const failure = new Error('bug');
+    const assistant: Assistant = {
+      async *answer() {
+        yield { type: 'start', intent: 'model', related: null };
+        throw failure;
+      },
+    };
+    const events = await readEvents(await handlerWith(assistant)(post({ message: 'q' })));
+    expect(events.at(-1)).toEqual({
+      type: 'error',
+      error: {
+        code: 'internal',
+        message: 'The answer was interrupted. Please try again.',
+        retryable: true,
+      },
+    });
+    expect(reported).toEqual([failure]);
+  });
+});
