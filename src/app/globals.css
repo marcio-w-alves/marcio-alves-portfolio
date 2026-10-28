@@ -1,1 +1,153 @@
 @import 'tailwindcss';
+
+/**
+ * Design tokens, ported from the approved design prototype.
+ *
+ * Everything the interface is allowed to look like is declared here, so every
+ * visual decision can be written as a utility over a token. A value that
+ * cannot be expressed as a utility is a missing token, not a licence to write
+ * a stylesheet.
+ */
+@theme {
+  /* Surfaces */
+  --color-bg: #fafaf8;
+  --color-sidebar: #f5f5f2;
+  --color-surface: #ffffff;
+  --color-hover: #eff0ec;
+  --color-code-bg: #f7f7f4;
+
+  /*
+   * Ink. `faint` is reserved for icons, rules and decoration: it does not
+   * reach WCAG AA as body text, which is what `muted` is for. The prototype
+   * darkened the brief's #767b77 to #686d69 for exactly that reason, and the
+   * corrected value is the one that ships — contrast outranks fidelity when
+   * the two disagree.
+   */
+  --color-ink: #202420;
+  --color-ink-muted: #686d69;
+  --color-ink-faint: #767b77;
+
+  /* Lines */
+  --color-border: #e8eae6;
+  --color-border-strong: #d6d9d3;
+
+  /* Accent and alert */
+  --color-accent: #376b56;
+  --color-accent-hover: #285440;
+  --color-accent-bg: #eaf2ec;
+  --color-danger: #9b3b2e;
+  --color-danger-bg: #faeeeb;
+
+  /* Type. The two stacks are self-hosted by the `geist` package. */
+  --font-sans:
+    var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* Shape */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 18px;
+  --radius-pill: 999px;
+
+  /* Depth */
+  --inset-shadow-ring: inset 0 0 0 1px var(--color-border);
+  --shadow-raised: 0 1px 2px rgb(32 36 32 / 0.05), 0 0 0 1px var(--color-border);
+  --shadow-composer: 0 1px 2px rgb(32 36 32 / 0.04), 0 12px 32px -20px rgb(32 36 32 / 0.24);
+  --shadow-drawer: 0 0 48px rgb(32 36 32 / 0.18);
+  --shadow-focus: 0 0 0 3px rgb(55 107 86 / 0.22);
+
+  /* Motion. One easing curve, two durations — anything else is improvisation. */
+  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --duration-fast: 140ms;
+  --duration-medium: 220ms;
+
+  --animate-rise: rise var(--duration-medium) var(--ease-standard) both;
+  --animate-fade: fade var(--duration-medium) var(--ease-standard) both;
+  --animate-blink: blink 1s steps(1, end) infinite;
+  --animate-pulse-dot: pulse-dot 1.4s var(--ease-standard) infinite;
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes blink {
+    50% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes pulse-dot {
+    0%,
+    80%,
+    100% {
+      opacity: 0.25;
+      transform: scale(0.8);
+    }
+    40% {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* Layout */
+  --container-column: 820px;
+  --container-sidebar: 260px;
+}
+
+/* The two named durations, so a component writes the token and not a number. */
+@utility duration-fast {
+  transition-duration: var(--duration-fast);
+}
+
+@utility duration-medium {
+  transition-duration: var(--duration-medium);
+}
+
+/*
+ * Only what no utility can reach: a global focus ring, two text-rendering
+ * hints, and the reduced-motion collapse. Surface and type for the document
+ * itself are utilities on <body>, in the root layout.
+ */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  body {
+    text-rendering: optimizeLegibility;
+  }
+
+  button {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
