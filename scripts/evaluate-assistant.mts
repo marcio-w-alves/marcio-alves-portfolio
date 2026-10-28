@@ -26,6 +26,7 @@ import { createToolRegistry } from '../src/core/assistant/tools/registry';
 import { knowledgeBase } from '../src/core/knowledge/knowledge-base';
 import { createOpenAIClient } from '../src/infrastructure/openai/openai-client';
 import { CASES, type EvaluationCase } from './evaluation/cases';
+import { sourcesOutsideTrace } from './evaluation/citations';
 import { runsFor } from './evaluation/grading';
 import { parseOptions, selectCases } from './evaluation/options';
 import {
@@ -261,14 +262,6 @@ async function runOnce(testCase: EvaluationCase, clientId: string): Promise<RunO
     failures.push('closes with an offer of help');
 
   return { path, intent, answer, sources, verdict, failures, ms, trace };
-}
-
-/** A cited source must be one the actions handed back, or its evidence was never seen. */
-function sourcesOutsideTrace(sources: readonly string[], trace: readonly ToolTrace[]): string[] {
-  const returned = new Set(
-    trace.flatMap(({ outcome }) => (outcome.ok ? outcome.result.sources.map(({ id }) => id) : [])),
-  );
-  return sources.filter((id) => !returned.has(id));
 }
 
 /**

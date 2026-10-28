@@ -21,6 +21,13 @@ describe('the evaluation cases', () => {
     expect(categories).toContain('product-vs-person');
   });
 
+  it('declare which path answers every leadership and product-vs-person case', () => {
+    const scoped = CASES.filter(({ category }) =>
+      ['leadership', 'product-vs-person'].includes(category),
+    );
+    for (const { id, expect: expectation } of scoped) expect(expectation.path, id).toBeDefined();
+  });
+
   it('ask about leadership in English and in Portuguese', () => {
     const languages = CASES.filter(({ category }) => category === 'leadership').map(
       ({ expect: expectation }) => expectation.language ?? 'en',
