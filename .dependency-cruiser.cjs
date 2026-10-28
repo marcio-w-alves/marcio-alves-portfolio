@@ -60,6 +60,16 @@ module.exports = {
       to: { path: '^src/core/(assistant|conversation)/' },
     },
     {
+      name: 'chat-contract-is-below-engine',
+      comment:
+        'src/core/chat is the wire contract the server and the browser share: events, request, ' +
+        'limits. It cannot reach the assistant or the conversation, or the client bundle would ' +
+        'pull the engine in with it and each contract would drift back to two definitions.',
+      severity: 'error',
+      from: { path: '^src/core/chat/' },
+      to: { path: '^src/core/(assistant|conversation)/' },
+    },
+    {
       name: 'ui-is-presentation',
       comment:
         'src/ui renders what it is given. Routes, adapters, the composition root, and server ' +

@@ -1,4 +1,4 @@
-import type { NoteTone } from '@/core/assistant/components';
+import type { NoteTone } from '@/core/chat/components';
 import { InlineText } from '../format/inline';
 import { Icon, type IconName } from '../primitives';
 

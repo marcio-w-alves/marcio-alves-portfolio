@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import type { TopicId } from '@/core/assistant/topics';
+import type { TopicId } from '@/core/chat/topic-id';
 import type { Knowledge } from '@/core/knowledge/schema';
 import { topicPath } from './routes';
 import type { SiteContent } from './site-content';

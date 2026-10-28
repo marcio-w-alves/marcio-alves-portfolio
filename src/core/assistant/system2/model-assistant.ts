@@ -1,5 +1,6 @@
-import type { AnswerSource, AssistantEvent } from '../assistant-event';
-import type { RichComponent } from '../components';
+import type { AnswerSource, AssistantEvent } from '../../chat/events';
+import type { RichComponent } from '../../chat/components';
+import type { HistoryTurn } from '../../chat/request';
 import type { ClockPort } from '../ports/clock.port';
 import type {
   LanguageModelPort,
@@ -30,11 +31,6 @@ const HISTORY_TURNS = 12;
 const HISTORY_CHARS = 1000;
 export const EMPTY_REPLY =
   "I couldn't put together an answer to that. Could you rephrase it, or ask about his experience, skills or projects?";
-
-export interface HistoryTurn {
-  readonly role: 'user' | 'assistant';
-  readonly text: string;
-}
 
 export interface ModelAssistantRequest {
   readonly question: string;

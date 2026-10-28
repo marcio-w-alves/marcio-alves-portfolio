@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { localize } from '@/core/knowledge/localize';
 import { fixtureAnswers, fixtureKnowledge } from '@/testing/fixture-profile';
 import { withoutVocabulary } from '@/testing/fixture-profile/variants';
-import type { ConversationContext } from '../response';
+import type { ConversationContext } from '../../chat/request';
 import { createRouter } from './router';
 
 const knowledge = localize(fixtureKnowledge, 'en');
@@ -291,10 +291,8 @@ describe('router — generic follow-ups continue the conversation', () => {
     expect(intentOf('Tell me more', { ...FRESH, topic: 'skills' })).toBe('skills');
   });
 
-  it('falls back to his career when neither the last answer nor the topic suggests a next one', () => {
-    expect(intentOf('Tell me more', { ...FRESH, lastIntent: 'greeting', topic: 'unknown' })).toBe(
-      'career',
-    );
+  it('falls back to his career on the overview when the last answer suggests no next one', () => {
+    expect(intentOf('Tell me more', { ...FRESH, lastIntent: 'greeting' })).toBe('career');
   });
 
   it('does not treat a question that merely starts like a follow-up as one', () => {

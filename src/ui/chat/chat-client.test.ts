@@ -1,8 +1,9 @@
 import { delay, http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
-import type { AssistantEvent } from '@/core/assistant/assistant-event';
-import { streamAnswer, type ChatRequest } from './chat-client';
+import type { AssistantEvent } from '@/core/chat/events';
+import type { ChatRequest } from '@/core/chat/request';
+import { streamAnswer } from './chat-client';
 
 const ENDPOINT = 'http://portfolio.test/api/chat';
 const server = setupServer();
@@ -95,12 +96,22 @@ describe('streaming an answer', () => {
     expect(await collect()).toEqual(ANSWER);
   });
 
+  it('skips frames of a known type that do not carry what the type promises', async () => {
+    const malformed = [
+      { type: 'text-delta', id: 'p0' },
+      { type: 'component', id: 'p1', component: 'script', props: {} },
+      { type: 'error', error: { code: 'internal' } },
+    ];
+    answerWith(sse([...malformed, ...ANSWER] as AssistantEvent[]));
+    expect(await collect()).toEqual(ANSWER);
+  });
+
   it('reports an answer cut off before it finished', async () => {
     answerWith(sse(ANSWER.slice(0, 3)));
     const events = await collect();
     expect(events.at(-1)).toMatchObject({
       type: 'error',
-      error: { code: 'internal', retryable: true },
+      error: { code: 'interrupted', retryable: true },
     });
   });
 });
@@ -118,11 +129,7 @@ describe('when the answer cannot be had', () => {
     expect(await collect()).toEqual([
       {
         type: 'error',
-        error: {
-          code: 'rate_limited',
-          message: 'Too many questions in a short time. Try again in 2 minutes.',
-          retryable: true,
-        },
+        error: { code: 'rate_limited', retryable: true, retryAfterSeconds: 90 },
       },
     ]);
   });

@@ -1,7 +1,7 @@
 'use client';
 
 import { useId, useState, type ReactNode } from 'react';
-import type { RoleView } from '@/core/assistant/components';
+import type { RoleView } from '@/core/chat/components';
 import { cn } from '../cn';
 import { Icon, Tag } from '../primitives';
 

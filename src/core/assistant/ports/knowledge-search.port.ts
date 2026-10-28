@@ -1,5 +1,5 @@
 import type { ChunkCategory } from '@/core/knowledge/corpus';
-import type { AnswerSource } from '../assistant-event';
+import type { AnswerSource } from '../../chat/events';
 
 export interface Passage {
   readonly id: string;

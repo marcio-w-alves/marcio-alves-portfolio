@@ -162,7 +162,7 @@ describe('a failed answer', () => {
     const user = userEvent.setup();
     const handlers = renderMessage({
       status: 'error',
-      error: { code: 'internal', message: 'That question could not be sent.', retryable: false },
+      error: { code: 'rejected', retryable: false },
     });
     const alert = screen.getByRole('alert');
     expect(alert).toHaveTextContent('That question could not be sent.');

@@ -3,7 +3,8 @@ import { localize } from '@/core/knowledge/localize';
 import { fixtureAnswers, fixtureKnowledge } from '@/testing/fixture-profile';
 import { createResponseKit } from './response-kit';
 import { createTopicIntro } from './topic-pages';
-import { createTopicCatalog, TOPIC_IDS } from './topics';
+import { TOPIC_IDS } from '../chat/topic-id';
+import { createTopicCatalog } from './topics';
 
 const kit = createResponseKit(localize(fixtureKnowledge, 'en'));
 const copy = fixtureAnswers.topics(kit);

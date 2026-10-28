@@ -1,11 +1,12 @@
-import type { AssistantEvent } from './assistant-event';
+import { INTERRUPTED, type AssistantEvent } from '../chat/events';
+import type { ConversationContext, HistoryTurn } from '../chat/request';
 import type { AnswerCachePort } from './ports/answer-cache.port';
 import type { ClockPort } from './ports/clock.port';
 import type { ModelBudgetPort } from './ports/model-budget.port';
-import { toEvents, type ConversationContext } from './response';
+import { toEvents } from './response';
 import type { FastPath } from './system1/fast-path';
 import { normalize } from './system1/router';
-import type { HistoryTurn, ModelAssistant } from './system2/model-assistant';
+import type { ModelAssistant } from './system2/model-assistant';
 
 export interface AssistantRequest {
   readonly question: string;
@@ -53,15 +54,6 @@ interface Options {
   /** Called once each answer has been given in full. */
   readonly onAnswered?: (report: AnswerReport) => void;
 }
-
-const INTERRUPTED: AssistantEvent = {
-  type: 'error',
-  error: {
-    code: 'internal',
-    message: 'The answer was interrupted. Please try again.',
-    retryable: true,
-  },
-};
 
 /**
  * Both paths behind one contract, and the policy for spending on the model.

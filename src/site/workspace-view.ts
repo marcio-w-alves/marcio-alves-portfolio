@@ -1,5 +1,5 @@
-import { MAX_QUESTION_LENGTH } from '@/core/assistant/system1/router';
-import type { TopicId } from '@/core/assistant/topics';
+import { MAX_QUESTION_LENGTH } from '@/core/chat/request';
+import type { TopicId } from '@/core/chat/topic-id';
 import { createConversation } from '@/core/conversation/conversation';
 import { topicPath } from './routes';
 import type { SiteContent } from './site-content';

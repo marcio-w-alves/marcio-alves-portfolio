@@ -1,37 +1,11 @@
 import { z } from 'zod';
 import type { Assistant } from '@/core/assistant/assistant';
-import { MAX_QUESTION_LENGTH } from '@/core/assistant/system1/router';
-import { TOPIC_IDS } from '@/core/assistant/topics';
+import { chatRequestSchema } from '@/core/chat/request-schema';
 import { clientIdOf } from './client-key';
 import { EVENT_STREAM_HEADERS, eventStream } from './event-stream';
 
 /** Generous for twelve turns of history, far short of anything abusive. */
 export const MAX_BODY_BYTES = 32_768;
-
-/**
- * The request the interface sends. Everything in it is untrusted: the
- * context only steers suggestions, and the history only gives the model
- * conversational memory — neither can grant anything.
- */
-const chatRequestSchema = z.strictObject({
-  message: z.string().trim().min(1).max(MAX_QUESTION_LENGTH),
-  history: z
-    .array(
-      z.strictObject({
-        role: z.enum(['user', 'assistant']),
-        text: z.string().max(4000),
-      }),
-    )
-    .max(24)
-    .default([]),
-  context: z
-    .strictObject({
-      topic: z.enum(TOPIC_IDS),
-      lastIntent: z.string().max(80).nullable(),
-      ctaShown: z.boolean(),
-    })
-    .default({ topic: 'overview', lastIntent: null, ctaShown: false }),
-});
 
 function problem(status: number, code: string, message: string): Response {
   return Response.json({ error: { code, message } }, { status });

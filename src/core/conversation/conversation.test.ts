@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { localize } from '@/core/knowledge/localize';
 import { fixtureAnswers, fixtureKnowledge } from '@/testing/fixture-profile';
-import type { AssistantEvent } from '../assistant/assistant-event';
+import type { AssistantEvent } from '../chat/events';
 import { toEvents } from '../assistant/response';
 import { createResponseKit } from '../assistant/response-kit';
 import { createFastPath } from '../assistant/system1/fast-path';
@@ -191,7 +191,7 @@ describe('history sent to the server', () => {
     let conversation = createConversation('experience', topicIntro('experience'));
     conversation = ask(conversation, 'What did she do at Globex?').conversation;
     conversation = ask(conversation, 'Broken', [
-      { type: 'error', error: { code: 'network', message: 'x', retryable: true } },
+      { type: 'error', error: { code: 'network', retryable: true } },
     ]).conversation;
     const history = historyOf(conversation);
     expect(history.map((turn) => turn.role)).toEqual(['user', 'assistant', 'user']);

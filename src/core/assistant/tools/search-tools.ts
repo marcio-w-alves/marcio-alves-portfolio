@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { AnswerSource } from '../assistant-event';
+import type { AnswerSource } from '../../chat/events';
 import type { KnowledgeSearchPort, Passage } from '../ports/knowledge-search.port';
 import { defineTool, type Tool, type ToolFailure, type ToolResult } from './tool';
 

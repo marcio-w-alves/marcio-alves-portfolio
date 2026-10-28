@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TOPIC_IDS } from '@/core/assistant/topics';
+import { TOPIC_IDS } from '@/core/chat/topic-id';
 import { localize } from '@/core/knowledge/localize';
 import { profile } from '@/profile';
 import { fixtureKnowledge } from '@/testing/fixture-profile/knowledge';

@@ -5,6 +5,7 @@ import { SuggestedQuestions } from '../welcome';
 import { AnswerActions } from './answer-actions';
 import { AnswerBody } from './answer-body';
 import { AssistantAvatar } from './assistant-avatar';
+import { errorText } from './error-text';
 import { ThinkingStatus } from './thinking-status';
 
 interface AssistantMessageProps {
@@ -92,8 +93,8 @@ export function AssistantMessage({
               Couldn&apos;t load this answer
             </p>
             <p className="m-0 text-14 leading-reading text-ink">
-              {message.error?.message ?? 'Something went wrong.'} Your question is saved, so you can
-              try again or edit it first.
+              {message.error ? errorText(message.error) : 'Something went wrong.'} Your question is
+              saved, so you can try again or edit it first.
             </p>
             <div className="flex flex-wrap gap-2">
               {message.error?.retryable !== false && (

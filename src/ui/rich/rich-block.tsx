@@ -1,4 +1,4 @@
-import type { RichComponent } from '@/core/assistant/components';
+import type { RichComponent } from '@/core/chat/components';
 import { ContactCard } from './contact-card';
 import { DataTable } from './data-table';
 import { Details } from './details';

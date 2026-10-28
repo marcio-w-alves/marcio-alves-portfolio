@@ -1,4 +1,4 @@
-import type { MetricItem, RoleSection, RoleView } from '@/core/assistant/components';
+import type { MetricItem, RoleSection, RoleView } from '@/core/chat/components';
 import { BulletList } from './bullet-list';
 import { SectionTitle } from './section-title';
 import { TagList } from './tag-list';

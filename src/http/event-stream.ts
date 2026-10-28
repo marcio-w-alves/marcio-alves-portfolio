@@ -1,4 +1,4 @@
-import type { AssistantEvent } from '@/core/assistant/assistant-event';
+import { INTERRUPTED, type AssistantEvent } from '@/core/chat/events';
 
 export const EVENT_STREAM_HEADERS = {
   'Content-Type': 'text/event-stream; charset=utf-8',
@@ -7,15 +7,6 @@ export const EVENT_STREAM_HEADERS = {
   // Proxies that buffer would hold the whole answer back until it is complete.
   'X-Accel-Buffering': 'no',
 } as const;
-
-const INTERRUPTED: AssistantEvent = {
-  type: 'error',
-  error: {
-    code: 'internal',
-    message: 'The answer was interrupted. Please try again.',
-    retryable: true,
-  },
-};
 
 function frame(event: AssistantEvent): Uint8Array {
   return new TextEncoder().encode(`data: ${JSON.stringify(event)}\n\n`);

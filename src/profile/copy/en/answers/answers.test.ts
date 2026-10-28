@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { AssistantResponse, ConversationContext } from '@/core/assistant/response';
+import type { AssistantResponse } from '@/core/assistant/response';
+import type { ConversationContext } from '@/core/chat/request';
+import type { TopicId } from '@/core/chat/topic-id';
 import { createResponseKit } from '@/core/assistant/response-kit';
 import { createFastPath } from '@/core/assistant/system1/fast-path';
 import { createTopicIntro } from '@/core/assistant/topic-pages';
@@ -207,7 +209,7 @@ describe('topics — introductions', () => {
 
 describe('fast path — a topic page never repeats itself', () => {
   const pages = topics.filter((topic) => topic.id !== 'overview');
-  const onPage = (topic: string): ConversationContext => ({ ...FRESH, topic });
+  const onPage = (topic: TopicId): ConversationContext => ({ ...FRESH, topic });
   const key = (part: unknown) => JSON.stringify(part);
 
   it.each(pages.map((topic) => [topic.id, topic] as const))(

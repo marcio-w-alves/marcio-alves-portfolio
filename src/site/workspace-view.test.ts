@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_QUESTION_LENGTH } from '@/core/assistant/system1/router';
-import { TOPIC_IDS } from '@/core/assistant/topics';
+import { MAX_QUESTION_LENGTH } from '@/core/chat/request';
+import { TOPIC_IDS } from '@/core/chat/topic-id';
 import { profile } from '@/profile';
 import { createSiteContent } from './site-content';
 import { workspaceView } from './workspace-view';

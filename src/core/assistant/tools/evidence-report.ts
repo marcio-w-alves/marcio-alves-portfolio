@@ -1,4 +1,4 @@
-import type { AnswerSource } from '../assistant-event';
+import type { AnswerSource } from '../../chat/events';
 import type { ResponseKit } from '../response-kit';
 import {
   createEvidenceFinder,

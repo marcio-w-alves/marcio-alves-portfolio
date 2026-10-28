@@ -1,6 +1,7 @@
 import type { ResponsePart } from './response';
+import type { TopicId } from '../chat/topic-id';
 import { text } from './response-kit';
-import type { TopicCatalog, TopicId } from './topics';
+import type { TopicCatalog } from './topics';
 
 const INTRO_FOLLOW_UPS = 3;
 

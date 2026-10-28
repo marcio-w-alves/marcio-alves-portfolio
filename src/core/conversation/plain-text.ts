@@ -1,4 +1,4 @@
-import type { RichComponent } from '../assistant/components';
+import type { RichComponent } from '../chat/components';
 import type { MessagePart } from './messages';
 
 /**

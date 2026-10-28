@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { TOPIC_IDS } from '@/core/assistant/topics';
+import { TOPIC_IDS } from '@/core/chat/topic-id';
 import { topicPath } from './routes';
 
 // No lastModified: the pages have no edit date to report, and the build time

@@ -1,4 +1,5 @@
-import type { AssistantResponse, ConversationContext } from '@/core/assistant/response';
+import type { AssistantResponse } from '@/core/assistant/response';
+import type { ConversationContext } from '@/core/chat/request';
 import {
   bullets,
   details,

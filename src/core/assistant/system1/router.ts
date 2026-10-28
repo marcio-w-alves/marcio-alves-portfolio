@@ -1,6 +1,6 @@
 import type { Knowledge } from '@/core/knowledge/schema';
-import type { ConversationContext } from '../response';
-import { isTopicId, type TopicId } from '../topics';
+import { MAX_QUESTION_LENGTH, type ConversationContext } from '../../chat/request';
+import type { TopicId } from '../../chat/topic-id';
 import { ROUTED_TECHNOLOGIES, type Technology } from './technologies';
 
 /**
@@ -11,8 +11,6 @@ import { ROUTED_TECHNOLOGIES, type Technology } from './technologies';
  * confident about is escalated to the model-backed path instead of being
  * answered badly.
  */
-
-export const MAX_QUESTION_LENGTH = 1200;
 
 export const SCORED_INTENTS = [
   'identity',
@@ -462,12 +460,13 @@ function isCompound(text: string, companies: readonly string[]): boolean {
   );
 }
 
-// The context arrives from the visitor, so only ids this router knows are
-// looked up — never a name like "constructor" that every object answers to.
+// The last intent arrives from the visitor, so only intents this router knows
+// are looked up — never a name like "constructor" that every object answers to.
+// The topic was checked against the topic ids where the request came in.
 function fromContext({ lastIntent, topic }: ConversationContext): ScoredIntent {
   if (lastIntent?.startsWith('company:')) return 'achievements';
   const next = lastIntent && isScoredIntent(lastIntent) ? NEXT_INTENT[lastIntent] : null;
-  return next ?? (isTopicId(topic) ? TOPIC_DEFAULT[topic] : 'career');
+  return next ?? TOPIC_DEFAULT[topic];
 }
 
 export type Router = (question: string, context: ConversationContext) => Route;

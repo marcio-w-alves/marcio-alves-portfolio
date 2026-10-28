@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { AssistantEvent } from '@/core/assistant/assistant-event';
+import type { AssistantEvent } from '@/core/chat/events';
 import { createAnswerCache } from './answer-cache';
 
 const ANSWER: readonly AssistantEvent[] = [

@@ -47,6 +47,12 @@ const FORBIDDEN_EDGES = [
     to: 'src/core/assistant/citation.ts',
   },
   {
+    fixture: 'chat-to-assistant',
+    rule: 'chat-contract-is-below-engine',
+    from: 'src/core/chat/events.ts',
+    to: 'src/core/assistant/answer.ts',
+  },
+  {
     fixture: 'ui-to-testing',
     rule: 'fixtures-only-in-tests',
     from: 'src/ui/panel.ts',

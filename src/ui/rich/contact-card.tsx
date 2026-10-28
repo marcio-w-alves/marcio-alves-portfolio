@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import type { RichComponent } from '@/core/assistant/components';
+import type { RichComponent } from '@/core/chat/components';
 import { ButtonLink, Icon, VisuallyHidden } from '../primitives';
 
 type ContactCardProps = Extract<RichComponent, { component: 'contact' }>['props'];

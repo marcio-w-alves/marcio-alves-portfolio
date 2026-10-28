@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import type { RichComponent } from '@/core/assistant/components';
+import type { RichComponent } from '@/core/chat/components';
 import { profile } from '@/profile';
 import { createSiteContent } from '@/site/site-content';
 import { details, note, table } from '@/core/assistant/response-kit';

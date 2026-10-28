@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, type ReactNode } from 'react';
-import type { TopicId } from '@/core/assistant/topics';
+import type { TopicId } from '@/core/chat/topic-id';
 import { activeAnswer } from '@/core/conversation/conversation';
 import type { Conversation } from '@/core/conversation/messages';
 

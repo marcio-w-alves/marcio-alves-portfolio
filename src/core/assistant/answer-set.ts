@@ -1,8 +1,10 @@
-import type { AssistantResponse, ConversationContext } from './response';
+import type { ConversationContext } from '../chat/request';
+import type { AssistantResponse } from './response';
 import type { ResponseKit } from './response-kit';
 import type { ScoredIntent, Vocabulary } from './system1/router';
 import type { TechnologyEvidence } from './system1/technologies';
-import type { TopicCopy, TopicId } from './topics';
+import type { TopicId } from '../chat/topic-id';
+import type { TopicCopy } from './topics';
 
 /**
  * What the fast path says, written by the profile. The core recognizes the
