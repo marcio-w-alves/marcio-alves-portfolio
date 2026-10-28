@@ -62,16 +62,16 @@ export type Route =
 
 // English only: a question in another language is escalated before these run,
 // and the model applies the same rules in the visitor's language.
-// Both guards need a target, not just a word: "act as" must be addressed to the
-// assistant ("did he act as a tech lead" is a career question), and a private
-// word must be about him ("React children", "password reset" and "codebase
-// health" are engineering).
+// "act as" refuses only when addressed to the assistant ("did he act as a tech
+// lead" is a career question). Of the private words, only children, health and
+// password are also engineering words ("React children", "codebase health",
+// "password reset"), so only those need him as their subject.
 const GUARDS: Readonly<Record<Guard, RegExp>> = {
   offPurpose:
-    /\b(ignore (all |any )?(the )?(previous|prior|above|earlier)|system prompt|you are now|pretend (to be|you)|jailbreak|developer mode|disregard (your|the|all)|reveal (your|the) (instructions|prompt|rules))\b|^(please )?act as\b|\byou\b.{0,20}\bact as\b/,
+    /\b(ignore (all |any )?(the )?(previous|prior|above|earlier)|system prompt|you are now|pretend (to be|you)|jailbreak|developer mode|disregard (your|the|all)|reveal (your|the) (instructions|prompt|rules))\b|(^|[.!?] )((please|hey|ok|okay|now|so),? )*act as\b|\byou (to |will |should |must |can |could |would )?(now )?act as\b/,
   // City-level location is shareable; a home address is not.
   privateInfo:
-    /\b((his|marcio's) (salary|salaries|compensation|hourly rate|age|birthday|kids|children|wife|husband|girlfriend|boyfriend|religio\w*|politic\w*|health|password)|(is|was|he's) (he |marcio )?(married|single|divorced|religious)|(does|did|has) (he|marcio) (have|got) (any )?(kids|children|a wife|a husband|a girlfriend|a boyfriend)|how old is (he|marcio)|how much (does|do|did) (he|marcio) (charge|make|earn)|home address|street address|phone number)\b/,
+    /\b(salary|salaries|compensation|hourly rate|(his|m[aá]rcio( alves)?'s) (age|birthday|kids|children|wife|husband|girlfriend|boyfriend|religio\w*|politic\w*|(mental |physical )?health|(\w+ )?password)|health (problems|issues|conditions?)|how many (kids|children)|(is|was) (he|m[aá]rcio) (married|single|divorced|religious)|he's (married|single|divorced|religious)|(does|did|has) (he|m[aá]rcio) (have|got) (any )?(kids|children|a wife|a husband|a girlfriend|a boyfriend)|how old is (he|m[aá]rcio)|how much (does|do|did) (he|m[aá]rcio) (charge|make|earn)|home address|street address|phone number)\b/,
 };
 
 // No \b: without the u flag it is ASCII-only, so it never matches after the "á"
