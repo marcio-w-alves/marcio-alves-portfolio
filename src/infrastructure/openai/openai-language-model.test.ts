@@ -74,6 +74,7 @@ async function events(): Promise<ModelEvent[]> {
     client: createOpenAIClient('test-key'),
     model: 'gpt-4o-mini',
     temperature: 0.2,
+    idleTimeoutMs: 1000,
   });
   const seen: ModelEvent[] = [];
   for await (const event of model.stream(REQUEST)) seen.push(event);
