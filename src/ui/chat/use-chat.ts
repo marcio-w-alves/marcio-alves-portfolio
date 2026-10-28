@@ -33,15 +33,20 @@ export function useChat(topic: TopicId, initial?: Conversation) {
     store.update(topic, change, seed);
   }
 
+  /** Aborts the answer on its way, if any, and marks it stopped so nothing waits on it. */
   function cancel() {
-    store.inFlight.get(topic)?.abort();
+    const inFlight = store.inFlight.get(topic);
+    if (!inFlight) return;
+    inFlight.controller.abort();
     store.inFlight.delete(topic);
+    setConversation((current) => stopAnswer(current, inFlight.answerId));
+    setAnnouncement('Response stopped');
   }
 
   async function stream(answerId: string, question: string, from: Conversation) {
     cancel();
     const controller = new AbortController();
-    store.inFlight.set(topic, controller);
+    store.inFlight.set(topic, { answerId, controller });
     setAnnouncement('Generating an answer');
     const request = { message: question, history: historyOf(from), context: contextOf(from) };
     for await (const event of streamAnswer(request, { signal: controller.signal })) {
@@ -51,7 +56,7 @@ export function useChat(topic: TopicId, initial?: Conversation) {
         setAnnouncement("The answer couldn't be loaded. Retry is available.");
       }
     }
-    if (store.inFlight.get(topic) === controller) store.inFlight.delete(topic);
+    if (store.inFlight.get(topic)?.controller === controller) store.inFlight.delete(topic);
   }
 
   function ask(raw: string): boolean {
@@ -63,14 +68,6 @@ export function useChat(topic: TopicId, initial?: Conversation) {
     setConversation(exchange.conversation);
     void stream(exchange.answerId, question, conversation);
     return true;
-  }
-
-  function stop() {
-    cancel();
-    const answer = activeAnswer(conversation);
-    if (!answer) return;
-    setConversation((current) => stopAnswer(current, answer.id));
-    setAnnouncement('Response stopped');
   }
 
   function retry(answerId: string) {
@@ -85,9 +82,8 @@ export function useChat(topic: TopicId, initial?: Conversation) {
   /** Takes the exchange out and returns its question, for the composer to hold. */
   function edit(answerId: string): string {
     cancel();
-    const removed = removeExchange(conversation, answerId);
-    setConversation(removed.conversation);
-    return removed.question;
+    setConversation((current) => removeExchange(current, answerId).conversation);
+    return removeExchange(conversation, answerId).question;
   }
 
   function rate(answerId: string, feedback: Feedback) {
@@ -107,7 +103,7 @@ export function useChat(topic: TopicId, initial?: Conversation) {
     /** Another page has an answer on its way, so this one waits. */
     waiting: store.busy && activeAnswer(conversation) === undefined,
     ask,
-    stop,
+    stop: cancel,
     retry,
     edit,
     rate,
