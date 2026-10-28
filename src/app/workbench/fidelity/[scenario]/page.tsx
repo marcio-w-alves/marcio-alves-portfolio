@@ -8,9 +8,11 @@ import { SCENARIOS } from './scenarios';
 // for the fidelity gate. A development tool, so production answers 404.
 export const metadata: Metadata = { robots: { index: false } };
 
-export default async function ScenarioPage({
-  params,
-}: PageProps<'/workbench/fidelity/[scenario]'>) {
+interface ScenarioPageProps {
+  readonly params: Promise<{ readonly scenario: string }>;
+}
+
+export default async function ScenarioPage({ params }: ScenarioPageProps) {
   if (process.env.NODE_ENV === 'production') notFound();
   const { scenario } = await params;
   const build = SCENARIOS[scenario];
