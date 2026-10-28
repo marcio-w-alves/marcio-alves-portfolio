@@ -98,11 +98,9 @@ const SKIPPED_ACTION: ToolOutcome = {
 };
 
 const SEARCH = 'searchKnowledge';
-const SEARCH_FIRST: ToolOutcome = {
-  ok: false,
-  error:
-    "Not recorded: first call searchKnowledge with the visitor's question and no category, and decline only if no passage answers it.",
-};
+const SEARCH_FIRST =
+  'Your decline was not recorded. These passages come from a search of his whole record for the question: answer from them if one answers it, and call declineToAnswer again only if none does.';
+const MAX_QUERY = 300;
 
 // Every call needs a reply, or the conversation is invalid.
 function roundMessages(turn: ModelTurn, results: readonly ActionResult[]): ModelMessage[] {
@@ -253,25 +251,49 @@ export function createModelAssistant({
   // The prompt asks for a search before anything is called not documented,
   // and the model still skips it after a narrower action comes back empty
   // ("did he work on the Roots backend?" once went getTechnologyEvidence →
-  // decline, while his notes answer it). Such a decline is sent back.
+  // decline, while his notes answer it). Sending the decline back was not
+  // enough — the model then answered without searching — so the search runs
+  // in its place, with the visitor's own question.
+
   function declinesUnsearched(call: ToolCall, searched: boolean): boolean {
     if (!canSearch || searched || call.name !== 'declineToAnswer') return false;
     const parsed = parseArguments(call.arguments) as { reason?: unknown } | undefined;
     return parsed?.reason === 'not_documented';
   }
 
+  async function searchInstead(question: string): Promise<ToolOutcome> {
+    const outcome = await tools.run(SEARCH, { query: question.slice(0, MAX_QUERY) });
+    if (!outcome.ok) return outcome;
+    return {
+      ok: true,
+      result: { ...outcome.result, data: { note: SEARCH_FIRST, results: outcome.result.data } },
+    };
+  }
+
   // Calls past the cap get a reply that declines to run them.
-  function outcomeOf(call: ToolCall, index: number, searched: boolean): Promise<ToolOutcome> {
+  function outcomeOf(
+    call: ToolCall,
+    index: number,
+    searched: boolean,
+    question: string,
+  ): Promise<ToolOutcome> {
     if (index >= MAX_CALLS_PER_ROUND) return Promise.resolve(SKIPPED_ACTION);
-    if (declinesUnsearched(call, searched)) return Promise.resolve(SEARCH_FIRST);
+    if (declinesUnsearched(call, searched)) return searchInstead(question);
     return execute(call);
   }
 
   // Actions in one round are independent, so they run concurrently: an
   // encyclopedia lookup and a GitHub read should not wait on each other.
-  function runActions(calls: readonly ToolCall[], searched: boolean): Promise<ActionResult[]> {
+  function runActions(
+    calls: readonly ToolCall[],
+    searched: boolean,
+    question: string,
+  ): Promise<ActionResult[]> {
     return Promise.all(
-      calls.map(async (call, index) => ({ call, outcome: await outcomeOf(call, index, searched) })),
+      calls.map(async (call, index) => ({
+        call,
+        outcome: await outcomeOf(call, index, searched, question),
+      })),
     );
   }
 
@@ -286,8 +308,11 @@ export function createModelAssistant({
         const turn = yield* streamRound(messages, round, reply, signal);
         if (turn.calls.length === 0) break;
 
-        searched ||= turn.calls.some((call) => call.name === SEARCH);
-        const results = await runActions(turn.calls, searched);
+        const searchedBefore: boolean = searched || turn.calls.some((call) => call.name === SEARCH);
+        const results = await runActions(turn.calls, searchedBefore, question);
+        // A decline replaced by a search counts as that search.
+        searched =
+          searchedBefore || turn.calls.some((call) => declinesUnsearched(call, searchedBefore));
         messages.push(...roundMessages(turn, results));
         for (const { call, outcome } of results) {
           onToolResult?.({ name: call.name, arguments: call.arguments, outcome });

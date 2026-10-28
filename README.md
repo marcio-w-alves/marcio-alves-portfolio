@@ -187,7 +187,9 @@ A technology only the notes mention comes back from `getTechnologyEvidence` as
 "reported in his notes", with the paragraphs and their tags, and the fast path
 leaves it to the model instead of answering "not documented" from the résumé
 alone; coursework still outranks it. A "not documented" decline the model makes
-before any search is sent back to it with the instruction to search first.
+before any search is replaced by a search of the whole record for the visitor's
+question, and a search limited to a category that finds nothing widens to the
+whole record.
 
 ## Chat endpoint
 

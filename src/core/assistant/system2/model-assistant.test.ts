@@ -293,7 +293,7 @@ describe('model assistant — what reaches the visitor', () => {
     expect((await collect(port)).at(-1)).toMatchObject({ type: 'finish', sources: [] });
   });
 
-  it('sends a "not documented" decline back until the record has been searched', async () => {
+  it('searches the whole record in place of a "not documented" decline made before any search', async () => {
     const { port, requests } = scriptedModel([
       { calls: [call('declineToAnswer', { reason: 'not_documented' })] },
       { calls: [call('searchKnowledge', { query: 'Roots backend' })] },
@@ -317,11 +317,15 @@ describe('model assistant — what reaches the visitor', () => {
       clock,
     });
     const events: AssistantEvent[] = [];
-    for await (const event of assistant.answer({ question: 'q', history: [], followUps: [] })) {
+    for await (const event of assistant.answer({
+      question: 'Does he have pets?',
+      history: [],
+      followUps: [],
+    })) {
       events.push(event);
     }
 
-    expect(JSON.stringify(toolReplies(requests[1]))).toContain('first call searchKnowledge');
+    expect(JSON.stringify(toolReplies(requests[1]))).toContain('Your decline was not recorded');
     expect(events.at(-1)).toMatchObject({
       type: 'finish',
       sources: [{ id: 'notes', label: 'Knowledge base' }],

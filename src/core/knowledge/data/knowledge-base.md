@@ -769,7 +769,7 @@ A combinação mais relevante é que Marcio consegue **especificar o objetivo, e
 
 ### 8.1 Evidências concretas de liderança
 
-A qualidade da liderança técnica pode ser descrita com **responsabilidades documentadas e resultados observáveis**, não apenas adjetivos. Na **Roots**, Marcio assumiu a estratégia e a arquitetura frontend, coordenou sprints e entregas, distribuiu responsabilidades e ajudou a ampliar a equipe de **um para quatro engenheiros frontend**. Na **Deel**, conduziu mentoria, revisões de código, pairing, onboarding e participou da contratação de engenheiros, além de colaborar no planejamento de OKRs e decisões de execução. Na **Toptal**, o currículo descreve comunicação com diretor/CEO sobre prioridades e requisitos e arquitetura de biblioteca compartilhada. [CV-2026]
+A qualidade da liderança técnica pode ser descrita com **responsabilidades documentadas e resultados observáveis**, não apenas adjetivos. Na **Roots**, Marcio assumiu a estratégia e a arquitetura frontend, coordenou sprints e entregas, distribuiu responsabilidades e ajudou a ampliar a equipe de **um para quatro engenheiros frontend**. Na **Deel**, ajudou a liderar e manter o time de HRIS responsável pelo produto central de ferramentas de RH, conduziu mentoria, revisões de código, pairing, onboarding e participou da contratação de engenheiros, além de colaborar no planejamento de OKRs e decisões de execução. Na **Toptal**, o currículo descreve comunicação com diretor/CEO sobre prioridades e requisitos e arquitetura de biblioteca compartilhada. [CV-2026]
 
 Esse histórico sustenta um perfil de **liderança de engenharia por influência, execução e estruturação de equipes**, com atuação além do próprio código. Os títulos formais documentados continuam sendo os registrados em cada empresa.
 
@@ -1055,7 +1055,7 @@ R: Atuou em HRIS, arquitetura e migração da Roots para a Deel. Participou de i
 R: A People List, em um carregamento inicial a frio, passou de cerca de 6 para 3 segundos no contexto de otimizações descritas no currículo da Deel.
 
 **P: Ele liderou equipes?**  
-R: Sim. Na Roots, ajudou a expandir a equipe frontend de um para quatro engenheiros e coordenou entregas. Na Deel, realizou mentoria, pairing, code reviews e participou de contratação e onboarding.
+R: Sim. Na Roots, ajudou a expandir a equipe frontend de um para quatro engenheiros e coordenou entregas. Na Deel, ajudou a liderar e manter o time de HRIS e realizou mentoria, pairing, code reviews e participou de contratação e onboarding.
 
 **P: Trabalha só com frontend?**  
 R: Não. Frontend é sua maior especialidade, mas há experiência profissional anterior com Node.js, APIs REST, microserviços e aplicações web/mobile, além de aprofundamento de arquitetura de sistemas em projetos próprios.
@@ -1176,6 +1176,39 @@ R: Favorece a forma mais simples que preserve limites de domínio e capacidade d
 
 **P: O que diferencia seu perfil como engenheiro de software além de React?**  
 R: Capacidade de trabalhar entre camadas, liderar decisões arquiteturais, melhorar performance com métricas, coordenar pessoas, definir contratos e integrar IA no processo de engenharia com contexto, hooks, validação e responsabilidade técnica. Essa combinação se apoia em trabalhos na Roots/Deel/Toptal e em estudos independentes.
+
+**P: Ele tem animais de estimação?**  
+R: Sim. Marcio tem dois cachorros e gosta de passear e brincar bastante com eles, que exigem muita atenção. [RELATO]
+
+**P: Ele toca algum instrumento?**  
+R: Começou a aprender a tocar bateria e gosta muito disso. [RELATO]
+
+**P: Que esportes ele pratica?**  
+R: Musculação e corrida, e gosta muito de jiu-jitsu, que pratica num vai e volta, pelo menos de vez em quando. A corrida não é o que mais gosta, mas ele sabe que precisa e está sempre tentando melhorar; corre na orla de João Pessoa. Não atribuir faixa no jiu-jitsu. [RELATO]
+
+**P: Quais jogos ele joga?**  
+R: Seu estilo preferido é MMORPG. Jogou Ragnarok Online a vida toda e também World of Warcraft, Lineage e Black Desert, entre outros. Até hoje desenvolve coisas para Ragnarok. [RELATO]
+
+**P: Onde ele mora?**  
+R: Em João Pessoa, na Paraíba, Brasil. [RELATO]
+
+**P: Em que ele trabalha na Toptal desde março de 2026?**  
+R: Em vários projetos, entre eles o Tech Resume, um produto com IA para melhorar currículos: um builder para ajustar dados, contato e experiência e baixar o resultado, que também analisa o currículo e sugere melhorias para as vagas. [RELATO]
+
+**P: Como ele chegou à Roots e à Deel?**  
+R: Foi contratado para a Roots como freelancer pela Toptal, enquanto era contratado direto da Maison Moderne. Construiu o frontend do início ao fim, liderou o time e fez o deploy; quando a Deel comprou a Roots, as pessoas que o contrataram propuseram que ele migrasse para a Deel. [RELATO]
+
+**P: Quais bancos de dados ele já usou?**  
+R: Usou bastante PostgreSQL, em alguns momentos MongoDB, tem alguma experiência com Cassandra e usou bastante Elasticsearch para busca, principalmente na Shall And Partners, num banco de currículos. [RELATO]
+
+**P: Ele trabalhou no backend da Roots ou da Deel?**  
+R: Não. Na Roots o backend era em Python e de outra equipe; ele construiu toda a aplicação frontend em React. Na Deel havia um monorepo só de frontend, dividido em verticais, e o backend era de outras equipes; ele participou apenas de algumas decisões de arquitetura. [RELATO]
+
+**P: Sobre o que foi o TCC dele?**  
+R: Na UFPB, o TCC mostrou as vantagens de usar um system design completo e os benefícios que isso traz. [RELATO]
+
+**P: Ele já participou de eventos?**  
+R: Participou da RoboCup 2014, em João Pessoa, como tradutor e membro do staff. [RELATO]
 
 ## 15. Narrativas prontas para apresentação
 
