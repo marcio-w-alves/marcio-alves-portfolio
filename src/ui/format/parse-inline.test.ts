@@ -22,6 +22,41 @@ describe('parseInline', () => {
     ]);
   });
 
+  it('keeps an address with parentheses in it whole, as encyclopedia links have', () => {
+    expect(
+      parseInline('See [Angular](https://en.wikipedia.org/wiki/Angular_(web_framework)).'),
+    ).toEqual([
+      { kind: 'text', text: 'See ' },
+      {
+        kind: 'link',
+        text: 'Angular',
+        href: 'https://en.wikipedia.org/wiki/Angular_(web_framework)',
+        external: true,
+      },
+      { kind: 'text', text: '.' },
+    ]);
+  });
+
+  it('reads the scheme of a link in any case', () => {
+    expect(parseInline('[Site](HTTPS://EXAMPLE.COM) [Mail](MAILTO:a@b.co)')).toEqual([
+      { kind: 'link', text: 'Site', href: 'HTTPS://EXAMPLE.COM', external: true },
+      { kind: 'text', text: ' ' },
+      { kind: 'link', text: 'Mail', href: 'MAILTO:a@b.co', external: false },
+    ]);
+  });
+
+  it('does not let bold or code run across a line break', () => {
+    expect(parseInline('**a\nb** `c\nd`')).toEqual([{ kind: 'text', text: 'a\nb `c\nd`' }]);
+  });
+
+  it('keeps text in any script, emoji included, exactly as written', () => {
+    const source = 'Liderança 🚀 — 日本語 — **Ação**';
+    expect(parseInline(source)).toEqual([
+      { kind: 'text', text: 'Liderança 🚀 — 日本語 — ' },
+      { kind: 'strong', text: 'Ação' },
+    ]);
+  });
+
   it.each([
     '[click](javascript:alert(1))',
     '[click](JavaScript:alert(1))',

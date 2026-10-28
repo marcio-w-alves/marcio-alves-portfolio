@@ -20,6 +20,18 @@ describe('InlineText', () => {
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
+  it('links to the whole address when it contains parentheses', () => {
+    render(
+      <p>
+        <InlineText text="[Angular](https://en.wikipedia.org/wiki/Angular_(web_framework))" />
+      </p>,
+    );
+    expect(screen.getByRole('link', { name: opensInNewTab('Angular') })).toHaveAttribute(
+      'href',
+      'https://en.wikipedia.org/wiki/Angular_(web_framework)',
+    );
+  });
+
   it('keeps a mailto link in the same tab', () => {
     render(
       <p>
