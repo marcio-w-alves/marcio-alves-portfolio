@@ -4,6 +4,7 @@ import type { ClockPort } from '../ports/clock.port';
 import type {
   LanguageModelPort,
   ModelMessage,
+  ModelRequest,
   ModelUsage,
   ToolCall,
 } from '../ports/language-model.port';
@@ -11,6 +12,7 @@ import type { ToolRegistry } from '../tools/registry';
 import type { ToolOutcome } from '../tools/tool';
 import { createOfferFilter } from './offer-filter';
 import { systemPrompt } from './system-prompt';
+import { createUsageMeter } from './usage';
 
 /**
  * System 2: the model answers what the fast path could not, acting only
@@ -47,7 +49,10 @@ interface Options {
   readonly model: LanguageModelPort;
   readonly tools: ToolRegistry;
   readonly clock: ClockPort;
-  /** Called once per model call with what it cost, for the spending budget. */
+  /**
+   * Called once per model call with what it cost, for the spending budget —
+   * as reported, or estimated when the call was cut short.
+   */
   readonly onUsage?: (usage: ModelUsage) => void;
   /** Called with every action the model ran and what it got back — the evidence an answer rests on. */
   readonly onToolResult?: (result: ToolTrace) => void;
@@ -219,22 +224,28 @@ export function createModelAssistant({
   ): AsyncGenerator<AssistantEvent, ModelTurn> {
     let text = '';
     let calls: readonly ToolCall[] = [];
-    const stream = model.stream({
+    const request: ModelRequest = {
       messages,
       tools: definitions,
       toolChoice: round === MAX_ROUNDS ? 'none' : 'auto',
       maxOutputTokens: MAX_OUTPUT_TOKENS,
       ...(signal ? { signal } : {}),
-    });
-    for await (const event of stream) {
-      if (event.type === 'text-delta' && event.delta) {
-        text += event.delta;
-        yield* reply.write(event.delta);
-      } else if (event.type === 'tool-calls') {
-        calls = event.calls;
-      } else if (event.type === 'finish') {
-        onUsage?.(event.usage);
+    };
+    const usage = createUsageMeter(request, (spent) => onUsage?.(spent));
+    try {
+      for await (const event of model.stream(request)) {
+        usage.accepted();
+        if (event.type === 'text-delta' && event.delta) {
+          text += event.delta;
+          yield* reply.write(event.delta);
+        } else if (event.type === 'tool-calls') {
+          calls = event.calls;
+        } else if (event.type === 'finish') {
+          usage.report(event.usage);
+        }
       }
+    } finally {
+      usage.settle();
     }
     yield* reply.endRound();
     return { text, calls };

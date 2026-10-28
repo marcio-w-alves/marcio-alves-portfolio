@@ -107,8 +107,10 @@ export function createOpenAILanguageModel({
         { signal: signal ? AbortSignal.any([signal, stall.signal]) : stall.signal },
       );
 
+      yield { type: 'started' };
+
       const calls = new Map<number, ToolCall>();
-      let usage: ModelUsage = { inputTokens: 0, outputTokens: 0 };
+      let usage: ModelUsage | undefined;
       const chunks = abortWhenIdle(stream, idleTimeoutMs, () => {
         stall.abort();
       });
@@ -138,7 +140,7 @@ export function createOpenAILanguageModel({
           calls: [...calls.entries()].sort(([a], [b]) => a - b).map(([, call]) => call),
         };
       }
-      yield { type: 'finish', usage };
+      if (usage) yield { type: 'finish', usage };
     },
   };
 }

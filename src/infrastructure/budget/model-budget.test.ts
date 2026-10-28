@@ -68,3 +68,13 @@ describe('model budget', () => {
     expect(daily.exhaustions()).toBe(2);
   });
 });
+
+describe('model budget — bounded memory', () => {
+  it('forgets idle clients', () => {
+    const paced = budget();
+    for (let client = 0; client < 10_000; client += 1) paced.admit(`client-${String(client)}`);
+    paced.at(60_001);
+    paced.admit('newcomer');
+    expect(paced.trackedClients()).toBe(1);
+  });
+});

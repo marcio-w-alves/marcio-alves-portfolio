@@ -94,6 +94,7 @@ describe('OpenAI language model adapter', () => {
       ),
     );
     expect(await events()).toEqual([
+      { type: 'started' },
       { type: 'text-delta', delta: 'He led ' },
       { type: 'text-delta', delta: 'the HRIS team.' },
       { type: 'finish', usage: { inputTokens: 120, outputTokens: 7 } },
@@ -134,6 +135,7 @@ describe('OpenAI language model adapter', () => {
       ),
     );
     expect(await events()).toEqual([
+      { type: 'started' },
       {
         type: 'tool-calls',
         calls: [
@@ -184,6 +186,11 @@ describe('OpenAI language model adapter', () => {
         { role: 'tool', tool_call_id: 'call_0', content: '{"ok":true}' },
       ],
     });
+  });
+
+  it('reports no usage when the stream ends without it, rather than calling the answer free', async () => {
+    server.use(http.post(COMPLETIONS, () => eventStream([chunk({ content: 'ok' }, 'stop')])));
+    expect(await events()).toEqual([{ type: 'started' }, { type: 'text-delta', delta: 'ok' }]);
   });
 
   it('surfaces a provider failure to the caller', async () => {

@@ -10,6 +10,13 @@ interface Options {
   readonly now?: () => number;
   /** Told once per day, at the answer that spends the last of the day's tokens. */
   readonly onExhausted?: () => void;
+  /** Told at most once per window, when too many clients force one out of the pacing. */
+  readonly onEvicted?: () => void;
+}
+
+export interface ModelBudget extends ModelBudgetPort {
+  /** How many clients the per-client pacing is tracking right now. */
+  trackedClients(): number;
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -25,8 +32,14 @@ export function createModelBudget({
   dailyTokens,
   now = Date.now,
   onExhausted,
-}: Options): ModelBudgetPort {
-  const perClient = createSlidingWindowLimiter({ limit: answersPerWindow, windowMs, now });
+  onEvicted,
+}: Options): ModelBudget {
+  const perClient = createSlidingWindowLimiter({
+    limit: answersPerWindow,
+    windowMs,
+    now,
+    ...(onEvicted ? { onEvicted } : {}),
+  });
   let day = Math.floor(now() / DAY_MS);
   let spent = 0;
 
@@ -51,5 +64,6 @@ export function createModelBudget({
       spent += inputTokens + outputTokens;
       if (hadBudget && spent >= dailyTokens) onExhausted?.();
     },
+    trackedClients: () => perClient.size(),
   };
 }

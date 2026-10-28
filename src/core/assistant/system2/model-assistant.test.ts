@@ -1,12 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import type { AssistantEvent } from '../assistant-event';
-import type { LanguageModelPort, ModelRequest, ToolCall } from '../ports/language-model.port';
+import type {
+  LanguageModelPort,
+  ModelRequest,
+  ModelUsage,
+  ToolCall,
+} from '../ports/language-model.port';
 import { createToolRegistry } from '../tools/registry';
 import { createSearchTools } from '../tools/search-tools';
 import {
   createModelAssistant,
   EMPTY_REPLY,
   MAX_CALLS_PER_ROUND,
+  MAX_OUTPUT_TOKENS,
   MAX_ROUNDS,
 } from './model-assistant';
 
@@ -250,6 +256,93 @@ describe('model assistant — spending', () => {
       { inputTokens: 10, outputTokens: 5 },
       { inputTokens: 10, outputTokens: 5 },
     ]);
+  });
+
+  function spendingOf(port: LanguageModelPort) {
+    const usage: ModelUsage[] = [];
+    const assistant = createModelAssistant({
+      model: port,
+      tools: createToolRegistry(),
+      clock,
+      onUsage: (spent) => usage.push(spent),
+    });
+    return { usage, answer: assistant.answer({ question: 'q', history: [], followUps: [] }) };
+  }
+
+  it('charges a round cut short after the model started answering at its ceiling', async () => {
+    const port: LanguageModelPort = {
+      async *stream() {
+        yield { type: 'text-delta', delta: 'He led ' };
+        throw new Error('connection reset');
+      },
+    };
+    const { usage, answer } = spendingOf(port);
+
+    await expect(Array.fromAsync(answer)).rejects.toThrow('connection reset');
+
+    expect(usage).toEqual([
+      {
+        inputTokens: expect.any(Number) as number,
+        outputTokens: MAX_OUTPUT_TOKENS,
+        estimated: true,
+      },
+    ]);
+    expect(usage[0]?.inputTokens).toBeGreaterThan(1000);
+  });
+
+  it('charges a round the provider accepted, even if it failed before sending anything', async () => {
+    const port: LanguageModelPort = {
+      async *stream() {
+        yield { type: 'started' };
+        throw new Error('stream reset while the action call was arriving');
+      },
+    };
+    const { usage, answer } = spendingOf(port);
+
+    await expect(Array.fromAsync(answer)).rejects.toThrow('stream reset');
+
+    expect(usage).toMatchObject([{ outputTokens: MAX_OUTPUT_TOKENS, estimated: true }]);
+  });
+
+  it('charges a round that ended without the provider reporting usage', async () => {
+    const port: LanguageModelPort = {
+      async *stream() {
+        yield { type: 'started' };
+        yield { type: 'text-delta', delta: 'Done.' };
+      },
+    };
+    const { usage, answer } = spendingOf(port);
+
+    await Array.fromAsync(answer);
+
+    expect(usage).toMatchObject([{ outputTokens: MAX_OUTPUT_TOKENS, estimated: true }]);
+  });
+
+  it('charges a round the visitor walked away from', async () => {
+    const port: LanguageModelPort = {
+      async *stream() {
+        for (;;) yield { type: 'text-delta', delta: 'more ' };
+      },
+    };
+    const { usage, answer } = spendingOf(port);
+
+    await answer.next();
+    await answer.return(undefined);
+
+    expect(usage).toMatchObject([{ outputTokens: MAX_OUTPUT_TOKENS, estimated: true }]);
+  });
+
+  it('charges nothing for a call refused before the model answered', async () => {
+    const port: LanguageModelPort = {
+      async *stream() {
+        throw new Error('circuit open');
+      },
+    };
+    const { usage, answer } = spendingOf(port);
+
+    await expect(Array.fromAsync(answer)).rejects.toThrow('circuit open');
+
+    expect(usage).toEqual([]);
   });
 });
 
