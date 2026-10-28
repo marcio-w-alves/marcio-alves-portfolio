@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { PROJECT_IDS, ROLE_IDS, SKILL_GROUP_IDS } from '@/core/knowledge/ids';
 import { knowledgeBase, projectById, roleById, sourceOf } from '@/core/knowledge/knowledge-base';
-import { findEvidence, TECHNOLOGIES, type Technology } from '../system1/technologies';
+import { evidenceReport } from './evidence-report';
 import { defineTool, type Tool } from './tool';
 
 /** Read-only access to the knowledge base, one fact family per action. */
@@ -88,41 +88,12 @@ const getSkills = defineTool({
   }),
 });
 
-function technologyFor(name: string): Technology {
-  const known = TECHNOLOGIES.find((tech) => tech.name.toLowerCase() === name.toLowerCase());
-  if (known) return known;
-  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const pattern = new RegExp(`\\b${escaped}`, 'i');
-  return { name, detect: pattern, evidence: pattern };
-}
-
 const getTechnologyEvidence = defineTool({
   name: 'getTechnologyEvidence',
   description:
     "Where a technology appears in Marcio's record: professional work, listed skills, or coursework only. Use it before saying whether he has used something.",
   input: { technology: z.string().trim().min(1).max(60) },
-  execute: ({ technology }) => {
-    const evidence = findEvidence(technologyFor(technology));
-    return {
-      data: {
-        technology,
-        professionalWork: evidence.work.map(({ company, statement }) => ({ company, statement })),
-        listedSkills: evidence.skills,
-        courseworkOnly: evidence.coursework,
-        verdict:
-          evidence.work.length > 0 || evidence.skills.length > 0
-            ? 'documented'
-            : evidence.coursework.length > 0
-              ? 'coursework only'
-              : 'not documented',
-      },
-      sources: [
-        ...new Set(evidence.work.map((item) => `resume.${item.role}` as const)),
-        ...(evidence.skills.length > 0 ? (['resume.skills'] as const) : []),
-        ...(evidence.coursework.length > 0 ? (['resume.certifications'] as const) : []),
-      ].map(sourceOf),
-    };
-  },
+  execute: ({ technology }) => evidenceReport(technology),
 });
 
 const getProjects = defineTool({
