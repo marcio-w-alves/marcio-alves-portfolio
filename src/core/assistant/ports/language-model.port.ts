@@ -24,6 +24,8 @@ export interface ToolDefinition {
 export interface ModelUsage {
   readonly inputTokens: number;
   readonly outputTokens: number;
+  /** Set when the provider reported nothing and the cost was estimated from what was exchanged. */
+  readonly estimated?: true;
 }
 
 export type ModelEvent =

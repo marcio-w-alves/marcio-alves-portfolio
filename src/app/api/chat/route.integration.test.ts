@@ -4,6 +4,8 @@ import { Agent, getGlobalDispatcher, setGlobalDispatcher } from 'undici';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildContainer } from '@/composition-root';
 import type { AnswerSource, AssistantEvent } from '@/core/assistant/assistant-event';
+import { assistantSettings } from '@/env';
+import { MAX_OUTPUT_TOKENS } from '@/core/assistant/system2/model-assistant';
 import knowledgeIndex from '@/infrastructure/retrieval/knowledge-index.json';
 import { createChatHandler } from './chat-handler';
 
@@ -22,6 +24,8 @@ const server = setupServer();
 const outbound: Request[] = [];
 /** The failures the site logged for whoever operates it, as structured log lines. */
 let reported: Record<string, unknown>[] = [];
+/** Every structured line the site logged. */
+let logged: Record<string, unknown>[] = [];
 
 // A fresh connection pool per test: MSW's emulated socket for an exchange
 // aborted mid-stream can still be tearing down when the next test connects.
@@ -35,9 +39,14 @@ beforeAll(() => {
 beforeEach(() => {
   outbound.length = 0;
   reported = [];
+  logged = [];
   vi.spyOn(console, 'error').mockImplementation((line: unknown) => {
     const entry = JSON.parse(String(line)) as Record<string, unknown>;
+    logged.push(entry);
     if (entry.event === 'assistant.failed') reported.push(entry);
+  });
+  vi.spyOn(console, 'log').mockImplementation((line: unknown) => {
+    logged.push(JSON.parse(String(line)) as Record<string, unknown>);
   });
   connections = new Agent();
   setGlobalDispatcher(connections);
@@ -52,13 +61,21 @@ afterAll(() => {
   server.close();
 });
 
-function postChat(): (request: Request) => Promise<Response> {
+function postChat({ dailyModelTokens }: { dailyModelTokens?: number } = {}): (
+  request: Request,
+) => Promise<Response> {
+  const settings = assistantSettings();
   return createChatHandler(
     buildContainer({
       env: { OPENAI_API_KEY: 'test-key', GITHUB_TOKEN: undefined },
+      settings: { ...settings, dailyModelTokens: dailyModelTokens ?? settings.dailyModelTokens },
       openAITimeoutMs: TEST_TIMEOUT_MS,
     }),
   );
+}
+
+function loggedEvents(event: string): Record<string, unknown>[] {
+  return logged.filter((entry) => entry.event === event);
 }
 
 /**
@@ -468,5 +485,107 @@ describe('POST /api/chat — pacing', () => {
     });
     expect((await handle(question('hi'))).status).toBe(200);
     expect(outbound).toEqual([]);
+  });
+});
+
+describe('POST /api/chat — the spending budget', () => {
+  const DELTAS = ['He led ', 'the Roots ', 'frontend at the time'];
+  const INTERRUPTIONS = [
+    'the visitor leaving',
+    'a provider failure mid-stream',
+    'a stall',
+  ] as const;
+  type Interruption = (typeof INTERRUPTIONS)[number];
+
+  const deltaChunks = [
+    chunk({ role: 'assistant', content: '' }),
+    ...DELTAS.map((content) => chunk({ content })),
+  ];
+
+  function failingCompletion(): HttpResponse<ReadableStream> {
+    const failure = { error: { message: 'The server had an error.', type: 'server_error' } };
+    return completion([...deltaChunks, failure]);
+  }
+
+  /** Answers with the deltas, then cuts the answer short as `how` says; returns the body OpenAI got. */
+  function interruptedCompletions(how: Interruption): string[] {
+    const bodies: string[] = [];
+    server.use(
+      http.post(COMPLETIONS, async ({ request }) => {
+        bodies.push(await request.text());
+        return how === 'a provider failure mid-stream'
+          ? failingCompletion()
+          : stalledCompletion(deltaChunks);
+      }),
+    );
+    return bodies;
+  }
+
+  async function askAndInterrupt(
+    handle: (request: Request) => Promise<Response>,
+    how: Interruption,
+  ) {
+    if (how !== 'the visitor leaving') {
+      await allEventsOf(await handle(question(MODEL_QUESTION)));
+      return;
+    }
+    const leaving = new AbortController();
+    const answer = eventsOf(await handle(question(MODEL_QUESTION, { signal: leaving.signal })));
+    for (let seen = 0; seen < 2 + DELTAS.length; seen += 1) await answer.next();
+    leaving.abort();
+    await Array.fromAsync(answer);
+  }
+
+  /** Runs one interrupted answer through a fresh container and waits until its cost is recorded. */
+  async function interruptedAnswer(how: Interruption, dailyModelTokens?: number) {
+    const handle = postChat(dailyModelTokens === undefined ? {} : { dailyModelTokens });
+    const bodies = interruptedCompletions(how);
+    const estimatesBefore = loggedEvents('model.usage_estimated').length;
+    await askAndInterrupt(handle, how);
+    await vi.waitFor(() => {
+      expect(loggedEvents('model.usage_estimated')).toHaveLength(estimatesBefore + 1);
+    });
+    return { handle, body: bodies.join('') };
+  }
+
+  async function nextModelAnswerIsPaced(handle: (request: Request) => Promise<Response>) {
+    const calls = outbound.filter((request) => request.url === COMPLETIONS).length;
+    await allEventsOf(await handle(question('Compare Toptal and Deel.')));
+    const paced = loggedEvents('chat.answered').at(-1)?.outcome === 'paced';
+    const calledOpenAI = outbound.filter((request) => request.url === COMPLETIONS).length > calls;
+    expect(paced).toBe(!calledOpenAI);
+    return paced;
+  }
+
+  it.each(INTERRUPTIONS)(
+    'an answer cut short by %s still spends at least what it exchanged',
+    async (how) => {
+      const measured = await interruptedAnswer(how);
+      const exchanged = measured.body.length + DELTAS.join('').length;
+      const atLeast = Math.ceil(exchanged / 3);
+
+      const { handle, body } = await interruptedAnswer(how, atLeast);
+
+      expect(body).toBe(measured.body);
+      expect(await nextModelAnswerIsPaced(handle)).toBe(true);
+      expect(loggedEvents('model.usage_estimated').at(-1)).toMatchObject({
+        outputTokens: MAX_OUTPUT_TOKENS,
+      });
+    },
+  );
+
+  it('counts reported usage exactly once', async () => {
+    const reportedTotal = USAGE.usage.prompt_tokens + USAGE.usage.completion_tokens;
+
+    const exhausted = postChat({ dailyModelTokens: reportedTotal });
+    scriptedCompletions(textRound(...DELTAS));
+    await allEventsOf(await exhausted(question(MODEL_QUESTION)));
+    expect(await nextModelAnswerIsPaced(exhausted)).toBe(true);
+
+    const oneTokenLeft = postChat({ dailyModelTokens: reportedTotal + 1 });
+    scriptedCompletions(textRound(...DELTAS), textRound('He paired with them weekly.'));
+    await allEventsOf(await oneTokenLeft(question(MODEL_QUESTION)));
+    expect(await nextModelAnswerIsPaced(oneTokenLeft)).toBe(false);
+    expect(loggedEvents('model.usage_estimated')).toEqual([]);
   });
 });

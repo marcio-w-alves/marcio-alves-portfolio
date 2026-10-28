@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { buildContainer } from '@/composition-root';
 import { createAssistant, type Assistant } from '@/core/assistant/assistant';
 import type { AssistantEvent } from '@/core/assistant/assistant-event';
 import type { LanguageModelPort, ToolCall } from '@/core/assistant/ports/language-model.port';
@@ -7,6 +8,7 @@ import { createAnswerCache } from '@/infrastructure/budget/answer-cache';
 import { createModelBudget } from '@/infrastructure/budget/model-budget';
 import { createSlidingWindowLimiter } from '@/infrastructure/rate-limit/sliding-window';
 import { createToolRegistry } from '@/core/assistant/tools/registry';
+import { assistantSettings } from '@/env';
 import { createChatHandler, MAX_BODY_BYTES } from './chat-handler';
 
 const reported: unknown[] = [];
@@ -267,5 +269,30 @@ describe('POST /api/chat — pacing', () => {
     expect((await handle(post({ message: 'hi' }, 'application/json', '203.0.113.1'))).status).toBe(
       429,
     );
+  });
+});
+
+describe('POST /api/chat — clients behind one IPv6 /64', () => {
+  function forwardedFor(address: string): Request {
+    return new Request('https://marciomariani.dev/api/chat', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-forwarded-for': address },
+      body: JSON.stringify({ message: 'hi' }),
+    });
+  }
+
+  it('two addresses in one /64 share a limit; another /64 has its own', async () => {
+    const handle = createChatHandler(
+      buildContainer({
+        env: { OPENAI_API_KEY: undefined, GITHUB_TOKEN: undefined },
+        settings: { ...assistantSettings(), requestsPerTenMinutes: 1 },
+      }),
+    );
+
+    expect((await handle(forwardedFor('2001:db8:1:2::a'))).status).toBe(200);
+    const sameNetwork = await handle(forwardedFor('2001:db8:1:2::b'));
+    expect(sameNetwork.status).toBe(429);
+    expect(sameNetwork.headers.get('retry-after')).toBe('600');
+    expect((await handle(forwardedFor('2001:db8:1:3::a'))).status).toBe(200);
   });
 });

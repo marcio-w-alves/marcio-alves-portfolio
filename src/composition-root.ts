@@ -90,6 +90,9 @@ function createBudget(settings: AssistantSettings): ModelBudgetPort {
     onExhausted: () => {
       logger.warn('model.budget_exhausted', { dailyTokens: settings.dailyModelTokens });
     },
+    onEvicted: () => {
+      logger.warn('limiter.evicted', { limiter: 'model-answers' });
+    },
   });
 }
 
@@ -172,6 +175,12 @@ function buildModelAssistant(
     clock: systemClock,
     onUsage: (usage) => {
       budget.record(usage);
+      if (usage.estimated) {
+        logger.info('model.usage_estimated', {
+          inputTokens: usage.inputTokens,
+          outputTokens: usage.outputTokens,
+        });
+      }
     },
     ...(observers.onToolResult ? { onToolResult: observers.onToolResult } : {}),
   });
@@ -222,6 +231,9 @@ export function buildContainer({
     requestLimiter: createSlidingWindowLimiter({
       limit: settings.requestsPerTenMinutes,
       windowMs: TEN_MINUTES,
+      onEvicted: () => {
+        logger.warn('limiter.evicted', { limiter: 'requests' });
+      },
     }),
   };
 }

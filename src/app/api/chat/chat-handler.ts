@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { Assistant } from '@/core/assistant/assistant';
 import { MAX_QUESTION_LENGTH } from '@/core/assistant/system1/router';
 import { TOPIC_IDS } from '@/core/assistant/topics';
+import { clientIdOf } from '@/http/client-key';
 import { EVENT_STREAM_HEADERS, eventStream } from './event-stream';
 
 /** Generous for twelve turns of history, far short of anything abusive. */
@@ -61,23 +62,6 @@ function parseJson(text: string): unknown {
   } catch {
     return undefined;
   }
-}
-
-/**
- * Vercel sets x-real-ip to the connecting client; x-forwarded-for is the
- * fallback elsewhere. Used only to pace requests, never stored or shown.
- */
-function clientIdOf(request: Request): string {
-  const realIp = request.headers.get('x-real-ip');
-  if (realIp) return realIp;
-  // Blank entries are dropped, so an empty header falls through instead of
-  // becoming one key shared by everyone who sends it.
-  const forwarded = request.headers
-    .get('x-forwarded-for')
-    ?.split(',')
-    .map((entry) => entry.trim())
-    .find(Boolean);
-  return forwarded ?? 'unknown';
 }
 
 /** Paces requests per client; the composition root supplies the implementation. */
