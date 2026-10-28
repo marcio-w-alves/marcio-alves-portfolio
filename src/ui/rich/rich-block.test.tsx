@@ -305,9 +305,8 @@ describe('contact', () => {
   });
 
   it('offers no résumé download while there is no résumé to download', () => {
-    const block = exampleBlock('contact');
-    expect(block.props.resumeUrl).toBeNull();
-    renderBlock(block);
+    const { props } = exampleBlock('contact');
+    renderBlock({ component: 'contact', props: { ...props, resumeUrl: null } });
     expect(screen.queryByRole('link', { name: /resume/i })).not.toBeInTheDocument();
   });
 

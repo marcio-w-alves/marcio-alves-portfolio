@@ -22,8 +22,8 @@ const WITHOUT_PROTOTYPE_NOTICE = '.ma-helper-note{display:none!important}';
 /**
  * The design renders with its own sample contact data, which differs from
  * production on purpose in two places: GitHub is linked (an explicit
- * requirement the design's data leaves out) and the résumé is not published
- * yet. The design's own logic is run with the production contact, so the
+ * requirement the design's data leaves out) and the résumé has its real
+ * address. The design's own logic is run with the production contact, so the
  * reference shows what the design does with the real data.
  */
 const PRODUCTION_CONTACT = `Object.assign(window.MAPortfolio.kb.contact, ${JSON.stringify({
