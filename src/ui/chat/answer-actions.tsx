@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import type { Feedback } from '@/core/conversation/messages';
 import { cn } from '../cn';
 import { Icon } from '../primitives';
+import { useCopyConfirmation } from './use-copy-confirmation';
 
 /** A quiet text action under an answer. */
 export const ACTION = cn(
@@ -13,7 +13,11 @@ export const ACTION = cn(
   '@max-phone/ma:h-10 @max-phone/ma:min-w-10',
 );
 
-const CONFIRM_MS = 1800;
+/** A way into the role an answer is about. */
+export interface RelatedRoleAction {
+  readonly label: string;
+  readonly onView: () => void;
+}
 
 interface AnswerActionsProps {
   readonly feedback: Feedback | null;
@@ -21,7 +25,7 @@ interface AnswerActionsProps {
   readonly onCopy: () => Promise<boolean>;
   readonly onAskFollowUp: () => void;
   /** The role the answer is about, offered as a way into that experience. */
-  readonly related: { readonly label: string; readonly onView: () => void } | null;
+  readonly related: RelatedRoleAction | null;
   /** While an answer is on its way, nothing that asks another question can be used. */
   readonly busy?: boolean;
   readonly onRate: (feedback: Feedback) => void;
@@ -35,17 +39,7 @@ export function AnswerActions({
   onRate,
   busy = false,
 }: AnswerActionsProps) {
-  const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    if (!copied) return;
-    const timer = setTimeout(() => {
-      setCopied(false);
-    }, CONFIRM_MS);
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [copied]);
+  const { copied, copy } = useCopyConfirmation(onCopy);
 
   return (
     <div
@@ -53,16 +47,13 @@ export function AnswerActions({
       aria-label="Answer actions"
       className="-ml-2 flex flex-wrap items-center gap-0.5"
     >
-      <button
-        type="button"
-        className={ACTION}
-        onClick={() => {
-          void onCopy().then(setCopied);
-        }}
-      >
+      <button type="button" className={ACTION} onClick={copy}>
         <Icon name={copied ? 'check' : 'copy'} size="sm" />
         {copied ? 'Copied' : 'Copy'}
       </button>
+      <span role="status" className="sr-only">
+        {copied ? 'Copied' : ''}
+      </span>
       <button type="button" className={ACTION} onClick={onAskFollowUp}>
         <Icon name="message" size="sm" />
         Ask follow-up

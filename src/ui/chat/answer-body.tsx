@@ -37,6 +37,7 @@ function TextBlock({ block, caret }: { readonly block: Block; readonly caret: bo
       const List = block.ordered ? 'ol' : 'ul';
       return (
         <List
+          start={block.ordered ? block.start : undefined}
           className={cn(
             'm-0 flex flex-col gap-2 pl-4.5 marker:text-ink-faint',
             block.ordered ? 'list-decimal' : 'list-disc',

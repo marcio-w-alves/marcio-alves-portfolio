@@ -25,4 +25,26 @@ describe('AnswerBody', () => {
     );
     expect(screen.queryByText(/\]\(https:/)).not.toBeInTheDocument();
   });
+
+  it('numbers each repository in turn when a description follows each one', () => {
+    const described = [
+      '1. **first-repo**',
+      '',
+      'A portfolio.',
+      '',
+      '2. **second-repo**',
+      '',
+      'A training API.',
+      '',
+      '3. **third-repo**',
+    ].join('\n');
+    render(<AnswerBody parts={[{ type: 'text', id: 'a', text: described }]} streaming={false} />);
+
+    const lists = screen.getAllByRole('list');
+    expect(lists.map((list) => [list.getAttribute('start'), list.textContent])).toEqual([
+      ['1', 'first-repo'],
+      ['2', 'second-repo'],
+      ['3', 'third-repo'],
+    ]);
+  });
 });

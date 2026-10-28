@@ -12,7 +12,14 @@ export type Block =
   | { readonly kind: 'heading'; readonly content: readonly InlineNode[] }
   | {
       readonly kind: 'list';
-      readonly ordered: boolean;
+      readonly ordered: false;
+      readonly items: readonly (readonly InlineNode[])[];
+    }
+  | {
+      readonly kind: 'list';
+      readonly ordered: true;
+      /** The first item's number, so a list a paragraph interrupted keeps counting. */
+      readonly start: number;
       readonly items: readonly (readonly InlineNode[])[];
     }
   | { readonly kind: 'code'; readonly language: string; readonly code: string };
@@ -20,12 +27,11 @@ export type Block =
 const FENCE = /^```\s*([\w-]*)/;
 const HEADING = /^#{2,4}\s+(.*)$/;
 const BULLET = /^\s*[-*]\s+(.*)$/;
-const NUMBERED = /^\s*\d+\.\s+(.*)$/;
+const NUMBERED = /^\s*(\d+)\.\s+(.*)$/;
 
-interface OpenList {
-  readonly ordered: boolean;
-  readonly items: InlineNode[][];
-}
+type OpenList =
+  | { readonly ordered: false; readonly items: InlineNode[][] }
+  | { readonly ordered: true; readonly start: number; readonly items: InlineNode[][] };
 
 interface OpenCode {
   readonly language: string;
@@ -108,13 +114,21 @@ export function parseBlocks(markdown: string): Block[] {
       continue;
     }
 
-    const item = BULLET.exec(line) ?? NUMBERED.exec(line);
-    if (item) {
+    const bullet = BULLET.exec(line);
+    if (bullet) {
       flushParagraph();
-      const ordered = NUMBERED.test(line);
-      if (open.list?.ordered !== ordered) flushList();
-      open.list ??= { ordered, items: [] };
-      open.list.items.push(parseInline(item[1] ?? ''));
+      if (open.list?.ordered !== false) flushList();
+      open.list ??= { ordered: false, items: [] };
+      open.list.items.push(parseInline(bullet[1] ?? ''));
+      continue;
+    }
+
+    const numbered = NUMBERED.exec(line);
+    if (numbered) {
+      flushParagraph();
+      if (open.list?.ordered !== true) flushList();
+      open.list ??= { ordered: true, start: Number(numbered[1]), items: [] };
+      open.list.items.push(parseInline(numbered[2] ?? ''));
       continue;
     }
 

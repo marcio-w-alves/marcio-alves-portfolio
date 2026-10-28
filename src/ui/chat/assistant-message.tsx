@@ -2,7 +2,7 @@ import type { AssistantMessage as Message, Feedback } from '@/core/conversation/
 import { cn } from '../cn';
 import { Button, Eyebrow, Icon, Tag } from '../primitives';
 import { SuggestedQuestions } from '../welcome';
-import { AnswerActions } from './answer-actions';
+import { AnswerActions, type RelatedRoleAction } from './answer-actions';
 import { AnswerBody } from './answer-body';
 import { AssistantAvatar } from './assistant-avatar';
 import { errorText } from './error-text';
@@ -19,13 +19,12 @@ interface AssistantMessageProps {
   /** Shown beside the name on a topic's introduction. */
   readonly topicLabel?: string | undefined;
   /** "View Deel experience", when the answer is about one role. */
-  readonly relatedLabel?: string | undefined;
+  readonly related?: RelatedRoleAction | undefined;
   readonly onFollowUp: (question: string) => void;
   readonly onCopy: (message: Message) => Promise<boolean>;
   readonly onRetry: (id: string) => void;
   readonly onEdit: (id: string) => void;
   readonly onRate: (id: string, feedback: Feedback) => void;
-  readonly onViewRelated: (message: Message) => void;
   readonly onAskFollowUp: () => void;
   /** Another answer is on its way, so nothing here may ask a new question. */
   readonly busy?: boolean | undefined;
@@ -41,13 +40,12 @@ export function AssistantMessage({
   ownerFirstName,
   isLatest,
   topicLabel,
-  relatedLabel,
+  related,
   onFollowUp,
   onCopy,
   onRetry,
   onEdit,
   onRate,
-  onViewRelated,
   onAskFollowUp,
   busy = false,
 }: AssistantMessageProps) {
@@ -147,16 +145,7 @@ export function AssistantMessage({
             feedback={message.feedback}
             onCopy={() => onCopy(message)}
             onAskFollowUp={onAskFollowUp}
-            related={
-              relatedLabel
-                ? {
-                    label: relatedLabel,
-                    onView: () => {
-                      onViewRelated(message);
-                    },
-                  }
-                : null
-            }
+            related={related ?? null}
             onRate={(feedback) => {
               onRate(message.id, feedback);
             }}

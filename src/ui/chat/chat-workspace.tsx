@@ -4,7 +4,6 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { TopicId } from '@/core/chat/topic-id';
 import { latestAnswerId } from '@/core/conversation/conversation';
 import type { Conversation } from '@/core/conversation/messages';
-import { toPlainText } from '@/core/conversation/plain-text';
 import { ChatComposer, ComposerDock, JumpToLatest, type ChatComposerHandle } from '../composer';
 import { AppShell } from '../shell/app-shell';
 import { ConversationTopBar } from '../shell/conversation-top-bar';
@@ -21,8 +20,7 @@ import {
   type QuestionChoice,
   type WelcomeGreeting,
 } from '../welcome';
-import { AssistantMessage } from './assistant-message';
-import { copyText } from './copy-text';
+import { ConversationTurn } from './conversation-turn';
 import { useChat } from './use-chat';
 import { useReveal } from './use-reveal';
 
@@ -220,45 +218,23 @@ export function ChatWorkspace({
             aria-busy={busy}
             className="mx-auto flex max-w-column list-none flex-col gap-10 px-8 pt-3 pb-8 @max-phone/ma:gap-7.5 @max-phone/ma:px-4 @max-phone/ma:pt-4 @max-phone/ma:pb-6"
           >
-            {conversation.messages.map((message) => {
-              if (message.role === 'user') {
-                return (
-                  <li key={message.id} className="flex animate-turn justify-end">
-                    <p className="m-0 max-w-bubble rounded-bubble bg-fill px-4 py-2.5 text-15 leading-reading wrap-anywhere whitespace-pre-wrap text-ink @max-phone/ma:max-w-bubble-phone">
-                      <span className="sr-only">You asked: </span>
-                      {message.text}
-                    </p>
-                  </li>
-                );
-              }
-              const company = message.related?.company;
-              return (
-                <li key={message.id} className="animate-turn">
-                  <AssistantMessage
-                    message={reveal.view(message)}
-                    assistantName={assistantName}
-                    ownerFirstName={ownerFirstName}
-                    busy={busy || chat.waiting}
-                    isLatest={message.id === latestId}
-                    topicLabel={
-                      message.kind === 'intro' && message.topicId
-                        ? topicIn(topics, message.topicId).label
-                        : undefined
-                    }
-                    relatedLabel={company ? `View ${company} experience` : undefined}
-                    onFollowUp={ask}
-                    onCopy={(answer) => copyText(toPlainText(answer.parts))}
-                    onRetry={chat.retry}
-                    onEdit={editQuestion}
-                    onRate={chat.rate}
-                    onViewRelated={() => {
-                      if (company) ask(`Tell me about his time at ${company}.`);
-                    }}
-                    onAskFollowUp={focusComposer}
-                  />
-                </li>
-              );
-            })}
+            {conversation.messages.map((message) => (
+              <ConversationTurn
+                key={message.id}
+                message={message}
+                view={reveal.view}
+                isLatest={message.id === latestId}
+                topicLabel={(id) => topicIn(topics, id).label}
+                assistantName={assistantName}
+                ownerFirstName={ownerFirstName}
+                busy={busy || chat.waiting}
+                onAsk={ask}
+                onRetry={chat.retry}
+                onEdit={editQuestion}
+                onRate={chat.rate}
+                onAskFollowUp={focusComposer}
+              />
+            ))}
           </ol>
         ) : (
           <WelcomeLayout>
