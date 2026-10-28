@@ -1,8 +1,9 @@
-import type { TopicId } from '@/core/chat/topic-id';
+import { TOPIC_IDS, type TopicId } from '@/core/chat/topic-id';
 import { interpolate, type Template } from '@/core/i18n/format';
-import { SUPPORTED_LOCALES, type Locale } from '@/core/i18n/locale';
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES, type Locale } from '@/core/i18n/locale';
 import { profile } from '@/profile';
 import { publishedLocales } from '@/site/published-locales';
+import { ABOUT_PAGE, pagePath, type SitePage } from '@/site/routes';
 import { createSiteContent } from '@/site/site-content';
 import { siteMessages } from '@/site/site-messages';
 import { copyIn } from '@/site/site-profile';
@@ -20,6 +21,38 @@ export function pagesIn(locale: Locale) {
   const copy = copyIn(profile, locale);
   const pages = createSiteContent(profile.knowledge, copy.answers, locale);
   return { ...pages, ...siteMessages(pages.knowledge, copy, locale) };
+}
+
+/** Every page of one language: each topic, and the page about the site where its copy writes one. */
+export function pagePathsIn(locale: Locale): string[] {
+  const pages: SitePage[] = copyIn(profile, locale).about
+    ? [...TOPIC_IDS, ABOUT_PAGE]
+    : [...TOPIC_IDS];
+  return pages.map((page) => pagePath(locale, page));
+}
+
+/** Every message of a catalog by its path, e.g. `ui.errors.retryIn.one`; list items each count. */
+function messagesByPath(catalog: unknown, path = ''): [string, string][] {
+  if (typeof catalog === 'string') return [[path, catalog]];
+  if (catalog === null || typeof catalog !== 'object') return [];
+  return Object.entries(catalog).flatMap(([key, value]) =>
+    messagesByPath(value, path ? `${path}.${key}` : key),
+  );
+}
+
+/**
+ * The interface's English messages that read differently in `locale` — what a
+ * page in that language must never show. Templates the browser still fills
+ * are left out: they never appear as written. So is each language's own name,
+ * which the switcher shows in that language on every page.
+ */
+export function englishOnlyMessages(locale: Locale): string[] {
+  const english = pagesIn(DEFAULT_LOCALE);
+  const theirs = new Map(messagesByPath({ ui: pagesIn(locale).ui, site: pagesIn(locale).site }));
+  return messagesByPath({ ui: english.ui, site: english.site })
+    .filter(([path]) => !path.startsWith('ui.language.'))
+    .filter(([path, message]) => theirs.get(path) !== message && !message.includes('{'))
+    .map(([, message]) => message);
 }
 
 /** The languages the build under test serves: the profile's, plus a preview's (`PREVIEW_LOCALES`). */

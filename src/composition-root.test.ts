@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createChatHandler } from '@/http/chat-handler';
-import { localize } from '@/core/knowledge/localize';
 import { profile } from '@/profile';
 import { fixtureAnswers, fixtureKnowledge } from '@/testing/fixture-profile';
 import { buildContainer } from './composition-root';
@@ -45,7 +44,7 @@ describe('production logs of a chat request', () => {
   it('records how each question was answered, as one JSON object per line', async () => {
     const logs = captureLogs();
     const handle = createChatHandler(
-      buildContainer({ knowledge: localize(fixtureKnowledge, 'en'), answers: fixtureAnswers }),
+      buildContainer({ record: fixtureKnowledge, answers: fixtureAnswers }),
     );
 
     await ask(handle, "Tell me about Ada's career.");
@@ -120,10 +119,7 @@ describe('the record the container answers from', () => {
 
   it('answers from the knowledge and copy it is given, not from a record of its own', async () => {
     captureLogs();
-    const fixture = buildContainer({
-      knowledge: localize(fixtureKnowledge, 'en'),
-      answers: fixtureAnswers,
-    });
+    const fixture = buildContainer({ record: fixtureKnowledge, answers: fixtureAnswers });
 
     const answer = await answerText(fixture, 'Tell me more about Pipewright.');
 

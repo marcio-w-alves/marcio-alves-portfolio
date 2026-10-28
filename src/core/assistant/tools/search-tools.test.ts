@@ -41,12 +41,12 @@ async function run(port: KnowledgeSearchPort, args: unknown) {
 }
 
 const knowledge = localize(fixtureKnowledge, 'en');
-const corpus = buildCorpus(knowledge);
+const englishCorpus = buildCorpus(fixtureKnowledge).filter(({ id }) => !id.startsWith('pt-BR/'));
 const citation = createCitation(knowledge);
 
-/** A passage of a corpus, as the vector search hands it back. */
+/** A passage of the English corpus, as the vector search hands it back: by its base id. */
 function corpusPassage(id: string, score: number): Passage {
-  const chunk = corpus.find((candidate) => candidate.id === id);
+  const chunk = englishCorpus.find((candidate) => candidate.baseId === id);
   if (!chunk) throw new Error(`${id} is not in the corpus`);
   return { id, category: chunk.category, text: chunk.text, source: citation(chunk.source), score };
 }

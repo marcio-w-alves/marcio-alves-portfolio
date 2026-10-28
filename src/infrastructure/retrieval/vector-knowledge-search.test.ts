@@ -22,7 +22,7 @@ import {
 
 const knowledge = localize(profile.knowledge, 'en');
 const index: KnowledgeIndex = committed;
-const corpus = buildCorpus(knowledge);
+const corpus = buildCorpus(profile.knowledge);
 const citation = createCitation(knowledge);
 
 // Read from the bound profile, so the search is tested on whatever record it has.
@@ -31,7 +31,7 @@ function present<T>(value: T | undefined, missing: string): T {
   return value;
 }
 const highlight = present(
-  corpus.find((chunk) => /^role:[^:]+:\d+$/.test(chunk.id)),
+  corpus.find((chunk) => /^en\/role:[^:]+:\d+$/.test(chunk.id)),
   'The record has no role highlight to search for.',
 );
 const firstRole = present(knowledge.experience[0], 'The record documents no role.');
@@ -81,7 +81,7 @@ describe('vector knowledge search', () => {
       corpus,
     });
     const [best] = await search.search({ query: 'internal tools', limit: 3 });
-    expect(best?.id).toBe(highlight.id);
+    expect(best?.id).toBe(highlight.baseId);
     expect(best?.text).toBe(highlight.text);
     expect(best?.source).toEqual({
       id: highlight.source,
@@ -93,7 +93,7 @@ describe('vector knowledge search', () => {
     const search = createVectorKnowledgeSearch({
       citation,
       breaker: newBreaker(),
-      embeddings: embeddingsReturning(vectorOf('languages')),
+      embeddings: embeddingsReturning(vectorOf('en/languages')),
       index,
       corpus,
     });
@@ -148,8 +148,8 @@ describe('vector knowledge search — résumé and notes together', () => {
       },
       corpus: Object.keys(ids).map((id): KnowledgeChunk =>
         id === 'resume'
-          ? { id, category: 'experience', text: id, source: roleSource }
-          : { id, category: 'notes', text: id, source: 'notes' },
+          ? { id, baseId: id, category: 'experience', text: id, source: roleSource }
+          : { id, baseId: id, category: 'notes', text: id, source: 'notes' },
       ),
     });
     expect((await search.search({ query: 'acessibilidade', limit: 1 })).map((p) => p.id)).toEqual([
@@ -183,8 +183,8 @@ describe('vector knowledge search — product sites beside the record', () => {
       },
       corpus: Object.keys(similarities).map((id): KnowledgeChunk =>
         id in sites
-          ? { id, category: 'product-sites', text: id, source: 'projects' }
-          : { id, category: 'projects', text: id, source: 'projects' },
+          ? { id, baseId: id, category: 'product-sites', text: id, source: 'projects' }
+          : { id, baseId: id, category: 'projects', text: id, source: 'projects' },
       ),
     });
 
@@ -199,6 +199,58 @@ describe('vector knowledge search — product sites beside the record', () => {
   });
 });
 
+describe('vector knowledge search — one fact in two languages', () => {
+  const at = (similarity: number) => [100 * similarity, 100 * Math.sqrt(1 - similarity ** 2)];
+
+  function bilingualSearch(similarities: Readonly<Record<string, number>>) {
+    return createVectorKnowledgeSearch({
+      citation,
+      breaker: newBreaker(),
+      embeddings: embeddingsReturning([1, 0]),
+      index: {
+        ...index,
+        vectors: Object.fromEntries(
+          Object.entries(similarities).map(([id, similarity]) => [id, at(similarity)]),
+        ),
+      },
+      corpus: Object.keys(similarities).map((id): KnowledgeChunk => {
+        const [language = '', baseId = id] = id.split('/');
+        return {
+          id,
+          baseId,
+          category: 'experience',
+          text: `${baseId} in ${language}`,
+          source: roleSource,
+        };
+      }),
+    });
+  }
+
+  it('cites a fact once, in the language closest to the question', async () => {
+    const search = bilingualSearch({ 'en/x': 0.8, 'pt-BR/x': 0.9 });
+
+    const found = await search.search({ query: 'x', limit: 5 });
+
+    expect(found.map(({ id, text }) => [id, text])).toEqual([['x', 'x in pt-BR']]);
+  });
+
+  it('fills every slot of the limit with a different fact', async () => {
+    const search = bilingualSearch({
+      'en/x': 0.9,
+      'pt-BR/x': 0.89,
+      'en/y': 0.8,
+      'pt-BR/y': 0.85,
+      'en/z': 0.5,
+      'pt-BR/z': 0.4,
+      'en/w': 0.3,
+    });
+
+    const found = await search.search({ query: 'x', limit: 3 });
+
+    expect(found.map(({ id }) => id)).toEqual(['x', 'y', 'z']);
+  });
+});
+
 describe('vector knowledge search — the relevance floor', () => {
   const QUERY = [1, 0];
 
@@ -208,7 +260,7 @@ describe('vector knowledge search — the relevance floor', () => {
   }
 
   function chunk(id: string): KnowledgeChunk {
-    return { id, category: 'experience', text: `passage ${id}`, source: roleSource };
+    return { id, baseId: id, category: 'experience', text: `passage ${id}`, source: roleSource };
   }
 
   function searchOver(similarities: Record<string, number>) {
@@ -300,7 +352,7 @@ describe('vector knowledge search — when embeddings fail', () => {
               object: 'list',
               model: 'text-embedding-3-small',
               data: [
-                { object: 'embedding', index: 0, embedding: vectorOf(`role:${firstRole.id}`) },
+                { object: 'embedding', index: 0, embedding: vectorOf(`en/role:${firstRole.id}`) },
               ],
               usage: { prompt_tokens: 1, total_tokens: 1 },
             }),

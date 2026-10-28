@@ -1,6 +1,5 @@
 import { createHash } from 'node:crypto';
 import { buildCorpus } from '@/core/knowledge/corpus';
-import { localize } from '@/core/knowledge/localize';
 import {
   corpusHash,
   EMBEDDING_DIMENSIONS,
@@ -30,7 +29,7 @@ function seededVector(id: string): number[] {
  * `pnpm test:fork`, and needs no key to rebuild (`pnpm fixture:index`).
  */
 export function buildFixtureIndex(): KnowledgeIndex {
-  const corpus = buildCorpus(localize(fixtureKnowledge, 'en'));
+  const corpus = buildCorpus(fixtureKnowledge);
   return {
     model: EMBEDDING_MODEL,
     dimensions: EMBEDDING_DIMENSIONS,

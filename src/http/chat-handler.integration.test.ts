@@ -283,7 +283,7 @@ const companies = [...new Set(record.experience.map((role) => role.company))];
 const [askedRole, searchedRole] = record.experience;
 if (!askedRole || !searchedRole) throw new Error('The profile documents fewer than two roles.');
 const indexed: Readonly<Record<string, readonly number[] | undefined>> = knowledgeIndex.vectors;
-const SEARCHED_VECTOR = indexed[`role:${searchedRole.id}`];
+const SEARCHED_VECTOR = indexed[`en/role:${searchedRole.id}`];
 if (!SEARCHED_VECTOR) throw new Error(`The index has no vector for the role ${searchedRole.id}.`);
 
 /** Questions about two of the record's companies, one per pair: only the model answers them. */

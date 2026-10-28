@@ -7,9 +7,8 @@ import { knowledge as source } from '.';
 
 /** What each source vouches for when a search returns these passages of the record. */
 function evidenceFrom(ids: readonly string[]): SourceEvidence[] {
-  const knowledge = localize(source, 'en');
-  const citation = createCitation(knowledge);
-  const chunks = buildCorpus(knowledge).filter((chunk) => ids.includes(chunk.id));
+  const citation = createCitation(localize(source, 'en'));
+  const chunks = buildCorpus(source).filter((chunk) => ids.includes(chunk.id));
   return [...new Set(chunks.map((chunk) => chunk.source))].map((id) => ({
     source: citation(id),
     text: chunks
@@ -23,13 +22,13 @@ function evidenceFrom(ids: readonly string[]): SourceEvidence[] {
 describe('usedSources — for what a leadership search returns from the record', () => {
   const retrieved = evidenceFrom([
     'notes:14.q6',
-    'skills:leadership',
+    'en/skills:leadership',
     'notes:8.1',
-    'role:deel:1',
+    'en/role:deel:1',
     'notes:8',
-    'education',
-    'role:roots:1',
-    'role:roots:2',
+    'en/education',
+    'en/role:roots:1',
+    'en/role:roots:2',
   ]);
 
   it('cites the roles an English answer paraphrases, not the skill list or the degree', () => {

@@ -3,6 +3,10 @@ import { about } from './copy/en/about';
 import { answers } from './copy/en/answers';
 import { site } from './copy/en/site';
 import { ui } from './copy/en/ui';
+import { about as portugueseAbout } from './copy/pt-BR/about';
+import { answers as portugueseAnswers } from './copy/pt-BR/answers';
+import { site as portugueseSite } from './copy/pt-BR/site';
+import { ui as portugueseUi } from './copy/pt-BR/ui';
 import { evaluation } from './evaluation/cases';
 import { identity } from './identity';
 import { knowledge } from './knowledge';
@@ -17,6 +21,14 @@ export const profile = validateProfile({
   knowledge,
   siteAllowList,
   brand,
-  copy: { en: { answers, ui, site, about } },
+  copy: {
+    en: { answers, ui, site, about },
+    'pt-BR': {
+      answers: portugueseAnswers,
+      ui: portugueseUi,
+      site: portugueseSite,
+      about: portugueseAbout,
+    },
+  },
   evaluation,
 });

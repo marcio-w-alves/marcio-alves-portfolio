@@ -10,7 +10,6 @@
  */
 import { writeFile } from 'node:fs/promises';
 import { buildCorpus } from '../src/core/knowledge/corpus';
-import { localize } from '../src/core/knowledge/localize';
 import { createOpenAIClient } from '../src/infrastructure/openai/openai-client';
 import { createOpenAIEmbeddings } from '../src/infrastructure/openai/openai-embeddings';
 import {
@@ -30,7 +29,7 @@ const PRECISION = 1e5;
 const apiKey = process.env.OPENAI_API_KEY;
 if (!apiKey) throw new Error('OPENAI_API_KEY is not set. Put it in .env.local.');
 
-const chunks = buildCorpus(localize(profile.knowledge, 'en'));
+const chunks = buildCorpus(profile.knowledge);
 const embeddings = createOpenAIEmbeddings({
   client: createOpenAIClient(apiKey),
   model: EMBEDDING_MODEL,

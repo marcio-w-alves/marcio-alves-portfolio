@@ -1,17 +1,35 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureKnowledge } from '@/testing/fixture-profile/knowledge';
-import { buildCorpus, CHUNK_CATEGORIES } from './corpus';
+import { buildCorpus, CHUNK_CATEGORIES, type KnowledgeChunk } from './corpus';
 import { localize } from './localize';
 import { siteSourceId } from './product-sites';
+import type { KnowledgeSource } from './schema';
 
 const knowledge = localize(fixtureKnowledge, 'en');
-const corpus = buildCorpus(knowledge);
+const portuguese = localize(fixtureKnowledge, 'pt-BR');
+const corpus = buildCorpus(fixtureKnowledge);
+
+function passage(id: string): KnowledgeChunk {
+  const found = corpus.find((chunk) => chunk.id === id);
+  if (!found) throw new Error(`${id} is not in the corpus`);
+  return found;
+}
+
+/** The record with one text left in English, as a translation in progress has it. */
+function partlyTranslated(): KnowledgeSource {
+  const [first, ...rest] = fixtureKnowledge.experience;
+  if (!first) throw new Error('The fixture documents a role.');
+  return {
+    ...fixtureKnowledge,
+    experience: [{ ...first, summary: { en: first.summary.en } }, ...rest],
+  };
+}
 
 describe('knowledge corpus', () => {
   it('gives every passage a unique, stable id', () => {
     const ids = corpus.map((chunk) => chunk.id);
     expect(ids).toHaveLength(new Set(ids).size);
-    expect(buildCorpus(knowledge).map((chunk) => chunk.id)).toEqual(ids);
+    expect(buildCorpus(fixtureKnowledge).map((chunk) => chunk.id)).toEqual(ids);
   });
 
   it('files every passage under one of the declared categories, and uses all of them', () => {
@@ -21,10 +39,10 @@ describe('knowledge corpus', () => {
   it('turns every resume statement into its own passage, naming the company', () => {
     for (const role of knowledge.experience) {
       for (const statement of role.highlights) {
-        const passage = corpus.find((chunk) => chunk.text.endsWith(statement));
-        expect(passage, statement).toBeDefined();
-        expect(passage?.text).toContain(role.company);
-        expect(passage?.source).toBe(role.source);
+        const found = corpus.find((chunk) => chunk.text.endsWith(statement));
+        expect(found, statement).toBeDefined();
+        expect(found?.text).toContain(role.company);
+        expect(found?.source).toBe(role.source);
       }
     }
   });
@@ -43,8 +61,8 @@ describe('knowledge corpus', () => {
   });
 
   it('tells a live product from a concept in the passage itself, naming whose it is', () => {
-    const live = corpus.find((chunk) => chunk.id === 'project:pipewright')?.text;
-    const concept = corpus.find((chunk) => chunk.id === 'project:loomstack')?.text;
+    const live = passage('en/project:pipewright').text;
+    const concept = passage('en/project:loomstack').text;
     expect(live).toContain("one of Ada's own products with a public site");
     expect(live).toContain('https://pipewright.example');
     expect(live).toContain('Key features:');
@@ -54,17 +72,66 @@ describe('knowledge corpus', () => {
   });
 
   it('labels certifications as coursework in the passage itself', () => {
-    expect(corpus.find((chunk) => chunk.id === 'certifications')?.text).toContain(
-      'not professional experience',
-    );
+    expect(passage('en/certifications').text).toContain('not professional experience');
   });
 
   it('credits every passage of the record to a source the record labels', () => {
     for (const chunk of corpus.filter(({ category }) => category !== 'product-sites')) {
       expect(Object.keys(knowledge.sourceLabels), chunk.id).toContain(chunk.source);
     }
-    expect(corpus.find((chunk) => chunk.id === 'skills:platform')?.source).toBe('cv.skills');
-    expect(corpus.find((chunk) => chunk.id === 'notes:1')?.source).toBe('notes');
+    expect(passage('en/skills:platform').source).toBe('cv.skills');
+    expect(passage('notes:1').source).toBe('notes');
+  });
+
+  describe('in every language the record is written in', () => {
+    const record = corpus.filter(({ category }) => !['notes', 'product-sites'].includes(category));
+
+    it('builds every passage of the record once in English and once in Portuguese', () => {
+      const english = record.filter(({ id }) => id.startsWith('en/')).map(({ baseId }) => baseId);
+      const translated = record
+        .filter(({ id }) => id.startsWith('pt-BR/'))
+        .map(({ baseId }) => baseId);
+
+      expect(english.length).toBeGreaterThan(10);
+      expect(translated).toEqual(english);
+      expect(record).toHaveLength(english.length + translated.length);
+    });
+
+    it('says the same fact in each language, crediting the same source', () => {
+      for (const chunk of record.filter(({ id }) => id.startsWith('en/'))) {
+        const other = passage(`pt-BR/${chunk.baseId}`);
+        expect(other.source, chunk.baseId).toBe(chunk.source);
+        expect(other.category, chunk.baseId).toBe(chunk.category);
+        expect(other.text, chunk.baseId).not.toBe(chunk.text);
+      }
+    });
+
+    it('frames a Portuguese passage in Portuguese, around the record read in Portuguese', () => {
+      const [role] = portuguese.experience;
+      expect(passage('pt-BR/role:acme').text).toBe(
+        `Acme — Principal Platform Engineer, ${role?.period ?? ''} (cargo atual). Lidera a plataforma interna para desenvolvedores.`,
+      );
+      expect(passage('pt-BR/project:loomstack').text).toContain(
+        'um dos conceitos de produto de Ada',
+      );
+      expect(passage('pt-BR/languages').text).toBe(
+        'Idiomas: Português (nativo), Inglês (fluente).',
+      );
+    });
+
+    it('keeps the passages written once — notes and sites — in their own language, once', () => {
+      const once = corpus.filter(({ category }) => ['notes', 'product-sites'].includes(category));
+      expect(once.map(({ id }) => id)).toEqual(once.map(({ baseId }) => baseId));
+      expect(once).toHaveLength(
+        fixtureKnowledge.notes.passages.length + fixtureKnowledge.productSites.length,
+      );
+    });
+
+    it('leaves a language out until every text of the record is written in it', () => {
+      const ids = buildCorpus(partlyTranslated()).map(({ id }) => id);
+      expect(ids.some((id) => id.startsWith('pt-BR/'))).toBe(false);
+      expect(ids).toContain('en/role:acme');
+    });
   });
 
   describe('passages of product and company sites', () => {
@@ -87,10 +154,10 @@ describe('knowledge corpus', () => {
     });
 
     it('refuses a site passage about something the record does not hold', () => {
-      const [passage] = knowledge.productSites;
-      if (!passage) throw new Error('The fixture has site passages.');
-      const orphan = { ...passage, subject: { kind: 'project' as const, id: 'unknown' } };
-      expect(() => buildCorpus({ ...knowledge, productSites: [orphan] })).toThrow(
+      const [site] = fixtureKnowledge.productSites;
+      if (!site) throw new Error('The fixture has site passages.');
+      const orphan = { ...site, subject: { kind: 'project' as const, id: 'unknown' } };
+      expect(() => buildCorpus({ ...fixtureKnowledge, productSites: [orphan] })).toThrow(
         'Unknown site subject "unknown".',
       );
     });

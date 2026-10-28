@@ -17,7 +17,7 @@ import { createSearchTools } from '@/core/assistant/tools/search-tools';
 import type { ToolFailure } from '@/core/assistant/tools/tool';
 import { buildCorpus } from '@/core/knowledge/corpus';
 import { localize } from '@/core/knowledge/localize';
-import type { Knowledge } from '@/core/knowledge/schema';
+import type { Knowledge, KnowledgeSource } from '@/core/knowledge/schema';
 import {
   assistantSettings,
   serverEnv,
@@ -127,8 +127,11 @@ interface GuardedModelAssistant {
 }
 
 export interface ContainerOptions extends Observers {
-  /** Defaults to the profile's record, in English. */
-  readonly knowledge?: Knowledge;
+  /**
+   * Defaults to the profile's record. The answers read it in English, the
+   * search in every language it is written in.
+   */
+  readonly record?: KnowledgeSource;
   /** Defaults to the profile's English copy; written for the record above. */
   readonly answers?: AnswerSet;
   /** Defaults to the validated process environment. */
@@ -140,6 +143,7 @@ export interface ContainerOptions extends Observers {
 }
 
 interface ModelWiring {
+  readonly record: KnowledgeSource;
   readonly knowledge: Knowledge;
   readonly apiKey: string;
   readonly githubToken: string | undefined;
@@ -149,7 +153,7 @@ interface ModelWiring {
 }
 
 function buildModelAssistant(
-  { knowledge, apiKey, githubToken, chatModel, openAITimeoutMs, budget }: ModelWiring,
+  { record, knowledge, apiKey, githubToken, chatModel, openAITimeoutMs, budget }: ModelWiring,
   observers: Observers,
 ): GuardedModelAssistant {
   const client = createOpenAIClient(apiKey, { timeoutMs: openAITimeoutMs });
@@ -162,7 +166,7 @@ function buildModelAssistant(
       dimensions: EMBEDDING_DIMENSIONS,
     }),
     index: knowledgeIndex,
-    corpus: buildCorpus(knowledge),
+    corpus: buildCorpus(record),
     citation: kit.citation,
     breaker: retrievalBreaker,
   });
@@ -224,19 +228,21 @@ function buildModelAssistant(
  * with a test environment and a short timeout.
  */
 export function buildContainer({
-  knowledge = localize(profile.knowledge, 'en'),
+  record = profile.knowledge,
   answers = profile.copy.en.answers,
   env = serverEnv(),
   settings = assistantSettings(),
   openAITimeoutMs = settings.openAITimeoutMs,
   ...observers
 }: ContainerOptions = {}): Container {
+  const knowledge = localize(record, 'en');
   const budget = createBudget(settings);
   // Without a credential the site still answers everything the fast path
   // recognizes, and says plainly what it cannot.
   const model = env.OPENAI_API_KEY
     ? buildModelAssistant(
         {
+          record,
           knowledge,
           apiKey: env.OPENAI_API_KEY,
           githubToken: env.GITHUB_TOKEN,

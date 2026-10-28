@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildCorpus, type KnowledgeChunk } from '@/core/knowledge/corpus';
 import { localize } from '@/core/knowledge/localize';
-import type { Knowledge } from '@/core/knowledge/schema';
+import type { KnowledgeSource } from '@/core/knowledge/schema';
 import { fixtureKnowledge } from '@/testing/fixture-profile/knowledge';
 import { createCitation } from '../citations';
 import { evidenceOf, usedSources, type SourceEvidence } from './sources';
@@ -98,10 +98,10 @@ describe('evidenceOf — what each source of a result vouches for', () => {
   });
 });
 
-/** What each source vouches for when a search returns these passages of a record. */
-function evidenceFrom(knowledge: Knowledge, ids?: readonly string[]): SourceEvidence[] {
-  const citation = createCitation(knowledge);
-  const chunks = buildCorpus(knowledge).filter((chunk) => !ids || ids.includes(chunk.id));
+/** What each source vouches for when a search returns every English passage of a record. */
+function evidenceFrom(source: KnowledgeSource): SourceEvidence[] {
+  const citation = createCitation(localize(source, 'en'));
+  const chunks = buildCorpus(source).filter((chunk) => !chunk.id.startsWith('pt-BR/'));
   const sources = [...new Set(chunks.map((chunk) => chunk.source))];
   return sources.map((id) => ({
     source: citation(id),
@@ -113,7 +113,7 @@ function evidenceFrom(knowledge: Knowledge, ids?: readonly string[]): SourceEvid
 }
 
 const fixture = localize(fixtureKnowledge, 'en');
-const EVERY_SOURCE = evidenceFrom(fixture);
+const EVERY_SOURCE = evidenceFrom(fixtureKnowledge);
 const { firstName } = fixture.profile;
 
 describe('usedSources — names shared by several sources do not count', () => {
