@@ -102,6 +102,11 @@ describe('offers of help in a streamed answer', () => {
     expect(filtered(answer, 3, ['Ada']).shown).toBe(answer);
   });
 
+  it('still removes an offer that merely mentions the person by name', () => {
+    const answer = 'He led payroll. If you have questions about Ada, feel free to ask.';
+    expect(filtered(answer, 3, ['Ada']).shown).toBe('He led payroll.');
+  });
+
   it.each([
     [
       'Ela trabalhou na Acme. Se tiver outras perguntas, fique à vontade para perguntar.',
