@@ -20,7 +20,18 @@ validates.
 | `schema.ts`, `index.ts`       | The profile's shape and its validation. You should not need to change them                                      |
 
 Every visitor-facing text is written per language, as `{ en: '…' }`. Ids,
-dates, metric values, links and names are written once.
+dates, metric values, links and names are written once. Every fact carries the
+`source` id it is cited by, and `knowledge/sources.ts` labels each one.
+
+`identity.nonIdentifyingTerms` lists names in your record that are ordinary
+words rather than yours, such as a "Freelance" employer, so the check that keeps
+your name, employers and products out of the rest of the code lets them appear
+there.
+
+Not everything is here yet: the fast path's answer prose and the topic copy
+still live in `src/core/assistant` until POR-54, and the interface copy, the
+page metadata and the brand colours and fonts still live in `src/ui` and
+`src/app` until POR-53 and POR-63 move them into this folder.
 
 ## After editing
 
