@@ -5,10 +5,12 @@ import type { InlineNode } from './parse-inline';
 
 /**
  * The answer's link filter and the page's renderer, end to end: whatever the
- * model writes, however it streams, the page links only to allowed addresses.
+ * model writes, however it streams, the page links only to allowed addresses,
+ * and a link that is not a web or mail address stays on this site.
  */
 
 const ALLOWED = 'https://github.com/marcio-w-alves';
+const SITE = 'https://site.example';
 const allowList = createLinkAllowList([ALLOWED]);
 
 function filtered(answer: string, chunk: number): string {
@@ -45,6 +47,13 @@ function renderedHrefs(markdown: string): string[] {
 
 function unlisted(markdown: string): string[] {
   return renderedHrefs(markdown).filter((href) => !allowList.allows(href));
+}
+
+/** Rendered links that are not web or mail addresses but would leave this site. */
+function offSite(markdown: string): string[] {
+  return renderedHrefs(markdown)
+    .filter((href) => !/^(https?|mailto):/i.test(href))
+    .filter((href) => new URL(href, SITE).origin !== SITE);
 }
 
 const CHUNK_SIZES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -84,9 +93,12 @@ describe('links the page renders from a filtered answer', () => {
       'look-alike addresses',
       '[x](https://github.com@evil.example/marcio-w-alves) [y](//evil.example)',
     ],
+    ['paths that name another host', '[x](//evil.example/cv.pdf) [y](/\\evil.example/cv.pdf)'],
   ])('are only allowed ones, whatever the chunk size: %s', (_case, answer) => {
     for (const chunk of CHUNK_SIZES) {
-      expect(unlisted(filtered(answer, chunk)), `chunk ${String(chunk)}`).toEqual([]);
+      const shown = filtered(answer, chunk);
+      expect(unlisted(shown), `chunk ${String(chunk)}`).toEqual([]);
+      expect(offSite(shown), `chunk ${String(chunk)}`).toEqual([]);
     }
   });
 
@@ -104,6 +116,11 @@ describe('links the page renders from a filtered answer', () => {
       '```',
       ALLOWED,
       'https://evil.example',
+      '/',
+      '//',
+      '/\\',
+      'evil.example',
+      '[a](',
     ];
     let seed = 7;
     const random = (bound: number) => {
@@ -115,7 +132,9 @@ describe('links the page renders from a filtered answer', () => {
         { length: 4 + random(30) },
         () => pieces[random(pieces.length)],
       ).join('');
-      expect(unlisted(filtered(answer, 1 + random(10))), answer).toEqual([]);
+      const shown = filtered(answer, 1 + random(10));
+      expect(unlisted(shown), answer).toEqual([]);
+      expect(offSite(shown), answer).toEqual([]);
     }
   });
 
