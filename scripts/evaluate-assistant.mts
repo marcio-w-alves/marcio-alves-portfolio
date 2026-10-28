@@ -24,6 +24,7 @@ import type { AssistantEvent } from '../src/core/assistant/assistant-event';
 import type { ToolTrace } from '../src/core/assistant/system2/model-assistant';
 import { createToolRegistry } from '../src/core/assistant/tools/registry';
 import { knowledgeBase } from '../src/core/knowledge/knowledge-base';
+import { CHAT_MODEL } from '../src/infrastructure/openai/chat-model';
 import { createOpenAIClient } from '../src/infrastructure/openai/openai-client';
 import { CASES, type EvaluationCase } from './evaluation/cases';
 import { sourcesOutsideTrace } from './evaluation/citations';
@@ -38,8 +39,6 @@ import {
   type RunReport,
 } from './evaluation/report';
 
-const judgeOverride = process.env.EVAL_JUDGE_MODEL;
-const JUDGE_MODEL = judgeOverride === undefined || judgeOverride === '' ? 'gpt-5.4' : judgeOverride;
 const CONCURRENCY = 4;
 const options = parseOptions(process.argv.slice(2), process.env);
 const cases = selectCases(CASES, options.only);
@@ -139,7 +138,7 @@ Reply with JSON only: {"quote": string | null}`;
  */
 async function recheck(claim: string, evidence: unknown): Promise<string | null> {
   const completion = await judge.chat.completions.create({
-    model: JUDGE_MODEL,
+    model: CHAT_MODEL,
     response_format: { type: 'json_object' },
     messages: [
       { role: 'system', content: RECHECK_INSTRUCTIONS },
@@ -169,7 +168,7 @@ async function unsupportedClaims(verdict: Verdict, evidence: unknown): Promise<s
 
 async function judgeAnswer(question: string, answer: string, evidence: unknown): Promise<Verdict> {
   const completion = await judge.chat.completions.create({
-    model: JUDGE_MODEL,
+    model: CHAT_MODEL,
     response_format: { type: 'json_object' },
     messages: [
       { role: 'system', content: JUDGE_INSTRUCTIONS },

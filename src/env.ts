@@ -30,15 +30,14 @@ const positiveInteger = (fallback: number) =>
   z.preprocess(unset, z.coerce.number().int().positive().default(fallback));
 
 /**
- * Operational knobs: which model answers, and how much traffic and spend the
- * site accepts. None is secret and all have defaults, so a deployment only
- * sets what it wants to change. The embedding model is deliberately not
- * here: the committed index was built with it, so changing it is a code
- * change followed by `pnpm rag:build`.
+ * Operational knobs: how much traffic and spend the site accepts. None is
+ * secret and all have defaults, so a deployment only sets what it wants to
+ * change. The models are deliberately not here: the chat model is fixed to
+ * keep the cost down (see chat-model.ts), and the committed index was built
+ * with the embedding model, so changing either is a code change.
  */
 const assistantSettingsSchema = z
   .object({
-    OPENAI_CHAT_MODEL: z.preprocess(unset, z.string().min(1).default('gpt-4o-mini')),
     OPENAI_TIMEOUT_MS: positiveInteger(20_000),
     /** Any request, fast path included: enough for a curious visitor, not for a script. */
     CHAT_REQUESTS_PER_TEN_MINUTES: positiveInteger(40),
@@ -52,7 +51,6 @@ const assistantSettingsSchema = z
     MODEL_DAILY_TOKENS: positiveInteger(2_000_000),
   })
   .transform((env) => ({
-    chatModel: env.OPENAI_CHAT_MODEL,
     openAITimeoutMs: env.OPENAI_TIMEOUT_MS,
     requestsPerTenMinutes: env.CHAT_REQUESTS_PER_TEN_MINUTES,
     modelAnswersPerTenMinutes: env.MODEL_ANSWERS_PER_TEN_MINUTES,
