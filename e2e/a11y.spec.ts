@@ -93,11 +93,25 @@ test.describe('on a phone', () => {
   });
 });
 
+test('the page about the site has no WCAG 2.1 AA violations', async ({ page }) => {
+  await page.goto('/about-this-site');
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  expect(await violations(page)).toEqual([]);
+});
+
 test.describe('beyond WCAG AA', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
   test('every page keeps its headings in order, from the h1 down', async ({ page }) => {
-    for (const path of ['/', '/experience', '/skills', '/projects', '/philosophy', '/education']) {
+    for (const path of [
+      '/',
+      '/experience',
+      '/skills',
+      '/projects',
+      '/philosophy',
+      '/education',
+      '/about-this-site',
+    ]) {
       await page.goto(path);
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
       const { violations } = await new AxeBuilder({ page })

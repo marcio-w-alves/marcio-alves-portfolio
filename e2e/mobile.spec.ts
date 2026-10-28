@@ -138,3 +138,18 @@ test('project cards fit a narrow phone: features wrap inside their chip, the sta
   expect(status && name && status.y).toBeGreaterThan((name?.y ?? 0) + (name?.height ?? 0));
   expect(category?.height ?? 0).toBeLessThan(24);
 });
+
+test('the drawer leads to the page about the site, which has no chat', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: ui.shell.openNavigation }).click();
+  await page
+    .getByRole('navigation', { name: ui.shell.topics })
+    .getByRole('link', { name: 'About this site' })
+    .click();
+
+  await expect(page).toHaveURL(/\/about-this-site$/);
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expect(page.getByRole('textbox')).toHaveCount(0);
+  const width = await page.evaluate(() => document.documentElement.scrollWidth);
+  expect(width).toBeLessThanOrEqual(page.viewportSize()?.width ?? 0);
+});

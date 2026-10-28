@@ -9,7 +9,7 @@ const SUGGESTION_COUNT = 4;
 
 /** What the chat workspace is rendered with, from the record. */
 export function workspaceView(
-  { knowledge, topicCatalog, topicIntro }: SiteContent,
+  { knowledge, topicCatalog, topicIntro, pages }: SiteContent,
   topic: TopicId = 'overview',
 ) {
   const { profile, contact, welcome, assistant } = knowledge;
@@ -23,6 +23,7 @@ export function workspaceView(
       icon,
       href: topicPath(id),
     })),
+    pages,
     welcome: { heading, description, placeholder, helper, evidence: evidenceLine(knowledge) },
     assistant: { name: assistant.name, initials: assistant.initials },
     suggestions: topicCatalog
