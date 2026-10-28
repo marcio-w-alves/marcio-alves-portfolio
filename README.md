@@ -29,6 +29,7 @@ pnpm dev
 | `pnpm format:check`        | Prettier, verify only                                |
 | `pnpm boundaries`          | Module-boundary rules                                |
 | `pnpm test`                | Unit and integration tests (Vitest)                  |
+| `pnpm test:e2e`            | Critical journeys in Chromium (Playwright)           |
 | `pnpm rag:build`           | Re-embed the knowledge corpus (needs the key)        |
 | `pnpm eval:assistant`      | Grade the assistant end to end (needs the key)       |
 | `pnpm fidelity`            | Compare every artboard with its page, pixel by pixel |
@@ -68,8 +69,8 @@ formats and lints what is staged, `commit-msg` validates the message, and
 
 `.github/workflows/ci.yml` runs on every pull request and every push to `main`.
 The four static gates fan out from one matrix job, so adding a gate is one list
-entry rather than a copied job. `build`, and `commits` on pull requests, run
-alongside them. A final `ci` job summarises the rest, which lets branch
+entry rather than a copied job. `build`, `e2e`, and `commits` on pull requests,
+run alongside them. A final `ci` job summarises the rest, which lets branch
 protection require one check instead of a list that has to be edited whenever a
 job is added.
 
@@ -84,6 +85,34 @@ here.
 The commit-message rule is enforced twice on purpose. The `commit-msg` hook
 only protects whoever installed it; the `commits` job is the one nobody can
 skip.
+
+## End-to-end tests
+
+`pnpm test:e2e` walks the journeys a visitor cannot be let down on, in
+Chromium, against a production build: asking a suggested question and watching
+the answer stream in with its timeline, metrics, sources, actions and
+follow-ups, then following up; picking a topic; a question the record does not
+document; a failed answer and its retry; and the navigation drawer on a phone.
+Everything else is proven lower, in Vitest, where it is faster and cannot
+flake.
+
+Playwright builds the site and starts it on port 3100 itself, fresh for every
+run — the request limit is in memory, so a reused server would carry one run's
+requests into the next. It starts it with `OPENAI_API_KEY` empty, which the app
+reads as "not set" and which keeps `.env.local` from filling it in, so every
+answer comes from the deterministic fast path; a global setup reads
+`/api/health` and refuses to run if the model is enabled anyway. The network is
+intercepted in two places only, and the server still answers: one test fails a
+request once to reach the error, and one holds a request at the browser before
+letting it through, because a fast-path answer arrives too quickly to see the
+in-flight state otherwise.
+
+Locally, install the browser once with `pnpm exec playwright install chromium`.
+In CI the `e2e` job caches the browsers keyed by the Playwright version, retries
+a failed test twice with a trace of the retry, and keeps the report and traces
+as an artifact when a run fails. There are no pixel comparisons here: fonts
+render differently on GitHub's runners, so visual fidelity stays with
+`pnpm fidelity`.
 
 ## Knowledge base
 
