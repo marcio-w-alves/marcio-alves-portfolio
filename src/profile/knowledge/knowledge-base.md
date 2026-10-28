@@ -27,7 +27,7 @@ source_policy: distinguir fatos curriculares, relatos e ideias ainda em desenvol
 | Nome público | Marcio Alves |
 | Base profissional | Brasil; mora em João Pessoa, Paraíba (relato de 28/10/2026) |
 | Área principal | Engenharia de software, com especialização em frontend |
-| Posicionamento | Senior Frontend Engineer, Lead Frontend Engineer e atuação de escopo staff-level |
+| Posicionamento | Senior Frontend Engineer com responsabilidade de tech lead; títulos formais recentes: Senior Frontend Engineer e Lead Frontend Engineer |
 | Tempo de experiência | Mais de 10 anos de experiência em software, conforme currículo |
 | Especialidades | React, TypeScript, Next.js, arquitetura frontend, performance, design systems, Developer Experience e liderança técnica |
 | Áreas complementares | Engenharia full-stack, Software Engineering, System Design, Node.js e APIs, arquitetura backend, sistemas distribuídos, dados, cloud, produto e UX |
@@ -54,7 +54,7 @@ source_policy: distinguir fatos curriculares, relatos e ideias ainda em desenvol
 
 ### 1.2 O que **não** se deve inferir
 
-- O título **Staff** descreve seu posicionamento e escopo pretendido; não significa que tenha exercido formalmente um cargo de Staff Engineer em todas as empresas.
+- Seus títulos formais mais recentes são Senior Frontend Engineer e Lead Frontend Engineer; nenhum é Staff. As evidências de escopo amplo descrevem o trabalho, não um título de Staff Engineer.
 - As métricas do currículo são resultados reportados e contribuições em contexto de equipe, não provas de autoria individual exclusiva.
 - Um projeto especificado, prototipado ou testado em beta não equivale a um serviço comercial lançado.
 - Uma tecnologia considerada na arquitetura de um projeto não equivale, por si só, a domínio profundo em produção.
@@ -797,7 +797,7 @@ Marcio demonstra preocupação específica com o modo de **delegar trabalho para
 
 ### 8.7 Escopo de senioridade e caminho profissional
 
-Há evidência sólida de competências adequadas a papéis de **Senior Frontend Engineer, Lead Frontend Engineer** e atuação de alcance **staff-level**, principalmente em iniciativas de frontend que exigem coordenação, padronização, influência transversal, mentoring e resultados. Seu conhecimento de backend e IA amplia sua capacidade de discutir sistemas e orientar soluções integradas. A aderência a cargos formais Staff/Principal em outra empresa depende da definição de escopo e avaliação técnica; o documento não substitui isso.
+Há evidência sólida de competências adequadas a papéis de **Senior Frontend Engineer, Lead Frontend Engineer** e de responsabilidade de tech lead, com escopo que vai além do próprio código, principalmente em iniciativas de frontend que exigem coordenação, padronização, influência transversal, mentoring e resultados. Seu conhecimento de backend e IA amplia sua capacidade de discutir sistemas e orientar soluções integradas. A aderência a cargos formais Staff/Principal em outra empresa depende da definição de escopo e avaliação técnica; o documento não substitui isso.
 
 ## 9. Formação, estudos e aprendizado contínuo
 
@@ -1047,7 +1047,7 @@ R: Um engenheiro de software brasileiro com mais de dez anos de experiência, es
 R: Frontend engineering em produtos web complexos: arquitetura, implementação React/TypeScript, performance, design systems, acessibilidade e boas práticas de manutenção.
 
 **P: Ele é Staff Engineer?**  
-R: Seu posicionamento é staff-level e ele busca escopos dessa senioridade, mas os títulos formais mais recentes registrados são Senior Frontend Engineer e Lead Frontend Engineer.
+R: Seus títulos formais mais recentes são Senior Frontend Engineer e Lead Frontend Engineer; nenhum é Staff. As evidências descrevem o escopo do trabalho, não um título.
 
 **P: O que fez na Deel?**  
 R: Atuou em HRIS, arquitetura e migração da Roots para a Deel. Participou de iniciativas que melhoraram Web Vitals em pelo menos 30% e reduziram em 50% o carregamento crítico.
@@ -1098,7 +1098,7 @@ R: Português nativo, inglês fluente, francês e espanhol intermediários, conf
 R: Trabalhou em organizações e produtos internacionais e tem inglês fluente informado no currículo. Não inferir locais de residência no exterior ou experiências de imigração.
 
 **P: Ele é a pessoa certa para minha vaga?**  
-R: Há boa evidência de competências relevantes para posições Senior/Lead e escopos staff-level com forte frontend. A compatibilidade real depende da função, profundidade requerida, colaboração e contexto da equipe; a IA deve apontar evidências em vez de prometer adequação.
+R: Há boa evidência de competências relevantes para posições Senior/Lead e de responsabilidade de tech lead, com forte frontend. A compatibilidade real depende da função, profundidade requerida, colaboração e contexto da equipe; a IA deve apontar evidências em vez de prometer adequação.
 
 **P: Marcio é um desenvolvedor full-stack de verdade?**  
 R: Sim, com especialização mais profunda em frontend. O currículo registra desenvolvimento de APIs REST, Node.js e sistemas baseados em microserviços na Shall And Partners, além de integração entre camadas em empresas posteriores. Projetos próprios ampliam seu repertório de arquitetura backend, mas não devem ser tratados automaticamente como experiência de produção em todos os seus módulos.

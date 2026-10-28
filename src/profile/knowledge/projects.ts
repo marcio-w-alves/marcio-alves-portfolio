@@ -87,7 +87,7 @@ export const projects: readonly ProjectSource[] = [
     status: { en: 'Live' },
     live: true,
     description: {
-      en: 'This portfolio: an AI assistant that answers questions about his work from his résumé and his own notes, citing the source of every answer.',
+      en: 'This portfolio: an AI assistant that answers questions about his work from his résumé and his own notes, citing its sources for every answer drawn from his record.',
     },
     scopeLabel: { en: 'Key features' },
     scope: [
@@ -95,7 +95,7 @@ export const projects: readonly ProjectSource[] = [
       { en: 'An OpenAI model for everything else' },
       { en: 'A closed list of validated tools' },
       { en: 'Retrieval over embeddings of his record' },
-      { en: 'Sources cited with every answer' },
+      { en: 'Sources cited with each answer from his record' },
       { en: 'Usage and cost limits' },
     ],
     platforms: [{ en: 'Web' }],

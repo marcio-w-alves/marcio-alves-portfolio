@@ -79,6 +79,14 @@ describe("the owner's record", () => {
     expect(record).not.toMatch(/\bSEO Optimization\b/i);
   });
 
+  it('gives the model no note that positions him as Staff, only scope as evidence', () => {
+    for (const { id, text } of knowledge.notes.passages) {
+      expect(text, id).not.toMatch(/staff-level/i);
+      expect(text, id).not.toMatch(/posicionamento[^.\n]*staff|staff[^.\n]*posicionamento/i);
+      expect(text, id).not.toMatch(/busca escopos dessa senioridade/i);
+    }
+  });
+
   it('names the owner the way the identity does, in one place', () => {
     expect(knowledge.profile.name).toBe(profile.identity.name);
     expect(knowledge.contact.github).toBe(profile.identity.contact.github);

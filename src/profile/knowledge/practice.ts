@@ -270,7 +270,7 @@ export const practice: PracticeSource = {
       en: 'A study in reliable asynchronous workflows: campaigns created, scheduled, queued, attempted and confirmed, with idempotency keys and retry policies so a provider timeout never means a duplicate send.',
     },
     'marciomariani-dev': {
-      en: 'A study in grounding a language model: it acts only through a closed list of validated tools, retrieves facts by embeddings with source tags and a relevance floor, and a second model grades its answers claim by claim against the evidence.',
+      en: 'A study in grounding a language model: it acts only through a closed list of validated tools, retrieves facts by embeddings with source tags and a relevance floor, and an offline evaluation has a second model grade its answers claim by claim against the evidence.',
     },
     fictiondraft: {
       en: 'Explores document versioning, role-based editorial permissions, review and translation, and asynchronous import and publishing jobs.',
