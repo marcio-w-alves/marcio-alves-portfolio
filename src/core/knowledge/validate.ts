@@ -145,7 +145,9 @@ const knowledgeSchema = z.strictObject({
     passages: z.array(z.strictObject({ id: text, text })),
   }),
   references: z.strictObject({
-    technologies: z.record(z.string(), text.nullable()),
+    technologies: z
+      .record(z.string(), text.nullable())
+      .refine((technologies) => Object.keys(technologies).length > 0, 'Must list a technology'),
   }),
 });
 
