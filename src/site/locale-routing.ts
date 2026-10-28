@@ -2,8 +2,13 @@ import { DEFAULT_LOCALE, LOCALE_SEGMENT, type Locale } from '../core/i18n/locale
 
 const ENGLISH = LOCALE_SEGMENT[DEFAULT_LOCALE];
 
-/** Paths the pages never answer: the API and Next's own assets. */
-const NOT_PAGES = ['api', '_next'];
+/**
+ * Paths the second rewrite leaves alone: the API, Next's own assets, and the
+ * English segment itself. Without that last one the rewrites chained on a
+ * client navigation to the home page — `/` became `/en`, then `/en/en` — and
+ * Overview opened the not-found page.
+ */
+const NOT_PAGES = ['api', '_next', ENGLISH];
 
 /**
  * English has no prefix of its own, so an `/en` address is a second name for

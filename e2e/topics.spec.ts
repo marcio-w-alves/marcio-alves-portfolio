@@ -68,3 +68,18 @@ test("an address under the API or Next's assets is not found, not an error", asy
     expect((await request.get(path)).status(), path).toBe(404);
   }
 });
+
+test('Overview in the sidebar leads back to the welcome screen from any page', async ({ page }) => {
+  for (const start of ['/experience', '/about-this-site']) {
+    await page.goto(start);
+    await page
+      .getByRole('navigation', { name: 'Topics' })
+      .getByRole('link', { name: 'Overview' })
+      .click();
+
+    await expect(page).toHaveURL(/\/$/);
+    await expect(
+      page.getByRole('heading', { level: 1, name: record.welcome.heading }),
+    ).toBeVisible();
+  }
+});

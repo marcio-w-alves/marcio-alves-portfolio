@@ -29,6 +29,10 @@ describe('the routing the real next.config.ts declares', () => {
     expect(await rewrittenPath('/skills?q=1')).toBe('/en/skills?q=1');
   });
 
+  it('still serves a page whose name merely starts with "en" from the English segment', async () => {
+    expect(await rewrittenPath('/enroll')).toBe('/en/enroll');
+  });
+
   it("leaves the API and Next's own assets alone", async () => {
     expect(await rewrittenPath('/api/chat')).toBeNull();
     expect(await rewrittenPath('/_next/static/x.js')).toBeNull();
