@@ -131,8 +131,14 @@ export function ChatWorkspace({
     reveal.finish();
   }
 
+  function retry(answerId: string) {
+    chat.retry(answerId);
+    reveal.finish();
+  }
+
   function editQuestion(answerId: string) {
     setDraft(chat.edit(answerId));
+    reveal.finish();
     focusComposer();
   }
 
@@ -221,7 +227,7 @@ export function ChatWorkspace({
                     relatedLabel={role ? `View ${role.company} experience` : undefined}
                     onFollowUp={ask}
                     onCopy={(answer) => copyText(toPlainText(answer.parts))}
-                    onRetry={chat.retry}
+                    onRetry={retry}
                     onEdit={editQuestion}
                     onRate={chat.rate}
                     onViewRelated={() => {

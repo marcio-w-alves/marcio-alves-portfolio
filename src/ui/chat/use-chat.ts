@@ -33,15 +33,19 @@ export function useChat(topic: TopicId, initial?: Conversation) {
     store.update(topic, change, seed);
   }
 
+  /** Aborts the answer on its way, if any, and marks it stopped so nothing waits on it. */
   function cancel() {
-    store.inFlight.get(topic)?.abort();
+    const inFlight = store.inFlight.get(topic);
+    if (!inFlight) return;
+    inFlight.controller.abort();
     store.inFlight.delete(topic);
+    setConversation((current) => stopAnswer(current, inFlight.answerId));
   }
 
   async function stream(answerId: string, question: string, from: Conversation) {
     cancel();
     const controller = new AbortController();
-    store.inFlight.set(topic, controller);
+    store.inFlight.set(topic, { answerId, controller });
     setAnnouncement('Generating an answer');
     const request = { message: question, history: historyOf(from), context: contextOf(from) };
     for await (const event of streamAnswer(request, { signal: controller.signal })) {
@@ -51,7 +55,7 @@ export function useChat(topic: TopicId, initial?: Conversation) {
         setAnnouncement("The answer couldn't be loaded. Retry is available.");
       }
     }
-    if (store.inFlight.get(topic) === controller) store.inFlight.delete(topic);
+    if (store.inFlight.get(topic)?.controller === controller) store.inFlight.delete(topic);
   }
 
   function ask(raw: string): boolean {
@@ -84,9 +88,9 @@ export function useChat(topic: TopicId, initial?: Conversation) {
 
   /** Takes the exchange out and returns its question, for the composer to hold. */
   function edit(answerId: string): string {
-    cancel();
     const removed = removeExchange(conversation, answerId);
     setConversation(removed.conversation);
+    cancel();
     return removed.question;
   }
 
