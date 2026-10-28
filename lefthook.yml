@@ -1,0 +1,35 @@
+# Local gates. These mirror the CI jobs (POR-04) so a failure shows up on the
+# machine that caused it, seconds after the mistake, instead of minutes later
+# in a pipeline.
+
+pre-commit:
+  # Sequential on purpose: both jobs rewrite the same files, and running them
+  # in parallel would let one overwrite the other's output.
+  parallel: false
+  jobs:
+    - name: eslint
+      glob: '*.{ts,tsx,mts}'
+      run: pnpm eslint --fix --max-warnings 0 {staged_files}
+      stage_fixed: true
+
+    - name: prettier
+      glob: '*.{ts,tsx,mts,js,mjs,cjs,json,css,md,yml,yaml}'
+      run: pnpm prettier --write --ignore-unknown {staged_files}
+      stage_fixed: true
+
+commit-msg:
+  jobs:
+    - name: commitlint
+      run: pnpm commitlint --edit {1}
+
+pre-push:
+  parallel: true
+  jobs:
+    - name: typecheck
+      run: pnpm typecheck
+
+    - name: lint
+      run: pnpm lint
+
+    - name: boundaries
+      run: pnpm boundaries
