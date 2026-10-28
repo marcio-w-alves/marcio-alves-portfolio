@@ -1,3 +1,4 @@
+import 'server-only';
 import { createResponseKit } from '@/core/assistant/response-kit';
 import { createTopicIntro } from '@/core/assistant/topic-pages';
 import { createTopicCatalog } from '@/core/assistant/topics';
