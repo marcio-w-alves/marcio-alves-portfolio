@@ -76,6 +76,26 @@ export function roleByCompany(company: string) {
   return role;
 }
 
+/** The companies and headline metrics the record flags for the welcome screen, by id. */
+export function welcomeEvidence() {
+  const { roles, metrics } = record.welcome.evidence;
+  return {
+    companies: roles.map((id) => {
+      const role = record.experience.find((candidate) => candidate.id === id);
+      if (!role) throw new Error(`The record has no role "${id}".`);
+      return role.company;
+    }),
+    metrics: metrics.map(metric),
+  };
+}
+
+/** Where the record publishes the résumé. */
+export function resumeUrl(): string {
+  const url = record.contact.resumeUrl;
+  if (!url) throw new Error('The record publishes no résumé.');
+  return url;
+}
+
 export function metric(id: string) {
   const found = record.metrics[id];
   if (!found) throw new Error(`The record has no metric "${id}".`);

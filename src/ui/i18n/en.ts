@@ -23,6 +23,8 @@ export const englishUiMessages: UiMessages = {
   welcome: {
     region: 'Welcome',
     suggestedQuestions: 'Suggested questions',
+    evidence: 'Track record',
+    contact: 'Contact',
   },
   conversation: {
     label: 'Conversation',

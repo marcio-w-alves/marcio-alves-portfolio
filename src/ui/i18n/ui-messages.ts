@@ -34,6 +34,10 @@ export interface UiMessages {
   readonly welcome: {
     readonly region: string;
     readonly suggestedQuestions: string;
+    /** Names the companies and headline metrics under the greeting. */
+    readonly evidence: string;
+    /** Names the contact and résumé links the welcome screen offers where the sidebar is a drawer. */
+    readonly contact: string;
   };
   readonly conversation: {
     readonly label: string;

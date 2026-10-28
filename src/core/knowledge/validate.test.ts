@@ -20,6 +20,10 @@ function withRoles(...experience: RoleSource[]): KnowledgeSource {
   return { ...fixtureKnowledge, experience };
 }
 
+function withEvidence(evidence: KnowledgeSource['welcome']['evidence']): KnowledgeSource {
+  return { ...fixtureKnowledge, welcome: { ...fixtureKnowledge.welcome, evidence } };
+}
+
 function issuesOf(source: KnowledgeSource) {
   try {
     validateKnowledge(source);
@@ -176,6 +180,21 @@ describe('validating a record', () => {
       'a site passage with no fetch date',
       withSitePassages({ ...pipewrightPage, fetchedAt: 'last week' }),
       ['productSites', 0, 'fetchedAt'],
+    ],
+    [
+      'an evidence line naming a role the record does not hold',
+      withEvidence({ roles: ['acme', 'umbrella'], metrics: ['acme-build-time', 'globex-team'] }),
+      ['welcome', 'evidence', 'roles', 1],
+    ],
+    [
+      'an evidence line naming a metric the record does not hold',
+      withEvidence({ roles: ['acme'], metrics: ['acme-build-time', 'acme-unknown'] }),
+      ['welcome', 'evidence', 'metrics', 1],
+    ],
+    [
+      'an evidence line naming no company',
+      withEvidence({ roles: [], metrics: ['acme-build-time', 'globex-team'] }),
+      ['welcome', 'evidence', 'roles'],
     ],
     [
       'a site passage read over http',
