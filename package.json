@@ -24,6 +24,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
     "rag:build": "tsx --env-file=.env.local scripts/build-knowledge-index.mts",
     "eval:assistant": "tsx --env-file=.env.local scripts/evaluate-assistant.mts",
     "fidelity": "tsx scripts/fidelity/check.mts",
