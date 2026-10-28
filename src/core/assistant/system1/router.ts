@@ -326,7 +326,7 @@ const COMPANY_NAMES: Readonly<Record<RoleId, string>> = {
   toptal: 'toptal',
   deel: 'deel',
   roots: 'roots',
-  maison: 'maison( modern)?',
+  maison: 'maison( moderne?)?',
   shall: 'shall (and|&) partners',
   webfi: 'webfi',
   freelance: 'freelanc\\w*',

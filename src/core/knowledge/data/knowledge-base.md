@@ -122,6 +122,10 @@ Os pilares mais evidentes de sua atuação são:
 
 **System design na Deel:** os problemas reais envolveram integração de uma plataforma adquirida, arquitetura de módulos, gestão de estado, padrões de tratamento de erros, dependências entre produto e backend, controle de qualidade e latência percebida. Relatos complementares mencionam liderança técnica sobre alguns engenheiros. As evidências documentais são de forte engenharia de aplicações e integração, sem alegação de autoria exclusiva de microserviços corporativos. [CV-2026] [RELATO]
 
+**Tamanho do time (relato de Marcio, 28/10/2026):** Marcio começou na Deel só com mais um desenvolvedor. Com o tempo entraram outros, até chegar a cinco desenvolvedores; depois o time continuou crescendo e foi dividido em outras verticais. No fim, só de frontend, eram cerca de 12 a 13 desenvolvedores. [RELATO]
+
+**Decisões com impacto (relato de Marcio, 28/10/2026):** era um projeto muito grande, usado por muita gente, então qualquer decisão podia ter impacto grande. Marcio era também responsável por opinar sobre arquitetura e sobre como as coisas seriam construídas, o que exigia fazer tudo com cuidado e bem testado para evitar problemas. [RELATO]
+
 **Organização do código (relato de Marcio, 28/10/2026):** na Deel havia um monorepo apenas de frontend, dividido em várias verticais de produto. O backend era de outras equipes: Marcio não chegou a trabalhar nele, além de participar de algumas decisões de arquitetura. [RELATO]
 
 **Como foi o trabalho de performance (relato de Marcio, 28/10/2026):** o último trabalho de Marcio na Deel foi otimizar a performance de algumas páginas, principalmente a People List. Ele levantou primeiro todas as métricas disponíveis — tamanho de bundle, tempo de carregamento, tempo de rede, Web Vitals e análise de cache — e atacou cada problema um a um. Fez um comparativo de antes e depois para garantir que tudo estava medido corretamente e que nada ficava de fora. [RELATO]
@@ -143,7 +147,7 @@ Os pilares mais evidentes de sua atuação são:
 
 **Contexto de carreira:** a Roots foi adquirida/integrada à Deel segundo o histórico informado. A passagem da empresa inicial para um ecossistema de maior escala é uma parte relevante de sua experiência. [CV-2026] [RELATO]
 
-### 3.4 Maison Modern / Maison Moderne — Senior Frontend Developer
+### 3.4 Maison Moderne — Senior Frontend Developer
 
 **Período informado:** 2020–2022. **Domínio:** publishing digital, revistas e newsletters. [CV-2026]
 
@@ -156,7 +160,7 @@ Os pilares mais evidentes de sua atuação são:
 
 **Vínculo e produtos (relato de Marcio, 28/10/2026):** Marcio era contratado direto da Maison Moderne, uma editora, e trabalhou no **Paperjam** e em outros produtos da empresa. Nesse mesmo período fazia o trabalho freelance da Roots (ver 3.3). [RELATO]
 
-**Nota:** o currículo usa a grafia “Maison Modern”; o nome oficial deve ser conferido antes de uso em logos ou materiais externos.
+**Nota:** o nome oficial é **Maison Moderne**, em francês, com “e” no final, como Marcio confirmou em 28/10/2026; o currículo grafa “Maison Moderne”. [RELATO]
 
 ### 3.5 Shall And Partners — Full Stack Developer
 
@@ -168,7 +172,7 @@ Os pilares mais evidentes de sua atuação são:
 - Atualização de código React com adoção de Hooks e melhor organização de manutenção.
 - Automação de rotinas operacionais, como preenchimento de apontamentos de tempo com dados prévios.
 - Progressão de responsabilidades, passando de nível intermediário para uma posição de referência em frontend dentro de um projeto de RH.
-- Contribuição para produto web/mobile reconhecido com Golden Award em 2019.
+- Contribuição para produto web/mobile reconhecido com Golden Award em 2019: o **Pointr**, um app de gestão de RH que montava um currículo online num formato parecido com uma rede social, ao estilo do LinkedIn (relato de Marcio, 28/10/2026). [RELATO]
 
 **Detalhes (relato de Marcio, 28/10/2026):** foi um dos seus primeiros projetos internacionais, com atuação full-stack e bastante trabalho de backend. Também trabalhou um pouco com desenvolvimento mobile, em Kotlin e Java. O produto tinha um banco de currículos, e o **Elasticsearch** era usado para buscar muitas informações sobre as pessoas e devolvê-las em tempo hábil. [RELATO]
 
@@ -180,6 +184,7 @@ Os pilares mais evidentes de sua atuação são:
 
 - Desenvolvimento frontend de aplicações de médio porte, desde decisões de arquitetura até entrega.
 - Participação em projetos de clientes menores associados a crescimento de vendas superior a 30%, conforme o currículo.
+- **Clientes (relato de Marcio, 28/10/2026):** eram vários tipos de clientes locais, que procuravam a WEBFI para criar ou melhorar seus projetos web, vender mais e impulsionar seus produtos. [RELATO]
 
 ### 3.7 Freelance — Web Developer
 
@@ -187,6 +192,7 @@ Os pilares mais evidentes de sua atuação são:
 
 - Desenvolvimento web por projetos, inicialmente com demandas mais delimitadas.
 - Evolução para responsabilidade independente pela construção de aplicações web completas.
+- **Em paralelo à WEBFI (relato de Marcio, 28/10/2026):** o freelance aconteceu ao mesmo tempo que a WEBFI. Os clientes chegavam pela WEBFI ou diretamente a ele, para criar ou melhorar projetos web, vender mais e impulsionar seus produtos; eram sobretudo clientes locais. [RELATO]
 
 ### 3.8 Evolução geral da carreira
 
@@ -199,7 +205,7 @@ Os pilares mais evidentes de sua atuação são:
 | Melhoria de Web Vitals ≥30% | Deel | Resultado de experiência/performance descrito no currículo. Não inferir uma métrica específica não nomeada. |
 | Carregamento crítico 50% menor | Deel | People List passou de 6 s para 3 s em inicialização a frio. |
 | Time frontend de 1 para 4 pessoas | Roots | Expansão e integração de três novos engenheiros. |
-| Receita de newsletters +20% | Maison Modern | Contribuição para iniciativa coletiva associada ao resultado. |
+| Receita de newsletters +20% | Maison Moderne | Contribuição para iniciativa coletiva associada ao resultado. |
 | Vendas de clientes >30% maiores | WEBFI | Resultado informado no currículo, sem detalhamento da amostra ou atribuição individual. |
 | Golden Award — 2019 | Shall And Partners | Participação no produto premiado, não prêmio pessoal individual confirmado. |
 
@@ -664,6 +670,8 @@ Este fluxo sintetiza uma **preferência observada**, não um procedimento formal
 
 Marcio acompanha e utiliza ferramentas como Codex, Claude Code, Cursor e outras soluções de IA para pesquisa, implementação, revisão e organização do trabalho. Demonstra interesse especial em agentes orientados a objetivos, ciclos de execução e validação, regras específicas por projeto, hooks/pre-task hooks, documentação próxima ao código e definição clara de critérios de aceite.
 
+**Como ele trabalha hoje (relato de Marcio, 28/10/2026):** usa principalmente o **Claude Code**. Para entregar uma funcionalidade, primeiro documenta o que precisa implementar, divide em entregáveis e em tasks pequenas e usa os loops do próprio Claude Code para atuar sobre elas. Assim trabalha em várias mini tasks ao mesmo tempo, acompanhando cada uma pelos sumários e pelo status que o Claude informa. Antes da revisão humana do código e do teste manual, cada entrega passa por revisão e por testes automatizados, inclusive no navegador. [RELATO]
+
 Seu posicionamento recorrente é que uma IA deve executar tarefas dentro de limites arquiteturais e de produto verificáveis; a decisão técnica, a análise de trade-offs e a revisão final não devem ser reduzidas à mera aceitação do código gerado. [RELATO]
 
 ### 7.4 Preferências de comunicação
@@ -728,6 +736,8 @@ Seus prompts de engenharia tendem a explicitar finalidade, arquitetura, telas, e
 Há uma diferença entre **descrever completamente uma intenção** e **comprovar que cada função foi entregue**. A base de conhecimento deve destacar sua capacidade de formular problemas complexos e coordenar a solução, sem atribuir implementação concluída apenas porque houve prompt ou arquitetura.
 
 ### 7.10 LLM engineering em produtos: RAG, tool calling e dados
+
+**Implementação em produção: este portfólio.** O site marciomariani.dev, onde este assistente roda, é uma implementação de Marcio em produção — a principal evidência pública de LLM engineering, e o único repositório dele que vale citar no GitHub. Foi construído com Next.js (App Router), TypeScript e Tailwind, e publicado na Vercel. O assistente tem dois caminhos: respostas determinísticas para as perguntas que ele reconhece com certeza e um modelo da OpenAI para o resto. O modelo só age por uma lista fechada de ações validadas (tool calling) e busca os fatos por RAG — embeddings de cada trecho do currículo e desta base, com marcações de fonte e um piso de relevância. O projeto inclui ainda uma avaliação automática em que um segundo modelo confere cada afirmação contra as evidências, um filtro que remove ofertas genéricas de ajuda das respostas, limites de uso e de custo, circuit breaker e uma verificação de fidelidade ao design de pelo menos 99,9% por pixel. Marcio autorizou citá-lo como prova em 28/10/2026. [PORTFÓLIO]
 
 Além de usar agentes para programar, Marcio estuda maneiras de **incorporar inteligência artificial ao produto**, especialmente quando há dados históricos, textos longos, recomendações ou decisões contextualizadas. [RELATO/ESTUDO]
 
@@ -881,7 +891,7 @@ A característica comum dos projetos independentes é o interesse em transformar
 
 **Problemas técnicos explorados:** aplicações multi-tenant, isolamento de domínios, mensageria, idempotência, filas, observabilidade, autenticação, RBAC, processamento de eventos e UX mobile-first. Tecnologias discutidas incluem Next.js, React, TypeScript, Node.js, Nx, PostgreSQL, Redis, S3 e NATS/JetStream.
 
-**Status:** iniciativa com planejamento e desenvolvimento discutidos. Não existem, nesta base, dados verificáveis de usuários, receita ou lançamento público.
+**Status (relato de Marcio, 28/10/2026):** está no ar em dev.targup.com, mas é só uma versão de teste, sem nada oficial, usada para ir desenvolvendo e testando. Não existem, nesta base, dados verificáveis de usuários, receita ou lançamento público. [RELATO]
 
 ### 10.2 FormDaily — treinamento e gestão de personal trainers
 
@@ -897,7 +907,7 @@ A característica comum dos projetos independentes é o interesse em transformar
 
 **Nas palavras de Marcio (28/10/2026):** a ideia inicial era favorecer os personal trainers: gerenciar alunos, treinos, agenda e exercícios e acompanhar o progresso de cada aluno. Depois ele estendeu o app para o lado do aluno, que pode usá-lo sozinho, de forma independente, ou acompanhado pelo personal: ver o treino, iniciá-lo, registrar séries, repetições e progresso. A IA atua dos dois lados — para melhorar os exercícios, ver onde o aluno está falhando e o que precisa de adaptação — e o aprendizado com LLMs serve para melhorar a sugestão de exercícios, as adaptações e a progressão. [RELATO]
 
-**Status:** há registros de versões beta iOS distribuídas pelo TestFlight em 2026, demonstrando atividade de desenvolvimento e testes; isso não comprova lançamento público nem entrega integral de todas as funcionalidades.
+**Status (relato de Marcio, 28/10/2026):** está atualmente no TestFlight. [RELATO] Há registros de versões beta iOS distribuídas pelo TestFlight em 2026, demonstrando atividade de desenvolvimento e testes; isso não comprova lançamento público nem entrega integral de todas as funcionalidades.
 
 ### 10.3 EvCopilot — mobilidade elétrica e planejamento de recarga
 
@@ -913,7 +923,7 @@ A característica comum dos projetos independentes é o interesse em transformar
 
 **Origem e funcionamento, nas palavras de Marcio (28/10/2026):** o EvCopilot surgiu depois de uma viagem de carro elétrico em que ele teve muita dificuldade para encontrar pontos de recarga, saber quais estavam funcionando e se havia fila. No app, a pessoa traça o trajeto — por exemplo, de João Pessoa a Recife —, vê os pontos de recarga no caminho, marca onde quer chegar e informa a porcentagem atual da bateria; o app calcula até onde ela chega, usando dados da fabricante, como o consumo médio, para ter mais assertividade. Além disso, compara o previsto com o real: ao chegar, a pessoa atualiza os dados reais e o app aprende com aquele percurso — velocidade média em cada trecho, distância, tempo, bateria de saída e de chegada — para medir corretamente o consumo de cada carro. Esses dados poderiam virar analytics úteis até para as próprias fabricantes entenderem como seus carros se comportam, e para quem pensa em comprar um. [RELATO]
 
-**Status:** pesquisa, definição de produto e sinais de testes/estrutura de aplicação em 2026. Cobertura de provedores, tempo real e disponibilidade pública exigem validação.
+**Status (relato de Marcio, 28/10/2026):** o site evcopilotapp.io está no ar com as informações reais do produto, e o app já entrou na App Store, mas ainda está em beta com acesso por convite, sem testes de fato com usuários. [RELATO] Cobertura de provedores, tempo real e disponibilidade pública exigem validação.
 
 ### 10.4 FictionDraft — escrita, edição e publicação assistidas por IA
 
@@ -929,7 +939,7 @@ A característica comum dos projetos independentes é o interesse em transformar
 
 **Nas palavras de Marcio (28/10/2026):** o FictionDraft é um aplicativo para auxiliar a escrita de tudo: começou pensado para romances e foi estendido para livros, documentos e roteiros. É parecido com o Word, mas o Word é voltado para documentos do dia a dia; o FictionDraft traz boilerplates para cada tipo de texto e uma IA preparada para atuar em cada um deles. Para quem escreve um romance, por exemplo, haveria uma base com os elementos canônicos da história, para a IA apontar que uma informação contradiz algo dito antes ou que um trecho não está bem colocado, e sugerir melhorias. [RELATO]
 
-**Status:** desenvolvimento de escopos, protótipos e arquitetura; funcionalidades finais e lançamento público não verificados nesta base.
+**Status (relato de Marcio, 28/10/2026):** existe só o projeto em desenvolvimento; nada foi publicado e não há como acessá-lo. [RELATO]
 
 ### 10.5 MMORPG, Unreal Engine e engine especializada
 
@@ -990,8 +1000,11 @@ Confirmado por Marcio em 28/10/2026: ele faz **musculação** e **corrida**, e g
 
 ### 11.6 Interesses complementares ou ocasionais
 
-- **Bateria (instrumento):** começou a aprender a tocar bateria e gosta muito disso. [RELATO]
-- **Cachorros:** tem dois cachorros; gosta de passear e brincar bastante com eles, que exigem muita atenção. [RELATO]
+- **Bateria (instrumento):** começou a aprender a tocar bateria e gosta muito disso. Deu uma pausa nas aulas porque a vida ficou corrida, mas pretende voltar. [RELATO]
+- **Cachorros:** tem dois cachorros, o **Sky** e o **Oreo** (como o biscoito) — um Samoieda e um Laika da Yakútia. Gosta de passear e brincar bastante com eles, que exigem muita atenção. [RELATO]
+- **Leitura:** lê bastante *novels*. No tempo livre, quando não está jogando ou estudando algo novo, na maioria das vezes está lendo. [RELATO]
+- **Séries:** assiste a poucas, mas gosta muito de algumas da Apple TV, como *Foundation* e *Dark Matter*. [RELATO]
+- **Família:** não publica nada sobre a família, mas conta que tem muito apego a ela, gosta de estar sempre em contato e próximo, e de viajar e passear junto. Mora um pouco longe, então vai visitá-la sempre que possível. Não dar nenhum detalhe além disso (nomes, quem são, onde moram). [RELATO]
 - **Jogos de tabuleiro e espaços de convivência:** existem referências a uma área dedicada a board games; interesse plausível, mas prática regular não confirmada.
 - **Tecnologia e equipamentos:** estações de trabalho, monitores, PCs, gadgets, dispositivos móveis, automação e organização do home office.
 - **Viagens e rotas:** análise de trajetos, planejamento logístico e adequação de tecnologia à vida cotidiana.
@@ -1005,9 +1018,13 @@ O que se pode dizer é que seus interesses atravessam software, produtos digitai
 
 ## 12. Objetivos e preferências profissionais
 
-**Cargos de interesse relatados:** Senior/Staff Frontend Engineer, liderança técnica de frontend, Tech Lead e funções de product engineering com autonomia arquitetural. [RELATO]
+**O que ele busca agora (relato de Marcio, 28/10/2026):** vagas de **Senior Frontend** ou **Senior Full Stack**, e de **Tech Lead** se aparecer algo que combine com seus interesses. **Só remoto** — não aceita híbrido nem presencial. Está **disponível para conversar** e saber mais sobre oportunidades. Procura empresas ou startups mais sólidas, com um produto que tenha impacto e esteja em crescimento: quer contribuir com algo que possa ver crescer e melhorar, com pessoas usando. [RELATO]
 
-**Modalidade preferida:** atuação totalmente remota, com abertura para equipes internacionais e colaboração em inglês. [RELATO]
+**Cargos de interesse relatados anteriormente:** Senior/Staff Frontend Engineer, liderança técnica de frontend, Tech Lead e funções de product engineering com autonomia arquitetural. [RELATO]
+
+**Modalidade:** apenas remota, com abertura para equipes internacionais e colaboração em inglês. [RELATO]
+
+**Stack preferida hoje (relato de Marcio, 28/10/2026):** no frontend, React — com ou sem Next.js —, sempre com TypeScript; no backend, Node.js; para APIs, GraphQL ou REST, sem problema com nenhuma das duas. Também está aprendendo e testando bastante desenvolvimento mobile para Android e iOS, com Kotlin e Swift. [RELATO]
 
 **Tipos de desafio atrativos:** produtos complexos, dados e IA, construção de sistemas de design, melhoria de arquitetura existente, performance, qualidade, liderança de decisões técnicas e colaboração entre múltiplas disciplinas.
 
@@ -1073,7 +1090,7 @@ R: Sim. Explora agentes e ferramentas de IA para acelerar pesquisa e implementa�
 R: Tem histórico documentado de padronização, refatoração e otimização em aplicações existentes. Para exemplos de migração detalhados, é necessário pedir seu contexto técnico específico; a base não deve inventá-lo.
 
 **P: Quais resultados de negócio ele gerou?**  
-R: O currículo registra contribuição para incremento de receita de newsletters em 20% em iniciativa da Maison Modern e crescimento de vendas de clientes na WEBFI acima de 30%, além de impactos de performance e qualidade.
+R: O currículo registra contribuição para incremento de receita de newsletters em 20% em iniciativa da Maison Moderne e crescimento de vendas de clientes na WEBFI acima de 30%, além de impactos de performance e qualidade.
 
 **P: Quais produtos está criando?**  
 R: TargUp (campanhas/comunicação), FormDaily (fitness), EvCopilot (mobilidade elétrica), FictionDraft (escrita com IA) e explorações de ferramentas para MMORPG. Os estados variam entre especificação, desenvolvimento e beta; não se deve inventar lançamentos.
@@ -1178,10 +1195,10 @@ R: Favorece a forma mais simples que preserve limites de domínio e capacidade d
 R: Capacidade de trabalhar entre camadas, liderar decisões arquiteturais, melhorar performance com métricas, coordenar pessoas, definir contratos e integrar IA no processo de engenharia com contexto, hooks, validação e responsabilidade técnica. Essa combinação se apoia em trabalhos na Roots/Deel/Toptal e em estudos independentes.
 
 **P: Ele tem animais de estimação?**  
-R: Sim. Marcio tem dois cachorros e gosta de passear e brincar bastante com eles, que exigem muita atenção. [RELATO]
+R: Sim. Marcio tem dois cachorros, o Sky e o Oreo — um Samoieda e um Laika da Yakútia —, e gosta de passear e brincar bastante com eles. [RELATO]
 
 **P: Ele toca algum instrumento?**  
-R: Começou a aprender a tocar bateria e gosta muito disso. [RELATO]
+R: Começou a aprender a tocar bateria e gosta muito disso; deu uma pausa nas aulas, mas pretende voltar. [RELATO]
 
 **P: Que esportes ele pratica?**  
 R: Musculação e corrida, e gosta muito de jiu-jitsu, que pratica num vai e volta, pelo menos de vez em quando. A corrida não é o que mais gosta, mas ele sabe que precisa e está sempre tentando melhorar; corre na orla de João Pessoa. Não atribuir faixa no jiu-jitsu. [RELATO]
@@ -1209,6 +1226,33 @@ R: Na UFPB, o TCC mostrou as vantagens de usar um system design completo e os be
 
 **P: Ele já participou de eventos?**  
 R: Participou da RoboCup 2014, em João Pessoa, como tradutor e membro do staff. [RELATO]
+
+**P: Que tipo de vaga ele procura?**  
+R: Senior Frontend ou Senior Full Stack, e Tech Lead se combinar com seus interesses; só remoto, sem híbrido nem presencial. Está disponível para conversar sobre oportunidades e procura empresas ou startups sólidas, com produto de impacto e em crescimento. [RELATO]
+
+**P: Qual é a stack preferida dele?**  
+R: React, com ou sem Next.js, sempre com TypeScript; Node.js no backend; GraphQL ou REST para APIs. Está aprendendo desenvolvimento mobile com Kotlin e Swift. [RELATO]
+
+**P: Ele tem algum projeto público ou open source?**  
+R: Este portfólio, que é o único repositório dele que vale citar: um site em Next.js com um assistente de IA que usa RAG, tool calling por uma lista fechada de ações, avaliação automática das respostas e verificação de fidelidade ao design. Os repositórios de trabalho não são públicos. [PORTFÓLIO]
+
+**P: Ele já construiu um sistema com RAG em produção?**  
+R: Sim: o assistente deste portfólio, que busca os fatos por embeddings em trechos do currículo e desta base, age só por ações validadas e tem as respostas avaliadas automaticamente. [PORTFÓLIO]
+
+**P: Qual era o tamanho do time na Deel?**  
+R: Ele começou com mais um desenvolvedor; o time chegou a cinco e depois foi dividido em verticais. No fim eram cerca de 12 a 13 desenvolvedores só de frontend. [RELATO]
+
+**P: Que produto ganhou o Golden Award?**  
+R: O Pointr, app de gestão de RH da Shall And Partners que montava um currículo online num formato parecido com uma rede social, ao estilo do LinkedIn. [RELATO]
+
+**P: Como se chamam os cachorros dele?**  
+R: Sky e Oreo, um Samoieda e um Laika da Yakútia. [RELATO]
+
+**P: O que ele gosta de ler e assistir?**  
+R: Lê bastante novels, que ocupam a maior parte do seu tempo livre. Assiste a poucas séries, mas gosta de algumas da Apple TV, como Foundation e Dark Matter. [RELATO]
+
+**P: Ele é próximo da família?**  
+R: Sim. Tem muito apego à família, gosta de estar sempre em contato e de viajar e passear junto; como mora um pouco longe, visita sempre que possível. Ele não publica detalhes sobre a família. [RELATO]
 
 ## 15. Narrativas prontas para apresentação
 
@@ -1299,6 +1343,7 @@ Uma IA de portfólio deve agir como **guia para informações sobre Marcio**, n�
 ### 19.1 Convenção de fontes
 
 - **[CV-2026]:** currículo de Marcio Alves com atualização em 27/10/2026; referência principal para cargos, datas, habilidades registradas e métricas.
+- **[PORTFÓLIO]:** este próprio site, implementado e publicado por Marcio; evidência verificável de trabalho em produção.
 - **[RELATO]:** afirmações e decisões compartilhadas em conversas anteriores sobre carreira, preferências, hobbies e produtos; podem ter mudado.
 - **[CONTEXTO]:** registros complementares de desenvolvimento/teste, como betas de aplicativos; não provam lançamento comercial ou cobertura total das features.
 - **[RELATO/ESTUDO]:** pesquisa, exploração, implementação parcial ou arquitetura discutida; requer validação do estado real antes de se afirmar uso consolidado em produção.
@@ -1308,7 +1353,7 @@ Uma IA de portfólio deve agir como **guia para informações sobre Marcio**, n�
 
 1. Confirmar cargo atual e natureza das atividades na Toptal, como registrado no currículo em março–outubro/2026. *(Respondido em 28/10/2026: vários projetos, entre eles o Tech Resume.)*
 2. Conferir os períodos precisos de Roots e outros vínculos com datas sobrepostas. *(Respondido em 28/10/2026: Roots como freelance pela Toptal em paralelo à Maison Moderne.)*
-3. Confirmar grafia oficial de Maison Modern/Maison Moderne e Shall And Partners.
+3. Confirmar grafia oficial de Maison Moderne/Maison Moderne e Shall And Partners.
 4. Verificar as fontes e metodologias das métricas para estudos de caso públicos mais profundos.
 5. Confirmar a situação atual, versões e links de TargUp, FormDaily, EvCopilot, FictionDraft e projetos de jogos. *(Descrições respondidas em 28/10/2026; status e links ainda pendentes.)*
 6. Verificar perfil público do GitHub, repositórios e permissão para divulgar código, marcas ou clientes.

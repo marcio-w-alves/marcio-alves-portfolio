@@ -32,7 +32,7 @@ export function react(): AssistantResponse {
           '- **Complex product interfaces** — helped lead the HRIS team at Deel and standardized its architecture, state management and error handling.\n' +
           '- **Performance** — improved Web Vitals by 30%+ and halved critical page loading time at Deel.\n' +
           '- **State management** — implemented advanced state management at Roots, where he built the frontend end to end.\n' +
-          '- **Next.js and SSR** — built responsive digital magazines with Next.js and server-side rendering at Maison Modern.\n' +
+          '- **Next.js and SSR** — built responsive digital magazines with Next.js and server-side rendering at Maison Moderne.\n' +
           '- **Modernization** — refactored a codebase to React Hooks at Shall And Partners.',
       ),
       skillGroups(['frontend', 'architecture']),
@@ -92,7 +92,7 @@ export function architecture(): AssistantResponse {
           '- **Toptal** — architected a modular React/TypeScript component library for consistent UI across product teams, and planned the initial architecture for a new product.\n' +
           '- **Deel** — standardized HRIS frontend architecture to improve structure, state management, error handling and scalability.\n' +
           '- **Roots** — directed frontend strategy, introduced advanced state management and set up GitLab CI pipelines deploying to Amazon S3.\n' +
-          '- **Maison Modern** — implemented SSR with Next.js and integrated the frontend with external publishing platforms.\n' +
+          '- **Maison Moderne** — implemented SSR with Next.js and integrated the frontend with external publishing platforms.\n' +
           '- **Shall And Partners** — moved the codebase to React Hooks and built apps within a microservices architecture.',
       ),
       text(
@@ -147,7 +147,7 @@ export function performance(): AssistantResponse {
       text(
         '### How he got there\n' +
           '- **Deel** — targeted refactoring and optimization of critical pages; the People List page went from six seconds to three on a cold run.\n' +
-          '- **Maison Modern** — server-side rendering to improve SEO and initial load speed for editorial products read by thousands daily.',
+          '- **Maison Moderne** — server-side rendering to improve SEO and initial load speed for editorial products read by thousands daily.',
       ),
       text(`### How he approaches a performance problem\n${bullets(practice.performanceApproach)}`),
     ],
@@ -253,7 +253,7 @@ export function nextjs(): AssistantResponse {
     'nextjs',
     [
       text(
-        'Yes. At **Maison Modern** (2020 — 2022), Marcio built responsive digital magazines and newsletters with Next.js and React, distributed across multiple countries. He implemented server-side rendering to improve SEO and initial load speed, integrated the frontend with external publishing platforms, and kept editorial products fast for thousands of daily readers.',
+        'Yes. At **Maison Moderne** (2020 — 2022), Marcio built responsive digital magazines and newsletters with Next.js and React, distributed across multiple countries. He implemented server-side rendering to improve SEO and initial load speed, integrated the frontend with external publishing platforms, and kept editorial products fast for thousands of daily readers.',
       ),
       text(
         `### How he decides what renders where\n${bullets(practice.frontendArchitecture.filter((decision) => /SSR|state/.test(decision)))}`,
@@ -263,7 +263,7 @@ export function nextjs(): AssistantResponse {
     {
       followUps: [
         'How did he optimize performance?',
-        'What did he do at Maison Modern?',
+        'What did he do at Maison Moderne?',
         'How experienced is he with React and TypeScript?',
       ],
       sources: ['resume.maison', 'resume.skills', 'notes'],
@@ -278,7 +278,7 @@ export function designSystems(): AssistantResponse {
     [
       text(
         'At **Toptal**, Marcio architected and implemented a modular React and TypeScript component library that speeds up feature development and keeps the UI consistent across multiple product teams — paired with advanced accessibility standards he led.\n\n' +
-          'Earlier, he standardized the HRIS frontend architecture at Deel and established coding standards at Maison Modern.',
+          'Earlier, he standardized the HRIS frontend architecture at Deel and established coding standards at Maison Moderne.',
       ),
       text(
         `### How he frames a shared library\n${bullets(practice.caseStudies.toptal?.angles.slice(0, 2) ?? [])}\n- **Boundaries** — module and reuse rules that keep the library from coupling every team to every change.`,
@@ -304,7 +304,7 @@ export function accessibility(): AssistantResponse {
         "Accessibility appears in three of Marcio's roles:\n\n" +
           '- **Toptal** — led the integration of advanced accessibility standards, broadening the product to users with diverse accessibility needs.\n' +
           '- **Roots** — integrated accessibility standards together with UX designers.\n' +
-          '- **Maison Modern** — built intuitive, accessible interfaces from complex requirements with UX designers.\n\n' +
+          '- **Maison Moderne** — built intuitive, accessible interfaces from complex requirements with UX designers.\n\n' +
           'He treats accessibility as a requirement of the foundation — in the component library itself — rather than a late fix on individual screens, and checks it alongside design, tests and performance before calling a feature done.',
       ),
     ],
@@ -325,7 +325,7 @@ export function testing(): AssistantResponse {
     'testing',
     [
       text(
-        "Frontend testing strategies are listed among Marcio's core skills. In practice, his documented quality work includes standardized error handling at Deel, code reviews and pair programming, and coding standards he set at Maison Modern to reduce bugs.",
+        "Frontend testing strategies are listed among Marcio's core skills. In practice, his documented quality work includes standardized error handling at Deel, code reviews and pair programming, and coding standards he set at Maison Moderne to reduce bugs.",
       ),
       text(
         '### How he approaches testing\n' +
@@ -349,7 +349,7 @@ export function testing(): AssistantResponse {
 
 const PRINCIPLES_IN_PRACTICE: Readonly<Record<string, string>> = {
   'Maintainability over cleverness':
-    'Coding standards and code reviews at Maison Modern; a move to React Hooks at Shall And Partners.',
+    'Coding standards and code reviews at Maison Moderne; a move to React Hooks at Shall And Partners.',
   'Composition over monoliths':
     'A modular React and TypeScript component library shared by several product teams at Toptal.',
   'Reuse before rewriting':
@@ -357,9 +357,9 @@ const PRINCIPLES_IN_PRACTICE: Readonly<Record<string, string>> = {
   'Architecture sized to the problem':
     'A React frontend built from an early stage at Roots, then organized for a team of four.',
   'Performance from the design':
-    'Critical pages 50% faster and People List from 6s to 3s at Deel; SSR for editorial products at Maison Modern.',
+    'Critical pages 50% faster and People List from 6s to 3s at Deel; SSR for editorial products at Maison Moderne.',
   'UX and visual fidelity':
-    'Accessibility built in with UX designers at Roots and Maison Modern, and led as a standard at Toptal.',
+    'Accessibility built in with UX designers at Roots and Maison Moderne, and led as a standard at Toptal.',
   'Verifiable quality':
     'Pair programming, code reviews and onboarding at Deel; GitLab CI pipelines at Roots.',
   'Explicit trade-offs':
@@ -436,7 +436,7 @@ export function codeQuality(): AssistantResponse {
     [
       text(
         "Marcio's engineering principles treat quality as a structural concern: readable, explicit code; small composable components; shared logic centralized instead of duplicated; and security enforced on the server.\n\n" +
-          'In practice that has meant standardized error handling and state management, code reviews and pair programming, coding standards at Maison Modern, and a move to React Hooks at Shall And Partners. Frontend testing strategies are part of his core skills.',
+          'In practice that has meant standardized error handling and state management, code reviews and pair programming, coding standards at Maison Moderne, and a move to React Hooks at Shall And Partners. Frontend testing strategies are part of his core skills.',
       ),
       text(`### What a healthy codebase means to him\n${bullets(practice.qualityPractices)}`),
     ],

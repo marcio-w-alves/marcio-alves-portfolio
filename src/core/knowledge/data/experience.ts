@@ -114,7 +114,7 @@ export const experience: readonly Role[] = [
   },
   {
     id: 'maison',
-    company: 'Maison Modern',
+    company: 'Maison Moderne',
     role: 'Senior Frontend Developer',
     period: '2020 — 2022',
     start: 2020,

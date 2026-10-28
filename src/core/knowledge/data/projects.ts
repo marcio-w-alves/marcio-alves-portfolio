@@ -77,9 +77,10 @@ export const projects: readonly Project[] = [
     id: 'fictiondraft',
     name: 'FictionDraft',
     category: 'AI writing & publishing',
-    status: 'Concept',
+    status: 'In development · not published',
     live: false,
-    description: 'An AI-assisted writing and publishing platform concept.',
+    description:
+      'An AI writing assistant for novels, books, documents and scripts: a template for each kind of text, with an AI that checks it against what was already written.',
     scopeLabel: 'Planned scope',
     scope: ['Editing', 'Review', 'Translation', 'Document consistency'],
     platforms: [],

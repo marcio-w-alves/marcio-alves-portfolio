@@ -29,7 +29,7 @@ export const metrics: Readonly<Record<MetricId, Metric>> = {
   'maison-newsletter': {
     value: '20%',
     label: 'Income increase from the newsletter project he contributed to',
-    context: 'Maison Modern',
+    context: 'Maison Moderne',
     source: 'resume.maison',
   },
   'webfi-sales': {
