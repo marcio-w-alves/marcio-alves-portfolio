@@ -124,6 +124,22 @@ The assistant reaches data only through an allow-list of named actions. It is
 never handed the knowledge base itself, and a question no action covers is
 answered as undocumented rather than guessed.
 
+## Deployment
+
+Hosted on Vercel, built from `main`. Every pull request gets its own preview
+deployment, which is what the manual test steps in a pull request description
+point at.
+
+Nothing about the build is configured in this repository, because nothing needs
+to be: Vercel detects Next.js, reads pnpm from the lockfile, and takes the Node
+major from `engines.node` in `package.json`. That field is `24.x` rather than an
+open range — the documented form Vercel resolves, and the honest one for a
+project that pins every other version.
+
+Environment variables are set in the Vercel project, never committed.
+`.env.example` is the list, and `OPENAI_API_KEY` is server-side only: a model
+credential behind a `NEXT_PUBLIC_` prefix would be readable by every visitor.
+
 ## Versioning
 
 Versions are derived from commit history by semantic-release, which runs on
