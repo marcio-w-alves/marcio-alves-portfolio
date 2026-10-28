@@ -7,8 +7,23 @@ import { extendTailwindMerge } from 'tailwind-merge';
  * silently drop the font size. A test keeps this list in step with globals.css.
  */
 export const THEME_TOKENS = {
-  text: ['11', '11.5', '12', '12.5', '13', '13.5', '14', '14.5', '15', '15.5', '16', '16.5'],
-  leading: ['display', 'heading', 'compact', 'label', 'body', 'prose'],
+  text: [
+    '11',
+    '11.5',
+    '12',
+    '12.5',
+    '13',
+    '13.5',
+    '14',
+    '14.5',
+    '15',
+    '15.5',
+    '16',
+    '16.5',
+    'display',
+    'subhead',
+  ],
+  leading: ['display', 'heading', 'compact', 'label', 'body', 'prose', 'subhead'],
   tracking: ['display', 'subhead', 'name', 'mono', 'avatar', 'monogram', 'label'],
   'font-weight': ['book'],
   radius: ['kbd', 'mark', 'control', 'mark-lg', 'xs', 'sm', 'md', 'lg', 'xl', 'pill'],
