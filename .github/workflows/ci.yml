@@ -18,10 +18,11 @@ env:
   NEXT_TELEMETRY_DISABLED: '1'
 
 jobs:
-  # The four static gates share one shape and differ only by the script they
-  # run, so they are one job definition fanned out rather than four copies.
-  # fail-fast is off: knowing that three of four failed is worth more than
-  # finishing a few seconds sooner.
+  # The static gates share one shape and differ only by the script they run, so
+  # they are one job definition fanned out rather than copies. fail-fast is
+  # off: knowing that three of them failed is worth more than finishing a few
+  # seconds sooner. The tests run with coverage, so a drop below the thresholds
+  # in vitest.config.mts fails the job.
   verify:
     name: ${{ matrix.gate }}
     runs-on: ubuntu-latest
@@ -29,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        gate: [typecheck, lint, format:check, boundaries, test]
+        gate: [typecheck, lint, format:check, boundaries, test:coverage]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup

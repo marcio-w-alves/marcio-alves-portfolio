@@ -70,14 +70,21 @@ formats and lints what is staged, `commit-msg` validates the message, and
 `pre-push` runs typecheck, lint and the boundary rules. Never bypass them with
 `--no-verify`: fix the gate or fix what the gate found.
 
-Coverage is deliberately not a gate. `pnpm test:coverage` shows which code no
-test reaches, which is worth reading; a threshold would only reward tests
-written to move the number.
+Coverage is a gate only where a drop means lost protection. `src/core` (the
+assistant's policy) and `src/infrastructure` (the adapters) are tested almost
+completely, so `vitest.config.mts` sets lines, branches and functions
+thresholds for each, two points below the measured baseline rounded down. CI
+runs `pnpm test:coverage` and fails when either falls below them, so deleting
+or skipping tests there is caught, while the margin keeps the gate from
+rewarding tests written only to move the number. The rest of `src` stays a
+diagnostic: `pnpm test:coverage` still shows which code no test reaches.
+Lowering a threshold needs a stated reason in the pull request, with the new
+measurement.
 
 ## Continuous integration
 
 `.github/workflows/ci.yml` runs on every pull request and every push to `main`.
-The four static gates fan out from one matrix job, so adding a gate is one list
+The static gates fan out from one matrix job, so adding a gate is one list
 entry rather than a copied job. `build`, `e2e`, and `commits` on pull requests,
 run alongside them. A final `ci` job summarises the rest, which lets branch
 protection require one check instead of a list that has to be edited whenever a
