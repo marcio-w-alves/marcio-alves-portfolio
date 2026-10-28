@@ -1,6 +1,7 @@
 import 'server-only';
 import type { ModelBudgetPort } from '@/core/assistant/ports/model-budget.port';
 import { createAssistant, type AnswerReport, type Assistant } from '@/core/assistant/assistant';
+import { urlsIn } from '@/core/assistant/system2/link-filter';
 import {
   createModelAssistant,
   type ModelAssistant,
@@ -190,6 +191,7 @@ function buildModelAssistant(
     model,
     tools,
     clock: systemClock,
+    knownUrls: [...urlsIn(knowledgeBase), `mailto:${knowledgeBase.contact.email}`, siteUrl().href],
     onUsage: (usage) => {
       budget.record(usage);
       if (usage.estimated) {

@@ -32,6 +32,23 @@ interface OpenCode {
   readonly lines: string[];
 }
 
+// Formatting never runs across a line, as in the answer's link filter: a link
+// split over two lines must not join into one here.
+function paragraphContent(lines: readonly string[]): InlineNode[] {
+  const nodes: InlineNode[] = [];
+  for (const [index, line] of lines.entries()) {
+    for (const node of parseInline(index === 0 ? line : ` ${line}`)) {
+      const last = nodes.at(-1);
+      if (node.kind === 'text' && last?.kind === 'text') {
+        nodes[nodes.length - 1] = { kind: 'text', text: last.text + node.text };
+      } else {
+        nodes.push(node);
+      }
+    }
+  }
+  return nodes;
+}
+
 export function parseBlocks(markdown: string): Block[] {
   const blocks: Block[] = [];
   const open: { paragraph: string[]; list: OpenList | null; code: OpenCode | null } = {
@@ -42,7 +59,7 @@ export function parseBlocks(markdown: string): Block[] {
 
   const flushParagraph = () => {
     if (open.paragraph.length > 0) {
-      blocks.push({ kind: 'paragraph', content: parseInline(open.paragraph.join(' ')) });
+      blocks.push({ kind: 'paragraph', content: paragraphContent(open.paragraph) });
     }
     open.paragraph = [];
   };
