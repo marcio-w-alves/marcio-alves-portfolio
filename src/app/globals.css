@@ -150,6 +150,15 @@
   /* Layout */
   --container-column: 820px;
   --container-sidebar: 260px;
+
+  /*
+   * The app's two container breakpoints, read off the root named \`ma\`:
+   * \`@max-compact/ma:\` is the drawer layout, \`@max-phone/ma:\` the phone one.
+   * The design says max-width 860px and 600px, inclusive; Tailwind's \`@max-*\`
+   * is a strict \`width <\`, hence one pixel more.
+   */
+  --container-compact: 861px;
+  --container-phone: 601px;
 }
 
 /* The two named durations, so a component writes the token and not a number. */
