@@ -17,8 +17,10 @@ export type InlineNode =
       readonly external: boolean;
     };
 
-const INLINE_TOKEN = /(\*\*[^*\n]+\*\*|`[^`\n]+`|\[[^\]\n]+\]\([^)\s]+\))/g;
-const LINK = /^\[([^\]]+)\]\(([^)\s]+)\)$/;
+// A link address may hold one balanced pair of parentheses, as in
+// https://en.wikipedia.org/wiki/Angular_(web_framework).
+const INLINE_TOKEN = /(\*\*[^*\n]+\*\*|`[^`\n]+`|\[[^\]\n]+\]\((?:[^()\s]|\([^()\s]*\))+\))/g;
+const LINK = /^\[([^\]]+)\]\(((?:[^()\s]|\([^()\s]*\))+)\)$/;
 const SAFE_HREF = /^(https?:\/\/|mailto:)/i;
 const WEB_HREF = /^https?:/i;
 

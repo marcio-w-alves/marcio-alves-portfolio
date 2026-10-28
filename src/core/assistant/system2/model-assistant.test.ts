@@ -117,6 +117,23 @@ describe('model assistant — answering through actions', () => {
   });
 });
 
+describe('model assistant — conversation memory is bounded', () => {
+  it('sends only the latest twelve turns, each cut to a thousand characters', async () => {
+    const { port, requests } = scriptedModel([{ text: 'ok' }]);
+    const assistant = createModelAssistant({ model: port, tools: createToolRegistry(), clock });
+    const history = Array.from({ length: 20 }, (_, i) => ({
+      role: i % 2 === 0 ? ('user' as const) : ('assistant' as const),
+      text: `${String(i)}:${'z'.repeat(5000)}`,
+    }));
+    await Array.fromAsync(assistant.answer({ question: 'Now?', history, followUps: [] }));
+
+    const remembered = (requests[0]?.messages ?? []).slice(1, -1);
+    expect(remembered).toHaveLength(12);
+    expect(remembered[0]?.content).toMatch(/^8:/);
+    expect(remembered.every((message) => message.content?.length === 1000)).toBe(true);
+  });
+});
+
 describe('model assistant — the model is untrusted', () => {
   it('turns invalid arguments into an error the model can correct, and lets it recover', async () => {
     const { port, requests } = scriptedModel([
@@ -141,6 +158,29 @@ describe('model assistant — the model is untrusted', () => {
       broken: { error: 'The arguments were not valid JSON.' },
     });
   });
+
+  it('runs an action called with no arguments at all, as models do for actions that take none', async () => {
+    const { port, requests } = scriptedModel([
+      { calls: [call('getSkills', '', 'bare')] },
+      { text: 'ok' },
+    ]);
+    await collect(port);
+    expect(toolReplies(requests[1]).bare).toEqual(
+      expect.arrayContaining([expect.objectContaining({ area: 'frontend' })]),
+    );
+  });
+
+  it.each([['null'], ['[]'], ['"deel"'], ['42']])(
+    'rejects the JSON %s, which is not an object of arguments',
+    async (raw) => {
+      const { port, requests } = scriptedModel([
+        { calls: [call('getExperience', raw, 'odd')] },
+        { text: 'ok' },
+      ]);
+      await collect(port);
+      expect(toolReplies(requests[1]).odd).toEqual({ error: expect.any(String) as unknown });
+    },
+  );
 
   it('refuses an action that is not on the list', async () => {
     const { port, requests } = scriptedModel([

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { EmbeddingPort } from '@/core/assistant/ports/embedding.port';
-import { buildCorpus } from '@/core/knowledge/corpus';
+import { buildCorpus, type KnowledgeChunk } from '@/core/knowledge/corpus';
 import { EMBEDDING_DIMENSIONS, type KnowledgeIndex } from './index-spec';
 import committed from './knowledge-index.json';
-import { cosine, createVectorKnowledgeSearch } from './vector-knowledge-search';
+import { cosine, createVectorKnowledgeSearch, RELEVANCE_FLOOR } from './vector-knowledge-search';
 
 const index: KnowledgeIndex = committed;
 const corpus = buildCorpus();
@@ -85,5 +85,62 @@ describe('vector knowledge search', () => {
       });
       expect(await search.search({ query: 'off topic', limit: 5 })).toEqual([]);
     }
+  });
+});
+
+describe('vector knowledge search — the relevance floor', () => {
+  const QUERY = [1, 0];
+
+  // Scaled up so the similarity comes out exact in floating point.
+  function vectorAt(similarity: number): number[] {
+    return [100 * similarity, 100 * Math.sqrt(1 - similarity ** 2)];
+  }
+
+  function chunk(id: string): KnowledgeChunk {
+    return { id, category: 'experience', text: `passage ${id}`, source: 'resume.deel' };
+  }
+
+  function searchOver(similarities: Record<string, number>) {
+    const ids = Object.keys(similarities);
+    return createVectorKnowledgeSearch({
+      embeddings: embeddingsReturning(QUERY),
+      index: {
+        ...index,
+        vectors: Object.fromEntries(ids.map((id) => [id, vectorAt(similarities[id] ?? 0)])),
+      },
+      corpus: ids.map(chunk),
+    });
+  }
+
+  async function idsFound(search: ReturnType<typeof searchOver>, limit = 5): Promise<string[]> {
+    return (await search.search({ query: 'q', limit })).map((passage) => passage.id);
+  }
+
+  it('keeps a passage exactly at the floor and drops one just under it', async () => {
+    const search = searchOver({ at: RELEVANCE_FLOOR, under: RELEVANCE_FLOOR - 0.0001 });
+    expect(await idsFound(search)).toEqual(['at']);
+  });
+
+  it('applies the limit after the floor, keeping the best of what is relevant', async () => {
+    const search = searchOver({ low: 0.3, high: 0.9, noise: 0.1, mid: 0.6 });
+    expect(await idsFound(search, 2)).toEqual(['high', 'mid']);
+  });
+
+  it('never returns a passage the index has no vector for, as after an unrebuilt change', async () => {
+    const search = createVectorKnowledgeSearch({
+      embeddings: embeddingsReturning(QUERY),
+      index: { ...index, vectors: { indexed: vectorAt(0.5) } },
+      corpus: [chunk('indexed'), chunk('added-since')],
+    });
+    expect((await search.search({ query: 'q', limit: 5 })).map((p) => p.id)).toEqual(['indexed']);
+  });
+
+  it('returns nothing when the query could not be embedded', async () => {
+    const search = createVectorKnowledgeSearch({
+      embeddings: { embed: () => Promise.resolve([]) },
+      index: { ...index, vectors: { indexed: vectorAt(0.9) } },
+      corpus: [chunk('indexed')],
+    });
+    expect(await search.search({ query: 'q', limit: 5 })).toEqual([]);
   });
 });
