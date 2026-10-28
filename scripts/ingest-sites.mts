@@ -5,8 +5,9 @@
  * Runs locally, by hand, never during a build or a request: review the diff,
  * then `pnpm rag:build` to embed it, and commit both.
  *
- *   pnpm sites:ingest           read the sites and rewrite the snapshot
- *   pnpm sites:ingest --check   list the pages read more than 180 days ago
+ *   pnpm sites:ingest             read the sites and rewrite the snapshot
+ *   pnpm sites:ingest --partial   rewrite it even though some pages could not be read
+ *   pnpm sites:ingest --check     list the pages read more than 180 days ago
  */
 import { readFile, writeFile } from 'node:fs/promises';
 import { setTimeout as sleep } from 'node:timers/promises';
@@ -39,18 +40,20 @@ async function ingest(): Promise<void> {
     now: new Date(),
     fallbackLanguage: 'en',
   });
-  await writeFile(SNAPSHOT, `${JSON.stringify(snapshot, null, 1)}\n`);
   for (const { url, passages } of report.ingested) {
     console.log(`  ${String(passages).padStart(3)} passages  ${url}`);
   }
   for (const { url, reason } of report.skipped) console.error(`  skipped  ${url}\n    ${reason}`);
-  console.log(`Wrote ${String(snapshot.entries.length)} passages → ${SNAPSHOT.pathname}`);
-  if (report.skipped.length > 0) {
+  // A failed fetch must not silently drop a site that the committed snapshot still holds.
+  if (report.skipped.length > 0 && !process.argv.includes('--partial')) {
     console.error(
-      'Some pages were not read. Run again, or take them off the allow-list: the tests fail while an allow-listed page has no passage.',
+      'Some pages were not read, so the snapshot is unchanged. Run again, take them off the allow-list, or pass --partial to write the rest.',
     );
     process.exitCode = 1;
+    return;
   }
+  await writeFile(SNAPSHOT, `${JSON.stringify(snapshot, null, 1)}\n`);
+  console.log(`Wrote ${String(snapshot.entries.length)} passages → ${SNAPSHOT.pathname}`);
 }
 
 await (process.argv.includes('--check') ? check() : ingest());
