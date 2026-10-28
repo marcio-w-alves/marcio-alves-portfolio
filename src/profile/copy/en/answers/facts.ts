@@ -60,6 +60,14 @@ export function createFacts({ knowledge, roleById, projectById, metricValue }: R
     return { from, to };
   };
   const metric = (id: string) => metricValue(id);
+  /** The award a role's achievements name, as they write it: "Golden Award in 2019". */
+  const award = (roleId: string) => {
+    const named = roleById(roleId)
+      .achievements.map((achievement) => /\b((?:[A-Z]\w* )+Award) in (\d{4})\b/.exec(achievement))
+      .find((match) => match !== null);
+    if (!named?.[1] || !named[2]) throw new Error(`The "${roleId}" role names no award.`);
+    return { name: named[1], won: `${named[1]} in ${named[2]}` };
+  };
   /** "30%+" → "30%", for prose that says "at least" or "over" itself. */
   const amount = (id: string) => metricValue(id).replace(/^~|\+$/g, '');
   const before = (id: string) => change(metricValue(id))[0];
@@ -77,6 +85,7 @@ export function createFacts({ knowledge, roleById, projectById, metricValue }: R
     startMonth,
     product: (projectId: string) => projectById(projectId).name,
     metric,
+    award,
     amount,
     before,
     after,

@@ -27,8 +27,19 @@ export function createExpertiseAnswers(kit: ResponseKit) {
     knowledge,
   } = kit;
   const { practice } = knowledge;
-  const { first, employer, period, years, product, metric, amount, before, after, countsInWords } =
-    createFacts(kit);
+  const {
+    first,
+    employer,
+    period,
+    years,
+    product,
+    metric,
+    award,
+    amount,
+    before,
+    after,
+    countsInWords,
+  } = createFacts(kit);
   const team = countsInWords('roots-team');
   const liveCount = inWords(knowledge.projects.filter((project) => project.live).length);
   const liveProducts = `${liveCount.charAt(0).toUpperCase()}${liveCount.slice(1)}`;
@@ -218,7 +229,7 @@ export function createExpertiseAnswers(kit: ResponseKit) {
       'mobile',
       [
         text(
-          `Yes. At **${employer('shall')}**, ${first} built web and mobile applications — including one that received the Golden Award in 2019 — and led development of a progressive web app before the product moved to a native Android app.\n\n` +
+          `Yes. At **${employer('shall')}**, ${first} built web and mobile applications — including one that received the ${award('shall').won} — and led development of a progressive web app before the product moved to a native Android app.\n\n` +
             `His own products are mobile-first too: **${product('evcopilot')}** is in an invite-only iPhone beta, and **${product('formdaily')}** lists web, iOS and Android. ${practice.mobileExplorations}`,
         ),
         projectCards(['evcopilot', 'formdaily']),

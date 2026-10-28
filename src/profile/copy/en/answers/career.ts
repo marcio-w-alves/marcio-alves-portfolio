@@ -27,6 +27,7 @@ export function createCareerAnswers(kit: ResponseKit) {
     startMonth,
     product: productName,
     metric,
+    award,
     amount,
     before,
     after,
@@ -310,7 +311,7 @@ export function createCareerAnswers(kit: ResponseKit) {
         metrics(['deel-critical-load', 'deel-web-vitals', 'deel-people-list', 'roots-team']),
         text(
           '### Other recognition\n' +
-            `- Contributed to a web and mobile application that received the **Golden Award in 2019** at ${employer('shall')}.\n` +
+            `- Contributed to a web and mobile application that received the **${award('shall').won}** at ${employer('shall')}.\n` +
             `- Contributed to the newsletter project at ${employer('maison')}, which achieved a **${metric('maison-newsletter')} increase in income**.\n` +
             `- Helped smaller industry clients at ${employer('webfi')} grow sales by **over ${amount('webfi-sales')}**.`,
         ),
@@ -368,12 +369,12 @@ export function createCareerAnswers(kit: ResponseKit) {
       'awards',
       [
         text(
-          `At **${employer('shall')}**, ${first} contributed to a web and mobile application that received the **Golden Award in 2019**.\n\n` +
+          `At **${employer('shall')}**, ${first} contributed to a web and mobile application that received the **${award('shall').won}**.\n\n` +
             `Other documented business results include the ${employer('maison')} newsletter project, which achieved a ${metric('maison-newsletter')} increase in income, and helping smaller ${employer('webfi')} clients grow sales by over ${amount('webfi-sales')}.`,
         ),
         note(
           'inference',
-          'The Golden Award went to the product he worked on, not to him personally.',
+          `The ${award('shall').name} went to the product he worked on, not to him personally.`,
         ),
       ],
       {

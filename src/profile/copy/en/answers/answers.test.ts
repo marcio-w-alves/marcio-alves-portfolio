@@ -307,4 +307,23 @@ describe('the answers follow the record they are given', () => {
     expect(growth).toContain('to six developers by recruiting and integrating five');
     expect(growth).not.toContain('four');
   });
+
+  it('names the award the record says the product won, wherever an answer mentions it', () => {
+    const silver = withRole(source, 'shall', {
+      achievements: [
+        {
+          en: 'Contributed to a web and mobile application that received the Silver Award in 2020.',
+        },
+      ],
+    });
+    const awardPath = createFastPath(localize(silver, 'en'), answers).answer;
+    for (const question of ['Has he received any awards?', 'Has he built mobile apps?']) {
+      const result = awardPath(question, FRESH);
+      if (result.kind !== 'answered')
+        throw new Error(`Escalated instead of answering: ${question}`);
+      const text = plainText(result.response);
+      expect(text, question).toContain('Silver Award in 2020');
+      expect(text, question).not.toContain('Golden');
+    }
+  });
 });
