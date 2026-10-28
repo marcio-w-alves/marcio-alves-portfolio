@@ -2,7 +2,6 @@ import { z } from 'zod';
 import type { Assistant } from '@/core/assistant/assistant';
 import { MAX_QUESTION_LENGTH } from '@/core/assistant/system1/router';
 import { TOPIC_IDS } from '@/core/assistant/topics';
-import type { Admission } from '@/infrastructure/rate-limit/sliding-window';
 import { EVENT_STREAM_HEADERS, eventStream } from './event-stream';
 
 /** Generous for twelve turns of history, far short of anything abusive. */
@@ -81,10 +80,15 @@ function clientIdOf(request: Request): string {
   return forwarded ?? 'unknown';
 }
 
+/** Paces requests per client; the composition root supplies the implementation. */
+interface RequestLimiter {
+  admit(clientId: string): { readonly allowed: boolean; readonly retryAfterMs: number };
+}
+
 interface Dependencies {
   readonly assistant: Assistant;
   readonly reportError: (error: unknown) => void;
-  readonly requestLimiter: { admit(key: string): Admission };
+  readonly requestLimiter: RequestLimiter;
   readonly reportRateLimited: (clientId: string) => void;
 }
 

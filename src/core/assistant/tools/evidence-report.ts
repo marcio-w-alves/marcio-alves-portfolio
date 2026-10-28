@@ -1,5 +1,5 @@
-import { sourceOf } from '@/core/knowledge/knowledge-base';
 import type { AnswerSource } from '../assistant-event';
+import { citation } from '../citations';
 import { findEvidence, TECHNOLOGIES, type Technology } from '../system1/technologies';
 
 export type EvidenceVerdict =
@@ -57,6 +57,6 @@ export function evidenceReport(name: string): EvidenceReport {
       ...(evidence.skills.length > 0 ? (['resume.skills'] as const) : []),
       ...(evidence.coursework.length > 0 ? (['resume.certifications'] as const) : []),
       ...(evidence.notes.length > 0 ? (['notes'] as const) : []),
-    ].map(sourceOf),
+    ].map(citation),
   };
 }

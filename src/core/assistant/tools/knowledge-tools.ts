@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { PROJECT_IDS, ROLE_IDS, SKILL_GROUP_IDS } from '@/core/knowledge/ids';
-import { knowledgeBase, projectById, roleById, sourceOf } from '@/core/knowledge/knowledge-base';
+import { knowledgeBase, projectById, roleById } from '@/core/knowledge/knowledge-base';
+import { citation } from '../citations';
 import { evidenceReport } from './evidence-report';
 import { defineTool, type Tool } from './tool';
 
@@ -29,7 +30,7 @@ const getProfileSummary = defineTool({
         city: profile.location.city ?? 'not documented',
       },
     },
-    sources: [sourceOf('profile')],
+    sources: [citation('profile')],
   }),
 });
 
@@ -52,7 +53,7 @@ const getExperience = defineTool({
         summary: role.summary,
         statements: role.highlights,
       })),
-      sources: roles.map((role) => sourceOf(role.source)),
+      sources: roles.map((role) => citation(role.source)),
     };
   },
 });
@@ -68,7 +69,7 @@ const getAchievementMetrics = defineTool({
       data: roles.flatMap((role) =>
         role.metrics.map((id) => ({ id, company: role.company, ...metrics[id] })),
       ),
-      sources: roles.filter((role) => role.metrics.length > 0).map((role) => sourceOf(role.source)),
+      sources: roles.filter((role) => role.metrics.length > 0).map((role) => citation(role.source)),
     };
   },
 });
@@ -84,7 +85,7 @@ const getSkills = defineTool({
       title: group.title,
       items: group.items,
     })),
-    sources: [sourceOf('resume.skills')],
+    sources: [citation('resume.skills')],
   }),
 });
 
@@ -105,7 +106,7 @@ const getProjects = defineTool({
     data: (project ? [projectById(project)] : knowledgeBase.projects).map(
       ({ source: _source, ...product }) => product,
     ),
-    sources: [sourceOf('projects')],
+    sources: [citation('projects')],
   }),
 });
 
@@ -126,9 +127,9 @@ const getEducationAndLanguages = defineTool({
       certifications,
     },
     sources: [
-      sourceOf('resume.education'),
-      sourceOf('resume.languages'),
-      sourceOf('resume.certifications'),
+      citation('resume.education'),
+      citation('resume.languages'),
+      citation('resume.certifications'),
     ],
   }),
 });
@@ -144,7 +145,7 @@ const getContactChannels = defineTool({
       github: contact.github,
       resume: contact.resumeUrl ?? 'not published; request it by email',
     },
-    sources: [sourceOf('profile')],
+    sources: [citation('profile')],
   }),
 });
 
@@ -154,7 +155,7 @@ const getEngineeringPrinciples = defineTool({
   input: {},
   execute: () => ({
     data: { focus: profile.focus, principles: knowledgeBase.principles },
-    sources: [sourceOf('principles'), sourceOf('profile')],
+    sources: [citation('principles'), citation('profile')],
   }),
 });
 
