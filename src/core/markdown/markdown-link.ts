@@ -21,6 +21,15 @@ export type LinkScan =
   /** A `[` where the link would continue: whether this is a link depends on what that one becomes. */
   | { readonly kind: 'bracket'; readonly at: number };
 
+/**
+ * Whether an address is a path on this site, such as `/resume.pdf`. Two
+ * leading slashes name another host, and browsers read a backslash after the
+ * first slash as a second slash, so neither is one.
+ */
+export function isSitePath(address: string): boolean {
+  return /^\/(?![/\\])/.test(address);
+}
+
 const INCOMPLETE: LinkScan = { kind: 'incomplete' };
 const NOT_A_LINK: LinkScan = { kind: 'not-a-link' };
 

@@ -24,6 +24,18 @@ describe('links in a streamed answer', () => {
     ).toBe('See docs and [GitHub](https://github.com/ada-rivera-example).');
   });
 
+  it('keeps a link to a path on this site, such as the résumé', () => {
+    expect(filtered('Here is [his résumé](/ada-rivera-cv.pdf).', 3, [])).toBe(
+      'Here is [his résumé](/ada-rivera-cv.pdf).',
+    );
+  });
+
+  it('renders as its label a link that only looks like a path but names another host', () => {
+    expect(filtered('[cv](//evil.example/cv.pdf) and [cv](/\\evil.example/cv.pdf)', 3, [])).toBe(
+      'cv and cv',
+    );
+  });
+
   it.each([1, 2, 3, 5, 7, 10])('gives the same output whatever the chunk size: %i', (chunk) => {
     const answer =
       'His [GitHub](https://github.com/ada-rivera-example) has it.\n- [login](https://evil.example/login?next=/) here\n';

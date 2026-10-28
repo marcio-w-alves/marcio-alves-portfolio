@@ -1,4 +1,4 @@
-import { scanLink } from '@/core/markdown/markdown-link';
+import { isSitePath, scanLink } from '@/core/markdown/markdown-link';
 
 /**
  * Keeps the model from linking anywhere it was not shown. The prompt asks it
@@ -120,7 +120,7 @@ export function createLinkFilter(isAllowed: (url: string) => boolean): LinkFilte
   };
 }
 
-/** The addresses an answer may link to. */
+/** The addresses an answer may link to: those it was shown, and any path on this site. */
 export interface LinkAllowList {
   allow(url: string): void;
   allows(url: string): boolean;
@@ -143,6 +143,7 @@ export function createLinkAllowList(known: Iterable<string>): LinkAllowList {
       if (key) allowed.add(key);
     },
     allows(url) {
+      if (isSitePath(url)) return true;
       const key = normalized(url);
       return key !== null && allowed.has(key);
     },

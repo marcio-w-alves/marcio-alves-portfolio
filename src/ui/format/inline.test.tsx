@@ -1,5 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { createFastPath } from '@/core/assistant/system1/fast-path';
+import { localize } from '@/core/knowledge/localize';
+import { profile } from '@/profile';
 import { InlineText } from './inline';
 
 // jsdom's accessible-name computation trims the space a browser keeps before the hidden note.
@@ -30,6 +33,27 @@ describe('InlineText', () => {
       'href',
       'https://en.wikipedia.org/wiki/Angular_(web_framework)',
     );
+  });
+
+  it('links the résumé the fast path offers, on this site, in the same tab', () => {
+    const fastPath = createFastPath(localize(profile.knowledge, 'en'), profile.copy.en.answers);
+    const result = fastPath.answer('Can I see his resume?', {
+      topic: 'overview',
+      lastIntent: null,
+      ctaShown: false,
+    });
+    const [lead] = result.kind === 'answered' ? result.response.parts : [];
+    const text = lead?.type === 'text' ? lead.text : '';
+
+    render(
+      <p>
+        <InlineText text={text} />
+      </p>,
+    );
+
+    const link = screen.getByRole('link', { name: 'open his resume as a PDF' });
+    expect(link).toHaveAttribute('href', profile.knowledge.contact.resumeUrl);
+    expect(link).not.toHaveAttribute('target');
   });
 
   it('keeps a mailto link in the same tab', () => {

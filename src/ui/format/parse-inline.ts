@@ -1,8 +1,8 @@
-import { scanLink } from '@/core/markdown/markdown-link';
+import { isSitePath, scanLink } from '@/core/markdown/markdown-link';
 
 /**
  * The inline Markdown subset an answer may use — `**bold**`, `` `code` `` and
- * `[label](https://…)` — parsed into plain data. Nothing here produces markup:
+ * `[label](https://…)` or `[label](/a-path-on-this-site)` — parsed into plain data. Nothing here produces markup:
  * the renderer turns each node into a text node inside a fixed element, so
  * text from a model cannot inject HTML.
  */
@@ -16,7 +16,7 @@ export type InlineNode =
       readonly kind: 'link';
       readonly text: string;
       readonly href: string;
-      /** An http(s) link leaves the site; a mailto link does not. */
+      /** An http(s) link leaves the site; a mailto link or a path on the site does not. */
       readonly external: boolean;
     };
 
@@ -26,7 +26,7 @@ const SAFE_HREF = /^(https?:\/\/|mailto:)/i;
 const WEB_HREF = /^https?:/i;
 
 export function isSafeHref(href: string): boolean {
-  return SAFE_HREF.test(href);
+  return SAFE_HREF.test(href) || isSitePath(href);
 }
 
 /**
