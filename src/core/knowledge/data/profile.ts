@@ -44,7 +44,7 @@ export const contact: Contact = {
   email: 'marcio.welben@gmail.com',
   linkedin: 'https://www.linkedin.com/in/marcio-montenegro',
   github: 'https://github.com/marcio-w-alves',
-  resumeUrl: null,
+  resumeUrl: '/marcio-alves-resume.pdf',
 };
 
 export const principles: readonly Principle[] = [
