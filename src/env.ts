@@ -46,3 +46,33 @@ export function siteUrl(): URL {
 
   return new URL('http://localhost:3000');
 }
+
+function nonEmpty(value: string | undefined): string | null {
+  return value === undefined || value === '' ? null : value;
+}
+
+export interface Deployment {
+  /** The release tag, when whoever deployed the build supplied one. */
+  readonly version: string | null;
+  /** The commit this deployment was built from, abbreviated as git does. */
+  readonly commit: string | null;
+  readonly environment: string;
+}
+
+/**
+ * Which build is running, from what the platform injects.
+ *
+ * The commit is the reliable identity: Vercel sets VERCEL_GIT_COMMIT_SHA on
+ * every git deployment. The release tag is not something it can know —
+ * semantic-release cuts it in CI once the gates pass, while Vercel is already
+ * building that same commit, and Vercel exposes no tag variable anyway. So
+ * `version` is RELEASE_VERSION when a deployment sets it, and null otherwise;
+ * the tag for a commit is on the repository's Releases page.
+ */
+export function deployment(): Deployment {
+  return {
+    version: nonEmpty(process.env.RELEASE_VERSION),
+    commit: nonEmpty(process.env.VERCEL_GIT_COMMIT_SHA)?.slice(0, 7) ?? null,
+    environment: process.env.VERCEL_ENV ?? 'development',
+  };
+}
