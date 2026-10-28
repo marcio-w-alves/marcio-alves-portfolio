@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import { ROLE_IDS } from '@/core/knowledge/ids';
-import { knowledgeBase, roleById, sourceOf } from '@/core/knowledge/knowledge-base';
+import { knowledgeBase, roleById } from '@/core/knowledge/knowledge-base';
 import type { AnswerSource } from '../assistant-event';
+import { citation } from '../citations';
 import type { GithubPort } from '../ports/github.port';
 import type { ReferencePort, ReferenceSummary } from '../ports/reference.port';
 import { evidenceReport } from './evidence-report';
@@ -87,7 +88,7 @@ export function createExternalTools({ references, github }: Dependencies): Tool[
             summary: role.summary,
           },
         },
-        sources: [...(summary ? [referenceSource(summary)] : []), sourceOf(role.source)],
+        sources: [...(summary ? [referenceSource(summary)] : []), citation(role.source)],
       };
     },
   });
@@ -102,7 +103,7 @@ export function createExternalTools({ references, github }: Dependencies): Tool[
       if (!city) {
         return {
           data: { country, city: 'not documented', note: 'Do not guess or infer the city.' },
-          sources: [sourceOf('profile')],
+          sources: [citation('profile')],
         };
       }
       const summary = await lookUp(city);
@@ -112,7 +113,7 @@ export function createExternalTools({ references, github }: Dependencies): Tool[
           country,
           reference: summary ? clip(summary.extract, MAX_EXTRACT) : UNAVAILABLE,
         },
-        sources: [sourceOf('profile'), ...(summary ? [referenceSource(summary)] : [])],
+        sources: [citation('profile'), ...(summary ? [referenceSource(summary)] : [])],
       };
     },
   });

@@ -1,4 +1,3 @@
-import type { AnswerSource } from '@/core/assistant/assistant-event';
 import { education, languages } from './data/education';
 import { experience } from './data/experience';
 import { metrics } from './data/metrics';
@@ -51,8 +50,8 @@ export function projectById(id: ProjectId): Project {
   return projectsById[id];
 }
 
-export function sourceOf(id: SourceId): AnswerSource {
-  return { id, label: sourceLabels[id] };
+export function sourceLabel(id: SourceId): string {
+  return sourceLabels[id];
 }
 
 /** Whether a role overlapped in time with any other. An open end means "still running". */

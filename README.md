@@ -56,10 +56,18 @@ off so the two can never disagree. The Tailwind plugin sorts every class list
 into canonical order, which keeps diffs about behaviour instead of class order.
 
 **dependency-cruiser** enforces the architecture. `src/core` may not import
-Next, React, a vendor SDK, or anything from an outer layer; cycles and
+Next, React, a vendor SDK, or anything from an outer layer, and inside it the
+knowledge base never imports the assistant. `src/ui` never reaches the
+adapters, the composition root or `env`; adapters never reach the routes, the
+UI or the root; routes reach adapters only through the root. Cycles and
 unresolvable imports are rejected. Zod is the single allowed dependency inside
 `src/core`, because the assistant's tool contracts are Zod schemas and those
-schemas are policy, not an adapter.
+schemas are policy, not an adapter. Each boundary rule has a fixture under
+`src/architecture/fixtures` that breaks it, and a test proves the rule reports
+it.
+
+`src/composition-root.ts` and `src/env.ts` import `server-only`, so a client
+component that reaches either fails `next build`.
 
 **commitlint** requires Conventional Commits whose subject ends with its task
 key, for example `feat(ui): add the composer (POR-10)`. The type drives the

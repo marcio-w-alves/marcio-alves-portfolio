@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import { METRIC_IDS, PROJECT_IDS, ROLE_IDS, SKILL_GROUP_IDS } from '@/core/knowledge/ids';
-import { knowledgeBase, roleById, sourceOf } from '@/core/knowledge/knowledge-base';
+import { knowledgeBase, roleById } from '@/core/knowledge/knowledge-base';
 import type { SourceId } from '@/core/knowledge/ids';
+import { citation } from '../citations';
 import type { ComponentPart } from '../response';
 import { contactCard, metrics, projects, skills, timeline } from '../response-kit';
 import { defineTool, type Tool, type ToolResult } from './tool';
@@ -15,7 +16,7 @@ import { defineTool, type Tool, type ToolResult } from './tool';
 
 // A block shows facts, so it cites them like any other answer does.
 function cite(ids: readonly SourceId[]): ToolResult['sources'] {
-  return [...new Set(ids)].map(sourceOf);
+  return [...new Set(ids)].map(citation);
 }
 
 /**
