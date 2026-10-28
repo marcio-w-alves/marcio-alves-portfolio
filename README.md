@@ -126,9 +126,16 @@ answered as undocumented rather than guessed.
 
 ## Deployment
 
-Hosted on Vercel, built from `main`. Every pull request gets its own preview
-deployment, which is what the manual test steps in a pull request description
-point at.
+Hosted on Vercel at **[marciomariani.dev](https://marciomariani.dev)**, built
+from `main`. Every pull request gets its own preview deployment, which is what
+the manual test steps in a pull request description point at.
+
+The canonical origin comes from `siteUrl()` in `src/env.ts`: an explicit
+`SITE_URL` wins, otherwise Vercel's production domain, otherwise localhost.
+Previews therefore declare the production domain as canonical, so search
+engines never index a preview URL as a second copy of the site. It is resolved
+apart from the server secrets on purpose — page metadata needs it at build
+time, and the build must never need a secret.
 
 Nothing about the build is configured in this repository, because nothing needs
 to be: Vercel detects Next.js, reads pnpm from the lockfile, and takes the Node
