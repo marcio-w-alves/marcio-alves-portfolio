@@ -9,7 +9,7 @@ import { MAX_OUTPUT_TOKENS } from '@/core/assistant/system2/model-assistant';
 import { SEARCH_UNAVAILABLE } from '@/core/assistant/tools/search-tools';
 import { profile } from '@/profile';
 import knowledgeIndex from '@/profile/generated/knowledge-index.json';
-import { createHealthHandler } from '../health/health-handler';
+import { createHealthHandler } from './health-handler';
 import { createChatHandler } from './chat-handler';
 
 /**

@@ -1,8 +1,7 @@
-import { knowledge } from './site-knowledge';
+import type { Knowledge } from '@/core/knowledge/schema';
 
 /** The owner as a schema.org Person, from the record. */
-export function personStructuredData(url: URL) {
-  const { profile, contact, skills } = knowledge;
+export function personStructuredData({ profile, contact, skills }: Knowledge, url: URL) {
   return {
     '@context': 'https://schema.org',
     '@type': 'Person',

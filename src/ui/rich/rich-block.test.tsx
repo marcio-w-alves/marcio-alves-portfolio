@@ -2,11 +2,14 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import type { RichComponent } from '@/core/assistant/components';
-import { knowledge } from '@/app/site-knowledge';
+import { profile } from '@/profile';
+import { createSiteContent } from '@/site/site-content';
 import { details, note, table } from '@/core/assistant/response-kit';
 import { createFastPath } from '@/core/assistant/system1/fast-path';
 import { exampleBlocks } from './examples';
 import { RichBlock } from './rich-block';
+
+const { knowledge } = createSiteContent(profile.knowledge);
 
 const exampleBlock = exampleBlocks(createFastPath(knowledge));
 
