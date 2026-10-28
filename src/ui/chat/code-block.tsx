@@ -27,7 +27,7 @@ export function CodeBlock({
   }, [copied]);
 
   return (
-    <figure className="m-0 animate-block-enter overflow-hidden rounded-md bg-code-bg inset-shadow-ring">
+    <figure className="bg-code-bg inset-shadow-ring m-0 animate-block-enter overflow-hidden rounded-md">
       <figcaption className="flex items-center justify-between gap-3 border-b border-border py-1 pr-1 pl-3.5 font-mono text-11.5 leading-none font-medium text-ink-muted">
         <span>{language}</span>
         <button

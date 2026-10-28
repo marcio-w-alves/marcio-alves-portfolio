@@ -22,7 +22,7 @@ export function Skills({ groups }: { readonly groups: readonly SkillGroup[] }) {
               {group.items.map((skill) => (
                 <li
                   key={skill}
-                  className="inline-flex h-7 items-center rounded-pill bg-surface px-2.75 text-13 whitespace-nowrap text-ink inset-shadow-ring"
+                  className="inset-shadow-ring inline-flex h-7 items-center rounded-pill bg-surface px-2.75 text-13 whitespace-nowrap text-ink"
                 >
                   {skill}
                 </li>

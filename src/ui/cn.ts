@@ -28,6 +28,7 @@ export const THEME_TOKENS = {
     '30',
     'code',
     '8.5',
+    '9.5',
     '10',
   ],
   leading: [

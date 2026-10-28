@@ -38,7 +38,7 @@ export function TimelineRole({
           onClick={() => {
             setIsOpen((open) => !open);
           }}
-          className="-mx-2 flex w-bleed cursor-pointer flex-wrap items-center gap-x-2.5 gap-y-1 rounded-sm bg-transparent px-2 py-1.5 text-left transition-[background-color] duration-fast ease-standard hover:bg-hover @max-phone/ma:min-h-11"
+          className="hover:bg-hover -mx-2 flex w-bleed cursor-pointer flex-wrap items-center gap-x-2.5 gap-y-1 rounded-sm bg-transparent px-2 py-1.5 text-left transition-[background-color] duration-fast ease-standard @max-phone/ma:min-h-11"
         >
           <span className="text-15 font-semibold tracking-name">{role.company}</span>
           <span className="text-14 text-ink-muted">{role.role}</span>
@@ -57,7 +57,7 @@ export function TimelineRole({
         {isOpen ? (
           <div
             id={panelId}
-            className="mt-3 flex animate-rise flex-col gap-4 rounded-md bg-surface p-4 shadow-raised"
+            className="shadow-raised mt-3 flex animate-rise flex-col gap-4 rounded-md bg-surface p-4"
           >
             {children}
           </div>

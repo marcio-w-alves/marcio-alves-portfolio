@@ -84,7 +84,7 @@ export function AssistantMessage({
         {message.status === 'error' && (
           <div
             role="alert"
-            className="flex flex-col gap-3 rounded-md bg-danger-bg px-4 py-3.5 text-danger"
+            className="bg-danger-bg flex flex-col gap-3 rounded-md px-4 py-3.5 text-danger"
           >
             <p className="m-0 flex items-center gap-2 text-14.5 font-semibold">
               <Icon name="alert" size="sm" />
@@ -126,7 +126,7 @@ export function AssistantMessage({
             {message.sources.map((source) => (
               <span
                 key={source.id}
-                className="inline-flex h-6 items-center gap-1.5 rounded-xs bg-sidebar px-2 font-mono text-11.5 leading-none whitespace-nowrap text-ink-muted"
+                className="bg-sidebar inline-flex h-6 items-center gap-1.5 rounded-xs px-2 font-mono text-11.5 leading-none whitespace-nowrap text-ink-muted"
               >
                 <Icon name="file" size="xs" />
                 {source.label}

@@ -16,7 +16,7 @@ export function DataTable({ columns, rows, caption }: DataTableProps) {
       aria-labelledby={caption ? captionId : undefined}
       aria-label={caption ? undefined : 'Table'}
       tabIndex={0}
-      className="animate-block-enter overflow-x-auto rounded-md bg-surface shadow-raised"
+      className="shadow-raised animate-block-enter overflow-x-auto rounded-md bg-surface"
     >
       <table className="w-full border-collapse text-14 leading-normal">
         {caption ? (

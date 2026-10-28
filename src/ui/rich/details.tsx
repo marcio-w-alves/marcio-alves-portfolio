@@ -16,7 +16,7 @@ export function Details({ summary, text }: DetailsProps) {
   const panelId = useId();
 
   return (
-    <div className="animate-block-enter rounded-md bg-surface shadow-raised">
+    <div className="shadow-raised animate-block-enter rounded-md bg-surface">
       <button
         type="button"
         aria-expanded={isOpen}

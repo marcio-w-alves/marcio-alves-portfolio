@@ -183,7 +183,7 @@ export function ChatWorkspace({
               if (message.role === 'user') {
                 return (
                   <li key={message.id} className="flex animate-turn justify-end">
-                    <p className="m-0 max-w-bubble rounded-xl rounded-br-xs bg-accent-bg px-3.5 py-2.5 text-15 leading-body wrap-anywhere whitespace-pre-wrap text-ink @max-phone/ma:max-w-bubble-phone">
+                    <p className="bg-accent-bg m-0 max-w-bubble rounded-xl rounded-br-xs px-3.5 py-2.5 text-15 leading-body wrap-anywhere whitespace-pre-wrap text-ink @max-phone/ma:max-w-bubble-phone">
                       <span className="sr-only">You asked: </span>
                       {message.text}
                     </p>

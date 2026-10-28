@@ -93,7 +93,7 @@ export function AppShell({
             if (event.key === 'Escape' && drawerOpen) close();
           }}
           className={cn(
-            'min-h-0 border-r border-border bg-sidebar',
+            'bg-sidebar min-h-0 border-r border-border',
             '@max-compact/ma:absolute @max-compact/ma:inset-y-0 @max-compact/ma:left-0 @max-compact/ma:z-30',
             '@max-compact/ma:w-76 @max-compact/ma:max-w-[86%] @max-compact/ma:border-r-0',
             '@max-compact/ma:duration-medium @max-compact/ma:ease-standard',

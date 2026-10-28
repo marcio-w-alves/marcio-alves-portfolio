@@ -22,7 +22,7 @@ export function ContactCard({
   return (
     <section
       aria-labelledby={titleId}
-      className="@container/contact flex animate-block-enter flex-col gap-4 rounded-lg bg-surface px-5.5 py-5 shadow-raised"
+      className="shadow-raised @container/contact flex animate-block-enter flex-col gap-4 rounded-lg bg-surface px-5.5 py-5"
     >
       <div className="flex items-start gap-3.5">
         <span

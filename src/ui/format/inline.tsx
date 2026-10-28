@@ -19,7 +19,7 @@ function InlineElement({ node }: { readonly node: InlineNode }) {
       return <strong className="font-semibold">{node.text}</strong>;
     case 'code':
       return (
-        <code className="rounded-code bg-code-bg px-1.25 py-px font-mono text-code font-normal inset-shadow-ring">
+        <code className="bg-code-bg inset-shadow-ring rounded-code px-1.25 py-px font-mono text-code font-normal">
           {node.text}
         </code>
       );

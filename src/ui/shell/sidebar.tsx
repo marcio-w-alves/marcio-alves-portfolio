@@ -83,7 +83,7 @@ export function Sidebar({
   return (
     <aside
       aria-label="Portfolio navigation"
-      className="flex h-full flex-col gap-6 overflow-y-auto bg-sidebar px-3 pt-4 pb-3"
+      className="bg-sidebar flex h-full flex-col gap-6 overflow-y-auto px-3 pt-4 pb-3"
     >
       <div className="flex items-center gap-3 px-1.5 py-1">
         <Monogram initials={profile.initials} />
@@ -118,7 +118,7 @@ export function Sidebar({
                     'transition-[background-color,color,box-shadow] duration-fast ease-standard',
                     '@max-compact/ma:h-11 @max-compact/ma:text-15',
                     active
-                      ? 'bg-surface font-medium text-ink shadow-raised'
+                      ? 'shadow-raised bg-surface font-medium text-ink'
                       : 'hover:bg-hover hover:text-ink',
                   )}
                 >

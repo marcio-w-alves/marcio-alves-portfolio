@@ -20,7 +20,7 @@ function ProjectPreview({ project }: { readonly project: ProjectView }) {
   return (
     <article
       aria-label={`Project: ${project.name}`}
-      className="@container/project flex h-full animate-block-enter flex-col gap-3.5 rounded-card bg-surface px-5 py-4.5 shadow-raised"
+      className="shadow-raised @container/project flex h-full animate-block-enter flex-col gap-3.5 rounded-card bg-surface px-5 py-4.5"
     >
       <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
         <div>

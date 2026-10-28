@@ -17,7 +17,7 @@ interface NoteProps {
 export function Note({ tone, text }: NoteProps) {
   const { label, icon } = TONES[tone];
   return (
-    <aside className="flex animate-block-enter items-start gap-2.5 rounded-control bg-sidebar px-3.5 py-2.75 text-13.5 leading-body text-ink-muted">
+    <aside className="bg-sidebar flex animate-block-enter items-start gap-2.5 rounded-control px-3.5 py-2.75 text-13.5 leading-body text-ink-muted">
       <Icon name={icon} size="sm" className="mt-0.5 text-ink-faint" />
       <p>
         <span className="mb-0.5 block font-mono text-11 leading-normal font-medium tracking-caps text-ink uppercase">

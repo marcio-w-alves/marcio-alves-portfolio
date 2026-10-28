@@ -13,10 +13,7 @@ export function Eyebrow({ children, as: Element = 'p', id, className }: EyebrowP
   return (
     <Element
       id={id}
-      className={cn(
-        'm-0 font-mono text-11.5 leading-label font-medium tracking-label text-ink-muted uppercase',
-        className,
-      )}
+      className={cn('m-0 font-sans text-12.5 leading-label font-medium text-ink-muted', className)}
     >
       {children}
     </Element>

@@ -9,38 +9,42 @@
  * a stylesheet.
  */
 @theme {
-  /* Surfaces */
-  --color-bg: #fafaf8;
-  --color-sidebar: #f5f5f2;
+  /*
+   * "White & Ice": white surfaces, cool ice neutrals, and ink as the only
+   * accent. `ink-faint` is for icons, rules and decoration only; text uses
+   * `ink-muted`, which holds 5.5:1 or better on every surface.
+   */
+  --color-bg: #ffffff;
+  --color-ice: #f9fafb;
   --color-surface: #ffffff;
-  --color-hover: #eff0ec;
-  --color-code-bg: #f7f7f4;
+  --color-fill: #f4f6f8;
+  --color-fill-hover: #eef1f4;
+  --color-selection: #e2e8f0;
+
+  --color-ink: #0f1115;
+  --color-ink-muted: #5b616b;
+  --color-ink-faint: #a3a9b1;
+
+  --color-border: #eceff2;
+  --color-border-strong: #dfe3e8;
+
+  --color-accent: #0f1115;
+  --color-accent-hover: #2b2f36;
+  --color-accent-soft: #eef2f6;
+  --color-accent-ring: #dce2e9;
+
+  --color-danger: #b42318;
+  --color-danger-soft: #fef5f4;
 
   /*
-   * Ink. `faint` is reserved for icons, rules and decoration: it does not
-   * reach WCAG AA as body text, which is what `muted` is for. The prototype
-   * darkened the brief's #767b77 to #686d69 for exactly that reason, and the
-   * corrected value is the one that ships — contrast outranks fidelity when
-   * the two disagree.
+   * Type: Inter for text, Inter Tight for display, Geist Mono for code, all
+   * self-hosted by next/font. Inter's character variants come with the stack.
    */
-  --color-ink: #202420;
-  --color-ink-muted: #686d69;
-  --color-ink-faint: #767b77;
-
-  /* Lines */
-  --color-border: #e8eae6;
-  --color-border-strong: #d6d9d3;
-
-  /* Accent and alert */
-  --color-accent: #376b56;
-  --color-accent-hover: #285440;
-  --color-accent-bg: #eaf2ec;
-  --color-danger: #9b3b2e;
-  --color-danger-bg: #faeeeb;
-
-  /* Type. The two stacks are self-hosted by the `geist` package. */
   --font-sans:
-    var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    var(--font-inter), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-sans--font-feature-settings: 'cv11', 'ss01', 'ss03';
+  --font-display:
+    var(--font-inter-tight), var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
   /*
@@ -78,6 +82,7 @@
 
   /* The assistant's mark: an outlined monogram, smaller still inline on a phone. */
   --text-8\.5: 8.5px;
+  --text-9\.5: 9.5px;
   --text-10: 10px;
 
   --leading-display: 1.02;
@@ -99,8 +104,8 @@
   --tracking-subhead: -0.02em;
   --tracking-name: -0.01em;
   --tracking-mono: 0.01em;
-  --tracking-avatar: 0.02em;
-  --tracking-monogram: 0.03em;
+  --tracking-avatar: 0.06em;
+  --tracking-monogram: 0.04em;
   --tracking-label: 0.08em;
 
   /* Rich answer blocks */
@@ -120,20 +125,21 @@
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
-  --radius-xl: 18px;
+  --radius-xl: 20px;
   --radius-pill: 999px;
 
   /* Rich answer blocks */
   --radius-code: 5px;
   --radius-card: 14px;
 
-  /* Depth */
-  --inset-shadow-ring: inset 0 0 0 1px var(--color-border);
-  --inset-shadow-ring-strong: inset 0 0 0 1px var(--color-border-strong);
-  --shadow-raised: 0 1px 2px rgb(32 36 32 / 0.05), 0 0 0 1px var(--color-border);
-  --shadow-composer: 0 1px 2px rgb(32 36 32 / 0.04), 0 12px 32px -20px rgb(32 36 32 / 0.24);
-  --shadow-drawer: 0 0 48px rgb(32 36 32 / 0.18);
-  --shadow-focus: 0 0 0 3px rgb(55 107 86 / 0.22);
+  /* Depth: hairlines first, a shadow only where something floats. */
+  --shadow-ring: 0 0 0 1px var(--color-border);
+  --shadow-ring-strong: 0 0 0 1px var(--color-border-strong);
+  --shadow-float:
+    0 0 0 1px var(--color-border), 0 1px 2px rgb(15 17 21 / 0.03),
+    0 10px 30px -18px rgb(15 17 21 / 0.16);
+  --shadow-drawer: 0 0 0 1px var(--color-border), 0 24px 60px rgb(15 17 21 / 0.12);
+  --shadow-focus: 0 0 0 4px rgb(15 17 21 / 0.05);
 
   /* The "Jump to latest" pill floats over the conversation. */
   --shadow-floating:
@@ -146,8 +152,8 @@
 
   /* Motion. One easing curve, two durations — anything else is improvisation. */
   --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --duration-fast: 140ms;
-  --duration-medium: 220ms;
+  --duration-fast: 150ms;
+  --duration-medium: 260ms;
 
   --animate-rise: rise var(--duration-medium) var(--ease-standard) both;
   --animate-fade: fade var(--duration-medium) var(--ease-standard) both;
@@ -200,7 +206,7 @@
     80%,
     100% {
       opacity: 0.25;
-      transform: scale(0.8);
+      transform: scale(0.75);
     }
     40% {
       opacity: 1;
@@ -209,8 +215,8 @@
   }
 
   /* Layout */
-  --container-column: 820px;
-  --container-sidebar: 260px;
+  --container-column: 720px;
+  --container-sidebar: 248px;
 
   /*
    * The app's two container breakpoints, read off the root named \`ma\`:
@@ -302,7 +308,7 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-accent);
+    outline: 2px solid var(--color-ink);
     outline-offset: 2px;
   }
 

@@ -99,7 +99,7 @@ export function ChatComposer({
       </label>
       <div
         className={cn(
-          'flex flex-col rounded-xl border border-border-strong bg-surface shadow-composer',
+          'shadow-composer flex flex-col rounded-xl border border-border-strong bg-surface',
           'transition-[border-color,box-shadow] duration-medium ease-standard',
           'focus-within:border-accent focus-within:ring-3 focus-within:ring-accent/22',
           isUnavailable && 'bg-sidebar shadow-none',
@@ -158,7 +158,7 @@ function KeyboardHint() {
 }
 
 function Key({ children }: { readonly children: string }) {
-  return <kbd className="rounded-kbd bg-bg px-1.25 py-px inset-shadow-ring">{children}</kbd>;
+  return <kbd className="inset-shadow-ring rounded-kbd bg-bg px-1.25 py-px">{children}</kbd>;
 }
 
 const SEND_CONTROL = cn(
@@ -176,7 +176,7 @@ function SendButton({ disabled }: { readonly disabled: boolean }) {
       className={cn(
         SEND_CONTROL,
         'bg-accent hover:not-disabled:bg-accent-hover',
-        'disabled:cursor-not-allowed disabled:bg-hover disabled:text-ink-faint',
+        'disabled:bg-hover disabled:cursor-not-allowed disabled:text-ink-faint',
       )}
     >
       <Icon name="arrowUp" />
