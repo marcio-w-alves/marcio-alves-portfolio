@@ -69,6 +69,7 @@ export interface Container {
   readonly requestLimiter: SlidingWindowLimiter;
   readonly reportRateLimited: (clientId: string) => void;
   readonly modelStatus: () => ModelStatus;
+  readonly requestTimeoutMs: number;
 }
 
 const tagClient = createClientTagger();
@@ -258,6 +259,7 @@ export function buildContainer({
     }),
     reportError,
     reportRateLimited,
+    requestTimeoutMs: settings.chatRequestTimeoutMs,
     modelStatus: () => ({
       model: model ? 'enabled' : 'disabled',
       circuit: model?.breaker.state() ?? null,

@@ -13,6 +13,7 @@ describe('assistant settings', () => {
       requestsPerTenMinutes: 40,
       modelAnswersPerTenMinutes: 15,
       dailyModelTokens: 2_000_000,
+      chatRequestTimeoutMs: 60_000,
     });
   });
 
@@ -36,6 +37,16 @@ describe('assistant settings', () => {
 
   it.each(['zero', '0', '-5', '1.5'])('refuses %j as a limit rather than guessing', (value) => {
     vi.stubEnv('MODEL_ANSWERS_PER_TEN_MINUTES', value);
+    expect(() => assistantSettings()).toThrow();
+  });
+
+  it('takes the overall time limit a deployment sets for an answer', () => {
+    vi.stubEnv('CHAT_REQUEST_TIMEOUT_MS', '45000');
+    expect(assistantSettings()).toMatchObject({ chatRequestTimeoutMs: 45_000 });
+  });
+
+  it.each(['soon', '0', '-1000'])('refuses %j as the overall time limit', (value) => {
+    vi.stubEnv('CHAT_REQUEST_TIMEOUT_MS', value);
     expect(() => assistantSettings()).toThrow();
   });
 });

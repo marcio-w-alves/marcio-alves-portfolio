@@ -190,6 +190,53 @@ describe('assistant — when the model is unavailable', () => {
   });
 });
 
+describe('assistant — an answer cut short', () => {
+  /** Starts an answer, then waits on a provider call that ends only when its signal aborts. */
+  const modelWaitingOnTheProvider: ModelAssistant = {
+    async *answer(_request, signal) {
+      yield { type: 'start', intent: 'model', related: null };
+      yield { type: 'text-start', id: 'p0' };
+      await new Promise((_resolve, reject) => {
+        signal?.addEventListener('abort', () => {
+          reject(signal.reason as Error);
+        });
+      });
+    },
+  };
+
+  async function answerStoppedBy(stop: 'visitor' | 'deadline') {
+    const visitor = new AbortController();
+    const deadline = new AbortController();
+    const answer = assistantWith(modelWaitingOnTheProvider).answer(request('What is TypeScript?'), {
+      visitor: visitor.signal,
+      deadline: deadline.signal,
+    });
+    const before = [await answer.next(), await answer.next()].map((next) =>
+      next.done ? undefined : next.value,
+    );
+    const rest = Array.fromAsync(answer);
+    (stop === 'visitor' ? visitor : deadline).abort(new DOMException('Stopped', 'AbortError'));
+    return { before, after: await rest };
+  }
+
+  it('ends silently, as abandoned and not as a failure, when the visitor leaves', async () => {
+    const { before, after } = await answerStoppedBy('visitor');
+
+    expect(before.map((event) => event?.type)).toEqual(['start', 'text-start']);
+    expect(after).toEqual([]);
+    expect(answered).toMatchObject([{ path: 'model', outcome: 'abandoned' }]);
+    expect(reported).toEqual([]);
+  });
+
+  it('records an interrupted answer, and no failure, when the time limit passes', async () => {
+    const { after } = await answerStoppedBy('deadline');
+
+    expect(after).toEqual([]);
+    expect(answered).toMatchObject([{ path: 'model', outcome: 'interrupted' }]);
+    expect(reported).toEqual([]);
+  });
+});
+
 describe('assistant — spending on the model', () => {
   it('replays a cached answer to the same question without calling the model or the budget', async () => {
     const { model, received } = sentenceModel();

@@ -8,8 +8,28 @@ export const EVENT_STREAM_HEADERS = {
   'X-Accel-Buffering': 'no',
 } as const;
 
+/**
+ * Well inside the browser's 30 s idle limit, so one late heartbeat never
+ * costs an answer that is still being worked on.
+ */
+export const HEARTBEAT_INTERVAL_MS = 10_000;
+
+const encoder = new TextEncoder();
+// A comment line: every client ignores it, and the bytes keep it from timing out.
+const HEARTBEAT = encoder.encode(': keep-alive\n\n');
+
 function frame(event: AssistantEvent): Uint8Array {
-  return new TextEncoder().encode(`data: ${JSON.stringify(event)}\n\n`);
+  return encoder.encode(`data: ${JSON.stringify(event)}\n\n`);
+}
+
+function isFinal(event: AssistantEvent): boolean {
+  return event.type === 'finish' || event.type === 'error';
+}
+
+interface Options {
+  /** When the answer has taken too long: the visitor is told it was interrupted. */
+  readonly deadline?: AbortSignal;
+  readonly heartbeatMs?: number;
 }
 
 /**
@@ -18,25 +38,66 @@ function frame(event: AssistantEvent): Uint8Array {
  * cancelled, which ends the generator — and, through the request's abort
  * signal, the model call behind it — so nobody pays for an answer no one is
  * reading.
+ *
+ * While the next event is being worked on — the model consulting actions
+ * before it writes anything — a heartbeat goes out every `heartbeatMs`.
  */
 export function eventStream(
   events: AsyncIterable<AssistantEvent>,
   reportError: (error: unknown) => void,
+  { deadline, heartbeatMs = HEARTBEAT_INTERVAL_MS }: Options = {},
 ): ReadableStream<Uint8Array> {
   const iterator = events[Symbol.asyncIterator]();
+  let ended = false;
+  let answered = false;
+  let heartbeat: ReturnType<typeof setInterval> | undefined;
+
+  function end(controller: ReadableStreamDefaultController<Uint8Array>, last?: AssistantEvent) {
+    ended = true;
+    clearInterval(heartbeat);
+    if (last) controller.enqueue(frame(last));
+    controller.close();
+  }
+
+  function send(controller: ReadableStreamDefaultController<Uint8Array>, event: AssistantEvent) {
+    answered ||= isFinal(event);
+    controller.enqueue(frame(event));
+  }
+
   return new ReadableStream({
+    start(controller) {
+      deadline?.addEventListener(
+        'abort',
+        () => {
+          if (ended) return;
+          end(controller, answered ? undefined : INTERRUPTED);
+          iterator.return?.().catch(reportError);
+        },
+        { once: true },
+      );
+    },
     async pull(controller) {
+      heartbeat = setInterval(() => {
+        controller.enqueue(HEARTBEAT);
+      }, heartbeatMs);
       try {
         const next = await iterator.next();
-        if (next.done) controller.close();
-        else controller.enqueue(frame(next.value));
+        if (ended) return;
+        if (next.done) end(controller);
+        else send(controller, next.value);
       } catch (error) {
+        // After the deadline the visitor has been told; what the answer
+        // throws on its way out is the abort it was sent.
+        if (ended) return;
         reportError(error);
-        controller.enqueue(frame(INTERRUPTED));
-        controller.close();
+        end(controller, INTERRUPTED);
+      } finally {
+        clearInterval(heartbeat);
       }
     },
     async cancel() {
+      ended = true;
+      clearInterval(heartbeat);
       await iterator.return?.();
     },
   });

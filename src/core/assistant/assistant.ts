@@ -16,8 +16,14 @@ export interface AssistantRequest {
   readonly clientId: string;
 }
 
+/** What may end an answer early: the visitor leaving, or the answer running out of time. */
+export interface AnswerSignals {
+  readonly visitor: AbortSignal;
+  readonly deadline: AbortSignal;
+}
+
 export interface Assistant {
-  answer(request: AssistantRequest, signal?: AbortSignal): AsyncGenerator<AssistantEvent>;
+  answer(request: AssistantRequest, signals?: AnswerSignals): AsyncGenerator<AssistantEvent>;
 }
 
 /**
@@ -76,7 +82,7 @@ export function createAssistant({
 }: Options): Assistant {
   async function* respond(
     { question, history, context, clientId }: AssistantRequest,
-    signal: AbortSignal | undefined,
+    signals: AnswerSignals | undefined,
   ): AsyncGenerator<AssistantEvent, Handling> {
     const routed = fastPath.answer(question, context);
     if (routed.kind === 'answered') {
@@ -108,6 +114,7 @@ export function createAssistant({
     }
 
     const emitted: AssistantEvent[] = [];
+    const signal = signals && AbortSignal.any([signals.visitor, signals.deadline]);
     try {
       const page = fastPath.pageShown(context);
       for await (const event of modelAssistant.answer(
@@ -124,7 +131,9 @@ export function createAssistant({
       return escalated('answered');
     } catch (error) {
       // A visitor who left is not a failure, and there is no one to answer.
-      if (signal?.aborted) return escalated('abandoned');
+      if (signals?.visitor.aborted) return escalated('abandoned');
+      // Nor is running out of time; whoever streams the answer tells the visitor.
+      if (signals?.deadline.aborted) return escalated('interrupted');
       reportError(error);
       if (emitted.length === 0) {
         yield* toEvents(fastPath.unknown());
@@ -136,9 +145,9 @@ export function createAssistant({
   }
 
   return {
-    async *answer(request, signal) {
+    async *answer(request, signals) {
       const startedAt = clock.now().getTime();
-      const handling = yield* respond(request, signal);
+      const handling = yield* respond(request, signals);
       onAnswered?.({
         ...handling,
         clientId: request.clientId,

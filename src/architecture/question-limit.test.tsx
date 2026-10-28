@@ -33,6 +33,7 @@ const handle = createChatHandler({
   reportError: () => undefined,
   requestLimiter: { admit: () => ({ allowed: true, retryAfterMs: 0 }) },
   reportRateLimited: () => undefined,
+  requestTimeoutMs: 60_000,
 });
 
 function ask(message: string): Promise<Response> {

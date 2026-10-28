@@ -64,20 +64,31 @@ afterAll(() => {
   server.close();
 });
 
-function postChat({
+interface TestSettings {
+  readonly dailyModelTokens?: number;
+  readonly openAITimeoutMs?: number;
+  readonly chatRequestTimeoutMs?: number;
+}
+
+function testContainer({
   dailyModelTokens,
   openAITimeoutMs = TEST_TIMEOUT_MS,
-}: { dailyModelTokens?: number; openAITimeoutMs?: number } = {}): (
-  request: Request,
-) => Promise<Response> {
+  chatRequestTimeoutMs,
+}: TestSettings = {}) {
   const settings = assistantSettings();
-  return createChatHandler(
-    buildContainer({
-      env: { OPENAI_API_KEY: 'test-key', GITHUB_TOKEN: undefined },
-      settings: { ...settings, dailyModelTokens: dailyModelTokens ?? settings.dailyModelTokens },
-      openAITimeoutMs,
-    }),
-  );
+  return buildContainer({
+    env: { OPENAI_API_KEY: 'test-key', GITHUB_TOKEN: undefined },
+    settings: {
+      ...settings,
+      dailyModelTokens: dailyModelTokens ?? settings.dailyModelTokens,
+      chatRequestTimeoutMs: chatRequestTimeoutMs ?? settings.chatRequestTimeoutMs,
+    },
+    openAITimeoutMs,
+  });
+}
+
+function postChat(testSettings: TestSettings = {}): (request: Request) => Promise<Response> {
+  return createChatHandler(testContainer(testSettings));
 }
 
 function loggedEvents(event: string): Record<string, unknown>[] {
@@ -270,6 +281,7 @@ function base64Floats(vector: readonly number[]): string {
 }
 
 const FALLBACK_START = { type: 'start', intent: 'unknown', related: null };
+const INTERRUPTED_EVENT = { type: 'error', error: { code: 'interrupted', retryable: true } };
 const MODEL_QUESTION = 'Compare Roots and Deel.';
 
 describe('POST /api/chat — the fast path', () => {
@@ -541,6 +553,118 @@ describe('POST /api/chat — a visitor who leaves mid-answer', () => {
   });
 });
 
+describe('POST /api/chat — an answer past its time limit', () => {
+  // Far beyond the time limit, so only the limit can end these answers.
+  const PATIENT_TIMEOUT_MS = 10_000;
+  const TIME_LIMIT_MS = 200;
+
+  const outOfTime = (testSettings: TestSettings = {}) =>
+    testContainer({
+      openAITimeoutMs: PATIENT_TIMEOUT_MS,
+      chatRequestTimeoutMs: TIME_LIMIT_MS,
+      ...testSettings,
+    });
+
+  it('ends with the interrupted event and stops the OpenAI call', async () => {
+    const signals = watchOutboundSignals();
+    server.use(
+      http.post(COMPLETIONS, () =>
+        stalledCompletion([chunk({ role: 'assistant', content: '' }), chunk({ content: 'He ' })]),
+      ),
+    );
+
+    const events = await allEventsOf(
+      await createChatHandler(outOfTime())(question(MODEL_QUESTION)),
+    );
+
+    expect(events.map((event) => event.type)).toEqual([
+      'start',
+      'text-start',
+      'text-delta',
+      'error',
+    ]);
+    expect(events.at(-1)).toEqual(INTERRUPTED_EVENT);
+    expect(signals.map((signal) => signal.aborted)).toEqual([true]);
+    await vi.waitFor(() => {
+      expect(loggedEvents('chat.answered')).toMatchObject([{ outcome: 'interrupted' }]);
+    });
+    expect(reported).toEqual([]);
+  });
+
+  it('ends with the interrupted event while the model is still consulting actions', async () => {
+    server.use(http.post(COMPLETIONS, ({ request }) => noResponseUntilAborted(request)));
+
+    const events = await allEventsOf(
+      await createChatHandler(outOfTime())(question(MODEL_QUESTION)),
+    );
+
+    expect(events).toEqual([INTERRUPTED_EVENT]);
+    expect(
+      outbound.filter((request) => request.url === COMPLETIONS).map((r) => r.signal.aborted),
+    ).toEqual([true]);
+    await vi.waitFor(() => {
+      expect(loggedEvents('chat.answered')).toMatchObject([{ outcome: 'interrupted' }]);
+    });
+    expect(reported).toEqual([]);
+  });
+
+  it('counts against neither circuit breaker, however often it happens', async () => {
+    // Every answer waits on OpenAI past the time limit: three in a row on the
+    // model, as many as open its circuit, then three on the search.
+    let rounds = 0;
+    server.use(
+      http.post(COMPLETIONS, ({ request }) => {
+        rounds += 1;
+        return rounds <= 3
+          ? noResponseUntilAborted(request)
+          : completion(toolCallRound('searchKnowledge', '{"query":"Roots backend"}'));
+      }),
+      http.post(EMBEDDINGS, ({ request }) => noResponseUntilAborted(request)),
+    );
+    const container = outOfTime();
+    const ask = createChatHandler(container);
+
+    const companies = ['Roots', 'Deel', 'Way2b1', 'Shall', 'Toptal', 'Acme'];
+    for (const [index, company] of companies.entries()) {
+      const events = await allEventsOf(await ask(question(`Compare ${company} and Deel.`)));
+      expect(events.at(-1)).toEqual(INTERRUPTED_EVENT);
+      // The visitor is told at once; the abandoned calls finish unwinding after.
+      await vi.waitFor(() => {
+        expect(loggedEvents('chat.answered')).toHaveLength(index + 1);
+      });
+    }
+
+    expect(outbound.filter((request) => request.url === EMBEDDINGS)).toHaveLength(3);
+    expect(await createHealthHandler(container)().json()).toMatchObject({
+      circuit: 'closed',
+      retrieval: 'closed',
+    });
+    expect(loggedEvents('model.circuit_opened')).toEqual([]);
+    expect(loggedEvents('retrieval.circuit_opened')).toEqual([]);
+  });
+
+  it('is told apart from a visitor leaving, who gets no interrupted event and no failure', async () => {
+    server.use(http.post(COMPLETIONS, ({ request }) => noResponseUntilAborted(request)));
+    const leaving = new AbortController();
+    const asked = question(MODEL_QUESTION, { signal: leaving.signal });
+
+    const answer = allEventsOf(await postChat({ openAITimeoutMs: PATIENT_TIMEOUT_MS })(asked));
+    await vi.waitFor(() => {
+      expect(outbound.filter((request) => request.url === COMPLETIONS)).toHaveLength(1);
+    });
+    leaving.abort();
+
+    expect(await answer).toEqual([]);
+    // Held to the end, as the platform holds a request while its connection
+    // is open: undici stops forwarding the abort to a collected Request's signal.
+    expect(asked.signal.aborted).toBe(true);
+    await vi.waitFor(() => {
+      expect(loggedEvents('chat.answered')).toMatchObject([{ outcome: 'abandoned' }]);
+    });
+    expect(reported).toEqual([]);
+  });
+});
+
 describe('POST /api/chat — pacing', () => {
   it('turns a client away after forty requests in ten minutes, saying when to retry', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
@@ -628,12 +752,15 @@ describe('POST /api/chat — the spending budget', () => {
     }
     const leaving = new AbortController();
     const responsesBefore = openAIResponses;
-    const answer = allEventsOf(await handle(question(MODEL_QUESTION, { signal: leaving.signal })));
+    const asked = question(MODEL_QUESTION, { signal: leaving.signal });
+    const answer = allEventsOf(await handle(asked));
     await vi.waitFor(() => {
       expect(openAIResponses).toBe(responsesBefore + 1);
     });
     leaving.abort();
     await answer.catch(() => undefined);
+    // Held until the abort reached it: undici stops forwarding the abort to a collected Request.
+    expect(asked.signal.aborted).toBe(true);
   }
 
   /** Runs one interrupted answer through a fresh container and waits until its cost is recorded. */

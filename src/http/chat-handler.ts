@@ -48,6 +48,25 @@ interface Dependencies {
   readonly reportError: (error: unknown) => void;
   readonly requestLimiter: RequestLimiter;
   readonly reportRateLimited: (clientId: string) => void;
+  /** The longest an answer may take before it ends as interrupted. */
+  readonly requestTimeoutMs: number;
+}
+
+/**
+ * Aborts as a cancellation, not as a timeout: an answer out of time says
+ * nothing about the health of the model or the search behind it, so it must
+ * not count against their circuit breakers.
+ */
+function deadlineAfter(ms: number): AbortSignal {
+  const deadline = new AbortController();
+  AbortSignal.timeout(ms).addEventListener(
+    'abort',
+    () => {
+      deadline.abort(new DOMException('The answer ran out of time.', 'AbortError'));
+    },
+    { once: true },
+  );
+  return deadline.signal;
 }
 
 export function createChatHandler({
@@ -55,6 +74,7 @@ export function createChatHandler({
   reportError,
   requestLimiter,
   reportRateLimited,
+  requestTimeoutMs,
 }: Dependencies) {
   return async function handle(request: Request): Promise<Response> {
     const clientId = clientIdOf(request);
@@ -82,10 +102,13 @@ export function createChatHandler({
     }
 
     const { message, history, context } = parsed.data;
+    const deadline = deadlineAfter(requestTimeoutMs);
     const events = assistant.answer(
       { question: message, history, context, clientId },
-      request.signal,
+      { visitor: request.signal, deadline },
     );
-    return new Response(eventStream(events, reportError), { headers: EVENT_STREAM_HEADERS });
+    return new Response(eventStream(events, reportError, { deadline }), {
+      headers: EVENT_STREAM_HEADERS,
+    });
   };
 }

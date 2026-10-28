@@ -36,6 +36,7 @@ const chatHandler = createChatHandler({
   reportError: () => undefined,
   requestLimiter: { admit: () => ({ allowed: true, retryAfterMs: 0 }) },
   reportRateLimited: () => undefined,
+  requestTimeoutMs: 60_000,
 });
 
 const server = setupServer(http.post(CHAT_URL, ({ request }) => chatHandler(request)));
