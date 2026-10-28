@@ -114,12 +114,17 @@ test('robots.txt keeps crawlers out of the API and points to the sitemap', async
   expect(robots).toMatch(/^Sitemap: https?:\/\/[^/]+\/sitemap\.xml$/m);
 });
 
-test('the sitemap lists the home page and every topic page at their canonical addresses', async ({
-  page,
-  request,
-}) => {
+test('the sitemap lists every page at its canonical address', async ({ page, request }) => {
   const canonicals: string[] = [];
-  for (const path of ['/', '/experience', '/skills', '/projects', '/philosophy', '/education']) {
+  for (const path of [
+    '/',
+    '/experience',
+    '/skills',
+    '/projects',
+    '/philosophy',
+    '/education',
+    '/about-this-site',
+  ]) {
     await page.goto(path);
     canonicals.push(String(await page.locator('link[rel="canonical"]').getAttribute('href')));
   }
@@ -127,4 +132,25 @@ test('the sitemap lists the home page and every topic page at their canonical ad
 
   const locations = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(([, loc]) => loc);
   expect(locations).toEqual(canonicals.map((canonical) => new URL(canonical).href));
+});
+
+test('the page about the site is listed, shared and readable without a chat', async ({
+  page,
+  request,
+}) => {
+  const sitemap = await (await request.get('/sitemap.xml')).text();
+  expect(sitemap).toContain('/about-this-site</loc>');
+
+  await page.goto('/about-this-site');
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'How this portfolio is built' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'Spending fewer tokens' }),
+  ).toBeVisible();
+  await expect(page.getByRole('textbox')).toHaveCount(0);
+  await expect(
+    page.getByRole('navigation', { name: 'Topics' }).getByRole('link', { name: 'About this site' }),
+  ).toHaveAttribute('aria-current', 'page');
+  expect(await page.locator('meta[property="og:type"]').getAttribute('content')).toBe('article');
 });

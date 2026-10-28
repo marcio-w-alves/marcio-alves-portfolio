@@ -17,6 +17,16 @@ describe('workspaceView', () => {
     );
   });
 
+  it('links no page beside the topics when the profile writes none', () => {
+    expect(workspaceView(content).pages).toEqual([]);
+  });
+
+  it('links the page about the site when the profile writes one', () => {
+    const about = { label: 'About', title: 'How it works', description: 'd', markdown: '## x' };
+    const { pages } = workspaceView(createSiteContent(fixtureKnowledge, fixtureAnswers, about));
+    expect(pages).toEqual([{ label: 'About', icon: 'layers', href: '/about-this-site' }]);
+  });
+
   it.each(TOPIC_IDS)('opens the %s page on its own conversation and four suggestions', (topic) => {
     const view = workspaceView(content, topic);
 

@@ -1,4 +1,5 @@
 import { brand } from './brand';
+import { about } from './copy/en/about';
 import { answers } from './copy/en/answers';
 import { site } from './copy/en/site';
 import { ui } from './copy/en/ui';
@@ -16,6 +17,6 @@ export const profile = validateProfile({
   knowledge,
   siteAllowList,
   brand,
-  copy: { en: { answers, ui, site } },
+  copy: { en: { answers, ui, site, about } },
   evaluation,
 });

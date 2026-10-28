@@ -1,3 +1,4 @@
+import type { AboutPageCopy } from './about-page';
 import type { AnswerSet } from '@/core/assistant/answer-set';
 import type { KnowledgeSource } from '@/core/knowledge/schema';
 import type { CopyOverrides } from './site-messages';
@@ -63,6 +64,8 @@ export interface Brand {
 /** What the site writes in one language: the answers around the record, and its own wording. */
 export interface LocaleCopy extends CopyOverrides {
   readonly answers: AnswerSet;
+  /** The page about the site itself; without it the site has none. */
+  readonly about?: AboutPageCopy;
 }
 
 /** What the pages are built from. The site-root binds the owner's profile; tests bind a fixture. */

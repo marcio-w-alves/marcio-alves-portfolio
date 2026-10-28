@@ -20,6 +20,13 @@ export interface SidebarTopic {
   readonly href: string;
 }
 
+/** A page beside the topics, with no conversation of its own. */
+export interface SidebarPage {
+  readonly label: string;
+  readonly icon: IconName;
+  readonly href: string;
+}
+
 export interface SidebarLinks {
   readonly email: string;
   readonly linkedin: string;
@@ -30,7 +37,11 @@ export interface SidebarLinks {
 interface SidebarProps {
   readonly profile: SidebarProfile;
   readonly topics: readonly SidebarTopic[];
-  readonly activeTopic: TopicId;
+  /** Null on a page that is not a topic. */
+  readonly activeTopic: TopicId | null;
+  readonly pages?: readonly SidebarPage[] | undefined;
+  /** The page among `pages` being shown, if any. */
+  readonly activePage?: string | undefined;
   readonly links: SidebarLinks;
   readonly onNewConversation: () => void;
   /** Only shown in the drawer layout. */
@@ -44,6 +55,8 @@ export function Sidebar({
   profile,
   topics,
   activeTopic,
+  pages = [],
+  activePage,
   links,
   onNewConversation,
   onClose,
@@ -100,6 +113,15 @@ export function Sidebar({
             </li>
           ))}
         </ul>
+        {pages.length > 0 ? (
+          <ul className="mt-2 flex flex-col gap-0.5 pt-2 inset-shadow-rule-top">
+            {pages.map((page) => (
+              <li key={page.href}>
+                <TopicLink topic={page} active={page.href === activePage} onNavigate={onClose} />
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </nav>
 
       <SidebarFooter links={links} />
@@ -112,7 +134,7 @@ function TopicLink({
   active,
   onNavigate,
 }: {
-  topic: SidebarTopic;
+  topic: SidebarTopic | SidebarPage;
   active: boolean;
   onNavigate: () => void;
 }) {

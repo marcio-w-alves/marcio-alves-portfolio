@@ -12,6 +12,7 @@ import {
   Sidebar,
   type SidebarLinks,
   type SidebarProfile,
+  type SidebarPage,
   type SidebarTopic,
 } from '../shell/sidebar';
 import {
@@ -37,6 +38,8 @@ interface ChatWorkspaceProps {
   readonly profile: SidebarProfile;
   readonly links: SidebarLinks;
   readonly topics: readonly SidebarTopic[];
+  /** Pages beside the topics, without a conversation. */
+  readonly pages?: readonly SidebarPage[] | undefined;
   readonly welcome: WelcomeCopy;
   /** How the assistant appears beside its answers. */
   readonly assistant: AssistantIdentity;
@@ -68,6 +71,7 @@ export function ChatWorkspace({
   profile,
   links,
   topics,
+  pages,
   welcome,
   assistant,
   suggestions,
@@ -187,6 +191,7 @@ export function ChatWorkspace({
           profile={profile}
           topics={topics}
           activeTopic={topic}
+          pages={pages}
           links={links}
           onNewConversation={startOver}
           onClose={() => {

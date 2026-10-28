@@ -1,10 +1,13 @@
 import type { ReactNode } from 'react';
 import type { TopicId } from '@/core/chat/topic-id';
+import { AboutWorkspace } from '@/ui/about/about-workspace';
+import { Article } from '@/ui/about/article';
 import { ChatWorkspace } from '@/ui/chat/chat-workspace';
 import { ConversationsProvider } from '@/ui/chat/conversation-store';
 import { I18nProvider } from '@/ui/i18n/i18n-provider';
 import { ButtonLink } from '@/ui/primitives';
 import { StatusNotice } from '@/ui/status/status-notice';
+import { ABOUT_PATH, aboutMetadata } from './about-page';
 import { THEME_SCRIPT } from '@/ui/theme/theme';
 import { iconImage } from './icon';
 import { loadImageFonts, type ImageFonts } from './image-fonts';
@@ -40,7 +43,8 @@ interface ImageSize {
  * re-export what this returns, so any profile that validates renders a site.
  */
 export function createSite(profile: SiteProfile, { fontClassName, siteUrl }: SiteOptions) {
-  const content = createSiteContent(profile.knowledge, profile.copy.en.answers);
+  const { about } = profile.copy.en;
+  const content = createSiteContent(profile.knowledge, profile.copy.en.answers, about);
   const { knowledge } = content;
   const messages = siteMessages(knowledge, profile.copy.en);
 
@@ -102,6 +106,40 @@ export function createSite(profile: SiteProfile, { fontClassName, siteUrl }: Sit
     return { metadata: topicMetadata(content, messages.site, topic), Page: TopicPage };
   }
 
+  /** The page about the site itself, or null when the profile has none. */
+  function aboutPage() {
+    if (!about) return null;
+    const view = workspaceView(content);
+    function AboutPage() {
+      if (!about) return null;
+      return (
+        <>
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: serializeStructuredData(
+                topicStructuredData(knowledge, siteUrl(), about.label, ABOUT_PATH),
+              ),
+            }}
+          />
+          <AboutWorkspace
+            profile={view.profile}
+            links={view.links}
+            topics={view.topics}
+            pages={view.pages}
+            activePage={ABOUT_PATH}
+          >
+            <Article title={about.title} markdown={about.markdown} />
+          </AboutWorkspace>
+        </>
+      );
+    }
+    return {
+      metadata: aboutMetadata(about, messages.site, knowledge.profile.name),
+      Page: AboutPage,
+    };
+  }
+
   function NotFound() {
     const { notFound } = messages.site;
     return (
@@ -126,8 +164,9 @@ export function createSite(profile: SiteProfile, { fontClassName, siteUrl }: Sit
     homeMetadata,
     HomePage,
     topicPage,
+    aboutPage,
     NotFound,
-    sitemap: () => sitemap(siteUrl()),
+    sitemap: () => sitemap(siteUrl(), about ? [ABOUT_PATH] : []),
     robots: () => robots(siteUrl()),
     imageFonts: () => loadImageFonts(profile.brand.imageFont),
     icon: (size: ImageSize, fonts: ImageFonts) =>

@@ -143,6 +143,7 @@ const profileSchema = z
         answers: z.looseObject({}),
         ui: z.looseObject({}),
         site: z.looseObject({}),
+        about: z.looseObject({}).optional(),
       }),
     }),
     evaluation: z.array(z.looseObject({ id: z.string().regex(/\S/) })),
