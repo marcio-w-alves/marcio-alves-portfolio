@@ -4,6 +4,10 @@ import type {
   KnowledgeSearchQuery,
   Passage,
 } from '../ports/knowledge-search.port';
+import { buildCorpus } from '@/core/knowledge/corpus';
+import { localize } from '@/core/knowledge/localize';
+import { fixtureKnowledge } from '@/testing/fixture-profile/knowledge';
+import { createCitation } from '../citations';
 import { createSearchTools, SEARCH_UNAVAILABLE } from './search-tools';
 
 const SHALL = { id: 'resume.shall', label: 'Resume' };
@@ -35,6 +39,124 @@ async function run(port: KnowledgeSearchPort, args: unknown) {
   if (!outcome.ok) throw new Error(outcome.error);
   return outcome.result;
 }
+
+const knowledge = localize(fixtureKnowledge, 'en');
+const corpus = buildCorpus(knowledge);
+const citation = createCitation(knowledge.sourceLabels);
+
+/** A passage of a corpus, as the vector search hands it back. */
+function corpusPassage(id: string, score: number): Passage {
+  const chunk = corpus.find((candidate) => candidate.id === id);
+  if (!chunk) throw new Error(`${id} is not in the corpus`);
+  return { id, category: chunk.category, text: chunk.text, source: citation(chunk.source), score };
+}
+
+// Ranked as the Portuguese leadership question once was: a skill list,
+// education and certifications above the roles, notes alongside.
+const WHOLE_RECORD = [
+  corpusPassage('notes:1', 0.61),
+  corpusPassage('skills:platform', 0.48),
+  corpusPassage('notes:2', 0.47),
+  corpusPassage('role:acme:0', 0.41),
+  corpusPassage('education', 0.33),
+  corpusPassage('profile', 0.31),
+  corpusPassage('certifications', 0.29),
+];
+// The experience-only search fills its limit on any real-sized record.
+const EXPERIENCE = [
+  corpusPassage('role:acme:0', 0.41),
+  corpusPassage('role:acme', 0.39),
+  corpusPassage('role:globex', 0.36),
+  corpusPassage('role:globex:0', 0.34),
+  corpusPassage('role:initech', 0.33),
+];
+
+function rankedRecord() {
+  const queries: KnowledgeSearchQuery[] = [];
+  const port: KnowledgeSearchPort = {
+    search: (query) => {
+      queries.push(query);
+      return Promise.resolve(query.category === 'experience' ? EXPERIENCE : WHOLE_RECORD);
+    },
+  };
+  return { port, queries };
+}
+
+function passageIds(data: unknown): string[] {
+  const shown = (data as { passages: { text: string }[] }).passages;
+  return shown.map(
+    ({ text }) => [...WHOLE_RECORD, ...EXPERIENCE].find((item) => item.text === text)?.id ?? text,
+  );
+}
+
+describe('searchKnowledge — questions about leading people', () => {
+  it.each([
+    'Has he led teams?',
+    'Ele já liderou equipes?',
+    'Did he mentor engineers?',
+    'Has he managed a team of developers?',
+    'Ele já foi gestor de alguém?',
+    'Ele gerenciou pessoas?',
+    '¿Ha sido líder de un equipo?',
+    '¿Gestionó personas?',
+    'Did he supervise anyone?',
+  ])('puts three role passages first for "%s"', async (question) => {
+    const { port, queries } = rankedRecord();
+
+    const result = await run(port, { query: question });
+
+    expect(queries).toContainEqual({ query: question, limit: 5, category: 'experience' });
+    expect(passageIds(result.data).slice(0, 3)).toEqual([
+      'role:acme:0',
+      'role:acme',
+      'role:globex',
+    ]);
+  });
+
+  it('keeps every note and displaces only the weakest résumé passages', async () => {
+    const { port } = rankedRecord();
+
+    const result = await run(port, { query: 'Ele já liderou equipes?' });
+
+    expect(passageIds(result.data)).toEqual([
+      'role:acme:0',
+      'role:acme',
+      'role:globex',
+      'notes:1',
+      'skills:platform',
+      'notes:2',
+      'education',
+    ]);
+  });
+
+  it.each([
+    'What is his lead time to production?',
+    'How does he manage state in React?',
+    'Como é o gerenciamento de estado no frontend?',
+    'Ele usa gestão de estado no frontend?',
+    'Does he like working in remote teams?',
+    'Ele trabalha bem em equipe?',
+  ])('keeps the ranking as it is for "%s"', async (question) => {
+    const { port, queries } = rankedRecord();
+
+    const result = await run(port, { query: question });
+
+    expect(queries).toEqual([{ query: question, limit: 5 }]);
+    expect(passageIds(result.data)).toEqual(WHOLE_RECORD.map(({ id }) => id));
+  });
+
+  it('tells which passages back each source, so an answer cites only what it used', async () => {
+    const passages = [corpusPassage('role:acme:0', 0.4), corpusPassage('role:acme', 0.3)];
+    const { port } = searchReturning([...passages, corpusPassage('education', 0.2)]);
+
+    const result = await run(port, { query: 'Acme' });
+
+    expect(result.evidence).toEqual({
+      'cv.acme': `${passages[0]?.text ?? ''}\n${passages[1]?.text ?? ''}`,
+      'cv.education': corpusPassage('education', 0).text,
+    });
+  });
+});
 
 describe('searchKnowledge', () => {
   it('returns matching passages with their relevance, citing each source once', async () => {
@@ -68,8 +190,8 @@ describe('searchKnowledge', () => {
 
   it('searches his whole record for the five best passages', async () => {
     const { port, queries } = searchReturning([]);
-    await run(port, { query: 'leadership' });
-    expect(queries).toEqual([{ query: 'leadership', limit: 5 }]);
+    await run(port, { query: 'accessibility' });
+    expect(queries).toEqual([{ query: 'accessibility', limit: 5 }]);
   });
 
   it('refuses an empty or oversized query', async () => {
@@ -80,15 +202,15 @@ describe('searchKnowledge', () => {
 
   it('searches for the query without the spaces around it', async () => {
     const { port, queries } = searchReturning([]);
-    await run(port, { query: '  leadership \n' });
-    expect(queries.map((query) => query.query)).toEqual(['leadership']);
+    await run(port, { query: '  accessibility \n' });
+    expect(queries.map((query) => query.query)).toEqual(['accessibility']);
   });
 
   it('accepts a query at either length limit, in any script', async () => {
     const { port, queries } = searchReturning([]);
     await run(port, { query: 'ux' });
     await run(port, { query: 'é'.repeat(300) });
-    await run(port, { query: 'liderança de equipes 🚀' });
+    await run(port, { query: 'acessibilidade na Deel 🚀' });
     expect(queries).toHaveLength(3);
   });
 

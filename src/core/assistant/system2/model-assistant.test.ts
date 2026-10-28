@@ -8,6 +8,7 @@ import type {
   ModelUsage,
   ToolCall,
 } from '../ports/language-model.port';
+import type { KnowledgeSearchPort, Passage } from '../ports/knowledge-search.port';
 import type { ReferencePort } from '../ports/reference.port';
 import { createResponseKit } from '../response-kit';
 import { createExternalTools } from '../tools/external-tools';
@@ -672,5 +673,143 @@ describe('model assistant — what reaches the visitor', () => {
       }
     }).rejects.toThrow('provider down');
     expect(seen).toEqual([]);
+  });
+});
+
+function recordPassage(
+  id: string,
+  category: Passage['category'],
+  text: string,
+  sourceId: string,
+): Passage {
+  return { id, category, text, source: { id: sourceId, label: 'Resume' }, score: 0.4 };
+}
+
+const HRIS_LEAD = recordPassage(
+  'role:deel:1',
+  'experience',
+  "Deel (Senior Frontend Engineer, 2022 — 2026): Helped lead and maintain the HRIS team responsible for the company's core HR tools product.",
+  'resume.deel',
+);
+const ROOTS_TEAM = recordPassage(
+  'role:roots:1',
+  'experience',
+  'Roots (Lead Frontend Engineer, 2020 — 2022): Expanded the frontend team from a solo developer setup by recruiting and integrating three additional developers.',
+  'resume.roots',
+);
+const SKILL_LIST = recordPassage(
+  'skills:leadership',
+  'skills',
+  'Skills — Leadership: Technical Strategy, Technical Trade-offs, Mentoring, Code Reviews, Hiring, OKR Planning, Agile.',
+  'resume.skills',
+);
+const DEGREE = recordPassage(
+  'education',
+  'education',
+  'Education: Bachelor of Computer Science, completed in 2015.',
+  'resume.education',
+);
+const COURSES = recordPassage(
+  'certifications',
+  'certifications',
+  'Certifications, which are courses and not professional experience: Scrum Fundamentals.',
+  'resume.certifications',
+);
+
+/** His whole record ranked as it was for the Portuguese question: the roles below the skill list. */
+const leadershipRecord: KnowledgeSearchPort = {
+  search: ({ category }) =>
+    Promise.resolve(
+      category === 'experience'
+        ? [HRIS_LEAD, ROOTS_TEAM]
+        : [SKILL_LIST, DEGREE, COURSES, HRIS_LEAD, ROOTS_TEAM],
+    ),
+};
+
+async function answerWithSearch(
+  model: LanguageModelPort,
+  record: KnowledgeSearchPort,
+  question: string,
+) {
+  const tools = registry(createSearchTools(record, rethrow));
+  const assistant = createModelAssistant({ model, tools, clock });
+  const events: AssistantEvent[] = [];
+  for await (const event of assistant.answer({ question, history: [], followUps: [] })) {
+    events.push(event);
+  }
+  return events;
+}
+
+function citedIds(events: readonly AssistantEvent[]): string[] {
+  const finish = events.at(-1);
+  return finish?.type === 'finish' ? finish.sources.map((source) => source.id) : [];
+}
+
+function passagesShown(request: ModelRequest | undefined): string[] {
+  const [reply] = Object.values(toolReplies(request)) as { passages: { text: string }[] }[];
+  return reply?.passages.map((passage) => passage.text) ?? [];
+}
+
+describe('model assistant — leadership answers rest on the roles where he led', () => {
+  it.each([
+    [
+      'Has he led teams?',
+      'Yes. At Deel he helped lead and maintain the HRIS team; at Roots he grew the frontend team from a solo setup by recruiting three developers.',
+    ],
+    [
+      'Ele já liderou equipes?',
+      'Sim. Na Deel, ajudou a liderar e manter o time de HRIS; na Roots, expandiu a equipe de frontend, recrutando e integrando três desenvolvedores.',
+    ],
+  ])(
+    'hands the model the role statements first and cites only them for "%s"',
+    async (question, answer) => {
+      const { port, requests } = scriptedModel([
+        { calls: [call('searchKnowledge', { query: question })] },
+        { text: answer },
+      ]);
+
+      const events = await answerWithSearch(port, leadershipRecord, question);
+
+      expect(passagesShown(requests[1]).slice(0, 2)).toEqual([HRIS_LEAD.text, ROOTS_TEAM.text]);
+      expect(text(events)).toBe(answer);
+      expect(citedIds(events)).toEqual(['resume.deel', 'resume.roots']);
+    },
+  );
+});
+
+describe('model assistant — sources are the evidence the answer used', () => {
+  it('cites only the record the answer used, of the two the search returned', async () => {
+    const { port } = scriptedModel([
+      { calls: [call('searchKnowledge', { query: 'Where did he study?' })] },
+      { text: 'He holds a Bachelor of Computer Science, completed in 2015.' },
+    ]);
+    const record: KnowledgeSearchPort = { search: () => Promise.resolve([COURSES, DEGREE]) };
+
+    const events = await answerWithSearch(port, record, 'Where did he study?');
+
+    expect(citedIds(events)).toEqual(['resume.education']);
+  });
+
+  it('cites what a card shows, even when the text says nothing about it', async () => {
+    const { port } = scriptedModel([
+      {
+        calls: [call('getProfileSummary', {}), call('showMetrics', { ids: ['deel-people-list'] })],
+      },
+      { text: 'Here is one measured result.' },
+    ]);
+
+    expect(citedIds(await collect(port))).toEqual(['resume.deel']);
+  });
+
+  it('keeps every source when the answer echoes none of them closely enough to tell', async () => {
+    const { port } = scriptedModel([
+      { calls: [call('searchKnowledge', { query: 'his background' })] },
+      { text: 'he has a varied background.' },
+    ]);
+    const record: KnowledgeSearchPort = { search: () => Promise.resolve([COURSES, DEGREE]) };
+
+    const events = await answerWithSearch(port, record, 'his background');
+
+    expect(citedIds(events)).toEqual(['resume.certifications', 'resume.education']);
   });
 });
