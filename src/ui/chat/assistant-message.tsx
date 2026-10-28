@@ -124,13 +124,13 @@ export function AssistantMessage({
             <Eyebrow as="span" className="mr-0.5 text-12 leading-label">
               Sources
             </Eyebrow>
-            {message.sources.map((source) => (
+            {[...new Set(message.sources.map((source) => source.label))].map((label) => (
               <span
-                key={source.id}
+                key={label}
                 className="inline-flex h-6 items-center gap-1.5 rounded-pill bg-ice px-2.25 text-11.5 whitespace-nowrap text-ink-muted shadow-ring"
               >
                 <Icon name="file" size="xs" className="text-ink-faint" />
-                {source.label}
+                {label}
               </span>
             ))}
           </div>

@@ -46,7 +46,11 @@ export const BOARDS: readonly Board[] = [
   board('Composer', 760, 220),
   board('ComposerStates', 880, 860),
   board('SuggestedQuestions', 760, 200),
-  board('AssistantMessage', 860, 1560),
+  {
+    ...board('AssistantMessage', 860, 1560),
+    departure:
+      'POR-36: the résumé is cited once as "Resume", not once per section, so the sources fit one row.',
+  },
   board('ExperienceTimeline', 780, 1400),
   board('AchievementMetrics', 780, 380),
   board('SkillCollection', 780, 500),

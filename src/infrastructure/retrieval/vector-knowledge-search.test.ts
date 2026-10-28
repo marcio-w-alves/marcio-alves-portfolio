@@ -50,7 +50,7 @@ describe('vector knowledge search', () => {
     expect(best?.text).toContain('timesheet');
     expect(best?.source).toEqual({
       id: 'resume.shall',
-      label: 'Resume · Shall And Partners experience',
+      label: 'Resume',
     });
   });
 

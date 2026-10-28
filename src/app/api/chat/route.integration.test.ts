@@ -284,7 +284,7 @@ describe('POST /api/chat — a model answer', () => {
     expect(textOf(events)).toBe('He led the Roots frontend.');
     expect(events.at(-1)).toMatchObject({
       type: 'finish',
-      sources: [{ id: 'resume.roots', label: 'Resume · Roots experience' }],
+      sources: [{ id: 'resume.roots', label: 'Resume' }],
     });
 
     const [first, second] = sent;
@@ -333,7 +333,7 @@ describe('POST /api/chat — a model answer', () => {
     expect(textOf(events)).toBe('He worked at Toptal.');
     expect(sourcesOf(events)).toContainEqual({
       id: 'resume.toptal',
-      label: 'Resume · Toptal experience',
+      label: 'Resume',
     });
   });
 });

@@ -102,7 +102,7 @@ describe('knowledge actions', () => {
         ]) as unknown,
       }),
     ]);
-    expect(result.sources).toEqual([{ id: 'resume.deel', label: 'Resume · Deel experience' }]);
+    expect(result.sources).toEqual([{ id: 'resume.deel', label: 'Resume' }]);
   });
 
   it('returns only the metrics produced at the company asked about', async () => {
