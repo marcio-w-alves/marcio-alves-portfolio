@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { KnowledgeSource, Locale } from '@/core/knowledge/schema';
-import { validateKnowledge } from '@/core/knowledge/validate';
+import { knowledgeRecordSchema } from '@/core/knowledge/validate';
 import type { EvaluationCase } from './evaluation/cases';
 
 /** Who the site is about. Every value here identifies the owner, which is why it lives in one place. */
@@ -47,13 +47,19 @@ const identitySchema = z.strictObject({
   nonIdentifyingTerms: z.array(z.string()),
 });
 
+const profileSchema = z.strictObject({
+  identity: identitySchema,
+  locales: z.array(z.enum(['en'])).min(1),
+  knowledge: knowledgeRecordSchema,
+  evaluation: z.array(z.looseObject({ id: z.string().regex(/\S/) })),
+});
+
 /**
- * Fails, with the path of every problem, when the profile is not one the site
- * can be built from. It runs wherever the profile is first read: the build,
- * the tests and every script.
+ * Fails, listing every problem by its path, when the profile is not one the
+ * site can be built from. It runs wherever the profile is first read: the
+ * build, the tests and every script.
  */
 export function validateProfile(profile: Profile): Profile {
-  identitySchema.parse(profile.identity);
-  validateKnowledge(profile.knowledge);
+  profileSchema.parse(profile);
   return profile;
 }

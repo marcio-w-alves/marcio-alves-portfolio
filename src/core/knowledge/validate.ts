@@ -247,7 +247,8 @@ function checkPracticeReferences(source: KnowledgeSource, report: Report) {
   }
 }
 
-const validated = knowledgeSchema.superRefine((parsed, context) => {
+/** The record's schema, for a caller that validates it as part of something larger. */
+export const knowledgeRecordSchema = knowledgeSchema.superRefine((parsed, context) => {
   const source = parsed as KnowledgeSource;
   const report: Report = (message, path) => {
     context.addIssue({ code: 'custom', message, path });
@@ -265,6 +266,6 @@ const validated = knowledgeSchema.superRefine((parsed, context) => {
 
 /** Returns the record unchanged, or throws a `ZodError` listing every violation by path. */
 export function validateKnowledge(source: KnowledgeSource): KnowledgeSource {
-  validated.parse(source);
+  knowledgeRecordSchema.parse(source);
   return source;
 }
