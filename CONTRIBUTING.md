@@ -38,7 +38,8 @@ gate is fixed, never bypassed.
 | --------------------------------------------------------- | ------------------------------------------------ | --------------------------------------------------- |
 | Lint (type-aware), format                                 | `pnpm lint`, `pnpm format:check`                 | commit, CI                                          |
 | Commit message                                            | commitlint                                       | commit, CI                                          |
-| Types, module boundaries, tests                           | `pnpm typecheck`, `pnpm boundaries`, `pnpm test` | push, CI                                            |
+| Types, module boundaries, tests                           | `pnpm typecheck`, `pnpm boundaries`, `pnpm test` | push, CI (tests via `pnpm test:coverage`)           |
+| Coverage floor on `src/core` and `src/infrastructure`     | `pnpm test:coverage`                             | CI                                                  |
 | Build                                                     | `pnpm build`                                     | CI                                                  |
 | Browser journeys, motion, accessibility, security, search | `pnpm test:e2e`                                  | CI                                                  |
 | Performance budget                                        | `pnpm lighthouse` (after `pnpm build`)           | CI                                                  |
@@ -87,4 +88,6 @@ gate is fixed, never bypassed.
   where the README says why.
 - No fixed sleeps: wait for conditions.
 - Every bug fix comes with a test that fails without it.
-- Coverage (`pnpm test:coverage`) is a diagnostic, not a target.
+- Coverage is a floor, not a target: `src/core` and `src/infrastructure` must
+  stay above the thresholds in `vitest.config.mts`, two points under their
+  measured baseline. Lowering one needs a stated reason in the pull request.

@@ -39,10 +39,6 @@ export function react(): AssistantResponse {
       text(
         `### The React toolset he works with\n${practice.toolset.find((area) => area.area === 'Frontend and UI')?.items ?? ''}.`,
       ),
-      note(
-        'gap',
-        'His resume lists React work per role rather than years per technology, so I describe the span of documented roles instead of a precise number.',
-      ),
     ],
     {
       followUps: [
@@ -154,7 +150,6 @@ export function performance(): AssistantResponse {
           '- **Maison Modern** — server-side rendering to improve SEO and initial load speed for editorial products read by thousands daily.',
       ),
       text(`### How he approaches a performance problem\n${bullets(practice.performanceApproach)}`),
-      note('gap', "The specific profiling tools behind each change aren't documented."),
     ],
     {
       followUps: [
@@ -312,10 +307,6 @@ export function accessibility(): AssistantResponse {
           '- **Maison Modern** — built intuitive, accessible interfaces from complex requirements with UX designers.\n\n' +
           'He treats accessibility as a requirement of the foundation — in the component library itself — rather than a late fix on individual screens, and checks it alongside design, tests and performance before calling a feature done.',
       ),
-      note(
-        'gap',
-        "The specific standard levels (for example, WCAG 2.1 AA) aren't named in his resume.",
-      ),
     ],
     {
       followUps: [
@@ -343,10 +334,6 @@ export function testing(): AssistantResponse {
           '- **Checked before release** — typecheck, lint, reproducible builds and the critical flows verified before shipping.\n' +
           '- **Watched after release** — error monitoring and Web Vitals to catch regressions.\n\n' +
           `Tools in his practice: ${practice.toolset.find((area) => area.area === 'Testing and quality')?.items ?? ''}.`,
-      ),
-      note(
-        'gap',
-        "The specific testing frameworks and coverage practices he uses aren't documented.",
       ),
     ],
     {
@@ -506,12 +493,6 @@ export function project(projectId: ProjectId): AssistantResponse {
       text(lead),
       projectCards([projectId]),
       text(`### The engineering behind it\n${practice.productDepth[projectId]}`),
-      note(
-        'gap',
-        subject.live
-          ? "Usage numbers and business metrics aren't published, so I won't speculate about them."
-          : "It's at the concept stage, so there is no implementation to describe yet.",
-      ),
     ],
     {
       followUps: [

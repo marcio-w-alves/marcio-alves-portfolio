@@ -50,9 +50,8 @@ export interface ProjectView {
 /**
  * `inference` — an assessment drawn from documented facts.
  * `example` — illustrative, not from any real codebase.
- * `gap` — something the record does not document.
  */
-export type NoteTone = 'inference' | 'example' | 'gap' | 'info';
+export type NoteTone = 'inference' | 'example' | 'info';
 
 export type RichComponent =
   | { readonly component: 'metrics'; readonly props: { readonly items: readonly MetricItem[] } }

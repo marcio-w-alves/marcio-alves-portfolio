@@ -110,9 +110,7 @@ describe('fast path — documented answers', () => {
     const live = answer('Tell me more about EvCopilot.');
     const concept = answer('What is FictionDraft?');
     expect(plainText(live)).toContain("**EvCopilot** is one of Marcio's own products.");
-    expect(plainText(live)).toContain("Usage numbers and business metrics aren't published");
     expect(plainText(concept)).toContain("**FictionDraft** is one of Marcio's product concepts");
-    expect(plainText(concept)).toContain("It's at the concept stage");
     expect(concept.followUps[0]).toBe('Tell me more about EvCopilot.');
   });
 

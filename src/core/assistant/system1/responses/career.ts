@@ -17,8 +17,8 @@ import {
 
 /**
  * Answers about career, impact and leadership. Every claim maps to a record
- * in the knowledge base; what the record does not document is stated as a
- * gap rather than inferred.
+ * in the knowledge base; what the record does not document is left out
+ * rather than inferred.
  */
 
 function article(word: string): string {
@@ -177,12 +177,6 @@ export function company(roleId: RoleId): AssistantResponse {
         ? details(
             'How were the performance gains achieved?',
             "Through targeted refactoring and optimization of critical pages. The People List page went from six seconds to three on a cold run, critical-page loading time fell by 50% overall, and Web Vitals improved by at least 30%. The specific tooling behind each change isn't documented.",
-          )
-        : null,
-      role.current
-        ? note(
-            'gap',
-            'This is his current role, so no measurable outcomes are documented for it yet.',
           )
         : null,
     ],

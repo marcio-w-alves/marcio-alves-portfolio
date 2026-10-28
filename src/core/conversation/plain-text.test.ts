@@ -18,7 +18,7 @@ describe('an answer as plain text', () => {
   it.each([
     ['a timeline as one line per role', timeline(['deel']), /^• 2022 — 2026 · Deel · Senior/],
     ['project cards as one line per product', projects(['evcopilot']), /^• EvCopilot — \S/],
-    ['a note without its markup', note('gap', 'Not **documented**.'), /^Not documented\.$/],
+    ['a note without its markup', note('info', 'Not **documented**.'), /^Not documented\.$/],
     [
       'details as their summary, then their text',
       details('Why it matters', 'It cut `load` time.'),
