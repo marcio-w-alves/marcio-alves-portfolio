@@ -34,6 +34,7 @@ export const SCORED_INTENTS = [
   'scaling',
   'enterprise',
   'staffFit',
+  'aiEngineering',
   'philosophy',
   'architecture',
   'performance',
@@ -202,6 +203,11 @@ const INTENT_RULES: Readonly<Record<ScoredIntent, readonly Rule[]>> = {
     [/\bposition\b/, 1],
     [/\bhire\b/, 2],
     [/\bwhy (should|would) (we|i)\b/, 2],
+  ],
+  aiEngineering: [
+    [/\b(codex|claude( code)?|cursor|copilot)\b/, 5],
+    [/\b(ai|llms?|artificial intelligence|genai)\b/, 4],
+    [/\b(agents?|agentic|prompts?|rag)\b/, 2],
   ],
   philosophy: [
     [/\bphilosoph\w*\b/, 5],

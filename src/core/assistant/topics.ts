@@ -118,6 +118,7 @@ export const topics = [
       { question: 'What does he know about design systems?', tag: 'Design systems' },
       { question: 'How does he approach accessibility?', tag: 'Accessibility' },
       { question: 'How does he approach testing?', tag: 'Testing' },
+      { question: 'How does he use AI in engineering?', tag: 'AI engineering' },
     ],
   },
   {
@@ -152,9 +153,11 @@ export const topics = [
     id: 'philosophy',
     label: 'Engineering Philosophy',
     icon: 'compass',
-    intro: `${profile.focus.replace(/^He/, 'Marcio')} Ask how those principles show up in his work.`,
+    intro:
+      "Marcio's engineering is pragmatic: readable code other people can evolve, architecture sized to the product's real stage, and quality he can verify. Here are the principles he works by and how he takes a problem from question to delivery.",
     questions: [
       { question: "What's his engineering philosophy?", tag: 'Principles' },
+      { question: 'How does he use AI in engineering?', tag: 'AI engineering' },
       { question: 'How does he approach frontend architecture?', tag: 'Architecture' },
       { question: 'Show me examples of architectural decisions.', tag: 'Decisions' },
       { question: 'How does he work with product teams?', tag: 'Product' },

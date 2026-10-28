@@ -77,6 +77,35 @@ describe('fast path — documented answers', () => {
     expect(text).toContain('### Recognition\n- Contributed to a web and mobile application');
   });
 
+  it('goes beyond the philosophy page: each principle with where it shows up, then how he works', () => {
+    const response = answer("What's his engineering philosophy?");
+    const text = plainText(response);
+    expect(text).toContain('Each principle in practice');
+    expect(text).toContain('A modular React and TypeScript component library');
+    expect(text).toContain('How he takes a problem to delivery');
+    expect(text).toContain('Day to day');
+    expect(response.sources.map((source) => source.label)).toContain('Knowledge base');
+  });
+
+  it('answers how he uses AI from his notes, without inventing a productivity figure', () => {
+    const response = answer('How does he use AI in engineering?');
+    const text = plainText(response);
+    expect(response.intent).toBe('aiEngineering');
+    expect(text).toContain('Claude Code');
+    expect(text).not.toMatch(/\d+%/);
+    expect(response.sources).toEqual([{ id: 'notes', label: 'Knowledge base' }]);
+  });
+
+  it('adds the engineering problem behind a recent role', () => {
+    const text = plainText(answer('What has he built at Deel?'));
+    expect(text).toContain('The engineering problem');
+    expect(text).toContain('Integration between platforms');
+  });
+
+  it('still answers "are you an AI?" as a question about the assistant', () => {
+    expect(answer('Are you an AI?').intent).toBe('identity');
+  });
+
   it('separates his live products from the concept, and says which is which', () => {
     const live = answer('Tell me more about EvCopilot.');
     const concept = answer('What is FictionDraft?');
@@ -164,14 +193,12 @@ describe('toEvents', () => {
     });
     expect(events.map((event) => event.type)).toEqual([
       'start',
-      'text-start',
-      'text-delta',
-      'text-end',
+      ...['text-start', 'text-delta', 'text-end'],
+      ...['text-start', 'text-delta', 'text-end'],
       'component',
-      'text-start',
-      'text-delta',
-      'text-end',
+      ...['text-start', 'text-delta', 'text-end'],
       'component',
+      ...['text-start', 'text-delta', 'text-end'],
       'finish',
     ]);
   });

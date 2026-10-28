@@ -3,6 +3,7 @@ import { knowledgeBase, roleById } from '@/core/knowledge/knowledge-base';
 import type { AssistantResponse, ConversationContext } from '../../response';
 import {
   allRoleSources,
+  bullets,
   contactOnce,
   details,
   metrics,
@@ -20,13 +21,11 @@ import {
  * gap rather than inferred.
  */
 
-function bullets(items: readonly string[]): string {
-  return items.map((item) => `- ${item}`).join('\n');
-}
-
 function article(word: string): string {
   return /^[aeiou]/i.test(word) ? 'an' : 'a';
 }
+
+const { practice } = knowledgeBase;
 
 export function career(): AssistantResponse {
   return response(
@@ -36,9 +35,11 @@ export function career(): AssistantResponse {
         `Marcio is a frontend engineer with **over 10 years** of professional experience. He started in ${String(knowledgeBase.profile.careerStartYear)} as a freelance web developer and grew into senior and lead frontend roles — helping lead the HRIS team at **Deel** (2022 — 2026) and, since March 2026, building component architecture at **Toptal**.\n\n` +
           'Across those roles the thread is consistent: React and Next.js architecture, performance, developer experience and technical leadership, with engineering work tied to product needs and user impact.',
       ),
+      text(`### How his scope grew\n${bullets(practice.careerArc)}`),
       timeline(),
       text('A few documented outcomes along the way:'),
       metrics(['deel-critical-load', 'deel-web-vitals', 'deel-people-list', 'roots-team']),
+      text(`### What he is looking for next\n${practice.goals.roles} ${practice.goals.mode}`),
     ],
     {
       followUps: [
@@ -46,7 +47,7 @@ export function career(): AssistantResponse {
         'Has he led engineering teams?',
         'What projects is he working on?',
       ],
-      sources: ['profile', ...allRoleSources()],
+      sources: ['profile', ...allRoleSources(), 'notes'],
       related: 'deel',
     },
   );
@@ -89,7 +90,7 @@ export function staffFit(context: ConversationContext): AssistantResponse {
         'Staff-level signals in his experience',
       ),
       text(
-        'Together, these show technical leadership and product impact well beyond individual feature delivery.',
+        `### How he leads\n${practice.leadershipPractice.style}\n\nHis formal titles were Senior and Lead Frontend Engineer; Staff-level describes the scope of his work, not a title he held.`,
       ),
       note(
         'inference',
@@ -103,7 +104,7 @@ export function staffFit(context: ConversationContext): AssistantResponse {
         'Show me examples of architectural decisions.',
         'What are his strongest technical skills?',
       ],
-      sources: ['resume.toptal', 'resume.deel', 'resume.roots'],
+      sources: ['resume.toptal', 'resume.deel', 'resume.roots', 'notes'],
       related: 'deel',
     },
   );
@@ -151,6 +152,12 @@ function section(heading: string, items: readonly string[]) {
   return items.length > 0 ? text(`### ${heading}\n${bullets(items)}`) : null;
 }
 
+function caseStudy(roleId: RoleId) {
+  const study = practice.caseStudies[roleId];
+  if (!study) return [];
+  return [text(`### The engineering problem\n${study.problem}\n\n${bullets(study.angles)}`)];
+}
+
 export function company(roleId: RoleId): AssistantResponse {
   const role = roleById(roleId);
   const intro =
@@ -165,6 +172,7 @@ export function company(roleId: RoleId): AssistantResponse {
       text(`### What the work involved\n${bullets(role.responsibilities)}`),
       section('Leadership', role.leadership),
       section('Recognition', role.achievements),
+      ...caseStudy(roleId),
       roleId === 'deel'
         ? details(
             'How were the performance gains achieved?',
@@ -184,7 +192,7 @@ export function company(roleId: RoleId): AssistantResponse {
         'What are his biggest technical achievements?',
         'How experienced is he with React and TypeScript?',
       ],
-      sources: [role.source],
+      sources: practice.caseStudies[roleId] ? [role.source, 'notes'] : [role.source],
       related: roleId,
     },
   );
@@ -202,6 +210,7 @@ export function hrisRole(): AssistantResponse {
           '- **People** — guided junior and mid-level engineers through knowledge-sharing sessions and code walkthroughs, ran code reviews and pair programming, and helped hire and onboard engineers.',
       ),
       metrics(['deel-critical-load', 'deel-people-list']),
+      text(`### The system design behind it\n${bullets(practice.caseStudies.deel?.angles ?? [])}`),
     ],
     {
       followUps: [
@@ -209,7 +218,7 @@ export function hrisRole(): AssistantResponse {
         'How does he raise code quality?',
         'Tell me more about his leadership.',
       ],
-      sources: ['resume.deel'],
+      sources: ['resume.deel', 'notes'],
       related: 'deel',
     },
   );
@@ -234,6 +243,9 @@ export function leadership(): AssistantResponse {
           '- Guided junior and mid-level engineers, ran code reviews and pair programming at **Deel**, and set coding standards at **Maison Modern**.\n' +
           '- Was promoted to Principal Frontend Developer at **Shall And Partners**.',
       ),
+      text(
+        `### How he leads\n${practice.leadershipPractice.style}\n\n${bullets(practice.leadershipPractice.habits)}\n\n${practice.leadershipPractice.balance}`,
+      ),
       metrics(['roots-team']),
     ],
     {
@@ -242,7 +254,14 @@ export function leadership(): AssistantResponse {
         'How did he grow the team at Roots?',
         'Would he fit a technical leadership position?',
       ],
-      sources: ['resume.roots', 'resume.deel', 'resume.toptal', 'resume.maison', 'resume.shall'],
+      sources: [
+        'resume.roots',
+        'resume.deel',
+        'resume.toptal',
+        'resume.maison',
+        'resume.shall',
+        'notes',
+      ],
     },
   );
 }
@@ -255,6 +274,9 @@ export function teamGrowth(): AssistantResponse {
         'As Lead Frontend Engineer at **Roots** (2020 — 2022), Marcio grew the frontend team from a solo setup to four developers by recruiting and integrating three. He then led frontend development for nearly two years, organizing and delegating work and coordinating sprint planning and deliverables with managers and stakeholders.\n\n' +
           'At Deel he also contributed to hiring and onboarding engineers.',
       ),
+      text(
+        `### What growing the team required\n${practice.caseStudies.roots?.problem ?? ''}\n\n${bullets(practice.caseStudies.roots?.angles ?? [])}`,
+      ),
       metrics(['roots-team']),
     ],
     {
@@ -263,7 +285,7 @@ export function teamGrowth(): AssistantResponse {
         'What did he do at Roots?',
         'Has he ever built something from scratch?',
       ],
-      sources: ['resume.roots', 'resume.deel'],
+      sources: ['resume.roots', 'resume.deel', 'notes'],
       related: 'roots',
     },
   );
@@ -283,6 +305,14 @@ export function achievements(): AssistantResponse {
           '- Contributed to the newsletter project at Maison Modern, which achieved a **20% increase in income**.\n' +
           '- Helped smaller industry clients at WEBFI grow sales by **over 30%**.',
       ),
+      details(
+        'How the Deel performance gains were achieved',
+        `Targeted refactoring and optimization of critical pages. His approach to a performance problem:\n\n${bullets(practice.performanceApproach)}`,
+      ),
+      note(
+        'inference',
+        'These are results reported in his resume from team work; none is claimed as his alone. Productivity, ROI or revenue attributable only to him are not documented.',
+      ),
     ],
     {
       followUps: [
@@ -290,7 +320,14 @@ export function achievements(): AssistantResponse {
         'How does he raise code quality?',
         'Tell me about his leadership experience.',
       ],
-      sources: ['resume.deel', 'resume.roots', 'resume.shall', 'resume.maison', 'resume.webfi'],
+      sources: [
+        'resume.deel',
+        'resume.roots',
+        'resume.shall',
+        'resume.maison',
+        'resume.webfi',
+        'notes',
+      ],
       related: 'deel',
     },
   );
@@ -303,6 +340,7 @@ export function quality(): AssistantResponse {
       text(
         'At **Deel**, Marcio standardized the HRIS frontend architecture — including state management and error handling — and raised quality standards through code reviews, pair programming and onboarding. At **Maison Modern**, he led code reviews and established coding standards to reduce bugs and improve maintainability.',
       ),
+      text(`### What a healthy codebase means to him\n${bullets(practice.qualityPractices)}`),
     ],
     {
       followUps: [
@@ -310,7 +348,7 @@ export function quality(): AssistantResponse {
         'How does he think about code quality?',
         'What has he built at Deel?',
       ],
-      sources: ['resume.deel', 'resume.maison'],
+      sources: ['resume.deel', 'resume.maison', 'notes'],
       related: 'deel',
     },
   );
@@ -323,6 +361,10 @@ export function awards(): AssistantResponse {
       text(
         'At **Shall And Partners**, Marcio contributed to a web and mobile application that received the **Golden Award in 2019**.\n\n' +
           'Other documented business results include the Maison Modern newsletter project, which achieved a 20% increase in income, and helping smaller WEBFI clients grow sales by over 30%.',
+      ),
+      note(
+        'inference',
+        'The Golden Award went to the product he worked on, not to him personally.',
       ),
     ],
     {
@@ -348,6 +390,9 @@ export function scaling(): AssistantResponse {
           '- **Team** — at Roots he grew the frontend team from one to four and set up GitLab CI pipelines deploying to Amazon S3.',
       ),
       metrics(['deel-critical-load', 'roots-team']),
+      text(
+        `### What scaling Deel's HRIS involved\n${bullets(practice.caseStudies.deel?.angles ?? [])}`,
+      ),
     ],
     {
       followUps: [
@@ -355,7 +400,7 @@ export function scaling(): AssistantResponse {
         'How does he approach frontend architecture?',
         'How did he optimize performance?',
       ],
-      sources: ['resume.deel', 'resume.roots', 'resume.toptal'],
+      sources: ['resume.deel', 'resume.roots', 'resume.toptal', 'notes'],
       related: 'deel',
     },
   );
@@ -373,6 +418,9 @@ export function scratch(): AssistantResponse {
           '- On his own, he builds products such as **EvCopilot**, **FormDaily** and **TargUp**.',
       ),
       metrics(['roots-team']),
+      text(
+        `### Starting from zero at Roots\n${practice.caseStudies.roots?.problem ?? ''}\n\nIn his own products he starts the same way: the product goal and its users first, then the domain, then the simplest architecture that fits.`,
+      ),
     ],
     {
       followUps: [
@@ -380,7 +428,7 @@ export function scratch(): AssistantResponse {
         'What did he do at Roots?',
         'How does he approach frontend architecture?',
       ],
-      sources: ['resume.roots', 'resume.toptal', 'resume.shall', 'projects'],
+      sources: ['resume.roots', 'resume.toptal', 'resume.shall', 'projects', 'notes'],
       related: 'roots',
     },
   );
@@ -394,6 +442,7 @@ export function enterprise(context: ConversationContext): AssistantResponse {
         `Yes. The most substantial enterprise example is **Deel** (2022 — 2026), where he helped lead the HRIS team behind the company's core HR tools, standardized its frontend architecture and led the migration of Roots into the platform.\n\n` +
           'At **Toptal** he architected a React/TypeScript component library used across multiple product teams and led accessibility standards.',
       ),
+      text(`### The enterprise problem at Deel\n${practice.caseStudies.deel?.problem ?? ''}`),
       metrics(['deel-web-vitals', 'deel-critical-load', 'deel-people-list']),
       contactOnce(context),
     ],
@@ -403,7 +452,7 @@ export function enterprise(context: ConversationContext): AssistantResponse {
         'How did he optimize performance?',
         'Has he led engineering teams?',
       ],
-      sources: ['profile', 'resume.deel', 'resume.toptal'],
+      sources: ['profile', 'resume.deel', 'resume.toptal', 'notes'],
       related: 'deel',
     },
   );
@@ -421,6 +470,9 @@ export function product(): AssistantResponse {
           '- At **Maison Modern**, he turned complex requirements into accessible interfaces with UX designers.\n\n' +
           knowledgeBase.profile.focus.replace(/^He/, 'Marcio'),
       ),
+      text(
+        `### How he works with them\n${bullets(practice.leadershipPractice.habits)}\n\nHe starts from the product goal, the users and what success looks like before choosing a solution, and treats requirements such as latency, privacy, accessibility and operating cost as part of the design.`,
+      ),
     ],
     {
       followUps: [
@@ -428,7 +480,14 @@ export function product(): AssistantResponse {
         'Would he fit a technical leadership position?',
         'What has he built at Deel?',
       ],
-      sources: ['resume.toptal', 'resume.deel', 'resume.roots', 'resume.maison', 'profile'],
+      sources: [
+        'resume.toptal',
+        'resume.deel',
+        'resume.roots',
+        'resume.maison',
+        'profile',
+        'notes',
+      ],
     },
   );
 }

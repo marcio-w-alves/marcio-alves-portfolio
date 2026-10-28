@@ -1,13 +1,15 @@
 import type { ProjectId } from '@/core/knowledge/ids';
-import { knowledgeBase, projectById } from '@/core/knowledge/knowledge-base';
+import { knowledgeBase, projectById, roleById } from '@/core/knowledge/knowledge-base';
 import type { AssistantResponse, ConversationContext } from '../../response';
 import {
   allRoleSources,
+  bullets,
   contactCard,
   contactOnce,
   details,
   metrics,
   note,
+  numbered,
   projects as projectCards,
   response,
   skills as skillGroups,
@@ -17,6 +19,8 @@ import {
 } from '../../response-kit';
 
 /** Answers about expertise, products, background and contact. */
+
+const { practice } = knowledgeBase;
 
 export function react(): AssistantResponse {
   return response(
@@ -32,6 +36,9 @@ export function react(): AssistantResponse {
           '- **Modernization** — refactored a codebase to React Hooks at Shall And Partners.',
       ),
       skillGroups(['frontend', 'architecture']),
+      text(
+        `### The React toolset he works with\n${practice.toolset.find((area) => area.area === 'Frontend and UI')?.items ?? ''}.`,
+      ),
       note(
         'gap',
         'His resume lists React work per role rather than years per technology, so I describe the span of documented roles instead of a precise number.',
@@ -50,6 +57,7 @@ export function react(): AssistantResponse {
         'resume.maison',
         'resume.shall',
         'resume.skills',
+        'notes',
       ],
       related: 'toptal',
     },
@@ -89,11 +97,24 @@ export function architecture(): AssistantResponse {
           '- **Deel** — standardized HRIS frontend architecture to improve structure, state management, error handling and scalability.\n' +
           '- **Roots** — directed frontend strategy, introduced advanced state management and set up GitLab CI pipelines deploying to Amazon S3.\n' +
           '- **Maison Modern** — implemented SSR with Next.js and integrated the frontend with external publishing platforms.\n' +
-          '- **Shall And Partners** — moved the codebase to React Hooks and built apps within a microservices architecture.\n\n' +
-          '### The principles behind them\n' +
-          '1. Compose small primitives into higher-level components instead of building monoliths.\n' +
-          '2. Keep presentation separate from state, domain logic and side effects.\n' +
-          '3. Centralize shared logic rather than duplicating business rules.',
+          '- **Shall And Partners** — moved the codebase to React Hooks and built apps within a microservices architecture.',
+      ),
+      text(
+        `### What he treats as frontend architecture\n${bullets(practice.frontendArchitecture)}`,
+      ),
+      text(
+        `### How he designs a system\n${numbered(practice.designProcess)}\n\nThe trade-offs he weighs most often: ${practice.decisionCriteria.map((criterion) => criterion.charAt(0).toLowerCase() + criterion.slice(1)).join('; ')}.`,
+      ),
+      details(
+        'The engineering problem at Roots, Deel and Toptal',
+        (['roots', 'deel', 'toptal'] as const)
+          .map((id) => {
+            const study = practice.caseStudies[id];
+            return study
+              ? `**${roleById(id).company}** — ${study.problem}\n\n${bullets(study.angles)}`
+              : '';
+          })
+          .join('\n\n'),
       ),
       note(
         'example',
@@ -114,6 +135,7 @@ export function architecture(): AssistantResponse {
         'resume.maison',
         'resume.shall',
         'principles',
+        'notes',
       ],
       related: 'deel',
     },
@@ -131,6 +153,7 @@ export function performance(): AssistantResponse {
           '- **Deel** — targeted refactoring and optimization of critical pages; the People List page went from six seconds to three on a cold run.\n' +
           '- **Maison Modern** — server-side rendering to improve SEO and initial load speed for editorial products read by thousands daily.',
       ),
+      text(`### How he approaches a performance problem\n${bullets(practice.performanceApproach)}`),
       note('gap', "The specific profiling tools behind each change aren't documented."),
     ],
     {
@@ -139,7 +162,7 @@ export function performance(): AssistantResponse {
         'Does he have Next.js and SSR experience?',
         'How does he approach frontend architecture?',
       ],
-      sources: ['resume.deel', 'resume.roots', 'resume.maison', 'resume.skills'],
+      sources: ['resume.deel', 'resume.roots', 'resume.maison', 'resume.skills', 'notes'],
       related: 'deel',
     },
   );
@@ -150,12 +173,10 @@ export function backend(): AssistantResponse {
     'backend',
     [
       text(
-        'Yes, with a clear distinction: Marcio is a frontend specialist who also has hands-on full-stack experience.\n\n' +
-          '### Where it is documented\n' +
-          '- **Shall And Partners (2018 — 2020)** — engineered RESTful APIs and built web and mobile apps in a microservices architecture with Node.js and multiple databases, plus internal tools that automated contractor timesheets.\n' +
-          '- **Toptal** — works with backend engineers to design and optimize RESTful APIs for efficient data fetching.\n' +
-          '- **Roots** — set up GitLab CI pipelines deploying to Amazon S3.',
+        `Yes, with a clear distinction: Marcio is a frontend specialist who also has hands-on full-stack experience. ${practice.fullStack.summary}`,
       ),
+      text(`### Company by company\n${bullets(practice.fullStack.byCompany)}`),
+      text(`### In his own products\n${practice.fullStack.ownProducts}`),
       skillGroups(['backend']),
       note(
         'inference',
@@ -168,7 +189,14 @@ export function backend(): AssistantResponse {
         'What are his strongest technical skills?',
         'How does he approach frontend architecture?',
       ],
-      sources: ['resume.shall', 'resume.toptal', 'resume.roots', 'resume.skills'],
+      sources: [
+        'resume.shall',
+        'resume.toptal',
+        'resume.roots',
+        'resume.deel',
+        'resume.skills',
+        'notes',
+      ],
       related: 'shall',
     },
   );
@@ -180,7 +208,7 @@ export function mobile(): AssistantResponse {
     [
       text(
         'Yes. At **Shall And Partners**, Marcio built web and mobile applications — including one that received the Golden Award in 2019 — and led development of a progressive web app before the product moved to a native Android app.\n\n' +
-          'His own products are mobile-first too: **EvCopilot** is in an invite-only iPhone beta, and **FormDaily** lists web, iOS and Android.',
+          `His own products are mobile-first too: **EvCopilot** is in an invite-only iPhone beta, and **FormDaily** lists web, iOS and Android. ${practice.mobileExplorations}`,
       ),
       projectCards(['evcopilot', 'formdaily']),
     ],
@@ -190,7 +218,7 @@ export function mobile(): AssistantResponse {
         'What did he do at Shall And Partners?',
         'How experienced is he with React and TypeScript?',
       ],
-      sources: ['resume.shall', 'projects'],
+      sources: ['resume.shall', 'projects', 'notes'],
       related: 'shall',
     },
   );
@@ -207,6 +235,12 @@ export function skills(): AssistantResponse {
       text(
         'His strongest documented areas are **React and Next.js architecture** and **performance**, both backed by measurable results at Deel and Roots.',
       ),
+      text(
+        `### How deep the evidence goes\n${bullets(practice.skillDepth.map(({ area, items }) => `**${area}** — ${items}`))}`,
+      ),
+      text(
+        `### Toolset\n${bullets(practice.toolset.map(({ area, items }) => `**${area}** — ${items}`))}`,
+      ),
     ],
     {
       followUps: [
@@ -214,7 +248,7 @@ export function skills(): AssistantResponse {
         'How did he optimize performance?',
         'How does he approach accessibility?',
       ],
-      sources: ['resume.skills', 'resume.deel', 'resume.roots'],
+      sources: ['resume.skills', 'resume.deel', 'resume.roots', 'notes'],
     },
   );
 }
@@ -226,6 +260,9 @@ export function nextjs(): AssistantResponse {
       text(
         'Yes. At **Maison Modern** (2020 — 2022), Marcio built responsive digital magazines and newsletters with Next.js and React, distributed across multiple countries. He implemented server-side rendering to improve SEO and initial load speed, integrated the frontend with external publishing platforms, and kept editorial products fast for thousands of daily readers.',
       ),
+      text(
+        `### How he decides what renders where\n${bullets(practice.frontendArchitecture.filter((decision) => /SSR|state/.test(decision)))}`,
+      ),
       skillGroups(['frontend', 'architecture']),
     ],
     {
@@ -234,7 +271,7 @@ export function nextjs(): AssistantResponse {
         'What did he do at Maison Modern?',
         'How experienced is he with React and TypeScript?',
       ],
-      sources: ['resume.maison', 'resume.skills'],
+      sources: ['resume.maison', 'resume.skills', 'notes'],
       related: 'maison',
     },
   );
@@ -248,6 +285,9 @@ export function designSystems(): AssistantResponse {
         'At **Toptal**, Marcio architected and implemented a modular React and TypeScript component library that speeds up feature development and keeps the UI consistent across multiple product teams — paired with advanced accessibility standards he led.\n\n' +
           'Earlier, he standardized the HRIS frontend architecture at Deel and established coding standards at Maison Modern.',
       ),
+      text(
+        `### How he frames a shared library\n${bullets(practice.caseStudies.toptal?.angles.slice(0, 2) ?? [])}\n- **Boundaries** — module and reuse rules that keep the library from coupling every team to every change.`,
+      ),
     ],
     {
       followUps: [
@@ -255,7 +295,7 @@ export function designSystems(): AssistantResponse {
         'How does he approach frontend architecture?',
         'What is he working on at Toptal?',
       ],
-      sources: ['resume.toptal', 'resume.deel', 'resume.maison'],
+      sources: ['resume.toptal', 'resume.deel', 'resume.maison', 'notes'],
       related: 'toptal',
     },
   );
@@ -269,7 +309,8 @@ export function accessibility(): AssistantResponse {
         "Accessibility appears in three of Marcio's roles:\n\n" +
           '- **Toptal** — led the integration of advanced accessibility standards, broadening the product to users with diverse accessibility needs.\n' +
           '- **Roots** — integrated accessibility standards together with UX designers.\n' +
-          '- **Maison Modern** — built intuitive, accessible interfaces from complex requirements with UX designers.',
+          '- **Maison Modern** — built intuitive, accessible interfaces from complex requirements with UX designers.\n\n' +
+          'He treats accessibility as a requirement of the foundation — in the component library itself — rather than a late fix on individual screens, and checks it alongside design, tests and performance before calling a feature done.',
       ),
       note(
         'gap',
@@ -282,7 +323,7 @@ export function accessibility(): AssistantResponse {
         'What is he working on at Toptal?',
         'How does he work with product teams?',
       ],
-      sources: ['resume.toptal', 'resume.roots', 'resume.maison'],
+      sources: ['resume.toptal', 'resume.roots', 'resume.maison', 'notes'],
       related: 'toptal',
     },
   );
@@ -295,6 +336,14 @@ export function testing(): AssistantResponse {
       text(
         "Frontend testing strategies are listed among Marcio's core skills. In practice, his documented quality work includes standardized error handling at Deel, code reviews and pair programming, and coding standards he set at Maison Modern to reduce bugs.",
       ),
+      text(
+        '### How he approaches testing\n' +
+          '- **Sized to risk** — unit, integration, contract and end-to-end tests chosen by how much each flow can break, not by a coverage target.\n' +
+          '- **Tested at the boundaries** — modules with clear interfaces, so behaviour can be checked without wiring the whole app.\n' +
+          '- **Checked before release** — typecheck, lint, reproducible builds and the critical flows verified before shipping.\n' +
+          '- **Watched after release** — error monitoring and Web Vitals to catch regressions.\n\n' +
+          `Tools in his practice: ${practice.toolset.find((area) => area.area === 'Testing and quality')?.items ?? ''}.`,
+      ),
       note(
         'gap',
         "The specific testing frameworks and coverage practices he uses aren't documented.",
@@ -306,33 +355,90 @@ export function testing(): AssistantResponse {
         'How does he raise code quality?',
         'What are his strongest technical skills?',
       ],
-      sources: ['resume.skills', 'resume.deel', 'resume.maison'],
+      sources: ['resume.skills', 'resume.deel', 'resume.maison', 'notes'],
     },
   );
 }
 
+const PRINCIPLES_IN_PRACTICE: Readonly<Record<string, string>> = {
+  'Maintainability over cleverness':
+    'Coding standards and code reviews at Maison Modern; a move to React Hooks at Shall And Partners.',
+  'Composition over monoliths':
+    'A modular React and TypeScript component library shared by several product teams at Toptal.',
+  'Reuse before rewriting':
+    'One standardized HRIS frontend architecture across product areas at Deel.',
+  'Architecture sized to the problem':
+    'A React frontend built from an early stage at Roots, then organized for a team of four.',
+  'Performance from the design':
+    'Critical pages 50% faster and People List from 6s to 3s at Deel; SSR for editorial products at Maison Modern.',
+  'UX and visual fidelity':
+    'Accessibility built in with UX designers at Roots and Maison Modern, and led as a standard at Toptal.',
+  'Verifiable quality':
+    'Pair programming, code reviews and onboarding at Deel; GitLab CI pipelines at Roots.',
+  'Explicit trade-offs':
+    'Technical trade-offs and delivery plans defined with Product and Engineering at Deel.',
+  'Security on the server':
+    'In the designs of his own products: permissions checked on the backend, role-based access and tenant isolation.',
+};
+
 export function philosophy(): AssistantResponse {
-  const principles = knowledgeBase.principles
-    .map((principle) => `- **${principle.title}** — ${principle.text}`)
-    .join('\n');
   return response(
     'philosophy',
     [
       text(
-        `${knowledgeBase.profile.focus.replace(/^He/, 'Marcio')}\n\n### Principles he works by\n${principles}\n\n` +
-          '### Where they show up\n' +
-          '- A shared component library for consistent UI across teams at Toptal.\n' +
-          '- Standardized HRIS architecture at Deel.\n' +
-          '- Code reviews, pair programming and coding standards at Deel and Maison Modern.',
+        "Marcio's philosophy is pragmatic: readable code other people can evolve, architecture sized to the product's real stage, and quality he can verify rather than assume. Each principle below is paired with where it shows up in his work.",
+      ),
+      text(
+        `### Each principle in practice\n${bullets(
+          knowledgeBase.principles.map(
+            (principle) =>
+              `**${principle.title}** — ${principle.text} **In practice:** ${PRINCIPLES_IN_PRACTICE[principle.title] ?? ''}`,
+          ),
+        )}`,
+      ),
+      text(`### How he takes a problem to delivery\n${numbered(practice.designProcess)}`),
+      text(`### Day to day\n${numbered(practice.workflow)}`),
+      note(
+        'inference',
+        'The process and the day-to-day loop summarize how he describes his work; they are not a formal method any one employer adopted.',
       ),
     ],
     {
       followUps: [
-        'How does he approach frontend architecture?',
-        'How does he work with product teams?',
-        'What are his biggest technical achievements?',
+        'Show me examples of architectural decisions.',
+        'How does he use AI in engineering?',
+        'How does he think about code quality?',
       ],
-      sources: ['profile', 'principles', 'resume.toptal', 'resume.deel', 'resume.maison'],
+      sources: [
+        'principles',
+        'resume.toptal',
+        'resume.deel',
+        'resume.roots',
+        'resume.maison',
+        'resume.shall',
+        'notes',
+      ],
+    },
+  );
+}
+
+export function aiEngineering(): AssistantResponse {
+  const ai = practice.aiEngineering;
+  return response(
+    'aiEngineering',
+    [
+      text(ai.summary),
+      text(`### Tools\n${bullets(ai.tools)}`),
+      text(`### How he works with agents\n${bullets(ai.practices)}`),
+      text(`### AI inside products\n${ai.inProducts}`),
+    ],
+    {
+      followUps: [
+        "What's his engineering philosophy?",
+        'How does he approach frontend architecture?',
+        'What projects is he working on?',
+      ],
+      sources: ['notes'],
     },
   );
 }
@@ -345,6 +451,7 @@ export function codeQuality(): AssistantResponse {
         "Marcio's engineering principles treat quality as a structural concern: readable, explicit code; small composable components; shared logic centralized instead of duplicated; and security enforced on the server.\n\n" +
           'In practice that has meant standardized error handling and state management, code reviews and pair programming, coding standards at Maison Modern, and a move to React Hooks at Shall And Partners. Frontend testing strategies are part of his core skills.',
       ),
+      text(`### What a healthy codebase means to him\n${bullets(practice.qualityPractices)}`),
     ],
     {
       followUps: [
@@ -352,7 +459,14 @@ export function codeQuality(): AssistantResponse {
         'How did he optimize performance?',
         'How does he approach frontend architecture?',
       ],
-      sources: ['principles', 'resume.deel', 'resume.maison', 'resume.shall', 'resume.skills'],
+      sources: [
+        'principles',
+        'resume.deel',
+        'resume.maison',
+        'resume.shall',
+        'resume.skills',
+        'notes',
+      ],
     },
   );
 }
@@ -365,6 +479,9 @@ export function projects(): AssistantResponse {
         'Alongside his professional work, Marcio builds his own products. Three already have public sites — **EvCopilot** (iPhone beta), **FormDaily** (invite-only) and **TargUp** (in development) — and **FictionDraft** is still a concept.',
       ),
       projectCards(),
+      text(
+        `### The engineering behind them\n${bullets(knowledgeBase.projects.map((item) => `**${item.name}** — ${practice.productDepth[item.id]}`))}`,
+      ),
     ],
     {
       followUps: [
@@ -372,7 +489,7 @@ export function projects(): AssistantResponse {
         'Tell me more about FormDaily.',
         'What is TargUp?',
       ],
-      sources: ['projects'],
+      sources: ['projects', 'notes'],
     },
   );
 }
@@ -388,6 +505,7 @@ export function project(projectId: ProjectId): AssistantResponse {
     [
       text(lead),
       projectCards([projectId]),
+      text(`### The engineering behind it\n${practice.productDepth[projectId]}`),
       note(
         'gap',
         subject.live
@@ -401,7 +519,7 @@ export function project(projectId: ProjectId): AssistantResponse {
         'What projects is he working on?',
         'Has he ever built something from scratch?',
       ],
-      sources: ['projects'],
+      sources: ['projects', 'notes'],
     },
   );
 }
@@ -427,6 +545,7 @@ export function education(): AssistantResponse {
       ),
       languageTable(),
       details('Courses and certifications', courses),
+      text(`### Continuous learning\n${practice.learningStyle}\n\n${bullets(practice.studies)}`),
     ],
     {
       followUps: [
@@ -434,7 +553,7 @@ export function education(): AssistantResponse {
         'Can I see his resume?',
         'How can I contact Marcio?',
       ],
-      sources: ['resume.education', 'resume.languages', 'resume.certifications'],
+      sources: ['resume.education', 'resume.languages', 'resume.certifications', 'notes'],
     },
   );
 }
