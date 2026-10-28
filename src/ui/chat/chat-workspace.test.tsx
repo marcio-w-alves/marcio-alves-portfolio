@@ -1,9 +1,9 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { delay, http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { Fragment } from 'react';
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createChatHandler } from '@/app/api/chat/chat-handler';
 import { createAssistant } from '@/core/assistant/assistant';
 import { MAX_QUESTION_LENGTH } from '@/core/assistant/system1/router';
@@ -34,6 +34,25 @@ const server = setupServer(http.post(CHAT_URL, ({ request }) => chatHandler(requ
 
 beforeAll(() => {
   server.listen({ onUnhandledFrame: 'error' });
+});
+/** Answers appear at once for a visitor who prefers reduced motion; most tests are about what, not how fast. */
+function prefersReducedMotion(reduce: boolean) {
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn(
+      (query: string) =>
+        ({
+          matches: reduce && query === '(prefers-reduced-motion: reduce)',
+          media: query,
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+        }) as unknown as MediaQueryList,
+    ),
+  );
+}
+
+beforeEach(() => {
+  prefersReducedMotion(true);
 });
 afterEach(() => {
   server.resetHandlers();
@@ -171,6 +190,74 @@ describe('asking a question', () => {
     const copied = await navigator.clipboard.readText();
     expect(copied).toContain('Roots');
     expect(copied).not.toContain('**');
+  });
+});
+
+describe('an answer as it is typed', () => {
+  beforeEach(() => {
+    prefersReducedMotion(false);
+  });
+
+  const actions = () => screen.queryByRole('group', { name: 'Answer actions' });
+
+  it('thinks first, then types the answer out, and offers its actions once it is all there', async () => {
+    const user = renderWorkspace();
+    await user.type(composer(), 'How did he grow the team at Roots?{Enter}');
+
+    expect(
+      within(latestAnswer()).getByText(/Reading Marcio.s documented experience/),
+    ).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Stop generating' })).toBeInTheDocument();
+
+    await waitFor(() => {
+      const typed = latestAnswer().textContent;
+      expect(typed).toContain('As Lead');
+      expect(typed).not.toContain('grew the frontend team');
+    });
+    expect(actions()).not.toBeInTheDocument();
+
+    expect(
+      await screen.findByRole('group', { name: 'Answer actions' }, { timeout: 8000 }),
+    ).toBeVisible();
+    expect(latestAnswer()).toHaveTextContent(/grew the frontend team/);
+    expect(screen.getByRole('button', { name: 'Send question' })).toBeInTheDocument();
+  }, 10_000);
+
+  it('shows the rest at once when the visitor stops it mid-typing', async () => {
+    const user = renderWorkspace();
+    await user.type(composer(), 'How did he grow the team at Roots?{Enter}');
+    await waitFor(() => {
+      expect(latestAnswer()).toHaveTextContent('As Lead');
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Stop generating' }));
+
+    expect(latestAnswer()).toHaveTextContent(/grew the frontend team/);
+    expect(actions()).toBeVisible();
+  });
+});
+
+describe('one question at a time', () => {
+  it('lets nothing else be asked from another page while an answer is on its way', async () => {
+    server.use(
+      http.post(CHAT_URL, async () => {
+        await delay('infinite');
+        return new HttpResponse(null);
+      }),
+    );
+    const user = renderWorkspace('skills');
+    await user.type(composer(), 'How does he approach testing?{Enter}');
+
+    user.navigate('overview');
+
+    expect(screen.getByRole('button', { name: 'His career' })).toBeDisabled();
+    await user.type(composer(), 'What did he do at Roots?');
+    expect(screen.getByRole('button', { name: 'Send question' })).toBeDisabled();
+    expect(
+      screen.getByText('Another answer is on its way. Send this once it is done.'),
+    ).toBeVisible();
+    await user.keyboard('{Enter}');
+    expect(screen.queryByRole('list', { name: 'Conversation' })).not.toBeInTheDocument();
   });
 });
 

@@ -56,7 +56,8 @@ export function useChat(topic: TopicId, initial?: Conversation) {
 
   function ask(raw: string): boolean {
     const question = raw.trim();
-    if (!question || activeAnswer(conversation)) return false;
+    // One question at a time across the whole site, this page included.
+    if (!question || store.busy) return false;
     // History is taken from before the question, so it is not sent twice.
     const exchange = addExchange(conversation, question);
     setConversation(exchange.conversation);
@@ -73,6 +74,7 @@ export function useChat(topic: TopicId, initial?: Conversation) {
   }
 
   function retry(answerId: string) {
+    if (store.busy && !activeAnswer(conversation)) return;
     const removed = removeExchange(conversation, answerId);
     if (!removed.question) return;
     const exchange = addExchange(removed.conversation, removed.question);
@@ -102,6 +104,8 @@ export function useChat(topic: TopicId, initial?: Conversation) {
     conversation,
     announcement,
     streaming: activeAnswer(conversation) !== undefined,
+    /** Another page has an answer on its way, so this one waits. */
+    waiting: store.busy && activeAnswer(conversation) === undefined,
     ask,
     stop,
     retry,

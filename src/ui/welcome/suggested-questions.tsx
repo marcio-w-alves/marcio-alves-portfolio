@@ -18,6 +18,8 @@ interface SuggestedQuestionsProps {
   readonly align?: 'start' | 'center';
   /** Where the context makes the title obvious, it is kept for screen readers only. */
   readonly hideTitle?: boolean;
+  /** While another answer is on its way, nothing more can be asked. */
+  readonly disabled?: boolean;
 }
 
 export function SuggestedQuestions({
@@ -26,6 +28,7 @@ export function SuggestedQuestions({
   onPick,
   align = 'start',
   hideTitle = false,
+  disabled = false,
 }: SuggestedQuestionsProps) {
   const titleId = useId();
   const centred = align === 'center';
@@ -42,6 +45,7 @@ export function SuggestedQuestions({
         {questions.map(({ question, label }) => (
           <li key={question}>
             <Chip
+              disabled={disabled}
               onClick={() => {
                 onPick(question);
               }}

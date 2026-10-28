@@ -6,7 +6,7 @@ import { SuggestedQuestions } from '../welcome';
 import { AnswerActions } from './answer-actions';
 import { AnswerBody } from './answer-body';
 import { AssistantAvatar } from './assistant-avatar';
-import { ThinkingDots } from './thinking-dots';
+import { ThinkingStatus } from './thinking-status';
 
 interface AssistantMessageProps {
   readonly message: Message;
@@ -23,6 +23,8 @@ interface AssistantMessageProps {
   readonly onRate: (id: string, feedback: Feedback) => void;
   readonly onViewRelated: (message: Message) => void;
   readonly onAskFollowUp: () => void;
+  /** Another answer is on its way, so nothing here may ask a new question. */
+  readonly busy?: boolean | undefined;
 }
 
 /**
@@ -41,6 +43,7 @@ export function AssistantMessage({
   onRate,
   onViewRelated,
   onAskFollowUp,
+  busy = false,
 }: AssistantMessageProps) {
   const isIntro = message.kind === 'intro';
   const done = message.status === 'done';
@@ -67,12 +70,7 @@ export function AssistantMessage({
           {topicLabel && <Tag tone="accent">{topicLabel}</Tag>}
         </div>
 
-        {message.status === 'pending' && (
-          <p className="m-0 flex min-h-7 items-center gap-2.5 text-14 text-ink-muted">
-            <ThinkingDots />
-            Reading Marcio&apos;s documented experience…
-          </p>
-        )}
+        {message.status === 'pending' && <ThinkingStatus />}
 
         {message.parts.length > 0 && (
           <AnswerBody parts={message.parts} streaming={message.status === 'streaming'} />
@@ -156,6 +154,7 @@ export function AssistantMessage({
             onRate={(feedback) => {
               onRate(message.id, feedback);
             }}
+            busy={busy}
           />
         )}
 
@@ -165,6 +164,7 @@ export function AssistantMessage({
               title={isIntro ? 'Suggested questions' : 'Ask a follow-up'}
               questions={message.followUps.map((question) => ({ question }))}
               onPick={onFollowUp}
+              disabled={busy}
             />
           </div>
         )}

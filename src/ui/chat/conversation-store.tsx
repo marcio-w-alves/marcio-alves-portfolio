@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, type ReactNode } from 'react';
 import type { TopicId } from '@/core/assistant/topics';
+import { activeAnswer } from '@/core/conversation/conversation';
 import type { Conversation } from '@/core/conversation/messages';
 
 type Change = Conversation | ((current: Conversation) => Conversation);
@@ -12,6 +13,8 @@ interface ConversationStore {
   readonly update: (topic: TopicId, change: Change, seed: Conversation) => void;
   /** The answer each page is streaming, so it can be cancelled from that page. */
   readonly inFlight: Map<TopicId, AbortController>;
+  /** Whether any page has an answer on its way: one question at a time, site-wide. */
+  readonly busy: boolean;
 }
 
 const ConversationStoreContext = createContext<ConversationStore | null>(null);
@@ -35,7 +38,14 @@ export function ConversationsProvider({ children }: { readonly children: ReactNo
   }
 
   return (
-    <ConversationStoreContext value={{ conversations, update, inFlight }}>
+    <ConversationStoreContext
+      value={{
+        conversations,
+        update,
+        inFlight,
+        busy: [...conversations.values()].some((conversation) => activeAnswer(conversation)),
+      }}
+    >
       {children}
     </ConversationStoreContext>
   );

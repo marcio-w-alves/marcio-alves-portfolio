@@ -155,6 +155,8 @@
   /* A rich block rises a little slower than a message; a disclosure body fades in. */
   --animate-block-enter: rise 320ms var(--ease-standard) both;
   --animate-reveal: fade 200ms var(--ease-standard);
+  /* A light band sweeping over "Thinking…"; it starts and ends off the text. */
+  --animate-shimmer: shimmer 1.6s var(--ease-standard) infinite;
 
   @keyframes rise {
     from {
@@ -173,6 +175,15 @@
     }
     to {
       opacity: 1;
+    }
+  }
+
+  @keyframes shimmer {
+    from {
+      translate: -100% 0;
+    }
+    to {
+      translate: 100% 0;
     }
   }
 
