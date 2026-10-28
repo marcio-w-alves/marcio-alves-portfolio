@@ -62,7 +62,7 @@
   --text-16\.5: 16.5px;
 
   /*
-   * POR-09: the hero sizes scale with the app's width, not the viewport. `cqi`
+   * The hero sizes scale with the app's width, not the viewport. `cqi`
    * resolves against the nearest container, which is the `ma` app root.
    */
   --text-display: clamp(40px, 7.2cqi, 60px);
@@ -75,7 +75,6 @@
   --leading-body: 1.55;
   --leading-prose: 1.65;
 
-  /* POR-09 */
   --leading-subhead: 1.25;
 
   --tracking-display: -0.045em;
@@ -118,7 +117,7 @@
   --animate-blink: blink 1s steps(1, end) infinite;
   --animate-pulse-dot: pulse-dot 1.4s var(--ease-standard) infinite;
 
-  /* POR-09: the welcome state settles in more slowly than a message does. */
+  /* The welcome state settles in more slowly than a message does. */
   --animate-fade-slow: fade 450ms var(--ease-standard);
 
   @keyframes rise {
@@ -173,7 +172,6 @@
   --container-compact: 861px;
   --container-phone: 601px;
 
-  /* POR-09 */
   --container-welcome: 760px;
   --container-measure: 62ch;
   --grid-template-columns-suggestions: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
@@ -188,14 +186,14 @@
   transition-duration: var(--duration-medium);
 }
 
-/* POR-09: a suggestion's arrow moves at the medium pace but recolours at the fast one. */
+/* A suggestion's arrow moves at the medium pace but recolours at the fast one. */
 @utility transition-nudge {
   transition:
     translate var(--duration-medium) var(--ease-standard),
     color var(--duration-fast) var(--ease-standard);
 }
 
-/* POR-09: a row that scrolls sideways without showing a scrollbar. */
+/* A row that scrolls sideways without showing a scrollbar. */
 @utility scrollbar-none {
   scrollbar-width: none;
 
