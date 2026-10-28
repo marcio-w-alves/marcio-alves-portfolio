@@ -396,6 +396,7 @@ describe('an answer in flight when another is retried, edited or dropped', () =>
     expect(interrupted).toHaveTextContent('Part');
     expect(within(interrupted).getByText('Response stopped')).toBeInTheDocument();
     expect(conversation()).toHaveAttribute('aria-busy', 'false');
+    expect(screen.getByRole('status')).toHaveTextContent('Response stopped');
 
     streaming.releaseRest();
     await user.keyboard('{Enter}');

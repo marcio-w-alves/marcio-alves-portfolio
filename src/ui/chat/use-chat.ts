@@ -40,6 +40,7 @@ export function useChat(topic: TopicId, initial?: Conversation) {
     inFlight.controller.abort();
     store.inFlight.delete(topic);
     setConversation((current) => stopAnswer(current, inFlight.answerId));
+    setAnnouncement('Response stopped');
   }
 
   async function stream(answerId: string, question: string, from: Conversation) {
@@ -69,14 +70,6 @@ export function useChat(topic: TopicId, initial?: Conversation) {
     return true;
   }
 
-  function stop() {
-    cancel();
-    const answer = activeAnswer(conversation);
-    if (!answer) return;
-    setConversation((current) => stopAnswer(current, answer.id));
-    setAnnouncement('Response stopped');
-  }
-
   function retry(answerId: string) {
     if (store.busy && !activeAnswer(conversation)) return;
     const removed = removeExchange(conversation, answerId);
@@ -88,10 +81,9 @@ export function useChat(topic: TopicId, initial?: Conversation) {
 
   /** Takes the exchange out and returns its question, for the composer to hold. */
   function edit(answerId: string): string {
-    const removed = removeExchange(conversation, answerId);
-    setConversation(removed.conversation);
     cancel();
-    return removed.question;
+    setConversation((current) => removeExchange(current, answerId).conversation);
+    return removeExchange(conversation, answerId).question;
   }
 
   function rate(answerId: string, feedback: Feedback) {
@@ -111,7 +103,7 @@ export function useChat(topic: TopicId, initial?: Conversation) {
     /** Another page has an answer on its way, so this one waits. */
     waiting: store.busy && activeAnswer(conversation) === undefined,
     ask,
-    stop,
+    stop: cancel,
     retry,
     edit,
     rate,
