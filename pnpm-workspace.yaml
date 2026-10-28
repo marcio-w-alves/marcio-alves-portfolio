@@ -1,3 +1,8 @@
+# lefthook's install script fetches the Go binary that runs the git hooks, so it
+# has to be allowed; pnpm blocks every other package's scripts by default.
+onlyBuiltDependencies:
+  - lefthook
+
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver

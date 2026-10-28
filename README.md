@@ -18,17 +18,52 @@ pnpm dev
 
 ## Scripts
 
-| Command          | Purpose                          |
-| ---------------- | -------------------------------- |
-| `pnpm dev`       | Development server               |
-| `pnpm build`     | Production build                 |
-| `pnpm typecheck` | TypeScript, no emit              |
-| `pnpm lint`      | ESLint                           |
+| Command             | Purpose                                   |
+| ------------------- | ----------------------------------------- |
+| `pnpm dev`          | Development server                        |
+| `pnpm build`        | Production build                          |
+| `pnpm typecheck`    | TypeScript, no emit                       |
+| `pnpm lint`         | ESLint, warnings treated as failures      |
+| `pnpm lint:fix`     | ESLint with autofix                       |
+| `pnpm format`       | Prettier, write                           |
+| `pnpm format:check` | Prettier, verify only                     |
+| `pnpm boundaries`   | Module-boundary rules                     |
+| `pnpm verify`       | All four gates, in the order CI runs them |
+
+## Quality gates
+
+Four checks guard the repository. Each one runs locally through a git hook and
+again in CI, so a failure surfaces on the machine that caused it.
+
+**ESLint** uses type-aware rules (`strictTypeChecked`), which read the type
+checker rather than the syntax tree. That is what catches a floating promise or
+an unnecessary condition — defects a syntax-only linter cannot see. Warnings
+fail the run: a warning nobody must act on is noise.
+
+**Prettier** owns formatting outright; ESLint's formatting rules are switched
+off so the two can never disagree. The Tailwind plugin sorts every class list
+into canonical order, which keeps diffs about behaviour instead of class order.
+
+**dependency-cruiser** enforces the architecture. `src/core` may not import
+Next, React, a vendor SDK, or anything from an outer layer; cycles and
+unresolvable imports are rejected. Zod is the single allowed dependency inside
+`src/core`, because the assistant's tool contracts are Zod schemas and those
+schemas are policy, not an adapter.
+
+**commitlint** requires Conventional Commits whose subject ends with its task
+key, for example `feat(ui): add the composer (POR-10)`. The type drives the
+automated version bump, so the format is load-bearing.
+
+Hooks are installed by `pnpm install` (the `prepare` script). `pre-commit`
+formats and lints what is staged, `commit-msg` validates the message, and
+`pre-push` runs typecheck, lint and the boundary rules. Never bypass them with
+`--no-verify`: fix the gate or fix what the gate found.
 
 ## Architecture
 
 Source dependencies point inward. `src/core` is plain TypeScript: it never
-imports from Next.js, React, the OpenAI SDK or any other outer layer.
+imports from Next.js, React, the OpenAI SDK or any other outer layer. This is
+checked by `pnpm boundaries`, not left to discipline.
 
 ```
 src/
