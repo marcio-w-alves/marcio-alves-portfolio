@@ -110,6 +110,18 @@ the build must not need a secret; at runtime only the question is embedded.
 The index records a hash of the corpus it came from, and a test fails the
 moment the knowledge base changes without the index being rebuilt.
 
+## Chat endpoint
+
+`POST /api/chat` takes `{ message, history, context }` and answers as
+Server-Sent Events in the contract of `src/core/assistant/assistant-event.ts`.
+Everything in the request is untrusted: the body is read in pieces and cut off
+at 32 KB (a `Content-Length` can lie), then validated by a strict schema —
+1,200 characters per question, 24 turns of history at most, no unknown fields.
+
+The stream is pulled one event at a time, so nothing is generated faster than
+the visitor reads it; when they leave, the stream is cancelled and the
+request's abort signal ends the model call behind it.
+
 ## Design tokens
 
 `src/app/globals.css` is the whole visual vocabulary, declared as Tailwind v4

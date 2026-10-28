@@ -35,6 +35,11 @@ const TEMPERATURE = 0.2;
 
 export interface Container {
   readonly assistant: Assistant;
+  readonly reportError: (error: unknown) => void;
+}
+
+function reportError(error: unknown): void {
+  console.error('[assistant]', error);
 }
 
 function buildModelAssistant(apiKey: string, githubToken: string | undefined): ModelAssistant {
@@ -75,10 +80,9 @@ export function getContainer(): Container {
         modelAssistant: env.OPENAI_API_KEY
           ? buildModelAssistant(env.OPENAI_API_KEY, env.GITHUB_TOKEN)
           : null,
-        reportError: (error) => {
-          console.error('[assistant]', error);
-        },
+        reportError,
       }),
+      reportError,
     };
   }
   return container;
