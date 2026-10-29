@@ -85,6 +85,21 @@ describe('circuit breaker', () => {
     expect(calls()).toBe(5);
   });
 
+  it('does not count a request the provider refused as malformed against it', async () => {
+    const refused = Object.assign(new Error('bad request'), { status: 400 });
+    const { guarded, calls, state } = setup(() => refused);
+    for (let i = 0; i < 5; i += 1) await expect(drain(guarded)).rejects.toThrow('bad request');
+    expect(calls()).toBe(5);
+    expect(state()).toBe('closed');
+  });
+
+  it('still counts the provider failing on its side', async () => {
+    const outage = Object.assign(new Error('unavailable'), { status: 503 });
+    const { guarded, state } = setup(() => outage);
+    for (let i = 0; i < 3; i += 1) await expect(drain(guarded)).rejects.toThrow('unavailable');
+    expect(state()).toBe('open');
+  });
+
   it('is not left stuck when a consumer stops reading a trial call early', async () => {
     let healthy = false;
     const { guarded, calls, advance } = setup(() => (healthy ? 'ok' : new Error('down')));

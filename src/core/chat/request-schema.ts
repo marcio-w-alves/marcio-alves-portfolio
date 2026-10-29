@@ -14,13 +14,17 @@ import { TOPIC_IDS } from './topic-id';
  * conversational memory — neither can grant anything. Kept apart from the
  * limits so the client reads them without bundling zod.
  */
+// A lone surrogate is nothing a keyboard types, and the model provider refuses it.
+const wellFormed = (text: string) => text.isWellFormed();
+const WELL_FORMED = 'Must be well-formed text.';
+
 export const chatRequestSchema = z.strictObject({
-  message: z.string().trim().min(1).max(MAX_QUESTION_LENGTH),
+  message: z.string().trim().min(1).max(MAX_QUESTION_LENGTH).refine(wellFormed, WELL_FORMED),
   history: z
     .array(
       z.strictObject({
         role: z.enum(['user', 'assistant']),
-        text: z.string().max(MAX_HISTORY_TEXT),
+        text: z.string().max(MAX_HISTORY_TEXT).refine(wellFormed, WELL_FORMED),
       }),
     )
     .max(MAX_HISTORY_MESSAGES)

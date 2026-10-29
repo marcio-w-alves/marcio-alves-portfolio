@@ -77,6 +77,21 @@ function isCancellation(error: unknown): boolean {
   return error instanceof Error && error.name === 'AbortError';
 }
 
+/**
+ * A request the provider refused as malformed (HTTP 400) is the caller's
+ * fault, not the provider's: counted, three crafted questions would open the
+ * circuit for every visitor.
+ */
+function isRefusedRequest(error: unknown): boolean {
+  return error instanceof Error && 'status' in error && error.status === 400;
+}
+
+/** Whatever says nothing about the dependency's health only releases the call. */
+function settleFailure(breaker: CircuitBreaker, error: unknown): void {
+  if (isCancellation(error) || isRefusedRequest(error)) breaker.released();
+  else breaker.failed();
+}
+
 /** Runs one call through the breaker: refused while it is open, counted when it fails. */
 export async function guard<T>(breaker: CircuitBreaker, call: () => Promise<T>): Promise<T> {
   breaker.admit();
@@ -85,8 +100,7 @@ export async function guard<T>(breaker: CircuitBreaker, call: () => Promise<T>):
     breaker.succeeded();
     return result;
   } catch (error) {
-    if (isCancellation(error)) breaker.released();
-    else breaker.failed();
+    settleFailure(breaker, error);
     throw error;
   }
 }
@@ -105,8 +119,7 @@ export function withCircuitBreaker(
         breaker.succeeded();
       } catch (error) {
         settled = true;
-        if (isCancellation(error)) breaker.released();
-        else breaker.failed();
+        settleFailure(breaker, error);
         throw error;
       } finally {
         // A consumer that stops reading early settles nothing; without this a
