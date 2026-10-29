@@ -36,7 +36,9 @@
     "notes:build": "tsx scripts/build-knowledge-notes.mts",
     "sites:ingest": "tsx scripts/ingest-sites.mts",
     "brand:css": "tsx scripts/generate-brand-css.mts",
-    "fixture:index": "tsx scripts/build-fixture-index.mts"
+    "fixture:index": "tsx scripts/build-fixture-index.mts",
+    "baseline:capture": "tsx scripts/baseline/capture.mts",
+    "baseline:compare": "tsx scripts/baseline/compare.mts"
   },
   "dependencies": {
     "@fontsource/inter-tight": "5.3.0",
@@ -66,6 +68,7 @@
     "@testing-library/user-event": "14.6.8",
     "@types/jsdom": "30.0.0",
     "@types/node": "24.19.2",
+    "@types/pg": "8.23.1",
     "@types/pngjs": "6.0.5",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
@@ -78,6 +81,7 @@
     "jsdom": "30.1.3",
     "lefthook": "2.2.2",
     "msw": "3.0.3",
+    "pg": "8.23.1",
     "pixelmatch": "8.0.0",
     "pngjs": "7.0.0",
     "prettier": "3.9.10",
@@ -90,6 +94,7 @@
     "typescript-eslint": "8.72.1",
     "undici": "8.12.3",
     "vite": "8.3.5",
-    "vitest": "5.0.5"
+    "vitest": "5.0.5",
+    "yaml": "2.9.1"
   }
 }

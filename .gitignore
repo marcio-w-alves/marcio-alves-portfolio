@@ -52,3 +52,6 @@ next-env.d.ts
 
 # Plans and decision records are kept outside the repository.
 docs/
+
+# Scratch copies the baseline capture runs inside a checkout; removed after each run.
+/scripts/baseline-run-*/
