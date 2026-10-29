@@ -55,7 +55,12 @@ function handlerWith(
 
 function spending() {
   return {
-    budget: createModelBudget({ answersPerWindow: 100, windowMs: 60_000, dailyTokens: 1_000_000 }),
+    budget: createModelBudget({
+      answersPerWindow: 100,
+      windowMs: 60_000,
+      dailyTokens: 1_000_000,
+      clientDailyTokens: 1_000_000,
+    }),
     answerCache: createAnswerCache({ ttlMs: 60_000, maxEntries: 10 }),
   };
 }
@@ -159,6 +164,34 @@ describe('POST /api/chat — rejecting bad requests at the boundary', () => {
       (await handlerWith(fastPathOnly)(post('message=hi', 'application/x-www-form-urlencoded')))
         .status,
     ).toBe(415);
+  });
+
+  it('refuses a type that only mentions JSON, which another site can send without a preflight', async () => {
+    const response = await handlerWith(fastPathOnly)(
+      post({ message: 'hi' }, 'text/plain; application/json'),
+    );
+    expect(response.status).toBe(415);
+  });
+
+  it('accepts JSON with a charset', async () => {
+    const response = await handlerWith(fastPathOnly)(
+      post({ message: 'hi' }, 'application/json; charset=utf-8'),
+    );
+    expect(response.status).toBe(200);
+  });
+
+  it('refuses a question a browser sent from another site', async () => {
+    const request = post({ message: 'hi' });
+    request.headers.set('sec-fetch-site', 'cross-site');
+    const response = await handlerWith(fastPathOnly)(request);
+    expect(response.status).toBe(403);
+    expect(await response.json()).toMatchObject({ error: { code: 'cross_site' } });
+  });
+
+  it('accepts a question a browser sent from the site itself', async () => {
+    const request = post({ message: 'hi' });
+    request.headers.set('sec-fetch-site', 'same-origin');
+    expect((await handlerWith(fastPathOnly)(request)).status).toBe(200);
   });
 
   it('stops reading an oversized body instead of buffering it', async () => {

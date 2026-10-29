@@ -30,6 +30,14 @@ async function readBody(request: Request): Promise<string | null> {
   return new TextDecoder().decode(Buffer.concat(chunks));
 }
 
+/**
+ * The exact type, not a mention of it: `text/plain; application/json` is a
+ * simple type a cross-site form or fetch sends without a CORS preflight.
+ */
+function isJson(contentType: string | null): boolean {
+  return contentType?.split(';')[0]?.trim().toLowerCase() === 'application/json';
+}
+
 function parseJson(text: string): unknown {
   try {
     return JSON.parse(text);
@@ -107,7 +115,13 @@ export function createChatHandler({
         },
       );
     }
-    if (!request.headers.get('content-type')?.includes('application/json')) {
+    // Browsers send it on every fetch; only a browser can be made to ask on
+    // another site's behalf, and its visitors' addresses would dodge the limits.
+    const fetchSite = request.headers.get('sec-fetch-site');
+    if (fetchSite !== null && fetchSite !== 'same-origin') {
+      return problem(403, 'cross_site', 'Ask from the site itself.');
+    }
+    if (!isJson(request.headers.get('content-type'))) {
       return problem(415, 'unsupported_media_type', 'Send the question as application/json.');
     }
     const text = await readBody(request);
