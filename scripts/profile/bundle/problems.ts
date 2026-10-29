@@ -8,11 +8,13 @@ export interface BundleProblem {
   /** A JSON Pointer into the document, e.g. `/experience/0/start`, or a `line:col` position. */
   readonly at?: string;
   readonly problem: string;
-  readonly remedy: string;
+  /** What to do about it, where the problem does not already say. */
+  readonly remedy?: string;
 }
 
 export function formatProblem({ document, at, problem, remedy }: BundleProblem): string {
-  return `${document}${at === undefined ? '' : `#${at}`}: ${problem} — ${remedy}`;
+  const where = `${document}${at === undefined ? '' : `#${at}`}`;
+  return `${where}: ${problem}${remedy === undefined ? '' : ` — ${remedy}`}`;
 }
 
 /** Thrown when a profile cannot be used; its message lists every problem, one per line. */

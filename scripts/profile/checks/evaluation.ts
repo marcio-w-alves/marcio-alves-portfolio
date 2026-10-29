@@ -67,13 +67,14 @@ function actionProblems(data: ProfileData, toolNames: ReadonlySet<string>): Bund
 }
 
 /**
- * `toolNames` are the assistant's actions, when known. They come from the
- * tool registry, which needs the compiled copy's labels to be built; until a
- * profile's copy is compiled the calibration's action names are not checked.
+ * `toolNames` are the assistant's actions (`assistantActionNames`). They come
+ * from the tool registry, which needs the compiled copy's labels to be built,
+ * so copy that does not compile leaves the action names unchecked — the copy
+ * check reports that instead.
  */
 export function checkEvaluation(
   data: ProfileData,
-  toolNames?: ReadonlySet<string>,
+  toolNames?: ReadonlySet<string> | null,
 ): BundleProblem[] {
   return [
     ...duplicateIdProblems(data),

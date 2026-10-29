@@ -115,7 +115,7 @@ describe('the limits of a bundle', () => {
   const answers = (count: number) =>
     Promise.all(
       Array.from({ length: count }, (_, index) =>
-        writeDocument(dir, `copy/en/answers/a${String(index)}.yaml`, 'a: 1\n'),
+        writeDocument(dir, `copy/en/answers/a${String(index)}.yaml`, '{}\n'),
       ),
     );
 
@@ -131,7 +131,7 @@ describe('the limits of a bundle', () => {
     await answers(LIMITS.documents - shipped);
     expect(await problemsOf(dir)).toEqual([]);
 
-    await writeDocument(dir, 'copy/en/answers/one-more.yaml', 'a: 1\n');
+    await writeDocument(dir, 'copy/en/answers/one-more.yaml', '{}\n');
     expect(await problemsOf(dir)).toEqual([
       '.: holds 401 documents; a bundle holds at most 400 — merge or remove documents',
     ]);
