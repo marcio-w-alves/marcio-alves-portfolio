@@ -28,7 +28,12 @@ const handle = createChatHandler({
     modelAssistant: null,
     clock: { now: () => new Date() },
     reportError: () => undefined,
-    budget: createModelBudget({ answersPerWindow: 100, windowMs: 60_000, dailyTokens: 1_000_000 }),
+    budget: createModelBudget({
+      answersPerWindow: 100,
+      windowMs: 60_000,
+      dailyTokens: 1_000_000,
+      clientDailyTokens: 1_000_000,
+    }),
     answerCache: createAnswerCache({ ttlMs: 60_000, maxEntries: 10 }),
   }),
   reportError: () => undefined,

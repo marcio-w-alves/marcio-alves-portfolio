@@ -37,6 +37,8 @@ export const EMPTY_REPLY =
 
 export interface ModelAssistantRequest {
   readonly question: string;
+  /** Who is asking, so what the answer costs is charged to them. */
+  readonly clientId: string;
   readonly history: readonly HistoryTurn[];
   /** Questions the fast path can answer, offered after this answer. */
   readonly followUps: readonly string[];
@@ -48,8 +50,21 @@ export interface ModelAssistantRequest {
   } | null;
 }
 
+/** What an answer rests on, once it is given. */
+export interface AnswerProvenance {
+  /**
+   * False when it rests on text read live from a third party, which anyone
+   * can edit: it may carry instructions, so the answer is not replayed to
+   * other visitors.
+   */
+  readonly shareable: boolean;
+}
+
 export interface ModelAssistant {
-  answer(request: ModelAssistantRequest, signal?: AbortSignal): AsyncGenerator<AssistantEvent>;
+  answer(
+    request: ModelAssistantRequest,
+    signal?: AbortSignal,
+  ): AsyncGenerator<AssistantEvent, AnswerProvenance>;
 }
 
 interface Options {
@@ -67,7 +82,7 @@ interface Options {
    * Called once per model call with what it cost, for the spending budget —
    * as reported, or estimated when the call was cut short.
    */
-  readonly onUsage?: (usage: ModelUsage) => void;
+  readonly onUsage?: (usage: ModelUsage, clientId: string) => void;
   /** Called with every action the model ran and what it got back — the evidence an answer rests on. */
   readonly onToolResult?: (result: ToolTrace) => void;
 }
@@ -299,6 +314,7 @@ export function createModelAssistant({
     messages: readonly ModelMessage[],
     round: number,
     reply: Reply,
+    clientId: string,
     signal?: AbortSignal,
   ): AsyncGenerator<AssistantEvent, ModelTurn> {
     let text = '';
@@ -310,7 +326,7 @@ export function createModelAssistant({
       maxOutputTokens: MAX_OUTPUT_TOKENS,
       ...(signal ? { signal } : {}),
     };
-    const usage = createUsageMeter(request, (spent) => onUsage?.(spent));
+    const usage = createUsageMeter(request, (spent) => onUsage?.(spent, clientId));
     try {
       for await (const event of model.stream(request)) {
         usage.accepted();
@@ -357,7 +373,11 @@ export function createModelAssistant({
     decline: ToolCall,
     signal?: AbortSignal,
   ): Promise<ToolOutcome> {
-    const outcome = await tools.run(SEARCH, { query: question.slice(0, MAX_QUERY) }, signal);
+    const outcome = await tools.run(
+      SEARCH,
+      { query: question.slice(0, MAX_QUERY).toWellFormed() },
+      signal,
+    );
     if (!outcome.ok || bestRelevance(outcome.result.data) < ANSWERABLE) {
       return execute(decline, signal);
     }
@@ -387,17 +407,18 @@ export function createModelAssistant({
   }
 
   return {
-    async *answer({ question, history, followUps, page }, signal) {
+    async *answer({ question, clientId, history, followUps, page }, signal) {
       const instructions = systemPrompt(clock.now(), subject);
       const messages = startMessages(question, history, instructions, page);
       const linkable = createLinkAllowList(knownUrls);
       const reply = createReply((url) => linkable.allows(url), subject);
       const effects = collectEffects(page?.cards ?? []);
       let searched = false;
+      let shareable = true;
       let answer = '';
 
       for (let round = 1; round <= MAX_ROUNDS; round += 1) {
-        const turn = yield* streamRound(messages, round, reply, signal);
+        const turn = yield* streamRound(messages, round, reply, clientId, signal);
         answer += turn.text;
         if (turn.calls.length === 0) break;
 
@@ -414,11 +435,13 @@ export function createModelAssistant({
         for (const { call, outcome } of results) {
           onToolResult?.({ name: call.name, arguments: call.arguments, outcome });
           effects.add(outcome);
+          if (outcome.ok && outcome.result.thirdParty) shareable = false;
           allowLinksFrom(outcome, linkable);
         }
       }
 
       yield* closeAnswer(reply, effects, { answer, followUps });
+      return { shareable };
     },
   };
 }

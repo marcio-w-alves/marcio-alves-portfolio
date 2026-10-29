@@ -29,6 +29,11 @@ function referenceSource(summary: ReferenceSummary): AnswerSource {
 
 const UNAVAILABLE = 'no public reference is available right now';
 
+/** Marks a result that carries what was read, so the answer built on it is never shared. */
+function thirdPartyIf(read: unknown): { thirdParty?: true } {
+  return read ? { thirdParty: true } : {};
+}
+
 interface Dependencies {
   readonly kit: ResponseKit;
   readonly references: ReferencePort;
@@ -61,6 +66,7 @@ export function createExternalTools({ kit, references, github }: Dependencies): 
           inHisRecord: evidence.data,
         },
         sources: [...(summary ? [referenceSource(summary)] : []), ...evidence.sources],
+        ...thirdPartyIf(summary),
       };
     },
   });
@@ -86,6 +92,7 @@ export function createExternalTools({ kit, references, github }: Dependencies): 
           },
         },
         sources: [...(summary ? [referenceSource(summary)] : []), citation(role.source)],
+        ...thirdPartyIf(summary),
       };
     },
   });
@@ -113,6 +120,7 @@ export function createExternalTools({ kit, references, github }: Dependencies): 
           citation(knowledge.profile.source),
           ...(summary ? [referenceSource(summary)] : []),
         ],
+        ...thirdPartyIf(summary),
       };
     },
   });
@@ -134,6 +142,7 @@ export function createExternalTools({ kit, references, github }: Dependencies): 
           ? { ...profile, bio: profile.bio && clip(profile.bio, MAX_DESCRIPTION) }
           : { available: false, url: knowledge.contact.github },
         sources: [githubSource],
+        ...thirdPartyIf(profile),
       };
     },
   });
@@ -152,6 +161,7 @@ export function createExternalTools({ kit, references, github }: Dependencies): 
             }))
           : { available: false, url: knowledge.contact.github },
         sources: [githubSource],
+        ...thirdPartyIf(repositories),
       };
     },
   });

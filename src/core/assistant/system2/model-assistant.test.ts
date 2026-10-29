@@ -71,7 +71,12 @@ function registry(
 async function collect(model: LanguageModelPort, question = 'question', history = []) {
   const assistant = createModelAssistant({ subject, model, tools: registry(), clock });
   const events: AssistantEvent[] = [];
-  for await (const event of assistant.answer({ question, history, followUps: ['Next?'] })) {
+  for await (const event of assistant.answer({
+    question,
+    clientId: 'visitor',
+    history,
+    followUps: ['Next?'],
+  })) {
     events.push(event);
   }
   return events;
@@ -158,7 +163,9 @@ describe('model assistant — answering through actions', () => {
       { role: 'user' as const, text: 'Who is he?' },
       { role: 'assistant' as const, text: 'A frontend engineer.' },
     ];
-    await Array.fromAsync(assistant.answer({ question: 'And at Acme?', history, followUps: [] }));
+    await Array.fromAsync(
+      assistant.answer({ question: 'And at Acme?', clientId: 'visitor', history, followUps: [] }),
+    );
     const roles = requests[0]?.messages.map((message) => message.role);
     expect(roles).toEqual(['system', 'user', 'assistant', 'user']);
     const [system] = requests[0]?.messages ?? [];
@@ -177,7 +184,9 @@ describe('model assistant — conversation memory is bounded', () => {
       role: i % 2 === 0 ? ('user' as const) : ('assistant' as const),
       text: `${String(i)}:${'z'.repeat(5000)}`,
     }));
-    await Array.fromAsync(assistant.answer({ question: 'Now?', history, followUps: [] }));
+    await Array.fromAsync(
+      assistant.answer({ question: 'Now?', clientId: 'visitor', history, followUps: [] }),
+    );
 
     const remembered = (requests[0]?.messages ?? []).slice(1, -1);
     expect(remembered).toHaveLength(12);
@@ -280,7 +289,9 @@ describe('model assistant — spending', () => {
       clock,
       onUsage: (spent) => usage.push(spent),
     });
-    await Array.fromAsync(assistant.answer({ question: 'q', history: [], followUps: [] }));
+    await Array.fromAsync(
+      assistant.answer({ question: 'q', clientId: 'visitor', history: [], followUps: [] }),
+    );
     expect(usage).toEqual([
       { inputTokens: 10, outputTokens: 5 },
       { inputTokens: 10, outputTokens: 5 },
@@ -296,7 +307,10 @@ describe('model assistant — spending', () => {
       clock,
       onUsage: (spent) => usage.push(spent),
     });
-    return { usage, answer: assistant.answer({ question: 'q', history: [], followUps: [] }) };
+    return {
+      usage,
+      answer: assistant.answer({ question: 'q', clientId: 'visitor', history: [], followUps: [] }),
+    };
   }
 
   it('charges a round cut short after the model started answering at its ceiling', async () => {
@@ -357,7 +371,7 @@ describe('model assistant — spending', () => {
     const { usage, answer } = spendingOf(port);
 
     await answer.next();
-    await answer.return(undefined);
+    await answer.return({ shareable: true });
 
     expect(usage).toMatchObject([{ outputTokens: MAX_OUTPUT_TOKENS, estimated: true }]);
   });
@@ -383,6 +397,7 @@ describe('model assistant — on a topic page', () => {
     await Array.fromAsync(
       assistant.answer({
         question: 'q',
+        clientId: 'visitor',
         history: [],
         followUps: [],
         page: { label: 'Skills', summary: 'Skills by area: Frontend: React', cards: ['skills'] },
@@ -405,6 +420,7 @@ describe('model assistant — on a topic page', () => {
     const events = await Array.fromAsync(
       assistant.answer({
         question: 'q',
+        clientId: 'visitor',
         history: [],
         followUps: [],
         page: { label: 'Skills', summary: 'Skills by area', cards: ['skills'] },
@@ -418,7 +434,13 @@ describe('model assistant — on a topic page', () => {
     const { port, requests } = scriptedModel([{ text: 'ok' }]);
     const assistant = createModelAssistant({ subject, model: port, tools: registry(), clock });
     await Array.fromAsync(
-      assistant.answer({ question: 'q', history: [], followUps: [], page: null }),
+      assistant.answer({
+        question: 'q',
+        clientId: 'visitor',
+        history: [],
+        followUps: [],
+        page: null,
+      }),
     );
     expect(requests[0]?.messages.filter((message) => message.role === 'system')).toHaveLength(1);
   });
@@ -494,6 +516,7 @@ describe('model assistant — what reaches the visitor', () => {
     const events: AssistantEvent[] = [];
     for await (const event of assistant.answer({
       question: 'Does he have pets?',
+      clientId: 'visitor',
       history: [],
       followUps: [],
     })) {
@@ -536,6 +559,7 @@ describe('model assistant — what reaches the visitor', () => {
     const events: AssistantEvent[] = [];
     for await (const event of assistant.answer({
       question: 'What are his dogs called?',
+      clientId: 'visitor',
       history: [],
       followUps: [],
     })) {
@@ -578,6 +602,7 @@ describe('model assistant — what reaches the visitor', () => {
     const events: AssistantEvent[] = [];
     for await (const event of assistant.answer({
       question: 'What was his GPA at university?',
+      clientId: 'visitor',
       history: [],
       followUps: [],
     })) {
@@ -604,7 +629,12 @@ describe('model assistant — what reaches the visitor', () => {
       clock,
     });
     const events: AssistantEvent[] = [];
-    for await (const event of assistant.answer({ question: 'q', history: [], followUps: [] })) {
+    for await (const event of assistant.answer({
+      question: 'q',
+      clientId: 'visitor',
+      history: [],
+      followUps: [],
+    })) {
       events.push(event);
     }
     expect(events.at(-1)).toMatchObject({ type: 'finish', sources: [] });
@@ -633,7 +663,7 @@ describe('model assistant — what reaches the visitor', () => {
     });
 
     const events = await Array.fromAsync(
-      assistant.answer({ question: 'q', history: [], followUps: [] }),
+      assistant.answer({ question: 'q', clientId: 'visitor', history: [], followUps: [] }),
     );
 
     const reply = JSON.stringify(toolReplies(requests[1]));
@@ -668,7 +698,10 @@ describe('model assistant — what reaches the visitor', () => {
     });
 
     await Array.fromAsync(
-      assistant.answer({ question: 'q', history: [], followUps: [] }, request.signal),
+      assistant.answer(
+        { question: 'q', clientId: 'visitor', history: [], followUps: [] },
+        request.signal,
+      ),
     );
 
     expect(signals).toEqual([request.signal]);
@@ -707,12 +740,62 @@ describe('model assistant — what reaches the visitor', () => {
     });
 
     const events = await Array.fromAsync(
-      assistant.answer({ question: 'What is React?', history: [], followUps: [] }),
+      assistant.answer({
+        question: 'What is React?',
+        clientId: 'visitor',
+        history: [],
+        followUps: [],
+      }),
     );
 
     expect(text(events)).toBe(
       `Early guess. See [React on Wikipedia](${wikipedia}), the official docs and [his LinkedIn](https://www.linkedin.com/in/ada-rivera-example/).`,
     );
+  });
+
+  it('says an answer resting on an encyclopedia extract may not be shared, and one on the record may', async () => {
+    const references: ReferencePort = {
+      summary: (title) =>
+        Promise.resolve({ title, extract: 'A build tool.', url: 'https://w.example' }),
+    };
+    const unreachableGithub = {
+      profile: () => Promise.resolve(null),
+      repositories: () => Promise.resolve(null),
+    };
+    async function provenanceAfter(name: string, args: unknown) {
+      const { port } = scriptedModel([{ calls: [call(name, args)] }, { text: 'Done.' }]);
+      const answer = createModelAssistant({
+        subject,
+        model: port,
+        tools: registry(createExternalTools({ kit, references, github: unreachableGithub })),
+        clock,
+      }).answer({ question: 'q', clientId: 'visitor', history: [], followUps: [] });
+      for (;;) {
+        const step = await answer.next();
+        if (step.done) return step.value;
+      }
+    }
+
+    expect(await provenanceAfter('getTechnologyBrief', { technology: 'Bazel' })).toEqual({
+      shareable: false,
+    });
+    expect(await provenanceAfter('getProfileSummary', {})).toEqual({ shareable: true });
+  });
+
+  it('charges each model call to the client who asked', async () => {
+    const charged: string[] = [];
+    const { port } = scriptedModel([{ calls: [call('getProfileSummary', {})] }, { text: 'Done.' }]);
+    const assistant = createModelAssistant({
+      subject,
+      model: port,
+      tools: registry(),
+      clock,
+      onUsage: (_usage, clientId) => charged.push(clientId),
+    });
+    await Array.fromAsync(
+      assistant.answer({ question: 'q', clientId: 'visitor-7', history: [], followUps: [] }),
+    );
+    expect(charged).toEqual(['visitor-7', 'visitor-7']);
   });
 
   it('judges a link the model splits across rounds as one link', async () => {
@@ -736,7 +819,12 @@ describe('model assistant — what reaches the visitor', () => {
     const assistant = createModelAssistant({ subject, model: port, tools: registry(), clock });
     const seen: AssistantEvent[] = [];
     await expect(async () => {
-      for await (const event of assistant.answer({ question: 'q', history: [], followUps: [] })) {
+      for await (const event of assistant.answer({
+        question: 'q',
+        clientId: 'visitor',
+        history: [],
+        followUps: [],
+      })) {
         seen.push(event);
       }
     }).rejects.toThrow('provider down');
@@ -802,7 +890,12 @@ async function answerWithSearch(
   const tools = registry(createSearchTools(record, rethrow));
   const assistant = createModelAssistant({ subject, model, tools, clock });
   const events: AssistantEvent[] = [];
-  for await (const event of assistant.answer({ question, history: [], followUps: [] })) {
+  for await (const event of assistant.answer({
+    question,
+    clientId: 'visitor',
+    history: [],
+    followUps: [],
+  })) {
     events.push(event);
   }
   return events;

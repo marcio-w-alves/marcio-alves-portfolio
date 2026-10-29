@@ -50,6 +50,11 @@ const assistantSettingsSchema = z
      * limit set on the OpenAI project itself.
      */
     MODEL_DAILY_TOKENS: positiveInteger(2_000_000),
+    /**
+     * What one client may spend of it in a day: a dozen long answers or so,
+     * plenty for a visitor, so a few scripts cannot empty the day for everyone.
+     */
+    MODEL_CLIENT_DAILY_TOKENS: positiveInteger(150_000),
     /** The longest any answer may take; past it the visitor is told it was interrupted. */
     CHAT_REQUEST_TIMEOUT_MS: z.preprocess(
       unset,
@@ -70,6 +75,7 @@ const assistantSettingsSchema = z
     requestsPerTenMinutes: env.CHAT_REQUESTS_PER_TEN_MINUTES,
     modelAnswersPerTenMinutes: env.MODEL_ANSWERS_PER_TEN_MINUTES,
     dailyModelTokens: env.MODEL_DAILY_TOKENS,
+    clientDailyModelTokens: env.MODEL_CLIENT_DAILY_TOKENS,
     chatRequestTimeoutMs: env.CHAT_REQUEST_TIMEOUT_MS,
   }));
 
