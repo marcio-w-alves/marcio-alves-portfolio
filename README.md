@@ -523,11 +523,6 @@ Nothing reads it, the site is not published to a registry, and a number
 sitting in a file is a number somebody eventually edits. **Never bump it by
 hand.**
 
-## Decisions
-
-The choices worth explaining — and what each one costs — are recorded as
-architecture decision records in [`docs/adr`](docs/adr/README.md).
-
 ## Contributing
 
 How to set up, the conventions, and the gates every change passes:
