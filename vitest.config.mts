@@ -11,6 +11,15 @@ const source = (path: string) => fileURLToPath(new URL(path, import.meta.url));
  */
 const asFork = process.env.PROFILE_UNDER_TEST === 'fixture';
 
+/**
+ * `pnpm test:store` runs the store suite against a real Postgres (see
+ * `scripts/profile/store/testing/postgres.sh`). It is a project of its own, and
+ * only that script defines it, so `pnpm test` never reaches for a database —
+ * and when it does run, a missing database fails the run instead of skipping it.
+ */
+const storeTests = process.env.PROFILE_STORE_TESTS === '1';
+const STORE_SUITE = 'scripts/**/*.store.test.ts';
+
 const alias = [
   ...(asFork
     ? [
@@ -55,9 +64,27 @@ export default defineConfig({
         test: {
           name: 'node',
           include: ['src/**/*.test.ts', 'scripts/**/*.test.ts'],
+          exclude: [...configDefaults.exclude, STORE_SUITE],
           environment: 'node',
         },
       },
+      ...(storeTests
+        ? [
+            {
+              extends: true as const,
+              test: {
+                name: 'store',
+                include: [STORE_SUITE],
+                environment: 'node',
+                // One database and two cluster-wide roles per file.
+                fileParallelism: false,
+                testTimeout: 60_000,
+                hookTimeout: 60_000,
+                globalSetup: ['./scripts/profile/store/testing/require-admin-url.ts'],
+              },
+            },
+          ]
+        : []),
       {
         extends: true,
         test: {

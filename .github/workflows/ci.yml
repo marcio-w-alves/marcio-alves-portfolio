@@ -105,6 +105,31 @@ jobs:
             test-results/
           retention-days: 7
 
+  # The profile store against a real Postgres 17. Not a service container: the
+  # tools never accept an unverified certificate, not even in a test, so the
+  # job generates a CA and a server certificate first and starts Postgres with
+  # them. No secret is involved — the database lives and dies with the job.
+  store:
+    name: store
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+
+      - name: Start Postgres with TLS
+        run: scripts/profile/store/testing/postgres.sh start >> "$GITHUB_ENV"
+
+      - run: pnpm test:store
+
+      - name: Show the Postgres log of a failed run
+        if: failure()
+        run: docker logs profile-store-postgres
+
+      - name: Stop Postgres
+        if: always()
+        run: scripts/profile/store/testing/postgres.sh stop
+
   commits:
     name: commits
     if: github.event_name == 'pull_request'
@@ -149,7 +174,7 @@ jobs:
   ci:
     name: ci
     if: always()
-    needs: [verify, build, e2e, commits, lhci]
+    needs: [verify, build, e2e, store, commits, lhci]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

@@ -271,16 +271,20 @@ describe('the materialize command', { timeout: CLI_TEST_TIMEOUT_MS }, () => {
     expect(run.stderr).toContain('materialize needs --out <dir>.');
   });
 
-  it('says in one line that it cannot read the database yet, and writes nothing', async () => {
-    const run = await runProfile(['materialize', '--out', out], {
-      PROFILE_DATABASE_URL: 'postgres://reader:secret@db.example/profile',
-    });
+  // What a reachable database holds is proven against a real Postgres, in
+  // `scripts/profile/store/*.store.test.ts`. Here: a database named but not
+  // there is a failure, never a quiet fall back to the example.
+  it('reports a database it cannot reach in one line, naming the host and no credential', async () => {
+    const url = 'postgres://reader:secret@db.invalid/profile';
+
+    const run = await runProfile(['materialize', '--out', out], { PROFILE_DATABASE_URL: url });
 
     expect(run.code).toBe(1);
     expect(run.stderr.trimEnd().split('\n')).toEqual([
-      'This version cannot read the profile database yet. Unset PROFILE_DATABASE_URL, or choose ' +
-        'PROFILE_SOURCE=bundle or PROFILE_SOURCE=example.',
+      expect.stringContaining('Reading the profile failed against db.invalid after 1 attempt'),
     ]);
+    expect(run.stdout + run.stderr).not.toContain('secret');
+    expect(run.stdout).not.toContain('example');
     await expect(stat(out)).rejects.toThrow();
   });
 });

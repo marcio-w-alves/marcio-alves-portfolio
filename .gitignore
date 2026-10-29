@@ -55,3 +55,6 @@ docs/
 
 # Scratch copies the baseline capture runs inside a checkout; removed after each run.
 /scripts/baseline-run-*/
+
+# The CA and server certificate the store tests' Postgres is started with.
+/.postgres-tls/
