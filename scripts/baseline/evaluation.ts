@@ -21,17 +21,24 @@ export type EvaluationOutcome =
   | { readonly kind: 'run'; readonly reports: readonly CaseReport[] }
   | { readonly kind: 'skipped'; readonly reason: string };
 
-/** The cases that passed in the baseline and fail now; a case either run lacks is not compared. */
+/** A case that passed in the baseline and now fails, or is no longer there. */
+export interface EvaluationRegression {
+  readonly id: string;
+  readonly kind: 'fails' | 'missing';
+}
+
 export function evaluationRegressions(
   baseline: readonly CaseReport[],
   current: readonly CaseReport[],
-): string[] {
-  const passedBefore = new Set(
-    baseline.filter((report) => caseGrade(report).passes).map(({ id }) => id),
-  );
-  return current
-    .filter((report) => passedBefore.has(report.id) && !caseGrade(report).passes)
-    .map(({ id }) => id);
+): EvaluationRegression[] {
+  const now = new Map(current.map((report) => [report.id, report]));
+  return baseline
+    .filter((report) => caseGrade(report).passes)
+    .flatMap(({ id }): EvaluationRegression[] => {
+      const report = now.get(id);
+      if (!report) return [{ id, kind: 'missing' }];
+      return caseGrade(report).passes ? [] : [{ id, kind: 'fails' }];
+    });
 }
 
 export function caseFails(reports: readonly CaseReport[], id: string): boolean {

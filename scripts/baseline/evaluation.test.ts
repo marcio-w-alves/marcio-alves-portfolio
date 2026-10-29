@@ -1,7 +1,9 @@
 import { mkdir, readdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CaseReport, RunReport } from '../evaluation/report';
+import { captureFiles } from './capture-layout';
+import { compareEvaluations } from './compare-evaluations';
 import { evaluationRegressions, rerunArguments, runEvaluation } from './evaluation';
 import { readJson } from './private-files';
 import { scratchDir } from './testing/tool';
@@ -38,10 +40,42 @@ describe('cases that regressed since the baseline', () => {
 
     const regressions = evaluationRegressions(baseline, current);
 
-    expect(regressions).toEqual(['flips']);
-    expect(regressions.map(rerunArguments)).toEqual([['--only', 'flips', '--runs', '1']]);
+    expect(regressions).toEqual([{ id: 'flips', kind: 'fails' }]);
+    expect(regressions.map(({ id }) => rerunArguments(id))).toEqual([
+      ['--only', 'flips', '--runs', '1'],
+    ]);
+  });
+
+  it('reports a case that passed in the baseline and is not run now as missing', () => {
+    expect(evaluationRegressions([passing('gone'), failing('was-failing')], [])).toEqual([
+      { id: 'gone', kind: 'missing' },
+    ]);
   });
 });
+
+let scratch: Awaited<ReturnType<typeof scratchDir>>;
+let checkout: string;
+
+beforeEach(async () => {
+  scratch = await scratchDir();
+  checkout = join(scratch.path, 'checkout');
+  await mkdir(checkout);
+});
+afterEach(async () => {
+  await scratch.remove();
+});
+
+async function standIn(script: string) {
+  await writeFile(
+    join(checkout, 'package.json'),
+    JSON.stringify({
+      name: 'stand-in',
+      private: true,
+      scripts: { 'eval:assistant': 'node evaluate.mjs' },
+    }),
+  );
+  await writeFile(join(checkout, 'evaluate.mjs'), script);
+}
 
 /**
  * A stand-in checkout whose `eval:assistant` writes the report the real one
@@ -49,30 +83,6 @@ describe('cases that regressed since the baseline', () => {
  * it was told to use. No model is called.
  */
 describe('running the evaluation in a checkout', () => {
-  let scratch: Awaited<ReturnType<typeof scratchDir>>;
-  let checkout: string;
-
-  beforeEach(async () => {
-    scratch = await scratchDir();
-    checkout = join(scratch.path, 'checkout');
-    await mkdir(checkout);
-  });
-  afterEach(async () => {
-    await scratch.remove();
-  });
-
-  async function standIn(script: string) {
-    await writeFile(
-      join(checkout, 'package.json'),
-      JSON.stringify({
-        name: 'stand-in',
-        private: true,
-        scripts: { 'eval:assistant': 'node evaluate.mjs' },
-      }),
-    );
-    await writeFile(join(checkout, 'evaluate.mjs'), script);
-  }
-
   it('keeps the report whole and case by case, run with gpt-4o-mini for the assistant and the judge', async () => {
     await standIn(`
       import { writeFileSync } from 'node:fs';
@@ -113,5 +123,62 @@ describe('running the evaluation in a checkout', () => {
 
     expect(outcome).toEqual({ kind: 'skipped', reason: 'no report (exit code 1)' });
     expect(await readJson(join(destination, 'skipped.json'))).toEqual(outcome);
+  });
+});
+
+/** Evaluation runs in two captures, each written by the stand-in from the reports it is handed. */
+describe('comparing the evaluation with the baseline', () => {
+  const REPORTING = `
+    import { writeFileSync } from 'node:fs';
+    import { tmpdir } from 'node:os';
+    import { join } from 'node:path';
+    if (process.env.STAND_IN_REPORTS === 'none') process.exit(1);
+    writeFileSync(join(tmpdir(), 'assistant-evaluation.json'), process.env.STAND_IN_REPORTS);
+  `;
+
+  async function evaluated(name: string, reports: readonly CaseReport[] | 'none') {
+    const capture = join(scratch.path, name);
+    vi.stubEnv('STAND_IN_REPORTS', reports === 'none' ? 'none' : JSON.stringify(reports));
+    await runEvaluation(checkout, ['--runs', '1'], captureFiles(capture).evaluation);
+    vi.unstubAllEnvs();
+    return capture;
+  }
+
+  beforeEach(async () => {
+    await standIn(REPORTING);
+  });
+
+  it('reports a case that passed in the baseline and is missing from the target', async () => {
+    const baseline = await evaluated('baseline', [passing('identity'), passing('leadership')]);
+    const target = await evaluated('target', [passing('identity')]);
+
+    const { differences } = await compareEvaluations(baseline, target, {
+      checkout: undefined,
+      requested: true,
+    });
+
+    expect(differences).toEqual([
+      {
+        location: 'evaluation:leadership',
+        kind: 'missing',
+        detail: 'passed in the baseline, not run now',
+      },
+    ]);
+  });
+
+  it('counts a skipped evaluation as a difference when the evaluation was asked for', async () => {
+    const baseline = await evaluated('baseline', [passing('identity')]);
+    const target = await evaluated('target', 'none');
+
+    const asked = await compareEvaluations(baseline, target, { checkout, requested: true });
+    const notAsked = await compareEvaluations(baseline, target, { checkout, requested: false });
+
+    expect(asked.differences).toEqual([
+      { location: 'evaluation', kind: 'missing', detail: 'the target has no evaluation run' },
+    ]);
+    expect(notAsked).toEqual({
+      differences: [],
+      notes: ['Evaluation not compared: the target has no evaluation run.'],
+    });
   });
 });

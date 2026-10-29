@@ -9,26 +9,42 @@ import {
   runEvaluation,
 } from './evaluation';
 
+export interface EvaluationComparison {
+  /** The checkout the target was built from, where a flipped case is re-run. */
+  readonly checkout: string | undefined;
+  /** Whether the comparison was asked to cover the evaluation (--eval). */
+  readonly requested: boolean;
+}
+
 /**
  * A case that passed in the baseline and fails now gets one re-run in the
  * checkout; if it fails again it is reported. Without a checkout it is
- * reported with the command that re-runs it.
+ * reported with the command that re-runs it. A case the target no longer has
+ * is reported as missing. When the evaluation was asked for, a side without
+ * a run — never evaluated, or skipped — is a difference, not a note.
  */
 export async function compareEvaluations(
   baseline: string,
   target: string,
-  checkout: string | undefined,
+  { checkout, requested }: EvaluationComparison,
 ): Promise<Comparison> {
   const [before, after] = await Promise.all([
     readEvaluation(captureFiles(baseline).evaluation),
     readEvaluation(captureFiles(target).evaluation),
   ]);
   if (!before || !after) {
-    return { differences: [], notes: ['Evaluation not compared: a side has no evaluation run.'] };
+    const side = before ? 'the target' : 'the baseline';
+    const detail = `${side} has no evaluation run`;
+    return requested
+      ? { differences: [{ location: 'evaluation', kind: 'missing', detail }], notes: [] }
+      : { differences: [], notes: [`Evaluation not compared: ${detail}.`] };
   }
   const differences: Difference[] = [];
-  for (const id of evaluationRegressions(before, after)) {
-    const difference = await confirmRegression(id, target, checkout);
+  for (const { id, kind } of evaluationRegressions(before, after)) {
+    const difference =
+      kind === 'missing'
+        ? { location: `evaluation:${id}`, kind, detail: 'passed in the baseline, not run now' }
+        : await confirmRegression(id, target, checkout);
     if (difference) differences.push(difference);
   }
   return { differences, notes: [] };

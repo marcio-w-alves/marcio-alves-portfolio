@@ -59,11 +59,10 @@ try {
   const target = await targetCapture(baseline);
   await readManifest(target);
   const captures = await compareCaptures(baseline, target);
-  const evaluations = await compareEvaluations(
-    baseline,
-    target,
-    values.checkout && resolve(values.checkout),
-  );
+  const evaluations = await compareEvaluations(baseline, target, {
+    checkout: values.checkout && resolve(values.checkout),
+    requested: values.eval,
+  });
   const differences = [...captures.differences, ...evaluations.differences];
   for (const difference of differences) console.log(formatDifference(difference));
   for (const note of [...captures.notes, ...evaluations.notes]) console.log(`note: ${note}`);
