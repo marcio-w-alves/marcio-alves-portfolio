@@ -355,7 +355,7 @@ class TokenReader {
 
   private filter(): FilterCall {
     const name = this.name();
-    const spec = FILTERS[name];
+    const spec = FILTERS.get(name);
     if (!spec) throw new Syntax(`Unknown filter "${name}"`);
     if (spec.locales && !spec.locales.includes(this.locale)) {
       throw new Syntax(`${name} has no ${this.locale} form`);

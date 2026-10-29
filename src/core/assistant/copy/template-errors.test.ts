@@ -64,7 +64,7 @@ describe('misused values', () => {
       '{{role[role.acme.metrics]}}',
       '"role.acme.metrics" cannot be used as a key',
     ],
-    ['a field of nothing', '{{profile.photoUrl.size}}', 'reads "size" of nothing'],
+    ['a field of nothing', '{{role.acme.end.size}}', 'reads "size" of nothing'],
     ['a field of a string', '{{first.length}}', 'reads "length" of something that has no fields'],
     [
       'a list compared with a string',
@@ -72,12 +72,8 @@ describe('misused values', () => {
       'A list cannot be compared',
     ],
     ['a string iterated', '{{#each first}}x{{/each}}', 'A string cannot be iterated'],
-    [
-      'nothing iterated',
-      '{{#each profile.photoUrl}}x{{/each}}',
-      'A missing value cannot be iterated',
-    ],
-    ['nothing written', '{{profile.photoUrl}}', 'Nothing to write here'],
+    ['nothing iterated', '{{#each role.acme.end}}x{{/each}}', 'A missing value cannot be iterated'],
+    ['nothing written', '{{role.acme.end}}', 'Nothing to write here'],
     ['a yes-or-no written', '{{role.acme.current}}', 'A boolean cannot be written as text'],
     ['the current item outside a block', '{{.}}', '"." is outside any block'],
   ])('refuses %s', (_case, template, problem) => {
@@ -100,7 +96,7 @@ describe('misused filters', () => {
     ['count on a string', '{{first | count}}', 'needs a list of objects'],
     ['first on a string', '{{first | first}}', 'needs a list'],
     ['replace with a number', '{{first | replace "A" 3}}', 'needs a string'],
-    ['words on nothing', '{{profile.photoUrl | words}}', 'needs a whole number, got nothing'],
+    ['words on nothing', '{{role.acme.end | words}}', 'needs a whole number, got nothing'],
     ['words on a list', '{{experience | words}}', 'needs a whole number, got a list'],
     ['words on a yes-or-no', '{{role.acme.current | words}}', 'got the boolean "true"'],
   ])('refuses %s', (_case, template, problem) => {

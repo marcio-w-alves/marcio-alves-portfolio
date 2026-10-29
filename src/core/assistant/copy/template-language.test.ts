@@ -57,7 +57,7 @@ describe('conditions', () => {
 
   it('treats nothing, false, "" and [] as false, and zero as true', () => {
     const truth = (value: string) => say(`{{#if ${value}}}T{{else}}F{{/if}}`);
-    expect(truth('profile.photoUrl')).toBe('F');
+    expect(truth('role.acme.end')).toBe('F');
     expect(truth('role.globex.current')).toBe('F');
     expect(truth('""')).toBe('F');
     expect(truth('role.globex.leadership')).toBe('F');
@@ -89,7 +89,7 @@ describe('blocks', () => {
     expect(say('{{#with experience | first}}{{.role}}{{/with}}')).toBe(
       'Principal Platform Engineer',
     );
-    expect(say('{{#with profile.photoUrl}}{{.}}{{else}}no photo{{/with}}')).toBe('no photo');
+    expect(say('{{#with role.acme.end}}{{.}}{{else}}still there{{/with}}')).toBe('still there');
   });
 
   it("writes bullets and numbered lists exactly as the response kit's builders do", () => {
@@ -162,6 +162,20 @@ describe('safety', () => {
   it('does not read inherited properties', () => {
     expect(() => say('{{profile.toString}}')).toThrow(/there is no "toString"/);
   });
+
+  // A filter is looked up by a name a template chose, so every name an object
+  // inherits has to be as unknown as any other — refused where it is written,
+  // not a function found where a filter was expected.
+  it.each(['toString', 'valueOf', 'hasOwnProperty', '__defineGetter__'])(
+    'refuses the inherited name %s as an unknown filter',
+    (name) => {
+      expect(() => say(`{{first | ${name}}}`)).toThrow(
+        new RegExp(
+          `answers/planted\\.yaml#greeting\\.parts\\[0\\]\\.text:1:1: Unknown filter "${name}"`,
+        ),
+      );
+    },
+  );
 
   it('takes a regular expression of 200 characters, not 201, and refuses an invalid one', () => {
     const pattern = (length: number) => `"${'a'.repeat(length)}"`;

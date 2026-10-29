@@ -117,7 +117,7 @@ function operandValue(operand: Operand, frame: Frame, missingAllowed: boolean): 
 }
 
 function applyFilter(input: unknown, call: FilterCall, frame: Frame): unknown {
-  const spec = FILTERS[call.name];
+  const spec = FILTERS.get(call.name);
   if (!spec) fail(frame, `Unknown filter "${call.name}"`);
   const args = call.args.map((arg) => {
     if (arg.kind === 'regex') return arg.pattern;

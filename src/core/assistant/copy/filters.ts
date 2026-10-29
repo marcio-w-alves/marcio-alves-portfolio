@@ -124,7 +124,7 @@ function sameItem(item: unknown, excluded: unknown): boolean {
   return id(item) !== undefined && id(item) === id(excluded);
 }
 
-export const FILTERS: Readonly<Record<string, FilterSpec | undefined>> = {
+const FILTER_SPECS = {
   words: { args: [], apply: words },
   withArticle: {
     args: [],
@@ -194,4 +194,12 @@ export const FILTERS: Readonly<Record<string, FilterSpec | undefined>> = {
   },
   bullets: { args: [], apply: (input) => bullets(stringsOf('bullets', input)) },
   numbered: { args: [], apply: (input) => numbered(stringsOf('numbered', input)) },
-};
+} satisfies Readonly<Record<string, FilterSpec>>;
+
+/**
+ * The filters, by name. A Map rather than an object: the name comes from a
+ * template, and an object would also answer to every name it inherits —
+ * `{{x | toString}}` would find a function where a filter was expected,
+ * instead of being refused as the unknown filter it is.
+ */
+export const FILTERS: ReadonlyMap<string, FilterSpec> = new Map(Object.entries(FILTER_SPECS));
