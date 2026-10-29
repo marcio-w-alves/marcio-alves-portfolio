@@ -104,16 +104,25 @@ export async function runProfile(
   args: readonly string[],
   env: Readonly<Record<string, string>> = {},
 ): Promise<CommandRun> {
+  return runScript(join(REPOSITORY, 'scripts', 'profile.mts'), args, env);
+}
+
+/** Writes a bundle's notes, seeded index and probe embeddings, as the example's are written. */
+export async function runExampleBuilder(dir: string): Promise<CommandRun> {
+  return runScript(join(REPOSITORY, 'scripts', 'example', 'generate-example-files.mts'), [dir]);
+}
+
+async function runScript(
+  script: string,
+  args: readonly string[],
+  env: Readonly<Record<string, string>> = {},
+): Promise<CommandRun> {
   try {
-    const { stdout, stderr } = await run(
-      TSX,
-      [join(REPOSITORY, 'scripts', 'profile.mts'), ...args],
-      {
-        cwd: REPOSITORY,
-        env: { NODE_ENV: 'test', PATH: process.env.PATH, HOME: process.env.HOME, ...env },
-        timeout: CLI_TEST_TIMEOUT_MS,
-      },
-    );
+    const { stdout, stderr } = await run(TSX, [script, ...args], {
+      cwd: REPOSITORY,
+      env: { NODE_ENV: 'test', PATH: process.env.PATH, HOME: process.env.HOME, ...env },
+      timeout: CLI_TEST_TIMEOUT_MS,
+    });
     return { code: 0, stdout, stderr };
   } catch (error) {
     const failed = error as { code?: number; stdout?: string; stderr?: string };
