@@ -151,6 +151,13 @@ describe('module boundaries', () => {
     expect(violations).toEqual([{ rule, from, to }]);
   });
 
+  it('reports a shipped module that imports the database driver, whatever the dependency is called', async () => {
+    const violations = violationsOf(await cruiseFixture('src-to-profile-store'));
+
+    expect(violations.map(({ rule }) => rule)).toContain('no-runtime-profile-store');
+    expect(violations.every(({ from }) => from === 'src/site-root.ts')).toBe(true);
+  });
+
   it('reports nothing for a tree whose every edge points inward, the profile read only by the roots and the global error page’s fonts', async () => {
     const violations = violationsOf(await cruiseFixture('clean'));
 
