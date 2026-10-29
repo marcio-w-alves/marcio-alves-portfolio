@@ -41,8 +41,8 @@ const STREAM = [
   },
 ];
 
-function eventStream(): HttpResponse<string> {
-  const frames = STREAM.map((event) => `data: ${JSON.stringify(event)}\n\n`);
+function eventStream(events: readonly unknown[] = STREAM): HttpResponse<string> {
+  const frames = events.map((event) => `data: ${JSON.stringify(event)}\n\n`);
   return new HttpResponse(`: keep-alive\n\n${frames.join('')}`, {
     headers: { 'content-type': 'text/event-stream; charset=utf-8' },
   });
@@ -133,6 +133,21 @@ describe('asking the chat endpoint', () => {
         followUps: ['What has she led?'],
         sources: [{ id: 'career', label: 'Career' }],
       },
+    });
+  });
+
+  it('keeps an event of a type it does not know, so a new kind of event is still compared', async () => {
+    const { clock } = fakeClock();
+    const unknown = { type: 'citation-preview', id: 'c0', url: 'https://ada.example/talk' };
+    network.use(
+      http.post(new URL('/api/chat', LOCAL).href, () => eventStream([...STREAM, unknown])),
+    );
+
+    await captureAnswers(questions.slice(0, 1), { target: LOCAL, dir: scratch.path, clock });
+
+    const [file = ''] = await readdir(captureFiles(scratch.path).answers);
+    await expect(readJson(`${captureFiles(scratch.path).answers}/${file}`)).resolves.toMatchObject({
+      observed: { unknownEvents: [unknown] },
     });
   });
 

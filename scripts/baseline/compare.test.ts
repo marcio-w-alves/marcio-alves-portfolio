@@ -8,10 +8,12 @@ import { fixtureAnswers, fixturePortugueseAnswers } from '../../src/testing/fixt
 import { profile as fixtureProfile } from '../../src/testing/fixture-profile/profile';
 import type { CapturedAnswer } from './answers';
 import { captureFiles } from './capture-layout';
+import { capture } from './capture-site';
 import { compareCaptures } from './compare-captures';
 import { enumerateInputs } from './enumeration';
 import type { AnswerInput, BaselineInputs, RouteInput } from './inputs';
 import { BASELINE_TOOL_VERSION, readManifest } from './manifest';
+import { systemClock } from './pacing';
 import { readJson } from './private-files';
 import { withEditedAnswer } from './testing/planted-edit';
 import { startSiteServer, type SiteServer, type StaticRoute } from './testing/site-server';
@@ -178,6 +180,22 @@ describe('comparing files and metadata routes', { timeout: TOOL_TEST_TIMEOUT_MS 
     ]);
   });
 
+  it('reports a redirect that points somewhere else', async () => {
+    const redirect = (to: string) => ({ body: PDF, contentType: 'text/plain', redirectTo: to });
+    const baseline = await captureServing(redirect('/ada-rivera-cv-2026.pdf'), 'a');
+    const target = await captureServing(redirect('/ada-rivera-cv-2025.pdf'), 'b');
+
+    const { differences } = await compareCaptures(baseline, target);
+
+    expect(differences).toEqual([
+      {
+        location: `route:${RESUME.id}#location`,
+        kind: 'changed',
+        detail: '/ada-rivera-cv-2026.pdf → /ada-rivera-cv-2025.pdf',
+      },
+    ]);
+  });
+
   it('reports a changed content type', async () => {
     const baseline = await captureServing({ body: PDF, contentType: 'application/pdf' }, 'a');
     const target = await captureServing(
@@ -194,6 +212,47 @@ describe('comparing files and metadata routes', { timeout: TOOL_TEST_TIMEOUT_MS 
         detail: 'application/pdf → application/octet-stream',
       },
     ]);
+  });
+});
+
+describe('retrieval', { timeout: TOOL_TEST_TIMEOUT_MS }, () => {
+  /** A deployment reports its commit and has no checkout to search offline in. */
+  async function captureDeployment(target: URL, name: string): Promise<string> {
+    vi.stubEnv('VERCEL_GIT_COMMIT_SHA', '0123456789abcdef0123456789abcdef01234567');
+    const dir = join(scratch.path, name);
+    await mkdir(dir);
+    const captured = await capture({
+      target,
+      out: join(dir, 'capture'),
+      inputsFile: await writeInputs(dir, ONLY_ANSWERS),
+      profile: 'fixture',
+      evaluation: false,
+      env: {},
+      clock: systemClock,
+    });
+    vi.unstubAllEnvs();
+    return captured;
+  }
+
+  it('counts a target without the retrieval results the baseline has as a difference', async () => {
+    const site = await serve();
+    const baseline = await captureAt(site, ONLY_ANSWERS, 'baseline');
+    const deployment = await captureDeployment(site, 'deployment');
+
+    const strict = await compareCaptures(baseline, deployment);
+    const accepted = await compareCaptures(baseline, deployment, { withoutRetrieval: true });
+
+    expect(strict.differences).toEqual([
+      {
+        location: 'retrieval',
+        kind: 'missing',
+        detail: 'the target was captured without --checkout (or pass --without-retrieval)',
+      },
+    ]);
+    expect(accepted).toEqual({
+      differences: [],
+      notes: ['Retrieval not compared: the target was captured without --checkout.'],
+    });
   });
 });
 

@@ -65,10 +65,10 @@ interface Provenance {
 /** Which commit the target was built from: the checkout's, or what the deployment reports. */
 async function provenanceOf({ target, checkout }: CaptureOptions): Promise<Provenance> {
   const health = await healthOf(target);
-  if (isLocalTarget(target) && health.model === 'enabled') {
+  if (isLocalTarget(target) && health.model !== 'disabled') {
     throw new CaptureError(
-      'The local server has the model enabled. Start it with OPENAI_API_KEY= so every answer ' +
-        'captured is the fast path’s.',
+      'The local server does not report the model disabled. Start it with OPENAI_API_KEY= so ' +
+        'every answer captured is the fast path’s.',
     );
   }
   if (checkout) return checkoutState(checkout);

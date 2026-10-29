@@ -24,6 +24,8 @@ export interface ObservedAnswer {
   readonly error?: unknown;
   /** What a refused request said instead of streaming. */
   readonly body?: string;
+  /** Events of a type this tool does not know, kept whole so a new one is still compared. */
+  readonly unknownEvents?: readonly unknown[];
 }
 
 export interface CapturedAnswer {
@@ -116,6 +118,7 @@ function eventsIn(body: string): StreamEvent[] {
 function foldEvents(events: readonly StreamEvent[]): Omit<ObservedAnswer, 'status'> {
   const parts: AnswerPart[] = [];
   const textAt = new Map<unknown, number>();
+  const unknownEvents: StreamEvent[] = [];
   let answer: Omit<ObservedAnswer, 'status' | 'parts'> = {};
   for (const event of events) {
     switch (event.type) {
@@ -141,9 +144,13 @@ function foldEvents(events: readonly StreamEvent[]): Omit<ObservedAnswer, 'statu
       case 'error':
         answer = { ...answer, error: event.error };
         break;
+      case 'text-end':
+        break;
+      default:
+        unknownEvents.push(event);
     }
   }
-  return { ...answer, parts };
+  return { ...answer, parts, ...(unknownEvents.length > 0 ? { unknownEvents } : {}) };
 }
 
 function appendText(parts: AnswerPart[], index: number | undefined, delta: string): void {

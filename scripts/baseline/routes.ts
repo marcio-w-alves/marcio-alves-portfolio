@@ -9,6 +9,8 @@ export interface CapturedRoute {
   readonly asked: RouteInput;
   readonly status: number;
   readonly contentType: string | null;
+  /** Where a redirect points; null for any other response. */
+  readonly location: string | null;
   readonly sha256: string;
   readonly size: number;
 }
@@ -34,6 +36,7 @@ export async function captureRoutes(inputs: readonly RouteInput[], target: URL, 
       asked,
       status: response.status,
       contentType: response.headers.get('content-type'),
+      location: response.headers.get('location'),
       sha256: createHash('sha256').update(bytes).digest('hex'),
       size: bytes.byteLength,
     };

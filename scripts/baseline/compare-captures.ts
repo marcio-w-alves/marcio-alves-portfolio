@@ -22,8 +22,20 @@ export interface Comparison {
   readonly notes: readonly string[];
 }
 
-export async function compareCaptures(baseline: string, target: string): Promise<Comparison> {
-  const retrieval = await compareRetrieval(baseline, target);
+export interface CaptureComparison {
+  /**
+   * Accept a target captured without its checkout, so without retrieval
+   * results, as a deployment is (--without-retrieval).
+   */
+  readonly withoutRetrieval?: boolean;
+}
+
+export async function compareCaptures(
+  baseline: string,
+  target: string,
+  { withoutRetrieval = false }: CaptureComparison = {},
+): Promise<Comparison> {
+  const retrieval = await compareRetrieval(baseline, target, withoutRetrieval);
   return {
     differences: [
       ...(await compareAnswers(baseline, target)),
@@ -154,6 +166,11 @@ async function compareRoute(
       ),
     );
   }
+  if (before.location !== after.location) {
+    differences.push(
+      changed(`${location}#location`, `${String(before.location)} → ${String(after.location)}`),
+    );
+  }
   if (before.sha256 === after.sha256) return differences;
   const [beforeBytes, afterBytes] = await Promise.all([
     readFile(routeBodyFile(baseline, id)),
@@ -192,14 +209,29 @@ function isPng({ contentType }: CapturedRoute): boolean {
   return contentType?.startsWith('image/png') ?? false;
 }
 
-async function compareRetrieval(baseline: string, target: string): Promise<Comparison> {
+async function compareRetrieval(
+  baseline: string,
+  target: string,
+  withoutRetrieval: boolean,
+): Promise<Comparison> {
   const [before, after] = await Promise.all([readRetrieval(baseline), readRetrieval(target)]);
-  if (!before || !after) {
-    const without = before ? 'the target' : 'the baseline';
-    return {
-      differences: [],
-      notes: [`Retrieval not compared: ${without} was captured without --checkout.`],
-    };
+  if (!before) {
+    return { differences: [], notes: ['Retrieval not compared: the baseline has none.'] };
+  }
+  if (!after) {
+    const detail = 'the target was captured without --checkout';
+    return withoutRetrieval
+      ? { differences: [], notes: [`Retrieval not compared: ${detail}.`] }
+      : {
+          differences: [
+            {
+              location: 'retrieval',
+              kind: 'missing',
+              detail: `${detail} (or pass --without-retrieval)`,
+            },
+          ],
+          notes: [],
+        };
   }
   const byProbe = (results: readonly RetrievalResult[]) =>
     new Map(results.map((result) => [result.probe, result.results]));

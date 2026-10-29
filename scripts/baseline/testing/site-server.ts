@@ -21,6 +21,8 @@ import {
 export interface StaticRoute {
   readonly body: Uint8Array;
   readonly contentType: string;
+  /** Answers with a redirect there instead of the body. */
+  readonly redirectTo?: string;
 }
 
 export interface SiteServerOptions {
@@ -56,6 +58,8 @@ export async function startSiteServer({
     if (pathname === '/api/health') return health();
     const file = files[pathname];
     if (!file) return new Response('not found', { status: 404 });
+    if (file.redirectTo)
+      return new Response(null, { status: 308, headers: { location: file.redirectTo } });
     return new Response(new Uint8Array(file.body), {
       headers: { 'content-type': file.contentType },
     });

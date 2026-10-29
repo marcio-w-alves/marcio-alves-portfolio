@@ -8,6 +8,9 @@
  *   pnpm baseline:compare --baseline <dir> --target <url> [--checkout <dir>] [--out <dir>]
  *     [--profile owner|fixture] [--eval]
  *   pnpm baseline:compare --baseline <dir> --capture <dir>
+ *
+ * A target captured without --checkout (a deployment) has no retrieval
+ * results; that is a difference unless --without-retrieval accepts it.
  */
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
@@ -31,6 +34,7 @@ const { values } = parseArgs({
     out: { type: 'string' },
     profile: { type: 'string', default: 'owner' },
     eval: { type: 'boolean', default: false },
+    'without-retrieval': { type: 'boolean', default: false },
   },
 });
 
@@ -58,7 +62,9 @@ try {
   const { commit, date } = await readManifest(baseline);
   const target = await targetCapture(baseline);
   await readManifest(target);
-  const captures = await compareCaptures(baseline, target);
+  const captures = await compareCaptures(baseline, target, {
+    withoutRetrieval: values['without-retrieval'],
+  });
   const evaluations = await compareEvaluations(baseline, target, {
     checkout: values.checkout && resolve(values.checkout),
     requested: values.eval,

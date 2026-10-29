@@ -1,7 +1,8 @@
-import { execFile, execFileSync } from 'node:child_process';
+import { execFile, execFileSync, type ChildProcess } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import { copyFile, mkdir, rm } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFile, mkdir } from 'node:fs/promises';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
@@ -22,6 +23,10 @@ const IN_CHECKOUT_FILES = [
   'inputs.ts',
   'private-files.ts',
 ];
+
+/** Matches the scratch folders below, so the checkout's git never lists one as untracked. */
+const SCRATCH_PATTERN = '/scripts/baseline-run-*/';
+const INTERRUPTED_EXIT_CODE = 130;
 
 /** The commit a checkout is at, and whether its files differ from that commit. */
 export interface CheckoutState {
@@ -46,8 +51,9 @@ export function toolCommit(): string {
 /**
  * Runs one of this folder's in-checkout scripts with the checkout's own code
  * and dependencies. The files are copied to a scratch folder beside the
- * checkout's `scripts/`, so their imports of `../../src` reach that checkout,
- * and removed afterwards.
+ * checkout's `scripts/`, so their imports of `../../src` reach that checkout.
+ * While it runs, the folder is excluded from the checkout's git; afterwards —
+ * or when the owner presses Ctrl-C — the folder and the exclusion are removed.
  */
 export async function runInCheckout(
   checkout: string,
@@ -55,17 +61,50 @@ export async function runInCheckout(
   args: readonly string[],
 ): Promise<void> {
   const scratch = join(checkout, 'scripts', `baseline-run-${randomBytes(4).toString('hex')}`);
-  await mkdir(scratch);
+  const restoreExclusion = excludeScratch(checkout);
+  let child: ChildProcess | undefined;
+  const cleanUp = () => {
+    rmSync(scratch, { recursive: true, force: true });
+    restoreExclusion();
+  };
+  const onInterrupt = () => {
+    child?.kill('SIGINT');
+    cleanUp();
+    process.exit(INTERRUPTED_EXIT_CODE);
+  };
+  process.once('SIGINT', onInterrupt);
   try {
+    await mkdir(scratch);
     await Promise.all(
       IN_CHECKOUT_FILES.map((file) => copyFile(join(TOOL_DIR, file), join(scratch, file))),
     );
-    const { stdout } = await run('pnpm', ['exec', 'tsx', join(scratch, script), ...args], {
+    const running = run('pnpm', ['exec', 'tsx', join(scratch, script), ...args], {
       cwd: checkout,
       timeout: IN_CHECKOUT_TIMEOUT_MS,
     });
+    child = running.child;
+    const { stdout } = await running;
     process.stdout.write(stdout);
   } finally {
-    await rm(scratch, { recursive: true, force: true });
+    process.off('SIGINT', onInterrupt);
+    cleanUp();
   }
+}
+
+/** Adds the scratch pattern to the checkout's `info/exclude`; the returned function takes it out. */
+function excludeScratch(checkout: string): () => void {
+  const gitPath = execFileSync('git', ['-C', checkout, 'rev-parse', '--git-path', 'info/exclude'], {
+    encoding: 'utf8',
+    timeout: GIT_TIMEOUT_MS,
+  }).trim();
+  const file = resolve(checkout, gitPath);
+  const before = existsSync(file) ? readFileSync(file, 'utf8') : null;
+  if (before?.split('\n').includes(SCRATCH_PATTERN)) return () => undefined;
+  mkdirSync(dirname(file), { recursive: true });
+  const separator = before && !before.endsWith('\n') ? '\n' : '';
+  writeFileSync(file, `${before ?? ''}${separator}${SCRATCH_PATTERN}\n`);
+  return () => {
+    if (before === null) rmSync(file, { force: true });
+    else writeFileSync(file, before);
+  };
 }
