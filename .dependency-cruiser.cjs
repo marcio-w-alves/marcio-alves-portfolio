@@ -217,7 +217,16 @@ module.exports = {
         'in scripts/profile/store (see src-never-imports-scripts).',
       severity: 'error',
       from: { path: '^src/' },
-      to: { path: 'node_modules/(pg|pg-pool|pg-protocol|yaml)/' },
+      to: { path: 'node_modules/(pg|pg-pool|pg-protocol)/' },
+    },
+    {
+      name: 'no-bundle-codec-in-shipped-code',
+      comment:
+        'A bundle is read from disk by the tooling and by the tests that stand in for it; the ' +
+        'site is built from what that tooling wrote, so no shipped module parses YAML.',
+      severity: 'error',
+      from: { path: '^src/', pathNot: [TESTS, '^src/testing/'] },
+      to: { path: 'node_modules/yaml/' },
     },
     {
       name: 'no-circular',
