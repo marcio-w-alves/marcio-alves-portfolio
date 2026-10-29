@@ -5,6 +5,7 @@ import { DEFAULT_LOCALE, LOCALE_SEGMENT, type Locale } from '@/core/i18n/locale'
 import { pagePath } from '@/site/routes';
 import { holdNextAnswer } from './support/assistant';
 import {
+  answerLabelsIn,
   englishOnlyMessages,
   pagePathsIn,
   pagesIn,
@@ -171,14 +172,24 @@ for (const locale of published.filter((candidate) => candidate !== DEFAULT_LOCAL
     const englishQuestion = questionOf(DEFAULT_LOCALE, 0);
     const offered = (count: number, language: Locale) =>
       Array.from({ length: count }, () => language);
+    // The career answer shows the timeline on the overview, which shows none of the record.
+    const timelineOf = (pageLocale: Locale, answerLocale: Locale) =>
+      page
+        .getByRole('article', { name: pagesIn(pageLocale).ui.conversation.answer })
+        .last()
+        .getByRole('region', { name: answerLabelsIn(answerLocale).cards.timeline });
 
-    await page.goto('/experience');
+    await page.goto('/');
     await ask(page, DEFAULT_LOCALE, theirQuestion);
+    await expect(timelineOf(DEFAULT_LOCALE, locale)).toBeVisible();
+    await expect(timelineOf(DEFAULT_LOCALE, DEFAULT_LOCALE)).toHaveCount(0);
     const onEnglish = await followUpLanguages(page, DEFAULT_LOCALE);
     expect(onEnglish).toEqual(offered(onEnglish.length, locale));
 
-    await page.goto(pagePath(locale, 'experience'));
+    await page.goto(pagePath(locale, 'overview'));
     await ask(page, locale, englishQuestion);
+    await expect(timelineOf(locale, DEFAULT_LOCALE)).toBeVisible();
+    await expect(timelineOf(locale, locale)).toHaveCount(0);
     const onTheirs = await followUpLanguages(page, locale);
     expect(onTheirs).toEqual(offered(onTheirs.length, DEFAULT_LOCALE));
 

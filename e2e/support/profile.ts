@@ -40,10 +40,15 @@ function messagesByPath(catalog: unknown, path = ''): [string, string][] {
   );
 }
 
+/** The words inside the cards of an answer given in `locale`. */
+export function answerLabelsIn(locale: Locale) {
+  return copyIn(profile, locale).answers.labels;
+}
+
 /** Everything a language's pages write around the record: interface, pages and the cards' words. */
 function catalogsOf(locale: Locale) {
   const { ui, site } = pagesIn(locale);
-  return { ui, site, labels: copyIn(profile, locale).answers.labels };
+  return { ui, site, labels: answerLabelsIn(locale) };
 }
 
 /**
