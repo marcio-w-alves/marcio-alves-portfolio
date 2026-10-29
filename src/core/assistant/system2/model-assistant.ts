@@ -1,6 +1,7 @@
 import type { AnswerSource, AssistantEvent } from '../../chat/events';
 import type { RichComponent } from '../../chat/components';
 import { MAX_HISTORY_MESSAGES, type HistoryTurn } from '../../chat/request';
+import type { Locale, Translations } from '../../i18n/locale';
 import type { ClockPort } from '../ports/clock.port';
 import type {
   LanguageModelPort,
@@ -40,6 +41,13 @@ export interface ModelAssistantRequest {
   /** Who is asking, so what the answer costs is charged to them. */
   readonly clientId: string;
   readonly history: readonly HistoryTurn[];
+  /** The language of the page, which breaks a tie when the question's cannot be told. */
+  readonly pageLocale: Locale;
+  /**
+   * The language the answer is given in: the question's, or the page's on a
+   * tie. The actions read the record in it, so facts and cards match the answer.
+   */
+  readonly answerLocale: Locale;
   /** Questions the fast path can answer, offered after this answer. */
   readonly followUps: readonly string[];
   /** The topic page the visitor is reading, when not the overview. */
@@ -69,7 +77,11 @@ export interface ModelAssistant {
 
 interface Options {
   readonly model: LanguageModelPort;
-  readonly tools: ToolRegistry;
+  /**
+   * The actions, reading the record in each language the site is written in:
+   * the answer's language is the one used, so its facts and cards read like it.
+   */
+  readonly tools: Translations<ToolRegistry>;
   readonly clock: ClockPort;
   /** Who the answers are about. */
   readonly subject: PromptSubject;
@@ -142,6 +154,8 @@ interface ActionResult {
 
 /** What every action in a round runs against. */
 interface RoundContext {
+  /** The actions in the page's language. */
+  readonly registry: ToolRegistry;
   readonly searched: boolean;
   readonly question: string;
   readonly signal?: AbortSignal;
@@ -304,7 +318,8 @@ export function createModelAssistant({
   onUsage,
   onToolResult,
 }: Options): ModelAssistant {
-  const definitions = tools.tools.map(({ name, description, parameters }) => ({
+  // Every language's actions share their names, descriptions and parameters.
+  const definitions = tools.en.tools.map(({ name, description, parameters }) => ({
     name,
     description,
     parameters,
@@ -346,13 +361,17 @@ export function createModelAssistant({
     return { text, calls };
   }
 
-  async function execute(call: ToolCall, signal?: AbortSignal): Promise<ToolOutcome> {
+  async function execute(
+    registry: ToolRegistry,
+    call: ToolCall,
+    signal?: AbortSignal,
+  ): Promise<ToolOutcome> {
     const parsed = parseArguments(call.arguments);
     if (parsed === undefined) return { ok: false, error: 'The arguments were not valid JSON.' };
-    return tools.run(call.name, parsed, signal);
+    return registry.run(call.name, parsed, signal);
   }
 
-  const canSearch = tools.tools.some((tool) => tool.name === SEARCH);
+  const canSearch = tools.en.tools.some((tool) => tool.name === SEARCH);
 
   // The prompt asks for a search before anything is called not documented,
   // and the model still skips it after a narrower action comes back empty
@@ -369,17 +388,16 @@ export function createModelAssistant({
   }
 
   async function searchInstead(
-    question: string,
     decline: ToolCall,
-    signal?: AbortSignal,
+    { registry, question, signal }: RoundContext,
   ): Promise<ToolOutcome> {
-    const outcome = await tools.run(
+    const outcome = await registry.run(
       SEARCH,
       { query: question.slice(0, MAX_QUERY).toWellFormed() },
       signal,
     );
     if (!outcome.ok || bestRelevance(outcome.result.data) < ANSWERABLE) {
-      return execute(decline, signal);
+      return execute(registry, decline, signal);
     }
     return {
       ok: true,
@@ -388,14 +406,10 @@ export function createModelAssistant({
   }
 
   // Calls past the cap get a reply that declines to run them.
-  function outcomeOf(
-    call: ToolCall,
-    index: number,
-    { searched, question, signal }: RoundContext,
-  ): Promise<ToolOutcome> {
+  function outcomeOf(call: ToolCall, index: number, context: RoundContext): Promise<ToolOutcome> {
     if (index >= MAX_CALLS_PER_ROUND) return Promise.resolve(SKIPPED_ACTION);
-    if (declinesUnsearched(call, searched)) return searchInstead(question, call, signal);
-    return execute(call, signal);
+    if (declinesUnsearched(call, context.searched)) return searchInstead(call, context);
+    return execute(context.registry, call, context.signal);
   }
 
   // Actions in one round are independent, so they run concurrently: an
@@ -407,8 +421,12 @@ export function createModelAssistant({
   }
 
   return {
-    async *answer({ question, clientId, history, followUps, page }, signal) {
-      const instructions = systemPrompt(clock.now(), subject);
+    async *answer(
+      { question, clientId, history, followUps, page, pageLocale, answerLocale },
+      signal,
+    ) {
+      const instructions = systemPrompt(clock.now(), subject, pageLocale);
+      const registry = tools[answerLocale] ?? tools.en;
       const messages = startMessages(question, history, instructions, page);
       const linkable = createLinkAllowList(knownUrls);
       const reply = createReply((url) => linkable.allows(url), subject);
@@ -424,6 +442,7 @@ export function createModelAssistant({
 
         const searchedBefore: boolean = searched || turn.calls.some((call) => call.name === SEARCH);
         const results = await runActions(turn.calls, {
+          registry,
           searched: searchedBefore,
           question,
           ...(signal ? { signal } : {}),

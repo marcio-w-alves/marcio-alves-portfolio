@@ -8,6 +8,7 @@ import {
   record,
   roleByCompany,
   sourceLabelPattern,
+  labels,
   templatePattern,
   ui,
   youAsked,
@@ -42,7 +43,7 @@ test('a suggested question streams in as a rich answer, and a follow-up continue
   const company = templatePattern(ui.actions.viewRole).exec(viewLabel)?.[1] ?? '';
   const role = roleByCompany(company);
 
-  const timeline = firstAnswer.getByRole('region', { name: ui.rich.timeline });
+  const timeline = firstAnswer.getByRole('region', { name: labels.cards.timeline });
   const roleToggle = timeline.getByRole('button', { name: `${role.company} ${role.role}` });
   await expect(roleToggle).toHaveAttribute('aria-expanded', 'false');
   await roleToggle.click();
@@ -50,7 +51,7 @@ test('a suggested question streams in as a rich answer, and a follow-up continue
   await expect(timeline.getByText(firstResponsibility(company))).toBeVisible();
 
   const shownMetrics = await firstAnswer
-    .getByRole('region', { name: ui.rich.metrics })
+    .getByRole('region', { name: labels.cards.metrics })
     .getByRole('listitem')
     .allInnerTexts();
   expect(shownMetrics.length).toBeGreaterThan(0);
@@ -74,7 +75,7 @@ test('a suggested question streams in as a rich answer, and a follow-up continue
   await expect(page.getByText(youAsked(followUp))).toBeVisible();
   await expect(answers(page)).toHaveCount(2);
   const roleAnswer = answers(page).nth(1);
-  const roleMetrics = roleAnswer.getByRole('region', { name: ui.rich.metrics });
+  const roleMetrics = roleAnswer.getByRole('region', { name: labels.cards.metrics });
   for (const id of role.metrics) {
     await expect(roleMetrics.getByText(metric(id).value, { exact: true })).toBeVisible();
   }

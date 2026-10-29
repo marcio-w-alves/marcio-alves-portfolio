@@ -2,6 +2,7 @@ import type { AnswerSet } from '@/core/assistant/answer-set';
 import { createBoundaryAnswers } from './boundaries';
 import { createCareerAnswers } from './career';
 import { createExpertiseAnswers } from './expertise';
+import { labels } from './labels';
 import { createTopics } from './topics';
 
 /** The English fast-path answers and topic pages, written over the record. */
@@ -13,6 +14,7 @@ export const answers: AnswerSet = {
     education: [[/\b(ufpb|udemy)\b/, 4]],
     awards: [[/\bgolden\b/, 3]],
   },
+  labels,
   topics: createTopics,
   answers: (kit) => {
     const boundaries = createBoundaryAnswers(kit);

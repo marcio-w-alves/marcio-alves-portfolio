@@ -5,6 +5,7 @@ import {
   record,
   resumeUrl,
   topicIntro,
+  labels,
   topicLabel,
   ui,
   welcomeEvidence,
@@ -123,7 +124,7 @@ test('project cards fit a narrow phone: features wrap inside their chip, the sta
   await page.goto('/projects');
   const project = widestProject();
   const card = page.getByRole('article', {
-    name: fill(ui.rich.project, { project: project.name }),
+    name: fill(labels.project.card, { project: project.name }),
   });
   await expect(card).toBeVisible();
 

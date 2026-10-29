@@ -9,7 +9,11 @@ describe('summarizePage', () => {
       {
         type: 'component',
         component: 'skills',
-        props: { groups: [{ title: 'Frontend', items: ['React', 'TypeScript'] }] },
+        props: {
+          groups: [{ title: 'Frontend', items: ['React', 'TypeScript'] }],
+          label: 'Skills',
+          unit: 'skills',
+        },
       },
     ]);
     expect(summary).toContain('### How his scope grew');
@@ -19,7 +23,11 @@ describe('summarizePage', () => {
   it('leaves out notes and the contact card, which are not part of the record', () => {
     expect(
       summarizePage([
-        { type: 'component', component: 'note', props: { tone: 'info', text: 'Aside' } },
+        {
+          type: 'component',
+          component: 'note',
+          props: { tone: 'info', text: 'Aside', label: 'Note' },
+        },
       ]),
     ).toBe('');
   });

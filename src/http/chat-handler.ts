@@ -132,11 +132,11 @@ export function createChatHandler({
       return problem(400, 'invalid_request', z.prettifyError(parsed.error));
     }
 
-    const { message, history, context } = parsed.data;
+    const { message, history, context, locale } = parsed.data;
     const visitor = visitorOf(request);
     const deadline = deadlineAfter(requestTimeoutMs);
     const events = assistant.answer(
-      { question: message, history, context, clientId },
+      { question: message, history, context, pageLocale: locale, clientId },
       { visitor: visitor.signal, deadline },
     );
     const leave = () => {

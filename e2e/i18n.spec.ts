@@ -1,9 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
+import { detectLanguage } from '@/core/assistant/language';
 import { TOPIC_IDS } from '@/core/chat/topic-id';
 import { DEFAULT_LOCALE, LOCALE_SEGMENT, type Locale } from '@/core/i18n/locale';
 import { pagePath } from '@/site/routes';
 import { holdNextAnswer } from './support/assistant';
 import {
+  answerLabelsIn,
   englishOnlyMessages,
   pagePathsIn,
   pagesIn,
@@ -93,6 +95,15 @@ function switcher(page: Page, locale: Locale) {
   return page.getByRole('navigation', { name: pagesIn(locale).ui.shell.language });
 }
 
+/** The language of each question the last answer offers next, as the page shows them. */
+async function followUpLanguages(page: Page, pageLocale: Locale): Promise<string[]> {
+  const offered = page
+    .getByRole('list', { name: pagesIn(pageLocale).ui.conversation.followUps })
+    .getByRole('button');
+  await expect(offered.first()).toBeVisible();
+  return (await offered.allInnerTexts()).map(detectLanguage);
+}
+
 /**
  * A published language besides English: read the portfolio in it and come
  * back. Run against a build that publishes it — `pnpm test:e2e:preview`
@@ -152,6 +163,44 @@ for (const locale of published.filter((candidate) => candidate !== DEFAULT_LOCAL
       conversation.getByRole('article', { name: english.ui.conversation.answer }).last(),
     ).toContainText(/\S/);
     expect(chatRequests).toHaveLength(1);
+  });
+
+  test(`a question is answered in its own language on either page, in the page's on a tie (${locale})`, async ({
+    page,
+  }) => {
+    const theirQuestion = questionOf(locale, 0);
+    const englishQuestion = questionOf(DEFAULT_LOCALE, 0);
+    const offered = (count: number, language: Locale) =>
+      Array.from({ length: count }, () => language);
+    // The career answer shows the timeline on the overview, which shows none of the record.
+    const timelineOf = (pageLocale: Locale, answerLocale: Locale) =>
+      page
+        .getByRole('article', { name: pagesIn(pageLocale).ui.conversation.answer })
+        .last()
+        .getByRole('region', { name: answerLabelsIn(answerLocale).cards.timeline });
+
+    await page.goto('/');
+    await ask(page, DEFAULT_LOCALE, theirQuestion);
+    await expect(timelineOf(DEFAULT_LOCALE, locale)).toBeVisible();
+    await expect(timelineOf(DEFAULT_LOCALE, DEFAULT_LOCALE)).toHaveCount(0);
+    const onEnglish = await followUpLanguages(page, DEFAULT_LOCALE);
+    expect(onEnglish).toEqual(offered(onEnglish.length, locale));
+
+    await page.goto(pagePath(locale, 'overview'));
+    await ask(page, locale, englishQuestion);
+    await expect(timelineOf(locale, DEFAULT_LOCALE)).toBeVisible();
+    await expect(timelineOf(locale, locale)).toHaveCount(0);
+    const onTheirs = await followUpLanguages(page, locale);
+    expect(onTheirs).toEqual(offered(onTheirs.length, DEFAULT_LOCALE));
+
+    await ask(page, locale, 'React?');
+    const tieOnTheirs = await followUpLanguages(page, locale);
+    expect(tieOnTheirs).toEqual(offered(tieOnTheirs.length, locale));
+
+    await page.goto('/skills');
+    await ask(page, DEFAULT_LOCALE, 'React?');
+    const tieOnEnglish = await followUpLanguages(page, DEFAULT_LOCALE);
+    expect(tieOnEnglish).toEqual(offered(tieOnEnglish.length, DEFAULT_LOCALE));
   });
 
   test(`the switcher is reached and followed from the keyboard, in ${locale}`, async ({ page }) => {

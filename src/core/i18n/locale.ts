@@ -15,6 +15,19 @@ export type Translations<T> = { readonly en: T } & Partial<
   Readonly<Record<Exclude<Locale, typeof DEFAULT_LOCALE>, T>>
 >;
 
+/** Each translation turned into something else, for the same languages. */
+export function mapTranslations<T, U>(
+  translations: Translations<T>,
+  transform: (value: T, locale: Locale) => U,
+): Translations<U> {
+  const mapped: Partial<Record<Locale, U>> = {};
+  for (const locale of SUPPORTED_LOCALES) {
+    const value = translations[locale];
+    if (locale !== DEFAULT_LOCALE && value !== undefined) mapped[locale] = transform(value, locale);
+  }
+  return { ...mapped, en: transform(translations.en, DEFAULT_LOCALE) };
+}
+
 export function isLocale(value: string): value is Locale {
   return (SUPPORTED_LOCALES as readonly string[]).includes(value);
 }

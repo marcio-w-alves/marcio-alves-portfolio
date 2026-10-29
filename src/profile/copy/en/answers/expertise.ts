@@ -1,14 +1,6 @@
 import type { AssistantResponse } from '@/core/assistant/response';
 import type { ConversationContext } from '@/core/chat/request';
-import {
-  bullets,
-  details,
-  note,
-  numbered,
-  table,
-  text,
-  type ResponseKit,
-} from '@/core/assistant/response-kit';
+import { bullets, details, numbered, text, type ResponseKit } from '@/core/assistant/response-kit';
 import { createFacts, inWords } from './facts';
 
 /** Answers about expertise, products, background and contact. */
@@ -27,6 +19,8 @@ export function createExpertiseAnswers(kit: ResponseKit) {
     skills: skillGroups,
     timeline,
     knowledge,
+    note,
+    table,
   } = kit;
   const { practice } = knowledge;
   const {

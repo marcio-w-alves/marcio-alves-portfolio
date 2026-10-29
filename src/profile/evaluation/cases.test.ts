@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { createRouter } from '@/core/assistant/system1/router';
+import { detectLanguage } from '@/core/assistant/language';
+import { createFastPath } from '@/core/assistant/system1/fast-path';
 import { localize } from '@/core/knowledge/localize';
 import { siteSourceId } from '@/core/knowledge/product-sites';
 import { answers } from '../copy/en/answers';
+import { answers as portugueseAnswers } from '../copy/pt-BR/answers';
 import { knowledge } from '../knowledge';
 import { evaluation } from './cases';
 
@@ -49,14 +51,51 @@ describe('the evaluation cases', () => {
     }
   });
 
-  it('route every product-vs-person case to the path it declares', () => {
-    const route = createRouter(localize(knowledge, 'en'), answers.vocabulary);
+  it('route every case that declares a path to it, on the page it is asked on', () => {
+    const fastPath = createFastPath({
+      en: { knowledge: localize(knowledge, 'en'), answers },
+      'pt-BR': { knowledge: localize(knowledge, 'pt-BR'), answers: portugueseAnswers },
+    });
     const fresh = { topic: 'overview', lastIntent: null, ctaShown: false } as const;
+    const declared = evaluation.filter(({ expect: expectation }) => expectation.path);
+    for (const { id, question, pageLocale = 'en', expect: expectation } of declared) {
+      const answered = fastPath.answer(question, fresh, pageLocale).kind === 'answered';
+      expect(answered ? 'fast' : 'model', id).toBe(expectation.path);
+    }
+  });
+
+  it('measure the model on product-vs-person questions too, not only the fast path', () => {
     const cases = evaluation.filter(({ category }) => category === 'product-vs-person');
     expect(cases.some(({ expect: expectation }) => expectation.path === 'model')).toBe(true);
-    for (const { id, question, expect: expectation } of cases) {
-      const escalated = route(question, fresh).intent === 'escalate';
-      expect(escalated ? 'model' : 'fast', id).toBe(expectation.path);
+  });
+
+  it('ask about his career, his leadership and his products in Portuguese', () => {
+    for (const category of ['career', 'leadership', 'product-vs-person'] as const) {
+      const portuguese = evaluation.filter(
+        (testCase) => testCase.category === category && testCase.expect.language === 'pt',
+      );
+      expect(portuguese.length, category).toBeGreaterThan(0);
     }
+  });
+
+  it('hold the model to the question’s language over the page’s, and to the page’s on a tie', () => {
+    const language = evaluation.filter(
+      ({ category, expect: expectation }) =>
+        category === 'language' && expectation.path === 'model',
+    );
+    const portugueseOnEnglish = language.filter(
+      ({ question, pageLocale = 'en', expect: expectation }) =>
+        pageLocale === 'en' &&
+        detectLanguage(question) === 'pt-BR' &&
+        expectation.language === 'pt',
+    );
+    const tieOnPortuguese = language.filter(
+      ({ question, pageLocale, expect: expectation }) =>
+        pageLocale === 'pt-BR' &&
+        detectLanguage(question) === 'ambiguous' &&
+        expectation.language === 'pt',
+    );
+    expect(portugueseOnEnglish.length).toBeGreaterThan(0);
+    expect(tieOnPortuguese.length).toBeGreaterThan(0);
   });
 });

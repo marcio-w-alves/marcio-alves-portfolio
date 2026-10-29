@@ -1,4 +1,3 @@
-import { useMessages } from '../i18n/i18n-provider';
 import { VisuallyHidden } from '../primitives';
 
 interface SkillGroup {
@@ -6,10 +5,16 @@ interface SkillGroup {
   readonly items: readonly string[];
 }
 
-export function Skills({ groups }: { readonly groups: readonly SkillGroup[] }) {
-  const { rich } = useMessages();
+interface SkillsProps {
+  readonly groups: readonly SkillGroup[];
+  readonly label: string;
+  /** Read after the number of skills in a group. */
+  readonly unit: string;
+}
+
+export function Skills({ groups, label, unit }: SkillsProps) {
   return (
-    <section aria-label={rich.skills} className="@container/skills animate-block-enter">
+    <section aria-label={label} className="@container/skills animate-block-enter">
       <ul className="grid grid-cols-skills gap-x-7 gap-y-5.5">
         {groups.map((group) => (
           <li key={group.title} className="pt-3.5 inset-shadow-rule-top">
@@ -17,7 +22,7 @@ export function Skills({ groups }: { readonly groups: readonly SkillGroup[] }) {
               {group.title}
               <span className="font-sans text-12 leading-none font-normal text-ink-muted">
                 {group.items.length}
-                <VisuallyHidden> {rich.skillsUnit}</VisuallyHidden>
+                <VisuallyHidden> {unit}</VisuallyHidden>
               </span>
             </p>
             <ul className="flex flex-wrap gap-1.5">

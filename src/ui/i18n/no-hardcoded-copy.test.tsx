@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { createResponseKit, details, note, table } from '@/core/assistant/response-kit';
+import { createResponseKit, details } from '@/core/assistant/response-kit';
 import type { AssistantEvent } from '@/core/chat/events';
 import type { ComponentPart } from '@/core/chat/components';
 import type { TopicId } from '@/core/chat/topic-id';
@@ -47,7 +47,8 @@ function wrapData<T>(value: T): T {
 }
 
 const content = createSiteContent(fixtureKnowledge, fixtureAnswers, 'en');
-const kit = createResponseKit(content.knowledge);
+const kit = createResponseKit(content.knowledge, fixtureAnswers.labels);
+const { note, table } = kit;
 
 /** The page's props with every value from the record marked as data. */
 function view(topic: TopicId) {

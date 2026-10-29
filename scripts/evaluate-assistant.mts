@@ -22,6 +22,7 @@ import { join } from 'node:path';
 import { buildContainer } from '../src/composition-root';
 import type { AssistantEvent } from '../src/core/chat/events';
 import type { ToolTrace } from '../src/core/assistant/system2/model-assistant';
+import { DEFAULT_LOCALE } from '../src/core/i18n/locale';
 import { createResponseKit } from '../src/core/assistant/response-kit';
 import { createToolRegistry } from '../src/core/assistant/tools/registry';
 import { localize } from '../src/core/knowledge/localize';
@@ -237,6 +238,7 @@ async function runOnce(testCase: EvaluationCase, clientId: string): Promise<RunO
       question: testCase.question,
       history: testCase.history ?? [],
       context: { topic: 'overview', lastIntent: null, ctaShown: false },
+      pageLocale: testCase.pageLocale ?? DEFAULT_LOCALE,
       clientId,
     }),
   );
@@ -318,7 +320,7 @@ async function pool<T, R>(
 /** Runs the actions for real, so the trace is exactly what the model would have received. */
 async function traceOf(actions: NonNullable<CalibrationItem['actions']>): Promise<ToolTrace[]> {
   const registry = createToolRegistry({
-    kit: createResponseKit(knowledge),
+    kit: createResponseKit(knowledge, profile.copy.en.answers.labels),
     reportError: (error) => {
       console.error(error);
     },

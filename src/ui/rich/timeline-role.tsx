@@ -1,10 +1,14 @@
 'use client';
 
 import { useId, useState, type ReactNode } from 'react';
-import type { RoleView } from '@/core/chat/components';
+import type { RoleBadge, RoleView } from '@/core/chat/components';
 import { cn } from '../cn';
-import { useMessages } from '../i18n/i18n-provider';
 import { Icon, Tag } from '../primitives';
+
+const BADGE_TONES = { current: 'accent', contract: 'neutral' } as const satisfies Record<
+  RoleBadge['kind'],
+  string
+>;
 
 interface TimelineRoleProps {
   readonly role: RoleView;
@@ -22,7 +26,6 @@ export function TimelineRole({
   initiallyOpen,
   children,
 }: TimelineRoleProps) {
-  const { rich } = useMessages();
   const [isOpen, setIsOpen] = useState(initiallyOpen);
   const panelId = useId();
 
@@ -46,8 +49,11 @@ export function TimelineRole({
             {role.company}
           </span>
           <span className="text-14 text-ink-muted">{role.role}</span>
-          {role.current ? <Tag tone="accent">{rich.current}</Tag> : null}
-          {role.contract ? <Tag>{rich.contract}</Tag> : null}
+          {role.badges.map((badge) => (
+            <Tag key={badge.kind} tone={BADGE_TONES[badge.kind]}>
+              {badge.label}
+            </Tag>
+          ))}
           <Icon
             name="chevronDown"
             size="sm"

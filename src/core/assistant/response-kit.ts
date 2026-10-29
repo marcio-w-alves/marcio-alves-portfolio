@@ -1,6 +1,8 @@
+import { interpolate } from '@/core/i18n/format';
 import { siteSourceId } from '@/core/knowledge/product-sites';
 import type { Knowledge, Metric, Project, Role, SiteSubject } from '@/core/knowledge/schema';
 import type { AnswerSource, RelatedRole } from '../chat/events';
+import type { AnswerLabels } from './answer-labels';
 import { createCitation } from './citations';
 import type {
   ComponentPart,
@@ -8,6 +10,7 @@ import type {
   NoteTone,
   ProjectView,
   ResponsePart,
+  RoleBadge,
   RoleSection,
   RoleView,
 } from '../chat/components';
@@ -31,18 +34,6 @@ export function text(markdown: string): ResponsePart {
   return { type: 'text', text: markdown };
 }
 
-export function table(
-  columns: readonly string[],
-  rows: readonly (readonly string[])[],
-  caption = '',
-): ComponentPart {
-  return { type: 'component', component: 'table', props: { columns, rows, caption } };
-}
-
-export function note(tone: NoteTone, markdown: string): ComponentPart {
-  return { type: 'component', component: 'note', props: { tone, text: markdown } };
-}
-
 export function details(summary: string, markdown: string): ComponentPart {
   return { type: 'component', component: 'details', props: { summary, text: markdown } };
 }
@@ -55,9 +46,18 @@ interface ResponseMeta {
   readonly grounded?: boolean;
 }
 
-/** The builders that read the record, bound to the knowledge they were created with. */
+/**
+ * The builders that read the record, bound to the knowledge they were created
+ * with, and that word their cards with the labels of the same language.
+ */
 export interface ResponseKit {
   readonly knowledge: Knowledge;
+  readonly table: (
+    columns: readonly string[],
+    rows: readonly (readonly string[])[],
+    caption?: string,
+  ) => ComponentPart;
+  readonly note: (tone: NoteTone, markdown: string) => ComponentPart;
   readonly roleById: (id: string) => Role;
   readonly projectById: (id: string) => Project;
   readonly metricById: (id: string) => Metric;
@@ -104,10 +104,12 @@ function projectView({
   return view;
 }
 
-export function createResponseKit(knowledge: Knowledge): ResponseKit {
+export function createResponseKit(knowledge: Knowledge, labels: AnswerLabels): ResponseKit {
   const roleById = lookup(knowledge.experience, 'role');
   const projectById = lookup(knowledge.projects, 'project');
   const citation = createCitation(knowledge);
+  const { roleSections, badges } = labels;
+  const firstName = { firstName: knowledge.profile.firstName };
 
   function relatedRole(id: string): RelatedRole {
     return { id, company: roleById(id).company };
@@ -122,11 +124,15 @@ export function createResponseKit(knowledge: Knowledge): ResponseKit {
   function roleView(role: Role): RoleView {
     const sections: RoleSection[] = [];
     if (role.responsibilities.length > 0) {
-      sections.push({ title: 'Responsibilities', kind: 'list', items: role.responsibilities });
+      sections.push({
+        title: roleSections.responsibilities,
+        kind: 'list',
+        items: role.responsibilities,
+      });
     }
     if (role.metrics.length > 0) {
       sections.push({
-        title: 'Engineering impact',
+        title: roleSections.impact,
         kind: 'metrics',
         items: role.metrics.map((id) => {
           const metric = metricById(id);
@@ -135,13 +141,13 @@ export function createResponseKit(knowledge: Knowledge): ResponseKit {
       });
     }
     if (role.leadership.length > 0) {
-      sections.push({ title: 'Leadership', kind: 'list', items: role.leadership });
+      sections.push({ title: roleSections.leadership, kind: 'list', items: role.leadership });
     }
     if (role.achievements.length > 0) {
-      sections.push({ title: 'Notable achievements', kind: 'list', items: role.achievements });
+      sections.push({ title: roleSections.achievements, kind: 'list', items: role.achievements });
     }
     if (role.focus.length > 0) {
-      sections.push({ title: 'Focus areas', kind: 'tags', items: role.focus });
+      sections.push({ title: roleSections.focus, kind: 'tags', items: role.focus });
     }
     return {
       id: role.id,
@@ -150,9 +156,16 @@ export function createResponseKit(knowledge: Knowledge): ResponseKit {
       period: role.period,
       summary: role.summary,
       current: role.current,
-      contract: role.engagement === 'contract',
+      badges: badgesOf(role),
       sections,
     };
+  }
+
+  function badgesOf(role: Role): RoleBadge[] {
+    const shown: RoleBadge[] = [];
+    if (role.current) shown.push({ kind: 'current', label: badges.current });
+    if (role.engagement === 'contract') shown.push({ kind: 'contract', label: badges.contract });
+    return shown;
   }
 
   function contactCard(): ComponentPart {
@@ -162,19 +175,36 @@ export function createResponseKit(knowledge: Knowledge): ResponseKit {
       component: 'contact',
       props: {
         initials: knowledge.profile.initials,
-        heading: 'Interested in working together?',
-        text: `Get in touch with ${knowledge.profile.firstName} to discuss engineering, architecture, and product opportunities.`,
+        heading: labels.contact.heading,
+        text: interpolate(labels.contact.text, firstName),
         availability: knowledge.profile.availability,
         email,
         linkedin,
         github,
         resumeUrl,
+        actions: {
+          email: interpolate(labels.contact.email, firstName),
+          linkedin: labels.contact.linkedin,
+          resume: labels.contact.resume,
+          github: labels.contact.github,
+          ...labels.links,
+        },
       },
     };
   }
 
   return {
     knowledge,
+    table: (columns, rows, caption = '') => ({
+      type: 'component',
+      component: 'table',
+      props: { columns, rows, caption, label: labels.cards.table },
+    }),
+    note: (tone, markdown) => ({
+      type: 'component',
+      component: 'note',
+      props: { tone, text: markdown, label: labels.notes[tone] },
+    }),
     roleById,
     projectById,
     metricById,
@@ -184,14 +214,18 @@ export function createResponseKit(knowledge: Knowledge): ResponseKit {
         const metric = metricById(id);
         return { value: metric.value, label: metric.label, context: metric.context };
       });
-      return { type: 'component', component: 'metrics', props: { items } };
+      return {
+        type: 'component',
+        component: 'metrics',
+        props: { items, label: labels.cards.metrics },
+      };
     },
     timeline(ids) {
       const roles = ids ? ids.map(roleById) : knowledge.experience;
       return {
         type: 'component',
         component: 'timeline',
-        props: { roles: roles.map(roleView), expanded: [] },
+        props: { roles: roles.map(roleView), expanded: [], label: labels.cards.timeline },
       };
     },
     skills(ids) {
@@ -201,7 +235,11 @@ export function createResponseKit(knowledge: Knowledge): ResponseKit {
       return {
         type: 'component',
         component: 'skills',
-        props: { groups: groups.map((group) => ({ title: group.title, items: group.items })) },
+        props: {
+          groups: groups.map((group) => ({ title: group.title, items: group.items })),
+          label: labels.cards.skills,
+          unit: labels.cards.skillsUnit,
+        },
       };
     },
     projects(ids) {
@@ -209,7 +247,10 @@ export function createResponseKit(knowledge: Knowledge): ResponseKit {
       return {
         type: 'component',
         component: 'projects',
-        props: { projects: list.map(projectView) },
+        props: {
+          projects: list.map(projectView),
+          labels: { ...labels.project, opensInNewTab: labels.links.opensInNewTab },
+        },
       };
     },
     contactCard,

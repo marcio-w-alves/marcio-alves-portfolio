@@ -127,33 +127,6 @@ export interface UiMessages {
     readonly stopped: string;
     readonly newConversation: string;
   };
-  readonly rich: {
-    readonly metrics: string;
-    readonly skills: string;
-    /** Read after the number of skills in a group. */
-    readonly skillsUnit: string;
-    readonly timeline: string;
-    readonly table: string;
-    readonly current: string;
-    readonly contract: string;
-    /** `{project}`. */
-    readonly project: Template;
-    readonly platforms: string;
-    readonly technologies: string;
-    readonly considerations: string;
-    readonly outcomes: string;
-    readonly notes: {
-      readonly inference: string;
-      readonly example: string;
-      readonly info: string;
-    };
-    readonly contact: {
-      readonly email: Template;
-      readonly linkedin: string;
-      readonly resume: string;
-      readonly github: string;
-    };
-  };
   readonly pageFailed: {
     readonly failure: string;
     readonly title: string;

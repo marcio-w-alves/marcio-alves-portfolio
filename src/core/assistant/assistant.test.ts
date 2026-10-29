@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
+import type { Locale } from '@/core/i18n/locale';
 import { localize } from '@/core/knowledge/localize';
-import { fixtureAnswers, fixtureKnowledge } from '@/testing/fixture-profile';
+import {
+  fixtureAnswers,
+  fixtureKnowledge,
+  fixturePortugueseAnswers,
+} from '@/testing/fixture-profile';
 import { createAssistant, type AnswerReport, type AssistantRequest } from './assistant';
 import type { AssistantEvent } from '../chat/events';
 import type { ConversationContext } from '../chat/request';
@@ -10,12 +15,14 @@ import type { ModelBudgetPort } from './ports/model-budget.port';
 import { createFastPath } from './system1/fast-path';
 import type { ModelAssistant, ModelAssistantRequest } from './system2/model-assistant';
 
-const fastPath = createFastPath(localize(fixtureKnowledge, 'en'), fixtureAnswers);
+const fastPath = createFastPath({
+  en: { knowledge: localize(fixtureKnowledge, 'en'), answers: fixtureAnswers },
+});
 
 const FRESH: ConversationContext = { topic: 'overview', lastIntent: null, ctaShown: false };
 
 function request(question: string, history: AssistantRequest['history'] = []): AssistantRequest {
-  return { question, history, context: FRESH, clientId: 'visitor-1' };
+  return { question, history, context: FRESH, pageLocale: 'en', clientId: 'visitor-1' };
 }
 
 /** An in-memory cache and a budget that admits or refuses, recording what it was asked. */
@@ -131,6 +138,7 @@ describe('assistant — on a topic page', () => {
     question,
     history: [],
     context: { ...FRESH, topic },
+    pageLocale: 'en',
     clientId: 'visitor-1',
   });
 
@@ -385,5 +393,74 @@ describe('assistant — reporting how each question was handled', () => {
   it('never puts the question in the report', async () => {
     await collect(assistantWith(sentenceModel().model), 'Is my secret plan any good?');
     expect(JSON.stringify(answered)).not.toMatch(/secret plan/i);
+  });
+});
+
+describe("assistant — in the visitor's language", () => {
+  const bilingual = createFastPath({
+    en: { knowledge: localize(fixtureKnowledge, 'en'), answers: fixtureAnswers },
+    'pt-BR': { knowledge: localize(fixtureKnowledge, 'pt-BR'), answers: fixturePortugueseAnswers },
+  });
+  const PORTUGUESE_FOLLOW_UPS = [
+    'Me fale sobre a carreira da Ada.',
+    'Quais competências ela tem?',
+    'Como posso falar com a Ada?',
+  ];
+
+  function bilingualAssistant(model: ModelAssistant | null) {
+    return createAssistant({
+      fastPath: bilingual,
+      modelAssistant: model,
+      budget: budgetThat(true),
+      answerCache: memoryCache(),
+      clock,
+      reportError: (error) => reported.push(error),
+    });
+  }
+
+  function asked(question: string, pageLocale: Locale): AssistantRequest {
+    return { ...request(question), pageLocale };
+  }
+
+  it('asks the model for a Portuguese answer, with Portuguese follow-ups, on an English page', async () => {
+    const { model, received } = sentenceModel();
+
+    await Array.fromAsync(
+      bilingualAssistant(model).answer(asked('Compare o trabalho dela na Acme e na Globex.', 'en')),
+    );
+
+    expect(received[0]?.pageLocale).toBe('en');
+    expect(received[0]?.answerLocale).toBe('pt-BR');
+    expect(received[0]?.followUps).toEqual(PORTUGUESE_FOLLOW_UPS);
+  });
+
+  it('asks the model for an English answer on a Portuguese page', async () => {
+    const { model, received } = sentenceModel();
+
+    await Array.fromAsync(
+      bilingualAssistant(model).answer(asked('Compare her work at Acme and Globex.', 'pt-BR')),
+    );
+
+    expect(received[0]?.pageLocale).toBe('pt-BR');
+    expect(received[0]?.answerLocale).toBe('en');
+  });
+
+  it("offers the page's follow-ups around a question in a language the site does not speak", async () => {
+    const { model, received } = sentenceModel();
+
+    await Array.fromAsync(bilingualAssistant(model).answer(asked('¿Dónde trabaja Ada?', 'pt-BR')));
+
+    expect(received[0]?.pageLocale).toBe('pt-BR');
+    expect(received[0]?.answerLocale).toBe('pt-BR');
+    expect(received[0]?.followUps).toEqual(PORTUGUESE_FOLLOW_UPS);
+  });
+
+  it('says what it cannot answer in Portuguese when there is no model', async () => {
+    const events = await Array.fromAsync(
+      bilingualAssistant(null).answer(asked('Compare o trabalho dela na Acme e na Globex.', 'en')),
+    );
+
+    const text = events.map((event) => (event.type === 'text-delta' ? event.delta : '')).join('');
+    expect(text).toBe('Não está no histórico de Ada.');
   });
 });

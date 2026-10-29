@@ -1,6 +1,8 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { firstSuggestion, record, ui } from './support/profile';
+import { DEFAULT_LOCALE } from '@/core/i18n/locale';
+import { pagePath } from '@/site/routes';
+import { firstSuggestion, pagePathsIn, pagesIn, published, record, ui } from './support/profile';
 
 /**
  * Every key state of the home page, scanned by axe against WCAG 2.1 A and AA.
@@ -165,3 +167,60 @@ test.describe('in the dark theme', () => {
     }
   });
 });
+
+/**
+ * The same scans in every other language the site publishes: its pages, an
+ * answer with rich blocks, a failed answer and the drawer, each reached the
+ * way a visitor reaches it there.
+ */
+for (const locale of published.filter((candidate) => candidate !== DEFAULT_LOCALE)) {
+  const theirs = pagesIn(locale);
+  const [suggestion] = theirs.topicCatalog.suggestedQuestions('overview', 0, 4);
+  if (!suggestion) throw new Error(`The ${locale} home page suggests no question.`);
+  const home = pagePath(locale, 'overview');
+
+  test.describe(`in ${locale}`, () => {
+    test.use({ viewport: { width: 1440, height: 900 } });
+
+    test('every page has no WCAG 2.1 AA violations and declares its language', async ({ page }) => {
+      for (const path of pagePathsIn(locale)) {
+        await page.goto(path);
+        await expect(page.locator('html')).toHaveAttribute('lang', locale);
+        await expect(page.getByRole('heading', { level: 1 })).toBeAttached();
+        expect(await violations(page), path).toEqual([]);
+      }
+    });
+
+    test('a fast-path answer with rich blocks has no WCAG 2.1 AA violations', async ({ page }) => {
+      await page.goto(home);
+      await page.getByRole('button', { name: suggestion.short }).click();
+      const answer = page.getByRole('article', { name: theirs.ui.conversation.answer });
+      await expect(answer.getByRole('group', { name: theirs.ui.actions.group })).toBeVisible();
+      await expect(answer.getByRole('list').first()).toBeVisible();
+
+      expect(await violations(page)).toEqual([]);
+    });
+
+    test('a failed answer has no WCAG 2.1 AA violations', async ({ page }) => {
+      await page.route('**/api/chat', (route) => route.fulfill({ status: 500 }));
+      await page.goto(home);
+      await page.getByRole('button', { name: suggestion.short }).click();
+      const answer = page.getByRole('article', { name: theirs.ui.conversation.answer });
+      await expect(answer.getByRole('alert')).toContainText(theirs.ui.failure.title);
+
+      expect(await violations(page)).toEqual([]);
+    });
+  });
+
+  test.describe(`in ${locale}, on a phone`, () => {
+    test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+
+    test('the open navigation drawer has no WCAG 2.1 AA violations', async ({ page }) => {
+      await page.goto(home);
+      await page.getByRole('button', { name: theirs.ui.shell.openNavigation }).click();
+      await expect(page.getByRole('navigation', { name: theirs.ui.shell.topics })).toBeVisible();
+
+      expect(await violations(page)).toEqual([]);
+    });
+  });
+}

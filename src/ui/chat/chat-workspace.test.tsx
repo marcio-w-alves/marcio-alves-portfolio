@@ -27,7 +27,7 @@ const CHAT_URL = `${window.location.origin}/api/chat`;
 /** The real endpoint, answering from the fast path: what production does without a model key. */
 const chatHandler = createChatHandler({
   assistant: createAssistant({
-    fastPath: createFastPath(knowledge, fixtureAnswers),
+    fastPath: createFastPath({ en: { knowledge: knowledge, answers: fixtureAnswers } }),
     modelAssistant: null,
     clock: { now: () => new Date() },
     reportError: () => undefined,

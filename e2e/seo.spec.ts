@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { record, site, topicLabel, ui } from './support/profile';
+import { pagePathsIn, published, record, site, topicLabel, ui } from './support/profile';
 
 /**
  * What a crawler and a link preview read from the production build. Absolute
@@ -114,17 +114,12 @@ test('robots.txt keeps crawlers out of the API and points to the sitemap', async
   expect(robots).toMatch(/^Sitemap: https?:\/\/[^/]+\/sitemap\.xml$/m);
 });
 
-test('the sitemap lists every page at its canonical address', async ({ page, request }) => {
+test('the sitemap lists every page, in every published language, at its canonical address', async ({
+  page,
+  request,
+}) => {
   const canonicals: string[] = [];
-  for (const path of [
-    '/',
-    '/experience',
-    '/skills',
-    '/projects',
-    '/philosophy',
-    '/education',
-    '/about-this-site',
-  ]) {
+  for (const path of published.flatMap(pagePathsIn)) {
     await page.goto(path);
     canonicals.push(String(await page.locator('link[rel="canonical"]').getAttribute('href')));
   }

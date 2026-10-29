@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { localize } from '@/core/knowledge/localize';
+import { fixtureAnswers } from '@/testing/fixture-profile';
 import { fixtureKnowledge } from '@/testing/fixture-profile/knowledge';
-import { createResponseKit, details, note } from '../assistant/response-kit';
+import { createResponseKit, details } from '../assistant/response-kit';
 import { toPlainText } from './plain-text';
 
-const { projects, timeline } = createResponseKit(localize(fixtureKnowledge, 'en'));
+const { note, projects, timeline } = createResponseKit(
+  localize(fixtureKnowledge, 'en'),
+  fixtureAnswers.labels,
+);
 
 describe('an answer as plain text', () => {
   it('drops inline markup but keeps a link target readable', () => {
@@ -44,6 +48,8 @@ describe('an answer as plain text', () => {
               { title: 'Frontend', items: ['React', 'TypeScript'] },
               { title: 'Backend', items: ['Node.js'] },
             ],
+            label: 'Skills',
+            unit: 'skills',
           },
         },
       ]),
@@ -57,7 +63,7 @@ describe('an answer as plain text', () => {
           type: 'component',
           id: 'p0',
           component: 'metrics',
-          props: { items: [{ value: '3×', label: 'Team size' }] },
+          props: { items: [{ value: '3×', label: 'Team size' }], label: 'Metrics' },
         },
       ]),
     ).toBe('• 3× — Team size');
@@ -71,7 +77,10 @@ describe('an answer as plain text', () => {
           type: 'component',
           id: 'p1',
           component: 'metrics',
-          props: { items: [{ value: '50%', label: 'Faster critical pages', context: 'Acme' }] },
+          props: {
+            items: [{ value: '50%', label: 'Faster critical pages', context: 'Acme' }],
+            label: 'Metrics',
+          },
         },
         {
           type: 'component',
@@ -81,6 +90,7 @@ describe('an answer as plain text', () => {
             columns: ['Signal', 'Where'],
             rows: [['Team building', 'Globex']],
             caption: 'Signals',
+            label: 'Table',
           },
         },
       ]),
@@ -105,6 +115,14 @@ describe('an answer as plain text', () => {
             github: 'https://github.com/ada-rivera-example',
             resumeUrl: null,
             initials: 'AR',
+            actions: {
+              email: 'Email',
+              linkedin: 'LinkedIn',
+              resume: 'Résumé',
+              github: 'GitHub',
+              opensInNewTab: '(opens in a new tab)',
+              pdfOpensInNewTab: '(PDF, opens in a new tab)',
+            },
           },
         },
       ]),

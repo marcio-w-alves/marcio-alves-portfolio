@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { AssistantResponse } from '@/core/assistant/response';
 import { createResponseKit } from '@/core/assistant/response-kit';
-import { SCORED_INTENTS } from '@/core/assistant/system1/router';
+import { SCORED_INTENTS } from '@/core/assistant/system1/intents';
 import { createEvidenceFinder, TECHNOLOGIES } from '@/core/assistant/system1/technologies';
 import type { ResponsePart } from '@/core/chat/components';
 import type { ConversationContext } from '@/core/chat/request';
@@ -25,7 +25,7 @@ function portugueseCopy() {
 
 const portuguese = portugueseCopy();
 const record = localize(profile.knowledge, 'pt-BR');
-const kit = createResponseKit(record);
+const kit = createResponseKit(record, portuguese.answers.labels);
 const FRESH: ConversationContext = { topic: 'overview', lastIntent: null, ctaShown: false };
 
 /**
@@ -143,7 +143,7 @@ function recordPairs(value: unknown, path = 'knowledge'): [string, string, strin
 /** Each topic's label, and its questions' tags and chips, beside the English ones. */
 function topicPairs(): [string, string, string][] {
   const english = profile.copy.en.answers.topics(
-    createResponseKit(localize(profile.knowledge, 'en')),
+    createResponseKit(localize(profile.knowledge, 'en'), profile.copy.en.answers.labels),
   );
   return Object.entries(portuguese.answers.topics(kit)).flatMap(([id, topic]) => {
     const theirs = english[id as keyof typeof english];

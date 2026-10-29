@@ -23,10 +23,12 @@ const PORTUGUESE_QUESTION = 'O que ela fez na Acme?';
 
 const chatHandler = createChatHandler({
   assistant: createAssistant({
-    fastPath: createFastPath(
-      createSiteContent(fixtureKnowledge, fixtureAnswers, 'en').knowledge,
-      fixtureAnswers,
-    ),
+    fastPath: createFastPath({
+      en: {
+        knowledge: createSiteContent(fixtureKnowledge, fixtureAnswers, 'en').knowledge,
+        answers: fixtureAnswers,
+      },
+    }),
     modelAssistant: null,
     clock: { now: () => new Date() },
     reportError: () => undefined,

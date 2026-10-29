@@ -24,7 +24,7 @@ const content = createSiteContent(fixtureKnowledge, fixtureAnswers, 'en');
 
 const handle = createChatHandler({
   assistant: createAssistant({
-    fastPath: createFastPath(content.knowledge, fixtureAnswers),
+    fastPath: createFastPath({ en: { knowledge: content.knowledge, answers: fixtureAnswers } }),
     modelAssistant: null,
     clock: { now: () => new Date() },
     reportError: () => undefined,

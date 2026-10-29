@@ -1,5 +1,5 @@
 import type { ResponseKit } from '@/core/assistant/response-kit';
-import { bullets, details, numbered, table, text } from '@/core/assistant/response-kit';
+import { bullets, details, numbered, text } from '@/core/assistant/response-kit';
 import type { TopicCopy } from '@/core/assistant/topics';
 import type { TopicId } from '@/core/chat/topic-id';
 import type { Language } from '@/core/knowledge/schema';
@@ -23,7 +23,7 @@ export function spokenLanguages(languages: readonly Language[]): string {
  * below.
  */
 export function createTopics(kit: ResponseKit): Readonly<Record<TopicId, TopicCopy>> {
-  const { knowledge, projects, skills, timeline, productDepth } = kit;
+  const { knowledge, projects, skills, table, timeline, productDepth } = kit;
   const { profile, experience, languages, education, practice } = knowledge;
   const { first, employer, product } = createFacts(kit);
   const liveProducts = joinNames(

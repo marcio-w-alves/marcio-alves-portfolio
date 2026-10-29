@@ -1,3 +1,4 @@
+import { fixtureAnswers } from '@/testing/fixture-profile';
 import { describe, expect, it } from 'vitest';
 import { localize } from '@/core/knowledge/localize';
 import { fixtureKnowledge } from '@/testing/fixture-profile';
@@ -7,7 +8,7 @@ import { createResponseKit } from '../response-kit';
 import { createExternalTools } from './external-tools';
 import type { ToolResult } from './tool';
 
-const kit = createResponseKit(localize(fixtureKnowledge, 'en'));
+const kit = createResponseKit(localize(fixtureKnowledge, 'en'), fixtureAnswers.labels);
 
 const UNREACHABLE_GITHUB: GithubPort = {
   profile: () => Promise.resolve(null),

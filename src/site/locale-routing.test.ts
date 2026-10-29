@@ -5,6 +5,7 @@ import {
 } from 'next/experimental/testing/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import nextConfig from '../../next.config';
+import { localeRewrites } from './locale-routing';
 
 const ORIGIN = 'https://ada.example';
 
@@ -47,20 +48,30 @@ describe('the routing the real next.config.ts declares', () => {
     expect(getRedirectUrl(skills)).toBe(`${ORIGIN}/skills`);
   });
 
-  it('sends /pt addresses to the English not-found page while Portuguese is not published', async () => {
+  it('serves /pt addresses from their own segment, Portuguese being published', async () => {
     vi.stubEnv('PREVIEW_LOCALES', '');
-
-    expect(await rewrittenPath('/pt')).toBe('/en/pt');
-    expect(await rewrittenPath('/pt/skills')).toBe('/en/pt/skills');
-  });
-
-  it('serves /pt addresses from their own segment once Portuguese is built', async () => {
-    vi.stubEnv('PREVIEW_LOCALES', 'pt-BR');
 
     expect(await rewrittenPath('/pt')).toBeNull();
     expect(await rewrittenPath('/pt/skills')).toBeNull();
     expect(await rewrittenPath('/pt/nope')).toBeNull();
     expect(await rewrittenPath('/ptx')).toBe('/en/ptx');
     expect(await rewrittenPath('/skills')).toBe('/en/skills');
+  });
+});
+
+describe('the routing of a profile that publishes English only', () => {
+  const englishOnly = { ...nextConfig, rewrites: () => Promise.resolve(localeRewrites(['en'])) };
+
+  it('sends /pt addresses to the English not-found page', async () => {
+    const rewritten = async (path: string) =>
+      getRewrittenUrl(
+        await unstable_getResponseFromNextConfig({
+          url: `${ORIGIN}${path}`,
+          nextConfig: englishOnly,
+        }),
+      )?.replace(ORIGIN, '') ?? null;
+
+    expect(await rewritten('/pt')).toBe('/en/pt');
+    expect(await rewritten('/pt/skills')).toBe('/en/pt/skills');
   });
 });

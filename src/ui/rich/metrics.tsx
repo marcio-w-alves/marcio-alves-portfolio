@@ -1,13 +1,16 @@
 import type { CSSProperties } from 'react';
 import type { MetricItem } from '@/core/chat/components';
-import { useMessages } from '../i18n/i18n-provider';
 
 const STAGGER_MS = 60;
 
-export function Metrics({ items }: { readonly items: readonly MetricItem[] }) {
-  const { rich } = useMessages();
+interface MetricsProps {
+  readonly items: readonly MetricItem[];
+  readonly label: string;
+}
+
+export function Metrics({ items, label }: MetricsProps) {
   return (
-    <section aria-label={rich.metrics} className="@container/metrics">
+    <section aria-label={label} className="@container/metrics">
       <ul className="grid grid-cols-metrics gap-x-7 gap-y-5 @max-metrics-narrow/metrics:grid-cols-2 @max-metrics-narrow/metrics:gap-x-4 @max-metrics-narrow/metrics:gap-y-4.5">
         {items.map((metric, index) => (
           <li

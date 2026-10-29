@@ -1,3 +1,4 @@
+import { fixtureAnswers } from '@/testing/fixture-profile';
 import { describe, expect, it } from 'vitest';
 import { localize } from '@/core/knowledge/localize';
 import { fixtureKnowledge } from '@/testing/fixture-profile/knowledge';
@@ -11,7 +12,7 @@ function rethrow(error: unknown): never {
   throw error;
 }
 
-const kit = createResponseKit(localize(fixtureKnowledge, 'en'));
+const kit = createResponseKit(localize(fixtureKnowledge, 'en'), fixtureAnswers.labels);
 const registry = createToolRegistry({ kit, reportError: rethrow });
 
 function succeeded(outcome: ToolOutcome): ToolResult {
@@ -248,6 +249,7 @@ describe('display actions', () => {
               context: 'Acme',
             },
           ],
+          label: fixtureAnswers.labels.cards.metrics,
         },
       },
     });
@@ -306,7 +308,7 @@ describe('declineToAnswer', () => {
 describe('the record the actions read', () => {
   it('accepts exactly the ids of the record it was given, and answers from it', async () => {
     const fixture = createToolRegistry({
-      kit: createResponseKit(localize(fixtureKnowledge, 'en')),
+      kit: createResponseKit(localize(fixtureKnowledge, 'en'), fixtureAnswers.labels),
       reportError: rethrow,
     });
     const getExperience = fixture.tools.find((tool) => tool.name === 'getExperience');
@@ -319,7 +321,7 @@ describe('the record the actions read', () => {
     expect((await fixture.run('getExperience', { company: 'umbrella' })).ok).toBe(false);
   });
 
-  const fixtureKit = createResponseKit(localize(fixtureKnowledge, 'en'));
+  const fixtureKit = createResponseKit(localize(fixtureKnowledge, 'en'), fixtureAnswers.labels);
   const unreachableGithub: GithubPort = {
     profile: () => Promise.resolve(null),
     repositories: () => Promise.resolve(null),

@@ -1,5 +1,5 @@
 import type { AnswerSet } from '@/core/assistant/answer-set';
-import type { ScoredIntent } from '@/core/assistant/system1/router';
+import type { ScoredIntent } from '@/core/assistant/system1/intents';
 import type { KnowledgeSource, MetricSource, RoleSource } from '@/core/knowledge/schema';
 
 /**

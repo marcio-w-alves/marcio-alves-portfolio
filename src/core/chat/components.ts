@@ -15,6 +15,12 @@ export type RoleSection =
   | { readonly title: string; readonly kind: 'metrics'; readonly items: readonly MetricItem[] }
   | { readonly title: string; readonly kind: 'tags'; readonly items: readonly string[] };
 
+/** A role's tag beside its title, worded in the answer's language. */
+export interface RoleBadge {
+  readonly kind: 'current' | 'contract';
+  readonly label: string;
+}
+
 export interface RoleView {
   readonly id: string;
   readonly company: string;
@@ -22,7 +28,7 @@ export interface RoleView {
   readonly period: string;
   readonly summary: string;
   readonly current: boolean;
-  readonly contract: boolean;
+  readonly badges: readonly RoleBadge[];
   readonly sections: readonly RoleSection[];
 }
 
@@ -46,27 +52,65 @@ export interface ProjectView {
   readonly links: readonly ProjectLinkView[];
 }
 
+/** The words a project card shows around the project's own, in the answer's language. */
+export interface ProjectLabels {
+  /** `{project}`: how assistive technology names the card. */
+  readonly card: string;
+  readonly platforms: string;
+  readonly technologies: string;
+  readonly considerations: string;
+  readonly outcomes: string;
+  /** Read after a link that opens in a new tab. */
+  readonly opensInNewTab: string;
+}
+
+/** The contact card's actions, in the answer's language. */
+export interface ContactActions {
+  readonly email: string;
+  readonly linkedin: string;
+  readonly resume: string;
+  readonly github: string;
+  /** Read after a link that opens in a new tab. */
+  readonly opensInNewTab: string;
+  /** Read after the résumé link, a PDF that opens in a new tab. */
+  readonly pdfOpensInNewTab: string;
+}
+
 /**
  * `inference` — an assessment drawn from documented facts.
  * `example` — illustrative, not from any real codebase.
  */
 export type NoteTone = 'inference' | 'example' | 'info';
 
+/**
+ * Every `label` is how assistive technology names the card; like every other
+ * word inside a card, it is in the answer's language.
+ */
 export type RichComponent =
-  | { readonly component: 'metrics'; readonly props: { readonly items: readonly MetricItem[] } }
+  | {
+      readonly component: 'metrics';
+      readonly props: { readonly items: readonly MetricItem[]; readonly label: string };
+    }
   | {
       readonly component: 'timeline';
-      readonly props: { readonly roles: readonly RoleView[]; readonly expanded: readonly string[] };
+      readonly props: {
+        readonly roles: readonly RoleView[];
+        readonly expanded: readonly string[];
+        readonly label: string;
+      };
     }
   | {
       readonly component: 'skills';
       readonly props: {
         readonly groups: readonly { readonly title: string; readonly items: readonly string[] }[];
+        readonly label: string;
+        /** Read after the number of skills in a group. */
+        readonly unit: string;
       };
     }
   | {
       readonly component: 'projects';
-      readonly props: { readonly projects: readonly ProjectView[] };
+      readonly props: { readonly projects: readonly ProjectView[]; readonly labels: ProjectLabels };
     }
   | {
       readonly component: 'table';
@@ -74,11 +118,12 @@ export type RichComponent =
         readonly columns: readonly string[];
         readonly rows: readonly (readonly string[])[];
         readonly caption: string;
+        readonly label: string;
       };
     }
   | {
       readonly component: 'note';
-      readonly props: { readonly tone: NoteTone; readonly text: string };
+      readonly props: { readonly tone: NoteTone; readonly text: string; readonly label: string };
     }
   | {
       readonly component: 'details';
@@ -96,6 +141,7 @@ export type RichComponent =
         readonly linkedin: string;
         readonly github: string;
         readonly resumeUrl: string | null;
+        readonly actions: ContactActions;
       };
     };
 

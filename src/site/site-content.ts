@@ -32,7 +32,7 @@ export function createSiteContent(
   about?: AboutPageCopy,
 ): SiteContent {
   const knowledge = localize(source, locale);
-  const responseKit = createResponseKit(knowledge);
+  const responseKit = createResponseKit(knowledge, answers.labels);
   const topicCatalog = createTopicCatalog(answers.topics(responseKit));
   return {
     locale,

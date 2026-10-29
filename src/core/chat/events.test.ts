@@ -13,7 +13,12 @@ const VALID: {
   'text-start': { type: 'text-start', id: 'p0' },
   'text-delta': { type: 'text-delta', id: 'p0', delta: 'At Acme' },
   'text-end': { type: 'text-end', id: 'p0' },
-  component: { type: 'component', id: 'p1', component: 'note', props: { tone: 'info', text: 'x' } },
+  component: {
+    type: 'component',
+    id: 'p1',
+    component: 'note',
+    props: { tone: 'info', text: 'x', label: 'Note' },
+  },
   finish: {
     type: 'finish',
     followUps: ['Next?'],

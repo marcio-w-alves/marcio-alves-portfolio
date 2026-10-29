@@ -1,16 +1,20 @@
-import type { ProjectView } from '@/core/chat/components';
+import type { ProjectLabels, ProjectView } from '@/core/chat/components';
 import { interpolate } from '@/core/i18n/format';
-import { useMessages } from '../i18n/i18n-provider';
 import { ButtonLink, Icon, Tag, VisuallyHidden } from '../primitives';
 import { BulletList } from './bullet-list';
 import { SectionTitle } from './section-title';
 import { TagList } from './tag-list';
 
-export function Projects({ projects }: { readonly projects: readonly ProjectView[] }) {
+interface ProjectsProps {
+  readonly projects: readonly ProjectView[];
+  readonly labels: ProjectLabels;
+}
+
+export function Projects({ projects, labels }: ProjectsProps) {
   return (
     <div className="grid grid-cols-projects gap-3">
       {projects.map((project) => (
-        <ProjectPreview key={project.id} project={project} />
+        <ProjectPreview key={project.id} project={project} labels={labels} />
       ))}
     </div>
   );
@@ -18,13 +22,17 @@ export function Projects({ projects }: { readonly projects: readonly ProjectView
 
 // Each section renders only when documented, and the scope keeps its own label, so a concept's
 // planned scope never reads as a live product's features.
-function ProjectPreview({ project }: { readonly project: ProjectView }) {
-  const messages = useMessages();
-  const { rich } = messages;
+function ProjectPreview({
+  project,
+  labels,
+}: {
+  readonly project: ProjectView;
+  readonly labels: ProjectLabels;
+}) {
   const links = project.links.filter((link) => isWebUrl(link.url));
   return (
     <article
-      aria-label={interpolate(rich.project, { project: project.name })}
+      aria-label={interpolate(labels.card, { project: project.name })}
       className="@container/project flex h-full animate-block-enter flex-col gap-3.5 rounded-lg bg-surface px-5 py-4.5 shadow-ring"
     >
       {/* A narrow card puts the status beneath the name rather than squeezing both. */}
@@ -54,25 +62,25 @@ function ProjectPreview({ project }: { readonly project: ProjectView }) {
       ) : null}
       {project.platforms.length > 0 ? (
         <div>
-          <SectionTitle>{rich.platforms}</SectionTitle>
+          <SectionTitle>{labels.platforms}</SectionTitle>
           <TagList tags={project.platforms} />
         </div>
       ) : null}
       {project.technologies.length > 0 ? (
         <div>
-          <SectionTitle>{rich.technologies}</SectionTitle>
+          <SectionTitle>{labels.technologies}</SectionTitle>
           <TagList tags={project.technologies} />
         </div>
       ) : null}
       {project.considerations.length > 0 ? (
         <div>
-          <SectionTitle>{rich.considerations}</SectionTitle>
+          <SectionTitle>{labels.considerations}</SectionTitle>
           <BulletList items={project.considerations} marker="disc" />
         </div>
       ) : null}
       {project.outcomes.length > 0 ? (
         <div>
-          <SectionTitle>{rich.outcomes}</SectionTitle>
+          <SectionTitle>{labels.outcomes}</SectionTitle>
           <BulletList items={project.outcomes} marker="disc" />
         </div>
       ) : null}
@@ -81,7 +89,7 @@ function ProjectPreview({ project }: { readonly project: ProjectView }) {
           {links.map(({ label, url }) => (
             <ButtonLink key={url} href={url} size="sm" target="_blank" rel="noopener noreferrer">
               {label}
-              <VisuallyHidden> {messages.links.opensInNewTab}</VisuallyHidden>
+              <VisuallyHidden> {labels.opensInNewTab}</VisuallyHidden>
               <Icon name="arrowUpRight" size="xs" />
             </ButtonLink>
           ))}

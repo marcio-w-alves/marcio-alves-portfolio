@@ -43,10 +43,12 @@ describe("the owner's record", () => {
   });
 
   it('labels Roots, Maison Moderne and the freelance work as contracts, and only those', () => {
-    const { timeline } = createResponseKit(knowledge);
+    const { timeline } = createResponseKit(knowledge, profile.copy.en.answers.labels);
     const block = timeline();
     if (block.component !== 'timeline') throw new Error('timeline() built another block.');
-    const contracts = block.props.roles.filter((role) => role.contract).map((role) => role.id);
+    const contracts = block.props.roles
+      .filter((role) => role.badges.some((badge) => badge.kind === 'contract'))
+      .map((role) => role.id);
     expect(contracts).toEqual(['roots', 'maison', 'freelance']);
   });
 
@@ -137,10 +139,10 @@ describe("the owner's headline", () => {
   });
 });
 
-// D30: Portuguese is switched on only with the bilingual fast path (POR-66).
-describe('the published site, until Portuguese is switched on', () => {
-  it('speaks English only', () => {
-    expect(profile.locales).toEqual(['en']);
-    expect(publishedLocales(profile.locales, {})).toEqual(['en']);
+// D30: Portuguese was switched on with the bilingual fast path (POR-66).
+describe('the published site', () => {
+  it('speaks English and Portuguese', () => {
+    expect(profile.locales).toEqual(['en', 'pt-BR']);
+    expect(publishedLocales(profile.locales, {})).toEqual(['en', 'pt-BR']);
   });
 });

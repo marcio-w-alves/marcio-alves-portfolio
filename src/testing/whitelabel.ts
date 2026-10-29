@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
-import type { Vocabulary } from '@/core/assistant/system1/router';
+import type { Vocabulary } from '@/core/assistant/system1/intents';
 import type { KnowledgeSource } from '@/core/knowledge/schema';
 import type { Identity } from '@/profile/schema';
 

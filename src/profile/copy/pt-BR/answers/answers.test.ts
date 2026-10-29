@@ -12,7 +12,7 @@ import { knowledge as source } from '../../../knowledge';
 const FRESH: ConversationContext = { topic: 'overview', lastIntent: null, ctaShown: false };
 
 function answersOver(record = source) {
-  return answers.answers(createResponseKit(localize(record, 'pt-BR')));
+  return answers.answers(createResponseKit(localize(record, 'pt-BR'), answers.labels));
 }
 
 function plainText(response: AssistantResponse): string {

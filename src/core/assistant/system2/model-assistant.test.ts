@@ -1,3 +1,4 @@
+import { fixtureAnswers } from '@/testing/fixture-profile';
 import { describe, expect, it } from 'vitest';
 import { localize } from '@/core/knowledge/localize';
 import { fixtureKnowledge } from '@/testing/fixture-profile';
@@ -57,7 +58,7 @@ function rethrow(error: unknown): never {
   throw error;
 }
 
-const kit = createResponseKit(localize(fixtureKnowledge, 'en'));
+const kit = createResponseKit(localize(fixtureKnowledge, 'en'), fixtureAnswers.labels);
 const subject = promptSubject(kit.knowledge);
 
 /** The real allow-list; an action that throws unexpectedly fails the test. */
@@ -65,7 +66,7 @@ function registry(
   extra: readonly Tool[] = [],
   reportError: (failure: ToolFailure) => void = rethrow,
 ) {
-  return createToolRegistry({ kit, extra, reportError });
+  return { en: createToolRegistry({ kit, extra, reportError }) };
 }
 
 async function collect(model: LanguageModelPort, question = 'question', history = []) {
@@ -75,6 +76,8 @@ async function collect(model: LanguageModelPort, question = 'question', history 
     question,
     clientId: 'visitor',
     history,
+    pageLocale: 'en',
+    answerLocale: 'en',
     followUps: ['Next?'],
   })) {
     events.push(event);
@@ -164,7 +167,14 @@ describe('model assistant — answering through actions', () => {
       { role: 'assistant' as const, text: 'A frontend engineer.' },
     ];
     await Array.fromAsync(
-      assistant.answer({ question: 'And at Acme?', clientId: 'visitor', history, followUps: [] }),
+      assistant.answer({
+        question: 'And at Acme?',
+        clientId: 'visitor',
+        history,
+        pageLocale: 'en',
+        answerLocale: 'en',
+        followUps: [],
+      }),
     );
     const roles = requests[0]?.messages.map((message) => message.role);
     expect(roles).toEqual(['system', 'user', 'assistant', 'user']);
@@ -185,7 +195,14 @@ describe('model assistant — conversation memory is bounded', () => {
       text: `${String(i)}:${'z'.repeat(5000)}`,
     }));
     await Array.fromAsync(
-      assistant.answer({ question: 'Now?', clientId: 'visitor', history, followUps: [] }),
+      assistant.answer({
+        question: 'Now?',
+        clientId: 'visitor',
+        history,
+        pageLocale: 'en',
+        answerLocale: 'en',
+        followUps: [],
+      }),
     );
 
     const remembered = (requests[0]?.messages ?? []).slice(1, -1);
@@ -290,7 +307,14 @@ describe('model assistant — spending', () => {
       onUsage: (spent) => usage.push(spent),
     });
     await Array.fromAsync(
-      assistant.answer({ question: 'q', clientId: 'visitor', history: [], followUps: [] }),
+      assistant.answer({
+        question: 'q',
+        clientId: 'visitor',
+        history: [],
+        pageLocale: 'en',
+        answerLocale: 'en',
+        followUps: [],
+      }),
     );
     expect(usage).toEqual([
       { inputTokens: 10, outputTokens: 5 },
@@ -309,7 +333,14 @@ describe('model assistant — spending', () => {
     });
     return {
       usage,
-      answer: assistant.answer({ question: 'q', clientId: 'visitor', history: [], followUps: [] }),
+      answer: assistant.answer({
+        question: 'q',
+        clientId: 'visitor',
+        history: [],
+        pageLocale: 'en',
+        answerLocale: 'en',
+        followUps: [],
+      }),
     };
   }
 
@@ -399,6 +430,8 @@ describe('model assistant — on a topic page', () => {
         question: 'q',
         clientId: 'visitor',
         history: [],
+        pageLocale: 'en',
+        answerLocale: 'en',
         followUps: [],
         page: { label: 'Skills', summary: 'Skills by area: Frontend: React', cards: ['skills'] },
       }),
@@ -422,6 +455,8 @@ describe('model assistant — on a topic page', () => {
         question: 'q',
         clientId: 'visitor',
         history: [],
+        pageLocale: 'en',
+        answerLocale: 'en',
         followUps: [],
         page: { label: 'Skills', summary: 'Skills by area', cards: ['skills'] },
       }),
@@ -438,6 +473,8 @@ describe('model assistant — on a topic page', () => {
         question: 'q',
         clientId: 'visitor',
         history: [],
+        pageLocale: 'en',
+        answerLocale: 'en',
         followUps: [],
         page: null,
       }),
@@ -466,6 +503,7 @@ describe('model assistant — what reaches the visitor', () => {
             context: 'Acme',
           },
         ],
+        label: fixtureAnswers.labels.cards.metrics,
       },
     });
     expect(events.findIndex((event) => event.type === 'text-end')).toBeLessThan(
@@ -518,6 +556,8 @@ describe('model assistant — what reaches the visitor', () => {
       question: 'Does he have pets?',
       clientId: 'visitor',
       history: [],
+      pageLocale: 'en',
+      answerLocale: 'en',
       followUps: [],
     })) {
       events.push(event);
@@ -561,6 +601,8 @@ describe('model assistant — what reaches the visitor', () => {
       question: 'What are his dogs called?',
       clientId: 'visitor',
       history: [],
+      pageLocale: 'en',
+      answerLocale: 'en',
       followUps: [],
     })) {
       events.push(event);
@@ -604,6 +646,8 @@ describe('model assistant — what reaches the visitor', () => {
       question: 'What was his GPA at university?',
       clientId: 'visitor',
       history: [],
+      pageLocale: 'en',
+      answerLocale: 'en',
       followUps: [],
     })) {
       events.push(event);
@@ -633,6 +677,8 @@ describe('model assistant — what reaches the visitor', () => {
       question: 'q',
       clientId: 'visitor',
       history: [],
+      pageLocale: 'en',
+      answerLocale: 'en',
       followUps: [],
     })) {
       events.push(event);
@@ -663,7 +709,14 @@ describe('model assistant — what reaches the visitor', () => {
     });
 
     const events = await Array.fromAsync(
-      assistant.answer({ question: 'q', clientId: 'visitor', history: [], followUps: [] }),
+      assistant.answer({
+        question: 'q',
+        clientId: 'visitor',
+        history: [],
+        pageLocale: 'en',
+        answerLocale: 'en',
+        followUps: [],
+      }),
     );
 
     const reply = JSON.stringify(toolReplies(requests[1]));
@@ -699,7 +752,14 @@ describe('model assistant — what reaches the visitor', () => {
 
     await Array.fromAsync(
       assistant.answer(
-        { question: 'q', clientId: 'visitor', history: [], followUps: [] },
+        {
+          question: 'q',
+          clientId: 'visitor',
+          history: [],
+          pageLocale: 'en',
+          answerLocale: 'en',
+          followUps: [],
+        },
         request.signal,
       ),
     );
@@ -744,6 +804,8 @@ describe('model assistant — what reaches the visitor', () => {
         question: 'What is React?',
         clientId: 'visitor',
         history: [],
+        pageLocale: 'en',
+        answerLocale: 'en',
         followUps: [],
       }),
     );
@@ -769,7 +831,14 @@ describe('model assistant — what reaches the visitor', () => {
         model: port,
         tools: registry(createExternalTools({ kit, references, github: unreachableGithub })),
         clock,
-      }).answer({ question: 'q', clientId: 'visitor', history: [], followUps: [] });
+      }).answer({
+        question: 'q',
+        clientId: 'visitor',
+        history: [],
+        pageLocale: 'en',
+        answerLocale: 'en',
+        followUps: [],
+      });
       for (;;) {
         const step = await answer.next();
         if (step.done) return step.value;
@@ -793,7 +862,14 @@ describe('model assistant — what reaches the visitor', () => {
       onUsage: (_usage, clientId) => charged.push(clientId),
     });
     await Array.fromAsync(
-      assistant.answer({ question: 'q', clientId: 'visitor-7', history: [], followUps: [] }),
+      assistant.answer({
+        question: 'q',
+        clientId: 'visitor-7',
+        history: [],
+        pageLocale: 'en',
+        answerLocale: 'en',
+        followUps: [],
+      }),
     );
     expect(charged).toEqual(['visitor-7', 'visitor-7']);
   });
@@ -823,6 +899,8 @@ describe('model assistant — what reaches the visitor', () => {
         question: 'q',
         clientId: 'visitor',
         history: [],
+        pageLocale: 'en',
+        answerLocale: 'en',
         followUps: [],
       })) {
         seen.push(event);
@@ -894,6 +972,8 @@ async function answerWithSearch(
     question,
     clientId: 'visitor',
     history: [],
+    pageLocale: 'en',
+    answerLocale: 'en',
     followUps: [],
   })) {
     events.push(event);
