@@ -1,17 +1,11 @@
+import type { CalibrationItem } from '../evaluation';
+
 /**
  * The answers the evaluation's judge is checked on before it judges: a true
  * answer must pass, and every planted fabrication must be caught. Otherwise
  * its verdicts mean nothing. They are written against this record, which is
  * why they live in the profile.
  */
-
-export interface CalibrationItem {
-  readonly answer: string;
-  /** How many of its claims the evidence does not support. */
-  readonly planted: number;
-  /** The actions whose results are the evidence; without one, the whole knowledge base is. */
-  readonly actions?: readonly { readonly name: string; readonly arguments: object }[];
-}
 
 // The model path is judged against an action trace, not the knowledge base,
 // so the judge is also checked on traces: a fact that is in the record but

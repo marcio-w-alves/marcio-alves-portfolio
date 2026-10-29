@@ -1,0 +1,29 @@
+# The example profile: Ada Rivera is fictional. Replace this bundle with your own.
+skills:
+  - id: platform
+    title:
+      en: Platform
+      pt-BR: Plataforma
+    items:
+      - en: Bazel
+        pt-BR: Bazel
+      - en: Kubernetes
+        pt-BR: Kubernetes
+    source: cv.skills
+  - id: languages
+    title:
+      en: Languages
+      pt-BR: Linguagens
+    items:
+      - en: Go
+        pt-BR: Go
+      - en: Rust
+        pt-BR: Rust
+    source: cv.skills
+certifications:
+  - name: Certified Platform Engineer
+    issuer: Platform Guild
+    source: cv.courses
+  - name: Terraform Basics
+    issuer: Cloud Academy
+    source: cv.courses

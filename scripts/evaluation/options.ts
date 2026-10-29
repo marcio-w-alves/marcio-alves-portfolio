@@ -1,5 +1,5 @@
 import { parseArgs } from 'node:util';
-import type { EvaluationCase } from '../../src/profile/evaluation/cases';
+import type { EvaluationCase } from '../../src/profile/evaluation';
 
 export interface EvaluationOptions {
   /** How many times each model-path case runs. */

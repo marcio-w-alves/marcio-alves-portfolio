@@ -1,0 +1,82 @@
+# The example profile: Ada Rivera is fictional. Replace this bundle with your own.
+experience:
+  - id: acme
+    company: Acme
+    aliases:
+      - Acme Corp
+    role: Principal Platform Engineer
+    start: '2022'
+    end: null
+    current: true
+    engagement: employment
+    summary:
+      en: Leads the internal developer platform.
+      pt-BR: Lidera a plataforma interna para desenvolvedores.
+    responsibilities:
+      - en: Runs the build platform.
+        pt-BR: Opera a plataforma de build.
+    leadership:
+      - en: Leads a platform team of five.
+        pt-BR: Lidera um time de plataforma de cinco pessoas.
+    achievements: []
+    focus:
+      - en: Build systems
+        pt-BR: Sistemas de build
+    metrics:
+      - acme-build-time
+    highlights:
+      - en: Cut build times by 40% with remote caching.
+        pt-BR: Reduziu o tempo de build em 40% com cache remoto.
+    source: cv.acme
+    reference:
+      encyclopediaTitle: Acme Corporation
+  - id: globex
+    company: Globex
+    role: Senior Platform Engineer
+    start: '2018'
+    end: '2022'
+    current: false
+    engagement: employment
+    summary:
+      en: Built the deployment pipeline.
+      pt-BR: Construiu o pipeline de deploy.
+    responsibilities:
+      - en: Owned continuous delivery.
+        pt-BR: Foi responsável pela entrega contínua.
+    leadership: []
+    achievements:
+      - en: Tripled daily deploys.
+        pt-BR: Triplicou os deploys diários.
+    focus:
+      - en: Continuous delivery
+        pt-BR: Entrega contínua
+    metrics:
+      - globex-deploys
+      - globex-team
+    highlights:
+      - en: Tripled daily deploys with a new pipeline.
+        pt-BR: Triplicou os deploys diários com um novo pipeline.
+    source: cv.globex
+  - id: initech
+    company: Initech
+    role: Build Consultant
+    start: '2017'
+    end: '2019'
+    current: false
+    engagement: contract
+    summary:
+      en: Advised on build tooling.
+      pt-BR: Prestou consultoria sobre ferramentas de build.
+    responsibilities:
+      - en: Audited build scripts.
+        pt-BR: Auditou scripts de build.
+    leadership: []
+    achievements: []
+    focus:
+      - en: Build tooling
+        pt-BR: Ferramentas de build
+    metrics: []
+    highlights:
+      - en: Audited and simplified the build scripts.
+        pt-BR: Auditou e simplificou os scripts de build.
+    source: cv.initech

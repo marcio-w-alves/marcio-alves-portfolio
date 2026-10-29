@@ -1,5 +1,6 @@
 import { validateProfile, type SiteEntry } from '@/profile/schema';
 import { fixtureBrand } from './brand';
+import { fixtureEvaluation } from './evaluation';
 import { fixtureCopy } from './copy';
 import { fixtureIdentity } from './identity';
 import { fixtureKnowledge } from './knowledge';
@@ -29,5 +30,5 @@ export const profile = validateProfile({
   siteAllowList: fixtureSiteAllowList,
   brand: fixtureBrand,
   copy: fixtureCopy,
-  evaluation: [],
+  evaluation: fixtureEvaluation,
 });

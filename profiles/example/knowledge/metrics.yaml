@@ -1,0 +1,23 @@
+# The example profile: Ada Rivera is fictional. Replace this bundle with your own.
+metrics:
+  acme-build-time:
+    value: 40%
+    label:
+      en: Faster builds
+      pt-BR: Builds mais rápidos
+    context: Acme
+    source: cv.acme
+  globex-deploys:
+    value: 3×
+    label:
+      en: More deploys a day
+      pt-BR: Mais deploys por dia
+    context: Globex
+    source: cv.globex
+  globex-team:
+    value: 2 → 6
+    label:
+      en: Platform team grown
+      pt-BR: Time de plataforma ampliado
+    context: Globex
+    source: cv.globex

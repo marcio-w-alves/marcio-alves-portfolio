@@ -37,7 +37,7 @@ export const fixtureKnowledge: KnowledgeSource = {
       'Portugal · hybrid · UTC+0 · open to platform roles',
       'Portugal · híbrido · UTC+0 · aberta a vagas de plataforma',
     ),
-    photoUrl: null,
+    photoUrl: '/ada-rivera.jpg',
     source: 'cv',
   },
   welcome: {
@@ -316,9 +316,18 @@ export const fixtureKnowledge: KnowledgeSource = {
     source: 'notes',
     guide: 'Passages marked [ADA] are her own account, not verified fact.',
     passages: [
-      { id: '1', text: 'Notes — Platform:\nAda reports she migrated three monorepos to Bazel.' },
-      { id: '2', text: 'Notes — Studies:\nAda studies Nix for reproducible builds.' },
-      { id: '3', text: 'Notes — Tooling:\nAda reports she runs the CI agents on Docker.' },
+      {
+        id: '1',
+        text: 'Knowledge-base notes — 1. Platform:\nAda reports she migrated three monorepos to Bazel.',
+      },
+      {
+        id: '2',
+        text: 'Knowledge-base notes — 2. Studies:\nAda studies Nix for reproducible builds.',
+      },
+      {
+        id: '3',
+        text: 'Knowledge-base notes — 3. Tooling:\nAda reports she runs the CI agents on Docker.',
+      },
     ],
   },
   productSites: [

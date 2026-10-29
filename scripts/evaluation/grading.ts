@@ -1,4 +1,4 @@
-import type { EvaluationCase } from '../../src/profile/evaluation/cases';
+import type { EvaluationCase } from '../../src/profile/evaluation';
 
 /**
  * A model answer varies from run to run, so one run proves little either way.

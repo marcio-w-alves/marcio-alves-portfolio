@@ -4,7 +4,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { caseGrade, type CaseReport } from '../evaluation/report';
 import { fileOf } from './capture-layout';
-import { makePrivateDir, writePrivateJson } from './private-files';
+import { makePrivateDir } from '../profile/home';
+import { writePrivateJson } from './private-files';
 import { gitEnvironment } from './git-environment';
 
 /**

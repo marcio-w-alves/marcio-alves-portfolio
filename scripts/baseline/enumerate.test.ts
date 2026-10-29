@@ -89,6 +89,7 @@ describe('the inputs a baseline asks', { timeout: TOOL_TEST_TIMEOUT_MS }, () => 
       '/icon',
       '/apple-icon',
       '/brand/share-image.png',
+      localize(fixtureKnowledge, 'en').profile.photoUrl,
       localize(fixtureKnowledge, 'en').contact.resumeUrl,
     ]);
   });

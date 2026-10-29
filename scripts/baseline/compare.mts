@@ -22,7 +22,7 @@ import { compareCaptures } from './compare-captures';
 import { compareEvaluations } from './compare-evaluations';
 import { formatDifference } from './difference';
 import { readManifest } from './manifest';
-import { profileHome } from './output-dir';
+import { profileHome } from '../profile/home';
 import { systemClock } from './pacing';
 
 const { values } = parseArgs({

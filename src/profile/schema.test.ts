@@ -137,7 +137,7 @@ describe('validating a profile', () => {
       knowledge: withThirdRoleHighlight('Auditou e simplificou 70% dos scripts de build.'),
     };
 
-    expect(() => validateProfile(embellished)).toThrow(/not 70/);
+    expect(() => validateProfile(embellished)).toThrow(/states 1 figure its English text does not/);
     expect(issuePaths(embellished)).toEqual([
       ['knowledge', 'experience', 2, 'highlights', 0, 'pt-BR'],
     ]);
@@ -148,7 +148,9 @@ describe('validating a profile', () => {
       label: { en: 'Builds 40% faster since 2022', 'pt-BR': 'Builds 40% mais rápidos' },
     });
 
-    expect(() => validateProfile({ ...bilingual, knowledge })).toThrow(/missing 2022/);
+    expect(() => validateProfile({ ...bilingual, knowledge })).toThrow(
+      /leaves out 1 figure its English text states/,
+    );
     expect(issuePaths({ ...bilingual, knowledge })).toEqual([
       ['knowledge', 'metrics', 'acme-build-time', 'label', 'pt-BR'],
     ]);

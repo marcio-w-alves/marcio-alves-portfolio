@@ -1,0 +1,63 @@
+# The example profile: Ada Rivera is fictional. Replace this bundle with your own.
+colors:
+  bg: '#fdf8f0'
+  ice: '#f5efe4'
+  surface: '#fffdf9'
+  fill: '#efe6d8'
+  fill-hover: '#e8dcc9'
+  selection: '#e0d2bb'
+  ink: '#2a1d3a'
+  ink-muted: '#6b5d7a'
+  ink-faint: '#a99bb8'
+  border: '#e9dfcf'
+  border-strong: '#dccfba'
+  border-hover: '#cbbba2'
+  accent: '#7a2e8c'
+  accent-hover: '#5f2370'
+  accent-soft: '#f1e4f4'
+  danger: '#a3261a'
+  danger-soft: '#fbefed'
+  danger-ring: '#f2d3cf'
+  on-accent: '#fffdf9'
+  shadow: '#2a1d3a'
+darkColors:
+  bg: '#1a1222'
+  ice: '#20172a'
+  surface: '#241a2f'
+  fill: '#2c2138'
+  fill-hover: '#352842'
+  selection: '#43335a'
+  ink: '#f4ecdf'
+  ink-muted: '#c4b6d2'
+  ink-faint: '#7d6e8c'
+  border: '#30253c'
+  border-strong: '#3a2e47'
+  border-hover: '#4a3c5a'
+  accent: '#d9a6e6'
+  accent-hover: '#c88fd8'
+  accent-soft: '#33243d'
+  danger: '#f28a7e'
+  danger-soft: '#311a1c'
+  danger-ring: '#5e2a27'
+  on-accent: '#1a1222'
+  shadow: '#000000'
+fonts:
+  sans:
+    face: inter
+    fallbacks:
+      - Georgia
+      - serif
+  display:
+    face: inter-tight
+    fallbacks:
+      - Georgia
+      - serif
+  mono:
+    face: geist-mono
+    fallbacks:
+      - monospace
+imageFont:
+  family: Inter Tight
+  files:
+    '400': '@fontsource/inter-tight/files/inter-tight-latin-400-normal.woff'
+    '600': '@fontsource/inter-tight/files/inter-tight-latin-600-normal.woff'

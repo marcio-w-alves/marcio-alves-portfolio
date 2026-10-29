@@ -4,12 +4,11 @@ import {
   findFigureLiterals,
   findOwnerLiterals,
   findOwnerWords,
-  ownerTerms,
-  ownerWords,
   recordFigures,
   repositoryFiles,
   type SourceFile,
 } from '@/testing/whitelabel';
+import { ownerTerms, ownerWords } from '@/profile/identifying-terms';
 // The profile on disk, never the one a test run binds in its place: this
 // checks the files a fork keeps against the profile it actually ships.
 import { profile } from '../profile';
@@ -19,7 +18,7 @@ import { profile } from '../profile';
  * the code, its tests, the scripts, the end-to-end journeys and the public
  * files — must hold for anyone's profile, so it reads the owner from there.
  */
-const SCOPE = ['src', 'scripts', 'e2e', 'public'];
+const SCOPE = ['src', 'scripts', 'e2e', 'public', 'profiles'];
 const OWNED = /^src\/(profile|testing\/fixture-profile)\//;
 
 const outsideProfile = repositoryFiles(SCOPE).filter(({ path }) => !OWNED.test(path));

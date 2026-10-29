@@ -1,0 +1,10 @@
+# The example profile: Ada Rivera is fictional. Replace this bundle with your own.
+- id: acme-build-times
+  category: career
+  question: How did she speed up builds at Acme?
+  expect:
+    path: fast
+    mentions:
+      - remote caching
+    cites:
+      - cv.acme

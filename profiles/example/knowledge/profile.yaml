@@ -1,0 +1,74 @@
+# The example profile: Ada Rivera is fictional. Replace this bundle with your own.
+profile:
+  name: Ada Rivera
+  firstName: Ada
+  initials: AR
+  title:
+    en: Principal Platform Engineer
+    pt-BR: Principal Platform Engineer
+  yearsLabel:
+    en: 12 years
+    pt-BR: 12 anos
+  careerStartYear: 2012
+  specializations:
+    - en: Platform engineering
+      pt-BR: Engenharia de plataforma
+    - en: Developer tooling
+      pt-BR: Ferramentas para desenvolvedores
+  summary:
+    en: Ada is a platform engineer who builds internal developer platforms.
+    pt-BR: Ada é uma engenheira de plataforma que constrói plataformas internas para desenvolvedores.
+  context:
+    en: She designs build systems and the tooling around them.
+    pt-BR: Ela projeta sistemas de build e as ferramentas em torno deles.
+  focus:
+    en: She plans platform roadmaps with product teams.
+    pt-BR: Ela planeja roadmaps de plataforma com os times de produto.
+  location:
+    country:
+      en: Portugal
+      pt-BR: Portugal
+    city: Porto
+  availability:
+    en: Portugal · hybrid · UTC+0 · open to platform roles
+    pt-BR: Portugal · híbrido · UTC+0 · aberta a vagas de plataforma
+  photoUrl: /ada-rivera.jpg
+  source: cv
+welcome:
+  heading:
+    en: Hi, I'm Ada
+    pt-BR: Olá, eu sou a Ada
+  description:
+    en: Platform engineer. Ask about my work.
+    pt-BR: Engenheira de plataforma. Pergunte sobre meu trabalho.
+  placeholder:
+    en: Ask about my platform work…
+    pt-BR: Pergunte sobre meu trabalho com plataformas…
+  helper:
+    en: Answers grounded in my record
+    pt-BR: Respostas baseadas no meu histórico
+  evidence:
+    roles:
+      - acme
+      - globex
+    metrics:
+      - acme-build-time
+      - globex-team
+assistant:
+  name:
+    en: Ada's assistant
+    pt-BR: Assistente da Ada
+  initials: AR
+contact:
+  email: ada@rivera.example
+  linkedin: https://www.linkedin.com/in/ada-rivera-example
+  github: https://github.com/ada-rivera-example
+  resumeUrl: /ada-rivera-cv.pdf
+principles:
+  - title:
+      en: Paved roads
+      pt-BR: Caminhos pavimentados
+    text:
+      en: Make the right way the easy way.
+      pt-BR: Fazer do jeito certo o jeito fácil.
+    source: principles

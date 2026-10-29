@@ -1,0 +1,14 @@
+[
+ {
+  "id": "1",
+  "text": "Knowledge-base notes — 1. Platform:\nAda reports she migrated three monorepos to Bazel."
+ },
+ {
+  "id": "2",
+  "text": "Knowledge-base notes — 2. Studies:\nAda studies Nix for reproducible builds."
+ },
+ {
+  "id": "3",
+  "text": "Knowledge-base notes — 3. Tooling:\nAda reports she runs the CI agents on Docker."
+ }
+]

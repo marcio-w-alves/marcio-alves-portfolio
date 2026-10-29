@@ -38,7 +38,8 @@
     "brand:css": "tsx scripts/generate-brand-css.mts",
     "fixture:index": "tsx scripts/build-fixture-index.mts",
     "baseline:capture": "tsx scripts/baseline/capture.mts",
-    "baseline:compare": "tsx scripts/baseline/compare.mts"
+    "baseline:compare": "tsx scripts/baseline/compare.mts",
+    "profile": "tsx scripts/profile.mts"
   },
   "dependencies": {
     "@fontsource/inter-tight": "5.3.0",

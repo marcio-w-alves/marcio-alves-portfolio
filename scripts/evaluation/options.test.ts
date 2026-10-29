@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { EvaluationCase } from '../../src/profile/evaluation/cases';
+import type { EvaluationCase } from '../../src/profile/evaluation';
 import { parseOptions, selectCases } from './options';
 
 describe('evaluation options', () => {
