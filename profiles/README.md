@@ -59,6 +59,18 @@ bundle directory, and with neither the example is used — except in a productio
 deployment (`VERCEL_ENV=production`), which fails instead, unless
 `PROFILE_SOURCE=example` says the example is meant.
 
+## Your own bundle
+
+Keep it outside the repository, under `PROFILE_HOME`
+(`${XDG_DATA_HOME:-~/.local/share}/portfolio-profile` by default); the tools
+refuse to write profile data inside a work tree. While the profile this
+repository is about is still TypeScript, this writes it as a bundle there:
+
+```bash
+pnpm exec tsx scripts/profile/export-repository-profile.mts
+pnpm profile check "$HOME/.local/share/portfolio-profile/bundles/owner"
+```
+
 ## The example's own files
 
 Its photo and résumé are drawn from its record, and its generated files are

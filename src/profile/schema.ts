@@ -155,10 +155,20 @@ interface Publication {
   readonly copy: Partial<Record<Locale, unknown>>;
 }
 
+const count = (n: number, thing: string) => `${String(n)} ${thing}${n === 1 ? '' : 's'}`;
+
+/**
+ * How many figures differ, never which: this message is printed by builds, so
+ * it reaches logs the record itself must not. The path says where to look.
+ */
 function describeMismatch(added: readonly string[], missing: readonly string[]): string {
   return [
-    ...(added.length > 0 ? [`not ${added.join(', ')}`] : []),
-    ...(missing.length > 0 ? [`missing ${missing.join(', ')}`] : []),
+    ...(added.length > 0
+      ? [`states ${count(added.length, 'figure')} its English text does not`]
+      : []),
+    ...(missing.length > 0
+      ? [`leaves out ${count(missing.length, 'figure')} its English text states`]
+      : []),
   ].join('; ');
 }
 
@@ -179,7 +189,7 @@ export function recordTranslationIssues({
         path: ['knowledge', ...path],
       })),
       ...figureMismatches(knowledge, locale).map(({ path, added, missing }) => ({
-        message: `A translation states the figures its English text does: ${describeMismatch(added, missing)}`,
+        message: `A translation ${describeMismatch(added, missing)}`,
         path: ['knowledge', ...path],
       })),
     ]);

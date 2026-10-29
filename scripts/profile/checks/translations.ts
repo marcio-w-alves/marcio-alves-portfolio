@@ -1,5 +1,6 @@
 import { DEFAULT_LOCALE, type Locale } from '../../../src/core/i18n/locale';
 import { recordTranslationIssues, type ProfileData } from '../../../src/profile/schema';
+import { DOCUMENTS } from '../bundle/layout';
 import type { BundleProblem } from '../bundle/problems';
 import { problemAt } from './schema';
 
@@ -28,8 +29,20 @@ function copyParityProblems({ locales, copy }: ProfileData): BundleProblem[] {
   return locales
     .filter((locale): locale is Exclude<Locale, 'en'> => locale !== DEFAULT_LOCALE)
     .flatMap((locale) => {
+      // Until a profile writes any copy at all, there is nothing to translate
+      // (D2 turns the copy into data; an empty English copy becomes an error then).
       const translated = copy[locale];
-      if (!translated) return [];
+      if (!translated) {
+        return Object.keys(english).length === 0
+          ? []
+          : [
+              {
+                document: `copy/${locale}/`,
+                problem: `is missing: publishing ${locale} needs its copy`,
+                remedy: `translate every document of copy/${DEFAULT_LOCALE}/, or stop publishing ${locale} in ${DOCUMENTS.bundle}`,
+              },
+            ];
+      }
       const names = new Set([...Object.keys(english), ...Object.keys(translated)]);
       return [...names].flatMap((name) => {
         const document = `copy/${locale}/${name}`;

@@ -5,7 +5,7 @@ import { renderBrandCss } from '../../src/site/brand-css';
 import { decodeBundle, documentAt } from './bundle/decode';
 import { DOCUMENTS } from './bundle/layout';
 import { checkProfile } from './checks';
-import type { Source } from './select-source';
+import { SelectionError, type Source } from './select-source';
 import { bundleDirectory } from './workspace/bundle-directory';
 import type { ProfileWorkspace } from './workspace/workspace';
 
@@ -59,9 +59,9 @@ function workspaceFor(source: Source, exampleDir: string): ProfileWorkspace {
     case 'bundle':
       return bundleDirectory(source.dir);
     case 'database':
-      throw new Error(
-        'PROFILE_DATABASE_URL is set, but this version cannot read the profile database yet. ' +
-          'Unset it, or choose PROFILE_SOURCE=bundle or PROFILE_SOURCE=example.',
+      throw new SelectionError(
+        'This version cannot read the profile database yet. ' +
+          'Unset PROFILE_DATABASE_URL, or choose PROFILE_SOURCE=bundle or PROFILE_SOURCE=example.',
       );
   }
 }
@@ -86,7 +86,7 @@ export async function materialize({
   };
   const bytesOf = (path: string) => documentAt(profile.documents, path).bytes;
   const json = (value: unknown) => `${JSON.stringify(value, null, 2)}\n`;
-  await replaceDirectory(join(out, GENERATED_DIR), {
+  const generated = await stageDirectory(join(out, GENERATED_DIR), {
     'profile.json': json(data),
     'knowledge-index.json': bytesOf(DOCUMENTS.index),
     'retrieval-probes.json': bytesOf(DOCUMENTS.probeEmbeddings),
@@ -94,10 +94,14 @@ export async function materialize({
     'global-error.json': json({ name: data.identity.name }),
     'manifest.json': json(manifest),
   });
-  await replacePublicFiles(
+  const assets = await stagePublicFiles(
     join(out, PUBLIC_DIR),
     new Map(data.assets.map(({ file, path }) => [path, bytesOf(file)])),
   );
+  // Both sides are written in full before either is swapped in, so a failure
+  // while reading or checking can never leave the site half one profile.
+  await generated.swapIn();
+  await assets.swapIn();
   log(
     `Materialized the ${source.kind} profile: revision ${revision.id}, digest ` +
       `${revision.digest.slice(0, 12)}, ${String(profile.documents.size)} documents, ` +
@@ -106,29 +110,43 @@ export async function materialize({
   return manifest;
 }
 
-/** Writes a whole directory beside the target, then swaps it in with renames. */
-async function replaceDirectory(
+export interface Staged {
+  /** Puts the staged files in place, and removes what they replace. */
+  readonly swapIn: () => Promise<void>;
+}
+
+/** Writes a whole directory beside the target, ready to be swapped in with two renames. */
+export async function stageDirectory(
   target: string,
   files: Readonly<Record<string, string | Uint8Array>>,
-) {
+): Promise<Staged> {
   const staging = join(dirname(target), `.materialize-${randomUUID()}`);
   const previous = `${staging}-previous`;
   await mkdir(staging, { recursive: true });
   try {
     for (const [name, content] of Object.entries(files))
       await writeFile(join(staging, name), content);
-    const hadPrevious = await rename(target, previous).then(
-      () => true,
-      (error: unknown) => {
-        if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false;
-        throw error;
-      },
-    );
-    await rename(staging, target);
-    if (hadPrevious) await rm(previous, { recursive: true });
-  } finally {
+  } catch (error) {
     await rm(staging, { recursive: true, force: true });
+    throw error;
   }
+  return {
+    swapIn: async () => {
+      try {
+        const hadPrevious = await rename(target, previous).then(
+          () => true,
+          (error: unknown) => {
+            if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false;
+            throw error;
+          },
+        );
+        await rename(staging, target);
+        if (hadPrevious) await rm(previous, { recursive: true });
+      } finally {
+        await rm(staging, { recursive: true, force: true });
+      }
+    },
+  };
 }
 
 // Only names at the root of public/, so an edited ledger cannot remove anything else.
@@ -146,16 +164,33 @@ async function readLedger(dir: string): Promise<string[]> {
   }
 }
 
-/** Writes each asset at its address, and removes the ones the previous run wrote that are gone. */
-async function replacePublicFiles(dir: string, assets: ReadonlyMap<string, Uint8Array>) {
+/**
+ * Writes each asset beside its address; swapping in renames them into place,
+ * removes the ones the previous run wrote that this profile lacks, and leaves
+ * everything else in `public/` alone.
+ */
+export async function stagePublicFiles(
+  dir: string,
+  assets: ReadonlyMap<string, Uint8Array>,
+): Promise<Staged> {
   await mkdir(dir, { recursive: true });
-  for (const stale of (await readLedger(dir)).filter((path) => !assets.has(path))) {
-    await rm(join(dir, stale), { force: true });
+  const staged = new Map<string, string>();
+  try {
+    for (const [path, bytes] of assets) {
+      const temporary = join(dir, `.${randomUUID()}.tmp`);
+      await writeFile(temporary, bytes);
+      staged.set(path, temporary);
+    }
+  } catch (error) {
+    for (const temporary of staged.values()) await rm(temporary, { force: true });
+    throw error;
   }
-  for (const [path, bytes] of assets) {
-    const temporary = join(dir, `.${randomUUID()}.tmp`);
-    await writeFile(temporary, bytes);
-    await rename(temporary, join(dir, path));
-  }
-  await writeFile(join(dir, PUBLIC_LEDGER), `${JSON.stringify([...assets.keys()])}\n`);
+  const stale = (await readLedger(dir)).filter((path) => !assets.has(path));
+  return {
+    swapIn: async () => {
+      for (const path of stale) await rm(join(dir, path), { force: true });
+      for (const [path, temporary] of staged) await rename(temporary, join(dir, path));
+      await writeFile(join(dir, PUBLIC_LEDGER), `${JSON.stringify([...assets.keys()])}\n`);
+    },
+  };
 }

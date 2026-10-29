@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createResponseKit } from '../../../src/core/assistant/response-kit';
 import { createToolRegistry } from '../../../src/core/assistant/tools/registry';
@@ -77,7 +79,7 @@ describe('the translations of a profile', () => {
     await reseedIndex(dir);
 
     expect(await problemsOf(dir)).toEqual([
-      'knowledge/experience.yaml#/experience/1/highlights/0/pt-BR: A translation states the figures its English text does: not 40 — write the translation, stating exactly the figures its English text does',
+      'knowledge/experience.yaml#/experience/1/highlights/0/pt-BR: A translation states 1 figure its English text does not — write the translation, stating exactly the figures its English text does',
     ]);
   });
 
@@ -94,6 +96,18 @@ describe('the translations of a profile', () => {
     expect(await problemsOf(dir)).toEqual([
       'knowledge/profile.yaml#/profile/summary/pt-BR: Publishing pt-BR needs this text in pt-BR — write the translation, stating exactly the figures its English text does',
     ]);
+  });
+
+  it('refuses a published language whose copy was never written', async () => {
+    await writeDocument(dir, 'copy/en/ui.yaml', 'emailSubject: Platform role\n');
+
+    expect(await problemsOf(dir)).toEqual([
+      'copy/pt-BR/: is missing: publishing pt-BR needs its copy — translate every document of copy/en/, or stop publishing pt-BR in bundle.yaml',
+    ]);
+  });
+
+  it('asks for no translation of a profile that has written no copy at all', async () => {
+    expect(await problemsOf(dir)).toEqual([]);
   });
 
   it('refuses a translated copy that lacks an answer of the English one', async () => {
@@ -200,7 +214,7 @@ describe('the assets of a profile', () => {
     await servedAt('/portrait.jpg');
 
     expect(await problemsOf(dir)).toEqual([
-      'knowledge/profile.yaml#/profile/photoUrl: links to /ada-rivera.jpg, which assets.yaml does not serve — add the file to assets.yaml at that address',
+      'knowledge/profile.yaml#/profile/photoUrl: links to a file assets.yaml does not serve — add the file to assets.yaml at that address',
     ]);
   });
 
@@ -215,16 +229,23 @@ describe('the assets of a profile', () => {
     },
   );
 
-  it.each(['/robots.txt', '/sitemap.xml', '/icon', '/apple-icon', '/en.jpg', '/pt.pdf'])(
-    "refuses %s, an address of the site's own",
-    async (path) => {
-      await servedAt(path);
+  it.each([
+    '/robots.txt',
+    '/sitemap.xml',
+    '/icon',
+    '/apple-icon',
+    '/en.jpg',
+    '/pt.pdf',
+    '/skills',
+    '/experience.pdf',
+    '/about-this-site',
+  ])("refuses %s, an address of the site's own", async (path) => {
+    await servedAt(path);
 
-      expect(await problemsOf(dir)).toContain(
-        `assets.yaml#/0/path: "${path}" collides with one of the site's own addresses — give it another name`,
-      );
-    },
-  );
+    expect(await problemsOf(dir)).toContain(
+      `assets.yaml#/0/path: "${path}" collides with one of the site's own addresses — give it another name`,
+    );
+  });
 
   it('refuses a file of the bundle no asset serves', async () => {
     await writeDocument(
@@ -235,6 +256,30 @@ describe('the assets of a profile', () => {
 
     expect(await problemsOf(dir)).toEqual([
       'assets/spare.png: is not served: assets.yaml does not name it — add it to assets.yaml, or remove it',
+    ]);
+  });
+
+  it('serves a file whose name carries a dot, at the address it names', async () => {
+    const photo = await readFile(join(dir, 'assets', 'ada-rivera.jpg'));
+    await writeDocument(dir, 'assets/ada-rivera.v2.jpg', photo);
+    await editDocument(dir, 'assets.yaml', (assets: Mapping[]) => {
+      const [first] = assets;
+      if (first) {
+        first.file = 'assets/ada-rivera.v2.jpg';
+        first.path = '/ada-rivera.v2.jpg';
+      }
+    });
+    await editDocument(
+      dir,
+      'knowledge/profile.yaml',
+      (record: { profile: { photoUrl: string } }) => {
+        record.profile.photoUrl = '/ada-rivera.v2.jpg';
+      },
+    );
+    await reseedIndex(dir);
+
+    expect(await problemsOf(dir)).toEqual([
+      'assets/ada-rivera.jpg: is not served: assets.yaml does not name it — add it to assets.yaml, or remove it',
     ]);
   });
 
@@ -264,7 +309,7 @@ describe('the evaluation of a profile', () => {
     });
 
     expect(await problemsOf(dir)).toEqual([
-      'evaluation/cases.yaml#/1/id: "where" is the id of an earlier case — give each case its own id',
+      'evaluation/cases.yaml#/2/id: "where" is the id of an earlier case — give each case its own id',
     ]);
   });
 
@@ -274,7 +319,7 @@ describe('the evaluation of a profile', () => {
     });
 
     expect(await problemsOf(dir)).toEqual([
-      'evaluation/cases.yaml#/0/expect/cites/2: "cv.umbrella" is not a source of the record — cite a source id of knowledge/sources.yaml, or site:<url> of a site passage',
+      'evaluation/cases.yaml#/1/expect/cites/2: "cv.umbrella" is not a source of the record — cite a source id of knowledge/sources.yaml, or site:<url> of a site passage',
     ]);
   });
 

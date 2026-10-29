@@ -1,4 +1,4 @@
-import { stat, symlink } from 'node:fs/promises';
+import { mkdir, stat, symlink } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -7,6 +7,7 @@ import {
   privateHomeDir,
   profileHome,
   workTreeContaining,
+  WorkTreesUnknownError,
   writePrivateFile,
 } from './home';
 import { REPOSITORY, scratchDir, type Scratch } from './testing/bundles';
@@ -57,6 +58,16 @@ describe('the profile home', () => {
       privateHomeDir({ PROFILE_HOME: join(link, 'home-by-mistake') }, 'bundles'),
     ).rejects.toThrow(/inside the git work tree/);
     await expect(stat(join(REPOSITORY, 'profiles', 'home-by-mistake'))).rejects.toThrow();
+  });
+
+  it('stops with an answerable message when git cannot say where the work trees are', async () => {
+    const notARepository = join(scratch.path, 'elsewhere');
+    await mkdir(notARepository);
+
+    expect(() => workTreeContaining(scratch.path, [notARepository])).toThrow(WorkTreesUnknownError);
+    expect(() => workTreeContaining(scratch.path, [notARepository])).toThrow(
+      /Profile data is written only where it is known to be outside the repository/,
+    );
   });
 
   it('creates its directories for the owner alone, and their files too', async () => {

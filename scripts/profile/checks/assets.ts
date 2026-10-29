@@ -1,4 +1,6 @@
+import { TOPIC_IDS } from '../../../src/core/chat/topic-id';
 import { LOCALE_SEGMENT } from '../../../src/core/i18n/locale';
+import { ABOUT_PAGE } from '../../../src/site/routes';
 import type { ProfileData } from '../../../src/profile/schema';
 import { locate, type DecodedBundle } from '../bundle/decode';
 import { DOCUMENTS, isAsset } from '../bundle/layout';
@@ -12,7 +14,10 @@ import { pointer, type BundleProblem } from '../bundle/problems';
 
 const TOP_LEVEL_FILE = /^\/[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
-/** Names the site's own routes answer at its root, with or without an extension. */
+/**
+ * The names the site answers at its root, with or without an extension, read
+ * from the routes themselves so a new page cannot be shadowed by an asset.
+ */
 const ROUTE_NAMES: ReadonlySet<string> = new Set([
   'api',
   'brand',
@@ -21,6 +26,8 @@ const ROUTE_NAMES: ReadonlySet<string> = new Set([
   'robots',
   'sitemap',
   '_next',
+  ABOUT_PAGE,
+  ...TOPIC_IDS,
   ...Object.values(LOCALE_SEGMENT),
 ]);
 
@@ -104,9 +111,9 @@ function linkProblems(data: ProfileData): BundleProblem[] {
   ];
   return links
     .filter(({ url }) => url !== null && !served.has(url))
-    .map(({ path, url }) => ({
+    .map(({ path }) => ({
       ...locate(['knowledge', ...path]),
-      problem: `links to ${String(url)}, which ${DOCUMENTS.assets} does not serve`,
+      problem: `links to a file ${DOCUMENTS.assets} does not serve`,
       remedy: `add the file to ${DOCUMENTS.assets} at that address`,
     }));
 }

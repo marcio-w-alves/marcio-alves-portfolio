@@ -7,6 +7,7 @@ import { renderBrandCss } from '../../src/site/brand-css';
 import { profileDataSchema } from '../../src/profile/schema';
 import { digestOf } from './bundle/digest';
 import { readBundleDirectory } from './bundle/read-directory';
+import { stageDirectory, stagePublicFiles } from './materialize';
 import { PRODUCTION_NEEDS_A_PROFILE } from './select-source';
 import {
   checkBundle,
@@ -268,5 +269,77 @@ describe('the materialize command', { timeout: CLI_TEST_TIMEOUT_MS }, () => {
 
     expect(run.code).toBe(1);
     expect(run.stderr).toContain('materialize needs --out <dir>.');
+  });
+
+  it('says in one line that it cannot read the database yet, and writes nothing', async () => {
+    const run = await runProfile(['materialize', '--out', out], {
+      PROFILE_DATABASE_URL: 'postgres://reader:secret@db.example/profile',
+    });
+
+    expect(run.code).toBe(1);
+    expect(run.stderr.trimEnd().split('\n')).toEqual([
+      'This version cannot read the profile database yet. Unset PROFILE_DATABASE_URL, or choose ' +
+        'PROFILE_SOURCE=bundle or PROFILE_SOURCE=example.',
+    ]);
+    await expect(stat(out)).rejects.toThrow();
+  });
+});
+
+describe('writing a materialization in one step', () => {
+  const target = () => join(scratch.path, 'generated');
+
+  async function stagedDirectory(files: Record<string, string>) {
+    await mkdir(target(), { recursive: true });
+    await writeFile(join(target(), 'manifest.json'), '{"source":"previous"}\n');
+    return stageDirectory(target(), files);
+  }
+
+  const stagingDirs = async () =>
+    (await readdir(scratch.path)).filter((name) => name.startsWith('.materialize-'));
+
+  it('leaves the previous files untouched while the new ones are being written', async () => {
+    const staged = await stagedDirectory({ 'manifest.json': '{"source":"next"}\n' });
+
+    expect(await readFile(join(target(), 'manifest.json'), 'utf8')).toBe('{"source":"previous"}\n');
+    await staged.swapIn();
+    expect(await readFile(join(target(), 'manifest.json'), 'utf8')).toBe('{"source":"next"}\n');
+    expect(await stagingDirs()).toEqual([]);
+  });
+
+  it('writes nothing and leaves no staging directory when a write fails midway', async () => {
+    await mkdir(target(), { recursive: true });
+    await writeFile(join(target(), 'manifest.json'), '{"source":"previous"}\n');
+    const before = await snapshot(target());
+
+    await expect(
+      stageDirectory(target(), {
+        'manifest.json': '{"source":"next"}\n',
+        // No directory of that name is ever created, so this write throws —
+        // after the first file of the same materialization was written.
+        'missing/profile.json': '{}',
+      }),
+    ).rejects.toThrow();
+
+    expect(await snapshot(target())).toEqual(before);
+    expect(await stagingDirs()).toEqual([]);
+  });
+
+  it('puts an asset in place only when it is asked to, and removes what it replaces then', async () => {
+    const dir = join(scratch.path, 'public');
+    await mkdir(dir, { recursive: true });
+    await writeFile(join(dir, 'old.pdf'), 'previous');
+    await writeFile(join(dir, '.materialized.json'), '["/old.pdf"]\n');
+
+    const staged = await stagePublicFiles(
+      dir,
+      new Map([['/new.pdf', new TextEncoder().encode('next')]]),
+    );
+
+    expect(await readFile(join(dir, 'old.pdf'), 'utf8')).toBe('previous');
+    expect(await readdir(dir)).not.toContain('new.pdf');
+    await staged.swapIn();
+    expect(await readdir(dir)).not.toContain('old.pdf');
+    expect(await readFile(join(dir, 'new.pdf'), 'utf8')).toBe('next');
+    expect((await readdir(dir)).filter((name) => name.endsWith('.tmp'))).toEqual([]);
   });
 });

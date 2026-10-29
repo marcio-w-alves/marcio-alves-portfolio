@@ -100,13 +100,35 @@ function protectedWorkTrees(insideRepositories: readonly string[]): string[] {
   return [...new Set(insideRepositories.flatMap(workTreesOf))].map(resolveThroughSymlinks);
 }
 
+/**
+ * Git could not say where the repository's work trees are, so no path can be
+ * shown to lie outside them.
+ */
+export class WorkTreesUnknownError extends Error {
+  constructor(path: string, cause: unknown) {
+    super(
+      'Cannot tell which directories belong to this repository: listing its work trees failed in ' +
+        `${path}. Profile data is written only where it is known to be outside the repository, so ` +
+        'this command stops here. Run it from a checkout of this repository, with git available.',
+      { cause },
+    );
+    this.name = 'WorkTreesUnknownError';
+  }
+}
+
 /** Every work tree of the repository `path` belongs to: its main checkout and each linked one. */
 function workTreesOf(path: string): string[] {
-  const listing = execFileSync('git', ['-C', path, 'worktree', 'list', '--porcelain'], {
-    encoding: 'utf8',
-    timeout: GIT_TIMEOUT_MS,
-    env: gitEnvironment(),
-  });
+  let listing: string;
+  try {
+    listing = execFileSync('git', ['-C', path, 'worktree', 'list', '--porcelain'], {
+      encoding: 'utf8',
+      timeout: GIT_TIMEOUT_MS,
+      stdio: ['ignore', 'pipe', 'ignore'],
+      env: gitEnvironment(),
+    });
+  } catch (error) {
+    throw new WorkTreesUnknownError(path, error);
+  }
   return listing
     .split('\n')
     .filter((line) => line.startsWith('worktree '))

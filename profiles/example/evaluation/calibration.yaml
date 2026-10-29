@@ -1,2 +1,9 @@
 # The example profile: Ada Rivera is fictional. Replace this bundle with your own.
-[]
+- answer: At Acme she cut build times with remote caching.
+  planted: 0
+- answer: At Acme she cut build times by 90% and led a team of fifty.
+  planted: 2
+  actions:
+    - name: getExperience
+      arguments:
+        company: acme

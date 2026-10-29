@@ -84,7 +84,8 @@ export const SEGMENT = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 const LOCALE = `(${SUPPORTED_LOCALES.join('|')})`;
 const NAME = '[A-Za-z0-9][A-Za-z0-9_-]*';
 const COPY_DOCUMENT = new RegExp(`^copy/${LOCALE}/(answers/)?${NAME}\\.yaml$`);
-const ASSET_FILE = new RegExp(`^assets/${NAME}\\.(pdf|jpe?g|png|webp)$`);
+// A dot is a name a person gives a file ("photo.v2.jpg"); only the last one picks the format.
+const ASSET_FILE = new RegExp(`^assets/[A-Za-z0-9][A-Za-z0-9._-]*\\.(pdf|jpe?g|png|webp)$`);
 
 export function mediaTypeOf(path: string): MediaType | undefined {
   const extension = /\.([a-z]+)$/.exec(path)?.[1];

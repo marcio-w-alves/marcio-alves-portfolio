@@ -92,6 +92,30 @@ describe('the YAML of a bundle', () => {
   });
 });
 
+describe('the JSON of a bundle', () => {
+  it('reports where the JSON stops being JSON, and never what it says', async () => {
+    const passage = 'Ada reports she migrated three monorepos to Bazel.';
+    await writeDocument(
+      dir,
+      'generated/notes.json',
+      `[\n {"id": "1", "text": "${passage}"} \n {}]\n`,
+    );
+
+    const problems = await problemsOf(dir);
+
+    expect(problems).toEqual(['generated/notes.json#3:2: is not valid JSON — fix the JSON there']);
+    expect(problems.join('\n')).not.toContain(passage);
+  });
+
+  it('reports a truncated document, which has no position to give', async () => {
+    await writeDocument(dir, 'sites/snapshot.json', '{"entries": [');
+
+    expect(await problemsOf(dir)).toEqual([
+      'sites/snapshot.json: is not valid JSON — fix the JSON there',
+    ]);
+  });
+});
+
 describe('the format of a bundle', () => {
   it('refuses a bundle written in another format, saying which it reads', async () => {
     await writeDocument(dir, 'bundle.yaml', 'format: 2\nlocales: [en, pt-BR]\n');

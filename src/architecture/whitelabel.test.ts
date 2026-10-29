@@ -18,7 +18,7 @@ import { profile } from '../profile';
  * the code, its tests, the scripts, the end-to-end journeys and the public
  * files — must hold for anyone's profile, so it reads the owner from there.
  */
-const SCOPE = ['src', 'scripts', 'e2e', 'public'];
+const SCOPE = ['src', 'scripts', 'e2e', 'public', 'profiles'];
 const OWNED = /^src\/(profile|testing\/fixture-profile)\//;
 
 const outsideProfile = repositoryFiles(SCOPE).filter(({ path }) => !OWNED.test(path));

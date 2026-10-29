@@ -111,16 +111,25 @@ function parseDocuments(documents: ReadonlyMap<string, Document>): Parsed {
       try {
         parsed.set(path, JSON.parse(text(document)));
       } catch (error) {
-        problems.push({
-          document: path,
-          problem: (error as Error).message,
-          remedy: 'fix the JSON there',
-        });
+        problems.push(invalidJson(path, error as Error));
       }
     }
   }
   if (problems.length > 0) throw new ProfileProblemsError(problems);
   return parsed;
+}
+
+/**
+ * Where the JSON stops being JSON, and nothing else: V8's message quotes the
+ * source, and these documents hold the record's prose, which must never reach
+ * a public build log.
+ */
+function invalidJson(document: string, error: Error): BundleProblem {
+  const position = /at position \d+ \(line (\d+) column (\d+)\)/.exec(error.message);
+  const at = position ? `${String(position[1])}:${String(position[2])}` : undefined;
+  const problem = 'is not valid JSON';
+  const remedy = 'fix the JSON there';
+  return at === undefined ? { document, problem, remedy } : { document, at, problem, remedy };
 }
 
 function asRecord(value: unknown): Readonly<Record<string, unknown>> {
@@ -187,6 +196,8 @@ function knowledgeOf(parsed: Parsed, notesGuide: string): Record<string, unknown
   };
 }
 
+// D2: once the copy is data, an English copy with no documents is a hard
+// error — a profile cannot answer anything without it.
 function copyOf(parsed: Parsed): Record<string, Record<string, unknown>> {
   const copy: Record<string, Record<string, unknown>> = { en: {} };
   for (const [path, value] of parsed) {
