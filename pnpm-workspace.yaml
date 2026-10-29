@@ -6,3 +6,11 @@ onlyBuiltDependencies:
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
+
+# Patched versions of what Lighthouse CI pulls in (dev only); its latest release
+# still pins the vulnerable ones. extract-zip has no patched release yet.
+overrides:
+  tmp: '>=0.2.6'
+  basic-ftp: '>=6.2.1'
+  uuid: '>=11.1.1'
+  chromium-bidi>zod: '>=4.6.6'

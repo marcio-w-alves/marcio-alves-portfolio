@@ -12,11 +12,13 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 // because a server-rendered `style={{ '--var': value }}` is how this codebase
 // passes a dynamic value to a utility; style elements are not. Development
 // alone needs eval (React rebuilds server stack traces with it) and inline
-// style elements (the dev server injects them).
+// style elements (the dev server injects them). Inline event handlers are
+// refused outright: nothing here writes one, so only an injection would.
 const contentSecurityPolicy = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ''}`,
   `style-src 'self'${isDevelopment ? " 'unsafe-inline'" : ''}`,
+  "script-src-attr 'none'",
   "style-src-attr 'unsafe-inline'",
   "img-src 'self'",
   "font-src 'self'",
@@ -33,6 +35,8 @@ const securityHeaders = [
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'X-Frame-Options', value: 'DENY' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+  { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+  { key: 'Cross-Origin-Resource-Policy', value: 'same-site' },
   {
     key: 'Permissions-Policy',
     value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()',
