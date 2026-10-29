@@ -6,8 +6,12 @@ import { createRouter } from '@/core/assistant/system1/router';
 import type { Locale } from '@/core/i18n/locale';
 import { recordFigures } from '@/core/knowledge/figures';
 import { localize } from '@/core/knowledge/localize';
-import { answerTranscript, transcriptDifferences } from '@/testing/answer-transcript';
-import { ownerCopy, ownerCopyWritten } from '@/testing/copy-documents';
+import {
+  answerTranscript,
+  suggestedQuestions,
+  transcriptDifferences,
+} from '@/testing/answer-transcript';
+import { ownerCopy, ownerCopyStatus } from '@/testing/copy-documents';
 import { REPOSITORY, about } from './copy/en/about';
 import { answers } from './copy/en/answers';
 import { site } from './copy/en/site';
@@ -46,7 +50,16 @@ const TS_COPY = {
   },
 } as const;
 
-const exported = ownerCopyWritten(locales);
+const status = ownerCopyStatus(locales);
+if (status.kind === 'skipped') console.info(`copy-equivalence: ${status.reason}`);
+
+// Never skipped itself: where this proof was meant to run and could not, that
+// is said here, rather than read off a green run that proved nothing.
+describe('the proof that the owner copy data says what his TypeScript copy says', () => {
+  it('runs wherever it is required, and for every language or none', () => {
+    expect(status.kind === 'failed' ? status.problem : null).toBeNull();
+  });
+});
 
 function compiled(locale: Locale) {
   return compileLocaleCopy(ownerCopy(locale), {
@@ -58,17 +71,7 @@ function compiled(locale: Locale) {
 
 const FRESH = { topic: 'overview', lastIntent: null, ctaShown: false } as const;
 
-function suggestedQuestions(transcript: Readonly<Record<string, unknown>>): string[] {
-  return Object.values(transcript).flatMap((entry) => {
-    const { followUps = [], questions = [] } = (entry ?? {}) as {
-      followUps?: string[];
-      questions?: { question: string }[];
-    };
-    return [...followUps, ...questions.map(({ question }) => question)];
-  });
-}
-
-describe.skipIf(!exported).each(locales)('the owner copy in %s', (locale) => {
+describe.skipIf(status.kind !== 'ready').each(locales)('the owner copy in %s', (locale) => {
   const knowledge = localize(source, locale);
   const typescript = TS_COPY[locale];
   const data = () => compiled(locale);

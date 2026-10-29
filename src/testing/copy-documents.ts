@@ -42,18 +42,75 @@ function profileHome(env: Readonly<Record<string, string | undefined>> = process
   return join(dataHome === '' ? join(homedir(), '.local', 'share') : dataHome, 'portfolio-profile');
 }
 
+type Env = Readonly<Record<string, string | undefined>>;
+
 /** Where the owner's copy documents are, once he has exported them. */
-export function ownerCopyDirectory(locale: Locale): string {
-  return join(profileHome(), 'bundles', 'owner', 'copy', locale);
+export function ownerCopyDirectory(locale: Locale, env: Env = process.env): string {
+  return join(profileHome(env), 'bundles', 'owner', 'copy', locale);
 }
 
 export function exampleCopyDirectory(locale: Locale): string {
   return join(repositoryRoot, 'profiles', 'example', 'copy', locale);
 }
 
-/** Whether the owner has exported his copy to his profile home. */
-export function ownerCopyWritten(locales: readonly Locale[]): boolean {
-  return locales.every((locale) => existsSync(ownerCopyDirectory(locale)));
+/** Where a machine says the owner's copy must be there to be proven. */
+export const OWNER_COPY_REQUIRED = 'OWNER_COPY=required';
+
+const EXPORT_COMMAND = 'pnpm exec tsx scripts/profile/export-owner-copy.mts <source-dir>';
+
+/**
+ * Whether the owner's equivalence oracle can run, must not run, or must fail.
+ *
+ * The oracle is the proof that his copy data says what his TypeScript copy
+ * says, and it needs his copy documents, which are not in the repository.
+ * Skipping it is right where they were never written — CI, a fork, a fresh
+ * clone — and says so out loud, because a silent skip reads like a proof.
+ * It is wrong in two cases, which fail instead:
+ *
+ * - a partial export, where some languages are there and others are not: the
+ *   data is on this machine, so there is no honest reason to prove none of it;
+ * - `OWNER_COPY=required`, which the pre-push hook sets, so a push from the
+ *   owner's machine always runs the real thing.
+ */
+export type OwnerCopyStatus =
+  | { readonly kind: 'ready' }
+  | { readonly kind: 'skipped'; readonly reason: string }
+  | { readonly kind: 'failed'; readonly problem: string };
+
+export function ownerCopyStatus(
+  locales: readonly Locale[],
+  env: Env = process.env,
+): OwnerCopyStatus {
+  const missing = locales.filter((locale) => !existsSync(ownerCopyDirectory(locale, env)));
+  if (missing.length === 0) return { kind: 'ready' };
+  const named = missing.map((locale) => ownerCopyDirectory(locale, env)).join(' and ');
+  const are = missing.length === 1 ? 'is' : 'are';
+  if (missing.length < locales.length) {
+    return {
+      kind: 'failed',
+      problem:
+        `The owner's copy is exported for ${String(locales.length - missing.length)} of ` +
+        `${String(locales.length)} languages: ${named} ${are} missing, so the proof that his ` +
+        `copy data says what his TypeScript copy says covered none of them. Export them all with ` +
+        `\`${EXPORT_COMMAND}\`.`,
+    };
+  }
+  if (env.OWNER_COPY === 'required') {
+    return {
+      kind: 'failed',
+      problem:
+        `${OWNER_COPY_REQUIRED} asks for the owner's copy, but ${named} ${are} not there, so the ` +
+        `proof that his copy data says what his TypeScript copy says did not run. Write the ` +
+        `documents with \`${EXPORT_COMMAND}\`, or unset OWNER_COPY to allow the skip.`,
+    };
+  }
+  return {
+    kind: 'skipped',
+    reason:
+      `The owner's copy is not in ${named}, so the proof that his copy data says what his ` +
+      `TypeScript copy says did not run. That is expected away from his machine; set ` +
+      `${OWNER_COPY_REQUIRED} to make it a failure instead.`,
+  };
 }
 
 function yamlFiles(directory: string): string[] {
@@ -77,6 +134,6 @@ export function exampleCopy(locale: Locale): CopyDocuments {
   return readCopyDocuments(exampleCopyDirectory(locale));
 }
 
-export function ownerCopy(locale: Locale): CopyDocuments {
-  return readCopyDocuments(ownerCopyDirectory(locale));
+export function ownerCopy(locale: Locale, env: Env = process.env): CopyDocuments {
+  return readCopyDocuments(ownerCopyDirectory(locale, env));
 }

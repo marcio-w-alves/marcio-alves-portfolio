@@ -34,5 +34,17 @@ pre-push:
     - name: boundaries
       run: pnpm boundaries
 
+    # The owner's copy documents are personal data, so they live in his
+    # profile home rather than the repository, and the proof that his copy
+    # data says what his TypeScript copy says is skipped where they are
+    # absent — CI, a fork, a fresh clone — saying so as it goes. On a machine
+    # that has them, OWNER_COPY=required turns that skip into a failure, so a
+    # push from there can never carry a proof that quietly stopped running.
     - name: test
-      run: pnpm test
+      run: |
+        home="${PROFILE_HOME:-${XDG_DATA_HOME:-$HOME/.local/share}/portfolio-profile}"
+        if [ -d "$home/bundles/owner/copy" ]; then
+          OWNER_COPY=required pnpm test
+        else
+          pnpm test
+        fi
