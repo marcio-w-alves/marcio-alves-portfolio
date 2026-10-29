@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { access, mkdir, symlink } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -14,6 +15,14 @@ import { REPOSITORY, runTool, scratchDir, TOOL_TEST_TIMEOUT_MS, writeInputs } fr
  * write one inside any work tree of this repository, however the path gets
  * there, and writes under PROFILE_HOME/baseline/ by default.
  */
+
+const flipCase = (path: string) =>
+  path.replace(/\p{L}/gu, (letter) =>
+    letter === letter.toLowerCase() ? letter.toUpperCase() : letter.toLowerCase(),
+  );
+
+/** macOS and Windows file systems answer to a path in any case; most Linux ones do not. */
+const FILE_SYSTEM_IGNORES_CASE = existsSync(flipCase(REPOSITORY));
 
 let scratch: Awaited<ReturnType<typeof scratchDir>>;
 let site: SiteServer;
@@ -80,6 +89,19 @@ describe('where a baseline may be written', { timeout: TOOL_TEST_TIMEOUT_MS }, (
     expect(refused.stderr).toContain(OUTSIDE_REPOSITORY_RULE);
     expect(await exists(join(REPOSITORY, 'scripts', 'baseline-by-mistake'))).toBe(false);
   });
+
+  it.skipIf(!FILE_SYSTEM_IGNORES_CASE)(
+    'refuses an output directory inside the work tree spelled in another case',
+    async () => {
+      const inside = join(REPOSITORY, 'scripts', 'baseline', 'captured-by-mistake');
+
+      const refused = await captureTo(flipCase(inside));
+
+      expect(refused.code).toBe(1);
+      expect(refused.stderr).toContain(OUTSIDE_REPOSITORY_RULE);
+      expect(await exists(inside)).toBe(false);
+    },
+  );
 
   it('writes under PROFILE_HOME/baseline/<commit>/ when no directory is given', async () => {
     const home = join(scratch.path, 'profile-home');

@@ -59,10 +59,15 @@ export function assertOutsideRepository(target: string, checkouts: readonly stri
   }
 }
 
-/** The real path of the deepest existing ancestor, with the not-yet-created rest appended. */
+/**
+ * The real path of the deepest existing ancestor, with the not-yet-created
+ * rest appended. The native call returns the casing on disk, so a path typed
+ * in another case on a case-insensitive file system still matches the work
+ * tree it is in.
+ */
 function resolveThroughSymlinks(path: string): string {
   try {
-    return realpathSync(path);
+    return realpathSync.native(path);
   } catch {
     const parent = dirname(path);
     if (parent === path) return path;
