@@ -42,10 +42,15 @@ gate is fixed, never bypassed.
 | Coverage floor on `src/core` and `src/infrastructure`     | `pnpm test:coverage`                             | CI                                                  |
 | Build                                                     | `pnpm build`                                     | CI                                                  |
 | Browser journeys, motion, accessibility, security, search | `pnpm test:e2e`                                  | CI                                                  |
+| Profile store against a real Postgres                     | `pnpm test:store`                                | CI (`store`), locally with Docker                   |
 | Performance budget                                        | `pnpm lighthouse` (after `pnpm build`)           | CI                                                  |
 | Assistant grounding                                       | `pnpm eval:assistant` (needs the key)            | locally, when answers, prompts or the record change |
 
-`pnpm verify` runs the commit and push gates in CI's order.
+`pnpm verify` runs the commit and push gates in CI's order. `pnpm test:store` is
+separate because it needs a database: start one with
+`export $(scripts/profile/store/testing/postgres.sh start | xargs)` (Docker, a
+generated CA, no secret) and stop it with the same script. It fails, rather than
+skips, when `PROFILE_TEST_ADMIN_URL` is unset — see `profiles/database.md`.
 
 ## Writing code
 

@@ -23,6 +23,7 @@
     "release": "semantic-release",
     "test": "vitest run",
     "test:fork": "PROFILE_UNDER_TEST=fixture vitest run",
+    "test:store": "PROFILE_STORE_TESTS=1 vitest run --project=store",
     "test:watch": "vitest",
     "test:motion": "playwright test --project=motion",
     "test:coverage": "vitest run --coverage",

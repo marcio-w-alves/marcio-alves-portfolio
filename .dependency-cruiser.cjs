@@ -208,6 +208,27 @@ module.exports = {
       to: { path: '^scripts/' },
     },
     {
+      name: 'no-runtime-profile-store',
+      comment:
+        'The profile store and the bundle codec are build-time tooling: the site is built from ' +
+        'files on disk and no request ever opens a database connection. Both packages are ' +
+        'devDependencies, which no-dev-dep-in-src already keeps out of src; this rule names them, ' +
+        'so the guarantee survives anyone moving pg into dependencies. The database adapter lives ' +
+        'in scripts/profile/store (see src-never-imports-scripts).',
+      severity: 'error',
+      from: { path: '^src/' },
+      to: { path: 'node_modules/(pg|pg-pool|pg-protocol)/' },
+    },
+    {
+      name: 'no-bundle-codec-in-shipped-code',
+      comment:
+        'A bundle is read from disk by the tooling and by the tests that stand in for it; the ' +
+        'site is built from what that tooling wrote, so no shipped module parses YAML.',
+      severity: 'error',
+      from: { path: '^src/', pathNot: [TESTS, '^src/testing/'] },
+      to: { path: 'node_modules/yaml/' },
+    },
+    {
       name: 'no-circular',
       comment: 'A cycle means the two modules are really one, and neither can be understood alone.',
       severity: 'error',

@@ -5,8 +5,9 @@ import { renderBrandCss } from '../../src/site/brand-css';
 import { decodeBundle, documentAt } from './bundle/decode';
 import { DOCUMENTS } from './bundle/layout';
 import { checkProfile } from './checks';
-import { SelectionError, type Source } from './select-source';
+import { type Source } from './select-source';
 import { bundleDirectory } from './workspace/bundle-directory';
+import { databaseWorkspace } from './workspace/database';
 import type { ProfileWorkspace } from './workspace/workspace';
 
 /**
@@ -59,10 +60,7 @@ function workspaceFor(source: Source, exampleDir: string): ProfileWorkspace {
     case 'bundle':
       return bundleDirectory(source.dir);
     case 'database':
-      throw new SelectionError(
-        'This version cannot read the profile database yet. ' +
-          'Unset PROFILE_DATABASE_URL, or choose PROFILE_SOURCE=bundle or PROFILE_SOURCE=example.',
-      );
+      return databaseWorkspace(source.url, 'materialize');
   }
 }
 
