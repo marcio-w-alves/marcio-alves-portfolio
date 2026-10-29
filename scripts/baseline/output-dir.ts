@@ -3,6 +3,7 @@ import { realpathSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { gitEnvironment } from './git-environment';
 
 /**
  * Where baselines go, and where they may never go. A baseline holds the
@@ -84,6 +85,7 @@ function workTreesOf(path: string): string[] {
   const listing = execFileSync('git', ['-C', path, 'worktree', 'list', '--porcelain'], {
     encoding: 'utf8',
     timeout: GIT_TIMEOUT_MS,
+    env: gitEnvironment(),
   });
   return listing
     .split('\n')

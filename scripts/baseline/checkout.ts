@@ -5,6 +5,7 @@ import { copyFile, mkdir } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
+import { gitEnvironment } from './git-environment';
 
 const run = promisify(execFile);
 const GIT_TIMEOUT_MS = 10_000;
@@ -36,7 +37,11 @@ export interface CheckoutState {
 
 export function checkoutState(checkout: string): CheckoutState {
   const git = (...args: string[]) =>
-    execFileSync('git', ['-C', checkout, ...args], { encoding: 'utf8', timeout: GIT_TIMEOUT_MS });
+    execFileSync('git', ['-C', checkout, ...args], {
+      encoding: 'utf8',
+      timeout: GIT_TIMEOUT_MS,
+      env: gitEnvironment(),
+    });
   return {
     commit: git('rev-parse', 'HEAD').trim(),
     dirty: git('status', '--porcelain').trim() !== '',
@@ -81,6 +86,7 @@ export async function runInCheckout(
     const running = run('pnpm', ['exec', 'tsx', join(scratch, script), ...args], {
       cwd: checkout,
       timeout: IN_CHECKOUT_TIMEOUT_MS,
+      env: gitEnvironment(),
     });
     child = running.child;
     const { stdout } = await running;
@@ -96,6 +102,7 @@ function excludeScratch(checkout: string): () => void {
   const gitPath = execFileSync('git', ['-C', checkout, 'rev-parse', '--git-path', 'info/exclude'], {
     encoding: 'utf8',
     timeout: GIT_TIMEOUT_MS,
+    env: gitEnvironment(),
   }).trim();
   const file = resolve(checkout, gitPath);
   const before = existsSync(file) ? readFileSync(file, 'utf8') : null;

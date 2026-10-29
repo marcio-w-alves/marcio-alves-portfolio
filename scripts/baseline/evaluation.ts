@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { caseGrade, type CaseReport } from '../evaluation/report';
 import { fileOf } from './capture-layout';
 import { makePrivateDir, writePrivateJson } from './private-files';
+import { gitEnvironment } from './git-environment';
 
 /**
  * The model path cannot be held to identical answers, so the baseline keeps
@@ -98,7 +99,7 @@ function evaluate(
       stdio: 'inherit',
       timeout: EVALUATION_TIMEOUT_MS,
       env: {
-        ...process.env,
+        ...gitEnvironment(),
         // os.tmpdir() reads it, so the report lands here rather than in the shared temp folder.
         TMPDIR: scratch,
         OPENAI_CHAT_MODEL: EVALUATION_MODEL,
