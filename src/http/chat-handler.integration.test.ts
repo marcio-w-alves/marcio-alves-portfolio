@@ -461,6 +461,31 @@ describe("POST /api/chat — the page's language", () => {
     expect(card?.roles[0]?.summary).toBe(askedRole.summary);
   });
 
+  it('cites what a search found by its Portuguese label for a Portuguese question', async () => {
+    server.use(
+      http.post(EMBEDDINGS, () =>
+        HttpResponse.json({
+          object: 'list',
+          model: 'text-embedding-3-small',
+          data: [{ object: 'embedding', index: 0, embedding: base64Floats(SEARCHED_VECTOR) }],
+          usage: { prompt_tokens: 5, total_tokens: 5 },
+        }),
+      ),
+    );
+    scriptedCompletions(
+      toolCallRound('searchKnowledge', '{"query":"trabalho no marketplace de talentos"}'),
+      textRound('Ele trabalhou lá.'),
+    );
+
+    const events = await allEventsOf(
+      await postChat()(question(PORTUGUESE_MODEL_QUESTION, { locale: 'en' })),
+    );
+
+    const portugueseLabel = portugueseRecord.sourceLabels[searchedRole.source];
+    expect(portugueseLabel).not.toBe(record.sourceLabels[searchedRole.source]);
+    expect(sourcesOf(events)).toContainEqual({ id: searchedRole.source, label: portugueseLabel });
+  });
+
   it("reads the record in the page's language when the question cannot tell", async () => {
     const { role, card } = await readAndShow(`${firstCompany} vs ${secondCompany}?`, 'pt-BR');
 

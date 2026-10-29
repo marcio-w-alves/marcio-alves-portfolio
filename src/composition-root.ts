@@ -164,18 +164,15 @@ function buildModelAssistant(
     createResponseKit(knowledge, answers.labels),
   );
   const { knowledge } = languages.en;
+  // One index, one embedding client and one breaker; each language cites its
+  // sources by its own labels.
   const retrievalBreaker = createCircuitBreakerFor('retrieval');
-  const search = createVectorKnowledgeSearch({
-    embeddings: createOpenAIEmbeddings({
-      client,
-      model: EMBEDDING_MODEL,
-      dimensions: EMBEDDING_DIMENSIONS,
-    }),
-    index: knowledgeIndex,
-    corpus: buildCorpus(record),
-    citation: kits.en.citation,
-    breaker: retrievalBreaker,
+  const embeddings = createOpenAIEmbeddings({
+    client,
+    model: EMBEDDING_MODEL,
+    dimensions: EMBEDDING_DIMENSIONS,
   });
+  const corpus = buildCorpus(record);
   const github = createGithubApi({
     username: new URL(identity.contact.github).pathname.slice(1),
     userAgent: identity.userAgentProduct,
@@ -191,7 +188,16 @@ function buildModelAssistant(
     createToolRegistry({
       kit,
       extra: [
-        ...createSearchTools(search, reportToolError),
+        ...createSearchTools(
+          createVectorKnowledgeSearch({
+            embeddings,
+            index: knowledgeIndex,
+            corpus,
+            citation: kit.citation,
+            breaker: retrievalBreaker,
+          }),
+          reportToolError,
+        ),
         ...createExternalTools({ kit, references, github }),
       ],
       reportError: reportToolError,
