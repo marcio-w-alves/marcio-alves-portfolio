@@ -180,7 +180,7 @@ function SidebarFooter({
   const mailto = `mailto:${links.email}?subject=${encodeURIComponent(messages.emailSubject)}`;
   return (
     <div className="mt-auto flex flex-col gap-1 px-2.5">
-      <div className="mb-5 flex flex-wrap items-center justify-center gap-3">
+      <div className="mb-5 flex flex-col items-center gap-3">
         <ThemeSwitcher />
         <LocaleSwitch languages={languages} />
       </div>

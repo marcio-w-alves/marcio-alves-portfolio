@@ -139,10 +139,10 @@ describe("the owner's headline", () => {
   });
 });
 
-// D30: Portuguese is switched on only with the bilingual fast path (POR-66).
-describe('the published site, until Portuguese is switched on', () => {
-  it('speaks English only', () => {
-    expect(profile.locales).toEqual(['en']);
-    expect(publishedLocales(profile.locales, {})).toEqual(['en']);
+// D30: Portuguese was switched on with the bilingual fast path (POR-66).
+describe('the published site', () => {
+  it('speaks English and Portuguese', () => {
+    expect(profile.locales).toEqual(['en', 'pt-BR']);
+    expect(publishedLocales(profile.locales, {})).toEqual(['en', 'pt-BR']);
   });
 });
