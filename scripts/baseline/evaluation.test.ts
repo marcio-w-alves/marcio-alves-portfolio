@@ -112,6 +112,27 @@ describe('running the evaluation in a checkout', () => {
     expect(await readJson(join(destination, 'report.json'))).toHaveLength(2);
   });
 
+  it('runs a checkout that opens a socket in its temporary folder, as tsx does, however deep the baseline sits', async () => {
+    await standIn(`
+      import { mkdirSync, writeFileSync } from 'node:fs';
+      import { createServer } from 'node:net';
+      import { tmpdir } from 'node:os';
+      import { join } from 'node:path';
+      mkdirSync(join(tmpdir(), 'tsx-501'), { recursive: true });
+      const server = createServer();
+      server.on('error', (error) => { console.error(error.message); process.exit(1); });
+      server.listen(join(tmpdir(), 'tsx-501', '77863.pipe'), () => {
+        writeFileSync(join(tmpdir(), 'assistant-evaluation.json'), '[]');
+        server.close();
+      });
+    `);
+    const destination = join(scratch.path, 'baseline', 'f'.repeat(40), 'evaluation');
+
+    const outcome = await runEvaluation(checkout, ['--runs', '1'], destination);
+
+    expect(outcome).toEqual({ kind: 'run', reports: [] });
+  });
+
   it('records the evaluation as skipped when the run leaves no report, as a failed calibration does', async () => {
     await standIn(`
       console.error('The judge failed calibration; its verdicts cannot be trusted.');
