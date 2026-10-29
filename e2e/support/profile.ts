@@ -24,11 +24,13 @@ export function pagesIn(locale: Locale) {
 }
 
 /** Every page of one language: each topic, and the page about the site where its copy writes one. */
+export function sitePagesIn(locale: Locale): SitePage[] {
+  return copyIn(profile, locale).about ? [...TOPIC_IDS, ABOUT_PAGE] : [...TOPIC_IDS];
+}
+
+/** The address of every page of one language. */
 export function pagePathsIn(locale: Locale): string[] {
-  const pages: SitePage[] = copyIn(profile, locale).about
-    ? [...TOPIC_IDS, ABOUT_PAGE]
-    : [...TOPIC_IDS];
-  return pages.map((page) => pagePath(locale, page));
+  return sitePagesIn(locale).map((page) => pagePath(locale, page));
 }
 
 /** Every message of a catalog by its path, e.g. `ui.errors.retryIn.one`; list items each count. */

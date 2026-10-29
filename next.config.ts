@@ -65,6 +65,13 @@ const nextConfig: NextConfig = {
     },
   },
   experimental: {
+    // Optimistic routing guesses an address's route from the shape of one it
+    // has seen: once `/pt` taught it `/[locale]`, it read `/experience` as the
+    // home page of a language called "experience". English addresses are a
+    // rewrite to the `en` segment, so the guess is always wrong, and a wrong
+    // guess while prefetching is fetched again without end (POR-101). Each
+    // link's route is asked of the server instead.
+    optimisticRouting: false,
     // Turbopack's persistent cache does not know that the Tailwind loader's
     // output depends on the class names in every component, so a build where
     // only components changed reused the previous stylesheet and shipped
