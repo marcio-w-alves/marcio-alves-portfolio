@@ -4,9 +4,12 @@
  *
  * 1. `PROFILE_SOURCE` set: that source (`example` is the explicit opt-in a
  *    fork deploying the example on purpose sets).
- * 2. Otherwise the database when its URL is set, a bundle directory when one
- *    is named, and the example anywhere but a production deployment.
- * 3. A production deployment with none of these fails, naming the settings.
+ * 2. Otherwise the database when its URL is set, and a bundle directory when
+ *    one is named; both at once is ambiguous and refused.
+ * 3. Nothing set: the TypeScript profile in `src/profile`, which is still
+ *    what the site is built from. Once the site is built from a
+ *    materialization instead, this is where an unconfigured production build
+ *    fails and every other one takes the example.
  *
  * An empty variable counts as unset: that is how a deployment clears one.
  */
@@ -14,7 +17,9 @@
 export type Source =
   | { readonly kind: 'database'; readonly url: string }
   | { readonly kind: 'bundle'; readonly dir: string }
-  | { readonly kind: 'example' };
+  | { readonly kind: 'example' }
+  /** The profile written as TypeScript modules under `src/profile`, which materializes nothing. */
+  | { readonly kind: 'typescript' };
 
 export type Env = Readonly<Record<string, string | undefined>>;
 
@@ -25,11 +30,7 @@ export class SelectionError extends Error {
   }
 }
 
-export const PRODUCTION_NEEDS_A_PROFILE =
-  'Production builds need a profile: set PROFILE_DATABASE_URL (read-only), or ' +
-  'PROFILE_SOURCE=example to deploy the example on purpose.';
-
-const SOURCES = ['database', 'bundle', 'example'] as const;
+const SOURCES = ['database', 'bundle', 'example', 'typescript'] as const;
 
 function setting(env: Env, name: string): string | undefined {
   const value = env[name];
@@ -49,8 +50,7 @@ export function selectSource(env: Env): Source {
   }
   if (url !== undefined) return { kind: 'database', url };
   if (dir !== undefined) return { kind: 'bundle', dir };
-  if (setting(env, 'VERCEL_ENV') !== 'production') return { kind: 'example' };
-  throw new SelectionError(PRODUCTION_NEEDS_A_PROFILE);
+  return { kind: 'typescript' };
 }
 
 function explicitSource(explicit: string, url?: string, dir?: string): Source {
@@ -69,6 +69,8 @@ function explicitSource(explicit: string, url?: string, dir?: string): Source {
       return { kind: 'bundle', dir };
     case 'example':
       return { kind: 'example' };
+    case 'typescript':
+      return { kind: 'typescript' };
     default:
       throw new SelectionError(
         `PROFILE_SOURCE is "${explicit}"; it must be one of ${SOURCES.join(', ')}.`,

@@ -3,12 +3,13 @@
  *
  *   pnpm profile check <bundle dir>
  *       Reads a profile bundle and runs every check on it; writes nothing.
- *   pnpm profile materialize --out <dir> [--example] [--if-absent]
+ *   pnpm profile materialize [--out <dir>] [--example] [--if-absent]
  *       Selects the profile (PROFILE_SOURCE, PROFILE_DATABASE_URL,
- *       PROFILE_BUNDLE_DIR, VERCEL_ENV), checks it, and writes the files the
- *       site is built from under <dir>. --example takes the shipped example
- *       whatever the environment says; --if-absent does nothing when <dir>
- *       already holds a materialization.
+ *       PROFILE_BUNDLE_DIR), checks it, and writes the files the site is
+ *       built from under <dir>. With no source set the site is built from the
+ *       TypeScript profile and this writes nothing. --example takes the
+ *       shipped example whatever the environment says; --if-absent does
+ *       nothing when <dir> already holds a materialization.
  *   pnpm profile init
  *       Creates the roles, the schema and the migrations in an empty database
  *       (PROFILE_ADMIN_DATABASE_URL, used once).
@@ -48,7 +49,7 @@ const EXAMPLE_DIR = fileURLToPath(new URL('../profiles/example/', import.meta.ur
 
 const USAGE = [
   'Usage: pnpm profile check <bundle dir>',
-  '       pnpm profile materialize --out <dir> [--example] [--if-absent]',
+  '       pnpm profile materialize [--out <dir>] [--example] [--if-absent]',
   '       pnpm profile init | migrate | revisions',
   '       pnpm profile export [dir]',
   '       pnpm profile diff <bundle dir>',
@@ -81,6 +82,14 @@ async function materializeCommand(args: readonly string[]) {
       'if-absent': { type: 'boolean', default: false },
     },
   });
+  const source: Source = values.example ? { kind: 'example' } : selectSource(process.env);
+  if (source.kind === 'typescript') {
+    log(
+      'No profile source is set, so the site is built from the TypeScript profile in ' +
+        'src/profile: there is nothing to materialize.',
+    );
+    return;
+  }
   // Materializing into the repository itself arrives with the site reading
   // these files; until then its generated files are committed and are not this
   // command's to overwrite.
@@ -90,7 +99,6 @@ async function materializeCommand(args: readonly string[]) {
     log(`A profile is already materialized in ${out}; leaving it as it is.`);
     return;
   }
-  const source: Source = values.example ? { kind: 'example' } : selectSource(process.env);
   await materialize({ source, out, exampleDir: EXAMPLE_DIR, log });
 }
 

@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { PRODUCTION_NEEDS_A_PROFILE, selectSource, type Env, type Source } from './select-source';
+import { selectSource, type Env, type Source } from './select-source';
 
 /**
  * One rule picks the profile a build is made from. The table is every
- * combination that matters; production without a profile is the row that
- * must never quietly become the example.
+ * combination that matters; a build with nothing set is the row that must
+ * stay on the TypeScript profile, because that is what the site is still
+ * built from — in production as anywhere else.
  */
 
 const URL = 'postgres://reader@db.example/profile';
@@ -46,23 +47,28 @@ const selected: readonly [string, Env, Source][] = [
     { PROFILE_BUNDLE_DIR: DIR, VERCEL_ENV: 'production' },
     { kind: 'bundle', dir: DIR },
   ],
-  ['nothing, without VERCEL_ENV', {}, { kind: 'example' }],
-  ['nothing, in a preview', { VERCEL_ENV: 'preview' }, { kind: 'example' }],
-  ['nothing, in development', { VERCEL_ENV: 'development' }, { kind: 'example' }],
+  [
+    'PROFILE_SOURCE=typescript, the explicit way to say src/profile',
+    { PROFILE_SOURCE: 'typescript' },
+    { kind: 'typescript' },
+  ],
+  ['nothing, without VERCEL_ENV', {}, { kind: 'typescript' }],
+  ['nothing, in a preview', { VERCEL_ENV: 'preview' }, { kind: 'typescript' }],
+  ['nothing, in development', { VERCEL_ENV: 'development' }, { kind: 'typescript' }],
+  ['nothing, in production', { VERCEL_ENV: 'production' }, { kind: 'typescript' }],
   [
     'empty values, which count as unset',
     { PROFILE_SOURCE: '', PROFILE_DATABASE_URL: '', PROFILE_BUNDLE_DIR: '' },
-    { kind: 'example' },
+    { kind: 'typescript' },
+  ],
+  [
+    'empty values, in production',
+    { VERCEL_ENV: 'production', PROFILE_DATABASE_URL: '', PROFILE_SOURCE: '' },
+    { kind: 'typescript' },
   ],
 ];
 
 const refused: readonly [string, Env, string][] = [
-  ['nothing, in production', { VERCEL_ENV: 'production' }, PRODUCTION_NEEDS_A_PROFILE],
-  [
-    'empty values, in production',
-    { VERCEL_ENV: 'production', PROFILE_DATABASE_URL: '', PROFILE_SOURCE: '' },
-    PRODUCTION_NEEDS_A_PROFILE,
-  ],
   [
     'PROFILE_SOURCE=database without its URL',
     { PROFILE_SOURCE: 'database' },
@@ -76,7 +82,7 @@ const refused: readonly [string, Env, string][] = [
   [
     'an unknown PROFILE_SOURCE',
     { PROFILE_SOURCE: 'owner' },
-    'PROFILE_SOURCE is "owner"; it must be one of database, bundle, example.',
+    'PROFILE_SOURCE is "owner"; it must be one of database, bundle, example, typescript.',
   ],
   [
     'both the URL and the directory',
@@ -92,10 +98,5 @@ describe('which profile a build is made from', () => {
 
   it.each(refused)('refuses %s, naming the setting', (_case, env, message) => {
     expect(() => selectSource(env)).toThrow(message);
-  });
-
-  it('tells a production build without a profile both ways to give it one', () => {
-    expect(PRODUCTION_NEEDS_A_PROFILE).toContain('PROFILE_DATABASE_URL');
-    expect(PRODUCTION_NEEDS_A_PROFILE).toContain('PROFILE_SOURCE=example');
   });
 });

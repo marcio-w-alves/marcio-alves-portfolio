@@ -8,8 +8,8 @@
     "node": "24.x"
   },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "pnpm run profile materialize && next dev",
+    "build": "pnpm run profile materialize && next build",
     "start": "next start",
     "typecheck": "next typegen && tsc --noEmit",
     "lint": "next typegen && eslint --max-warnings 0",
