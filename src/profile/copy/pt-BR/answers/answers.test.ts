@@ -4,6 +4,7 @@ import { createResponseKit } from '@/core/assistant/response-kit';
 import type { ConversationContext } from '@/core/chat/request';
 import { localize } from '@/core/knowledge/localize';
 import { withMetric } from '@/testing/fixture-profile/variants';
+import { scoredAnswer } from '@/testing/scored-answer';
 import { answers } from '.';
 import { knowledge as source } from '../../../knowledge';
 
@@ -23,13 +24,13 @@ function plainText(response: AssistantResponse): string {
 
 describe('the Portuguese answers', () => {
   it("name the award as the record's Portuguese achievements write it", () => {
-    const text = plainText(answersOver().scored.awards(FRESH, ''));
+    const text = plainText(scoredAnswer(answersOver(), 'awards')(FRESH, ''));
     expect(text).toContain('**Golden Award em 2019**');
     expect(text).toContain('O Golden Award foi para o produto em que ele trabalhou');
   });
 
   it('say how long the career has been, in Portuguese, from the record', () => {
-    expect(plainText(answersOver().scored.career(FRESH, ''))).toContain(
+    expect(plainText(scoredAnswer(answersOver(), 'career')(FRESH, ''))).toContain(
       'com **mais de 10 anos** de experiência profissional',
     );
   });
@@ -47,7 +48,7 @@ describe('the Portuguese answers', () => {
   });
 
   it('recognize a language asked about by its Portuguese name, accent and all', () => {
-    const { languages } = answersOver().scored;
+    const languages = scoredAnswer(answersOver(), 'languages');
     expect(plainText(languages(FRESH, 'Ele fala inglês?'))).toContain(
       'Sim — Inglês em nível fluente.',
     );
@@ -57,9 +58,9 @@ describe('the Portuguese answers', () => {
   });
 
   it('show the levels of the languages in Portuguese', () => {
-    const table = answersOver()
-      .scored.languages(FRESH, '')
-      .parts.find((part) => part.type === 'component' && part.component === 'table');
+    const table = scoredAnswer(answersOver(), 'languages')(FRESH, '').parts.find(
+      (part) => part.type === 'component' && part.component === 'table',
+    );
     expect(JSON.stringify(table)).toContain('["Inglês","Fluente"]');
   });
 });

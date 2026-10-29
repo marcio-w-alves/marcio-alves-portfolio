@@ -233,15 +233,19 @@ function createLanguageFastPath(
           ? { kind: 'escalate', nearest: null }
           : answered(answers.technology(evidence));
       }
-      default:
-        return answered(answers.scored[routed.intent](context, question));
+      default: {
+        const build = answers.scored[routed.intent];
+        return build ? answered(build(context, question)) : ESCALATE_UNRECOGNIZED;
+      }
     }
   }
 
   return {
     answer,
-    followUpsFor: (intent, context) =>
-      intent ? answers.scored[intent](context, '').followUps : answers.greeting().followUps,
+    followUpsFor: (intent, context) => {
+      const build = intent ? answers.scored[intent] : undefined;
+      return build ? build(context, '').followUps : answers.greeting().followUps;
+    },
     pageShown: (context) =>
       context.topic === 'overview'
         ? null

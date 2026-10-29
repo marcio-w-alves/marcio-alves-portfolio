@@ -1,0 +1,261 @@
+# The fictional person's answers. Each states facts read from the record, and each
+# scored intent opens with a marker naming it, so a test can tell which answer ran.
+
+identity:
+  parts:
+    - text: '[identity] {{profile.name}} — {{#with experience | first}}{{.role}} at {{.company}}{{/with}}.'
+  followUps: &followUps
+    - "Tell me about {{first}}'s career."
+    - 'Which skills does she have?'
+    - 'How can I contact {{first}}?'
+  sources: &profileSource
+    - '{{profile.source}}'
+
+resume:
+  parts:
+    - text: '[resume] [Download her CV]({{#if contact.resumeUrl}}{{contact.resumeUrl}}{{/if}})'
+  followUps: *followUps
+  sources: *profileSource
+
+contact:
+  parts:
+    - text: '[contact] {{contact.email}}'
+    - contactCard: true
+  followUps: *followUps
+  sources: *profileSource
+
+location:
+  parts:
+    - text: '[location] {{#if profile.location.city}}{{profile.location.city}}{{/if}}, {{profile.location.country}}'
+  followUps: *followUps
+  sources: *profileSource
+
+accessibility:
+  parts:
+    - text: '[accessibility] {{profile.name}} — {{#with experience | first}}{{.role}} at {{.company}}{{/with}}.'
+  followUps: *followUps
+  sources: *profileSource
+
+testing:
+  parts:
+    - text: '[testing] {{profile.name}} — {{#with experience | first}}{{.role}} at {{.company}}{{/with}}.'
+  followUps: *followUps
+  sources: *profileSource
+
+mobile:
+  parts:
+    - text: '[mobile] {{profile.name}} — {{#with experience | first}}{{.role}} at {{.company}}{{/with}}.'
+  followUps: *followUps
+  sources: *profileSource
+
+designSystems:
+  parts:
+    - text: '[designSystems] {{profile.name}} — {{#with experience | first}}{{.role}} at {{.company}}{{/with}}.'
+  followUps: *followUps
+  sources: *profileSource
+
+nextjs:
+  parts:
+    - text: '[nextjs] {{profile.name}} — {{#with experience | first}}{{.role}} at {{.company}}{{/with}}.'
+  followUps: *followUps
+  sources: *profileSource
+
+codeQuality:
+  parts:
+    - text: '[codeQuality] {{profile.name}} — {{#with experience | first}}{{.role}} at {{.company}}{{/with}}.'
+  followUps: *followUps
+  sources: *profileSource
+
+qualityImprovement:
+  parts:
+    - text: '[qualityImprovement] {{profile.name}} — {{#with experience | first}}{{.role}} at {{.company}}{{/with}}.'
+  followUps: *followUps
+  sources: *profileSource
+
+awards:
+  parts:
+    - text: '[awards] {{profile.name}} — {{#with experience | first}}{{.role}} at {{.company}}{{/with}}.'
+  followUps: *followUps
+  sources: *profileSource
+
+teamGrowth:
+  parts:
+    - text: '[teamGrowth] The {{role.globex.company}} platform team went {{metric.globex-team.value}}.'
+  followUps: *followUps
+  sources: *profileSource
+
+leadRole:
+  parts:
+    - text: '[leadRole] {{role.acme.leadership | join " "}} — the payroll platform at {{role.acme.company}}.'
+  followUps: *followUps
+  sources: *profileSource
+
+product:
+  parts:
+    - text: '[product] {{profile.name}} — {{#with experience | first}}{{.role}} at {{.company}}{{/with}}.'
+  followUps: *followUps
+  sources: *profileSource
+
+scratch:
+  parts:
+    - text: '[scratch] {{profile.name}} — {{#with experience | first}}{{.role}} at {{.company}}{{/with}}.'
+  followUps: *followUps
+  sources: *profileSource
+
+scaling:
+  parts:
+    - text: '[scaling] {{profile.name}} — {{#with experience | first}}{{.role}} at {{.company}}{{/with}}.'
+  followUps: *followUps
+  sources: *profileSource
+
+enterprise:
+  parts:
+    - text: '[enterprise] {{profile.name}} — {{#with experience | first}}{{.role}} at {{.company}}{{/with}}.'
+  followUps: *followUps
+  sources: *profileSource
+
+roleFit:
+  parts:
+    - text: '[roleFit] {{profile.title}}, cutting build times by {{metric.acme-build-time.value}}.'
+    - contactOnce: true
+  followUps: *followUps
+  sources: *profileSource
+
+aiEngineering:
+  parts:
+    - text: '[aiEngineering] {{profile.name}} — {{#with experience | first}}{{.role}} at {{.company}}{{/with}}.'
+  followUps: *followUps
+  sources: *profileSource
+
+philosophy:
+  parts:
+    - text: '[philosophy] {{profile.name}} — {{#with experience | first}}{{.role}} at {{.company}}{{/with}}.'
+  followUps: *followUps
+  sources: *profileSource
+
+architecture:
+  parts:
+    - text: '[architecture] {{profile.name}} — {{#with experience | first}}{{.role}} at {{.company}}{{/with}}.'
+  followUps: *followUps
+  sources: *profileSource
+
+performance:
+  parts:
+    - text: '[performance] {{profile.name}} — {{#with experience | first}}{{.role}} at {{.company}}{{/with}}.'
+  followUps: *followUps
+  sources: *profileSource
+
+backend:
+  parts:
+    - text: '[backend] {{profile.name}} — {{#with experience | first}}{{.role}} at {{.company}}{{/with}}.'
+  followUps: *followUps
+  sources: *profileSource
+
+react:
+  parts:
+    - text: '[react] {{profile.name}} — {{#with experience | first}}{{.role}} at {{.company}}{{/with}}.'
+  followUps: *followUps
+  sources: *profileSource
+
+skills:
+  parts:
+    - text: '[skills] {{#each skills sep=", "}}{{.items | join ", "}}{{/each}}'
+  followUps: *followUps
+  sources: *profileSource
+
+leadership:
+  parts:
+    - text: '[leadership] {{profile.name}} — {{#with experience | first}}{{.role}} at {{.company}}{{/with}}.'
+  followUps: *followUps
+  sources: *profileSource
+
+achievements:
+  parts:
+    - text: '[achievements] {{#each metric sep=", "}}{{.value}}{{/each}}'
+    - metrics: all
+  followUps: *followUps
+  sources: *profileSource
+
+projects:
+  parts:
+    - text: '[projects] {{profile.name}} — {{#with experience | first}}{{.role}} at {{.company}}{{/with}}.'
+  followUps: *followUps
+  sources: *profileSource
+
+languages:
+  parts:
+    - text: '[languages] {{languages | map name | join ", "}}'
+  followUps: *followUps
+  sources: *profileSource
+
+education:
+  parts:
+    - text: '[education] {{education.degree}}, {{education.school}}'
+  followUps: *followUps
+  sources: *profileSource
+
+career:
+  parts:
+    - text: '[career] {{#each experience sep="; "}}{{.role}} at **{{.company}}** ({{.period}}){{/each}}'
+    - timeline: all
+    - text: |-
+        ### Where she is headed
+        {{practice.goals.roles}}
+  followUps: *followUps
+  sources: *profileSource
+
+greeting:
+  parts:
+    - text: 'Hello — I answer about {{profile.name}}.'
+  followUps: *followUps
+  sources: []
+
+privateInfo:
+  parts:
+    - text: 'That is private to {{first}}.'
+  followUps: *followUps
+  sources: []
+  grounded: false
+
+offPurpose:
+  parts:
+    - text: 'I only answer about her work.'
+  followUps: *followUps
+  sources: []
+  grounded: false
+
+unknown:
+  parts:
+    - text: "Not in {{first}}'s record."
+  followUps: *followUps
+  sources: []
+  grounded: false
+
+slowDown:
+  parts:
+    - text: 'Slow down, please.'
+  followUps: *followUps
+  sources: []
+  grounded: false
+
+company:
+  parts:
+    - text: '{{role.role}} at **{{role.company}}** ({{role.period}}).'
+  followUps: *followUps
+  sources: ['{{role.source}}']
+  related: '{{role.id}}'
+
+project:
+  parts:
+    - text: '**{{project.name}}** — {{project.description}}'
+    - projects: { from: project.id }
+    - text: '{{practice.productDepth[project.id]}}'
+  followUps: *followUps
+  sources: ['{{project.source}}']
+
+technology:
+  parts:
+    - text: '{{#each evidence sep="\n"}}{{.technology.name}}: {{.work | count}} roles{{/each}}'
+  followUps: *followUps
+  sources: []
+  grounded: false

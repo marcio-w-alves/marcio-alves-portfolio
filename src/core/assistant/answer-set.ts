@@ -17,7 +17,8 @@ import type { TopicCopy } from './topics';
 export type AnswerBuilder = (context: ConversationContext, question: string) => AssistantResponse;
 
 export interface Answers {
-  readonly scored: Readonly<Record<ScoredIntent, AnswerBuilder>>;
+  /** An intent the profile's copy leaves out has no answer, and the fast path escalates it. */
+  readonly scored: Readonly<Partial<Record<ScoredIntent, AnswerBuilder>>>;
   readonly greeting: () => AssistantResponse;
   readonly privateInfo: () => AssistantResponse;
   readonly offPurpose: () => AssistantResponse;
