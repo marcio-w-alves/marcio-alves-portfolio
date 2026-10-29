@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   fixtureBrand,
+  fixtureCalibration,
   fixtureIdentity,
   fixtureKnowledge,
   fixtureSiteAllowList,
@@ -21,7 +22,7 @@ import { seededIndex, seededProbes } from './seeded-index';
 const example = await checkBundle(EXAMPLE_DIR);
 
 describe('the example bundle', () => {
-  it('decodes to the fixture record, identity, brand, allow-list and evaluation', () => {
+  it('decodes to the fixture record, identity, brand, allow-list, cases and calibration', () => {
     const { data } = example;
     const { sans, display, mono } = data.brand.fonts;
     const withoutFaces = {
@@ -38,6 +39,7 @@ describe('the example bundle', () => {
     expect(withoutFaces).toEqual(fixtureBrand);
     expect(data.siteAllowList).toEqual(fixtureSiteAllowList);
     expect(data.evaluation.cases).toEqual(fixtureProfile.evaluation);
+    expect(data.evaluation.calibration).toEqual(fixtureCalibration);
   });
 
   it('sets each font role in one of the faces the template bundles', () => {
