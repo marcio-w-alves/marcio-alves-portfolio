@@ -201,6 +201,13 @@ export const factsDocumentSchema = z.strictObject({
     .optional(),
   /** Strings every answer and topic may read, such as how a language's level is written. */
   strings: stringsSchema.optional(),
+  /**
+   * The intents this profile chooses not to answer. The router still scores
+   * them from its generic rules, so an answer that simply went missing is a
+   * defect; naming it here says the omission is meant, and the fast path
+   * leaves those questions to the model.
+   */
+  omit: z.array(z.enum(SCORED_INTENTS)).optional(),
 });
 
 /** An interface catalog's overrides: messages, plurals and lists, nested as the catalog nests them. */

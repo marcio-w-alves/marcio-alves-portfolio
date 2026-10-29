@@ -3,7 +3,7 @@ import { TOPIC_IDS, type TopicId } from '../../chat/topic-id';
 import type { Locale } from '../../i18n/locale';
 import type { AnswerLabels } from '../answer-labels';
 import type { NoteTone } from '../../chat/components';
-import type { Rule, Vocabulary } from '../system1/intents';
+import type { Rule, ScoredIntent, Vocabulary } from '../system1/intents';
 import {
   FIXED_ANSWERS,
   type FixedAnswer,
@@ -128,6 +128,8 @@ export interface PreparedCopy {
   readonly labels: AnswerLabels;
   readonly extract: Readonly<Record<string, PreparedExtraction>>;
   readonly strings: Readonly<Record<string, Variant<StringValue>>>;
+  /** The intents this profile says it means not to answer. */
+  readonly omitted: readonly ScoredIntent[];
   readonly ui: CatalogOverrides;
   readonly site: CatalogOverrides;
   readonly about?: PreparedAbout;
@@ -142,7 +144,10 @@ const SINGLE_DOCUMENTS = [
   'site.yaml',
   'about.yaml',
 ];
-const ANSWER_DOCUMENT = /^answers\/[A-Za-z0-9][A-Za-z0-9._-]*\.yaml$/;
+// The same name the bundle layout allows a copy document: no dots, so
+// `answers/career.yaml` is one and `answers/career.old.yaml` is not a document
+// the bundle would carry either.
+const ANSWER_DOCUMENT = /^answers\/[A-Za-z0-9][A-Za-z0-9_-]*\.yaml$/;
 
 function pointer(path: readonly PropertyKey[]): string {
   return path
@@ -530,6 +535,7 @@ export function prepareLocaleCopy(documents: CopyDocuments, locale: Locale): Pre
     labels,
     extract: extractionsOf(preparation, facts),
     strings,
+    omitted: facts?.omit ?? [],
     ui: ui ?? {},
     site: site ?? {},
     ...(about

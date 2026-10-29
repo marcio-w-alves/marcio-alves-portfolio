@@ -2,7 +2,7 @@ import { TOPIC_IDS } from '../../chat/topic-id';
 import type { Locale } from '../../i18n/locale';
 import type { Knowledge } from '@/core/knowledge/schema';
 import { createResponseKit, type ResponseKit } from '../response-kit';
-import { isScoredIntent } from '../system1/intents';
+import { SCORED_INTENTS, isScoredIntent } from '../system1/intents';
 import { answerCases, technologyEvidenceSets } from './answer-cases';
 import {
   BoundCopy,
@@ -298,6 +298,33 @@ function renderProblems(copy: PreparedCopy, kit: ResponseKit, options: CompileOp
   return problems;
 }
 
+/**
+ * The router scores every intent from its own generic rules, whatever a
+ * profile writes, so an intent with no answer is one the fast path hands to
+ * the model. That is a choice a profile may make, and `omit` in facts.yaml is
+ * how it says so; an intent that is simply missing — a renamed file, a lost
+ * key, a bad merge — would otherwise cost money quietly.
+ */
+function intentProblems(copy: PreparedCopy): string[] {
+  const omitted = new Set<string>(copy.omitted);
+  const missing = SCORED_INTENTS.filter(
+    (intent) => !copy.answers.has(intent) && !omitted.has(intent),
+  ).map(
+    (intent) =>
+      `answers/: no answer writes the "${intent}" intent, which the router still recognizes, so ` +
+      'those questions would go to the model. Write it, or name it in facts.yaml#omit to say the ' +
+      'omission is meant.',
+  );
+  const answered = copy.omitted
+    .filter((intent) => copy.answers.has(intent))
+    .map(
+      (intent) =>
+        `facts.yaml#omit: "${intent}" is named as omitted, but an answer writes it — remove it ` +
+        'from omit, or remove the answer.',
+    );
+  return [...missing, ...answered];
+}
+
 /** Every problem with one language's copy over its record; empty when it can ship. */
 export function checkLocaleCopy(documents: CopyDocuments, options: CheckOptions): string[] {
   let copy: PreparedCopy;
@@ -309,6 +336,7 @@ export function checkLocaleCopy(documents: CopyDocuments, options: CheckOptions)
   }
   const kit = createResponseKit(options.knowledge, copy.labels);
   return [
+    ...intentProblems(copy),
     ...staticProblems(copy, kit),
     ...figureProblems(copy, options.figures),
     ...renderProblems(copy, kit, options),

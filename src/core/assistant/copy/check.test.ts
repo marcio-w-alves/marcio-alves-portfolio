@@ -29,6 +29,42 @@ describe('the example copy', () => {
   });
 });
 
+describe('an intent the copy stops answering', () => {
+  const withoutLeadRole = () => withoutAnswer(example(), 'leadRole');
+
+  it('fails, because the router still recognizes it', () => {
+    expect(problems(withoutLeadRole())).toEqual([
+      'answers/: no answer writes the "leadRole" intent, which the router still recognizes, so those questions would go to the model. Write it, or name it in facts.yaml#omit to say the omission is meant.',
+    ]);
+  });
+
+  it('passes once the copy says the omission is meant', () => {
+    const documents = withDocument(withoutLeadRole(), 'facts.yaml', (facts) => ({
+      ...facts,
+      omit: ['leadRole'],
+    }));
+    expect(problems(documents)).toEqual([]);
+  });
+
+  it('fails when the copy both omits and answers it', () => {
+    const documents = withDocument(example(), 'facts.yaml', (facts) => ({
+      ...facts,
+      omit: ['leadRole'],
+    }));
+    expect(problems(documents)).toEqual([
+      'facts.yaml#omit: "leadRole" is named as omitted, but an answer writes it — remove it from omit, or remove the answer.',
+    ]);
+  });
+
+  it('refuses a name that is not an intent at all', () => {
+    const documents = withDocument(example(), 'facts.yaml', (facts) => ({
+      ...facts,
+      omit: ['weather'],
+    }));
+    expect(problems(documents)).toContainEqual(expect.stringContaining('facts.yaml#omit[0]'));
+  });
+});
+
 describe('templates that state or invent facts (AC-22.1)', () => {
   it('fail on a role the record lacks, naming the template', () => {
     const found = problems(
