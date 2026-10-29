@@ -1,13 +1,6 @@
 import type { AssistantResponse } from '@/core/assistant/response';
 import type { ConversationContext } from '@/core/chat/request';
-import {
-  bullets,
-  details,
-  note,
-  table,
-  text,
-  type ResponseKit,
-} from '@/core/assistant/response-kit';
+import { bullets, details, text, type ResponseKit } from '@/core/assistant/response-kit';
 import { article, createFacts } from './facts';
 
 /**
@@ -16,7 +9,17 @@ import { article, createFacts } from './facts';
  * rather than inferred.
  */
 export function createCareerAnswers(kit: ResponseKit) {
-  const { roleById, allRoleSources, contactOnce, metrics, response, timeline, knowledge } = kit;
+  const {
+    roleById,
+    allRoleSources,
+    contactOnce,
+    metrics,
+    note,
+    response,
+    table,
+    timeline,
+    knowledge,
+  } = kit;
   const { practice } = knowledge;
   const {
     first,

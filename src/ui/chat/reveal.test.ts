@@ -4,7 +4,12 @@ import { nextStep, revealLength, revealParts } from './reveal';
 
 const parts: MessagePart[] = [
   { type: 'text', id: 'a', text: 'Hello there.' },
-  { type: 'component', id: 'b', component: 'note', props: { tone: 'info', text: 'Note' } },
+  {
+    type: 'component',
+    id: 'b',
+    component: 'note',
+    props: { tone: 'info', text: 'Note', label: 'Note' },
+  },
   { type: 'text', id: 'c', text: 'After.' },
 ];
 

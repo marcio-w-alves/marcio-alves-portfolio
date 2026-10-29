@@ -6,7 +6,7 @@ import { createTopicIntro } from './topic-pages';
 import { TOPIC_IDS } from '../chat/topic-id';
 import { createTopicCatalog } from './topics';
 
-const kit = createResponseKit(localize(fixtureKnowledge, 'en'));
+const kit = createResponseKit(localize(fixtureKnowledge, 'en'), fixtureAnswers.labels);
 const copy = fixtureAnswers.topics(kit);
 const catalog = createTopicCatalog(copy);
 const { suggestedQuestions, suggestions, topicById, topics } = catalog;

@@ -144,7 +144,7 @@ const ANSWERS_IN: Readonly<Record<Locale, AnswerSet>> = {
 
 /** Every question a language's pages suggest, as asked. */
 function suggestedIn(locale: Locale): string[] {
-  const kit = createResponseKit(localize(fixtureKnowledge, locale));
+  const kit = createResponseKit(localize(fixtureKnowledge, locale), ANSWERS_IN[locale].labels);
   const { topics } = createTopicCatalog(ANSWERS_IN[locale].topics(kit));
   return topics.flatMap((topic) => topic.questions.map((item) => item.question));
 }
@@ -196,6 +196,30 @@ describe('fast path — the language of the answer', () => {
     expect(response.followUps.map(detectLanguage)).toEqual(response.followUps.map(() => 'en'));
     expect(plainText(response)).toContain('Platform leadership.');
     expect(plainText(response)).not.toContain('Liderança de plataforma.');
+  });
+
+  it("words the cards inside an answer in the answer's language, not the page's", () => {
+    const cardOf = (response: AssistantResponse) => {
+      const timeline = response.parts.find(
+        (part) => part.type === 'component' && part.component === 'timeline',
+      );
+      if (!timeline) throw new Error('The career answer shows no timeline.');
+      return timeline.props;
+    };
+    const portuguese = cardOf(answer('Me fale sobre a carreira da Ada.', FRESH, 'en'));
+    const english = cardOf(answer("Tell me about Ada's career.", FRESH, 'pt-BR'));
+
+    expect(portuguese.label).toBe(fixturePortugueseAnswers.labels.cards.timeline);
+    expect(portuguese.roles[0]?.sections[0]?.title).toBe(
+      fixturePortugueseAnswers.labels.roleSections.responsibilities,
+    );
+    expect(portuguese.roles[0]?.badges).toEqual([
+      { kind: 'current', label: fixturePortugueseAnswers.labels.badges.current },
+    ]);
+    expect(english.label).toBe(fixtureAnswers.labels.cards.timeline);
+    expect(english.roles[0]?.badges).toEqual([
+      { kind: 'current', label: fixtureAnswers.labels.badges.current },
+    ]);
   });
 
   it("answers a question that does not tell its language in the page's", () => {
@@ -331,7 +355,9 @@ describe('toEvents', () => {
 
 describe('fast path — a topic page never repeats itself', () => {
   const catalog = createTopicCatalog(
-    fixtureAnswers.topics(createResponseKit(localize(fixtureKnowledge, 'en'))),
+    fixtureAnswers.topics(
+      createResponseKit(localize(fixtureKnowledge, 'en'), fixtureAnswers.labels),
+    ),
   );
   const topicIntro = createTopicIntro(catalog);
   const pages = catalog.topics.filter((topic) => topic.id !== 'overview');

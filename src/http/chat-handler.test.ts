@@ -110,7 +110,12 @@ describe('POST /api/chat — answering', () => {
           { id: 'c1', name: 'getExperience', arguments: '{"company":"globex"}' },
           'She built the Globex pipeline.',
         ),
-        tools: { en: createToolRegistry({ kit: createResponseKit(knowledge), reportError }) },
+        tools: {
+          en: createToolRegistry({
+            kit: createResponseKit(knowledge, fixtureAnswers.labels),
+            reportError,
+          }),
+        },
         clock,
         subject: promptSubject(knowledge),
       }),

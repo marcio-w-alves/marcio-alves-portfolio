@@ -1,22 +1,22 @@
 import { useId } from 'react';
 import { cn } from '../cn';
-import { useMessages } from '../i18n/i18n-provider';
 
 interface DataTableProps {
   readonly columns: readonly string[];
   readonly rows: readonly (readonly string[])[];
   readonly caption: string;
+  /** The table's name when it has no caption. */
+  readonly label: string;
 }
 
-export function DataTable({ columns, rows, caption }: DataTableProps) {
-  const { rich } = useMessages();
+export function DataTable({ columns, rows, caption, label }: DataTableProps) {
   const captionId = useId();
   return (
     // Focusable and named, so a keyboard can scroll a table wider than the column.
     <div
       role="region"
       aria-labelledby={caption ? captionId : undefined}
-      aria-label={caption ? undefined : rich.table}
+      aria-label={caption ? undefined : label}
       tabIndex={0}
       className="animate-block-enter overflow-x-auto rounded-md bg-surface shadow-ring"
     >

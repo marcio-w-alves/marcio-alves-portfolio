@@ -24,7 +24,9 @@ import {
 import type { AssistantMessage, Conversation } from './messages';
 
 const knowledge = localize(fixtureKnowledge, 'en');
-const catalog = createTopicCatalog(fixtureAnswers.topics(createResponseKit(knowledge)));
+const catalog = createTopicCatalog(
+  fixtureAnswers.topics(createResponseKit(knowledge, fixtureAnswers.labels)),
+);
 const topicIntro = createTopicIntro(catalog);
 const { answer: fastPath } = createFastPath({ en: { knowledge, answers: fixtureAnswers } });
 

@@ -14,7 +14,7 @@ import { knowledge as source } from '../../../knowledge';
 /** What this profile's English answers say, checked against its own record. */
 
 const knowledge = localize(source, 'en');
-const catalog = createTopicCatalog(answers.topics(createResponseKit(knowledge)));
+const catalog = createTopicCatalog(answers.topics(createResponseKit(knowledge, answers.labels)));
 const { topics } = catalog;
 const topicIntro = createTopicIntro(catalog);
 const englishFastPath = createFastPath({ en: { knowledge, answers } });

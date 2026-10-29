@@ -1,5 +1,5 @@
 import type { AssistantResponse } from '@/core/assistant/response';
-import { note, text, type ResponseKit } from '@/core/assistant/response-kit';
+import { text, type ResponseKit } from '@/core/assistant/response-kit';
 import type { TechnologyEvidence } from '@/core/assistant/system1/technologies';
 
 /**
@@ -8,7 +8,7 @@ import type { TechnologyEvidence } from '@/core/assistant/system1/technologies';
  * and the honest fallback when nothing better is available.
  */
 export function createBoundaryAnswers(kit: ResponseKit) {
-  const { response, skills } = kit;
+  const { response, skills, note } = kit;
   const first = kit.knowledge.profile.firstName;
 
   const CORE_FOLLOW_UPS = [

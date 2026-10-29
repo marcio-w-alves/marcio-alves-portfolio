@@ -1,3 +1,4 @@
+import { fixtureAnswers } from '../../src/testing/fixture-profile/answers';
 import { describe, expect, it } from 'vitest';
 import type { ToolTrace } from '../../src/core/assistant/system2/model-assistant';
 import { createResponseKit } from '../../src/core/assistant/response-kit';
@@ -13,7 +14,7 @@ import {
   type RunReport,
 } from './report';
 
-const kit = createResponseKit(localize(fixtureKnowledge, 'en'));
+const kit = createResponseKit(localize(fixtureKnowledge, 'en'), fixtureAnswers.labels);
 
 function rethrow(error: unknown): never {
   throw error;

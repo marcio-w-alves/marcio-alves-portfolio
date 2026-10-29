@@ -1,15 +1,17 @@
+import { fixtureAnswers, fixturePortugueseAnswers } from '@/testing/fixture-profile';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import type { ComponentPart, RichComponent, RichComponentName } from '@/core/chat/components';
-import { createResponseKit, details, note, table } from '@/core/assistant/response-kit';
+import { createResponseKit, details } from '@/core/assistant/response-kit';
 import { localize } from '@/core/knowledge/localize';
 import { fixtureKnowledge } from '@/testing/fixture-profile/knowledge';
 import { renderWithMessages } from '@/testing/ui-messages';
 import { RichBlock } from './rich-block';
 
 const knowledge = localize(fixtureKnowledge, 'en');
-const fixtureKit = createResponseKit(knowledge);
+const fixtureKit = createResponseKit(knowledge, fixtureAnswers.labels);
+const { note, table } = fixtureKit;
 
 type BlockOf<Name extends RichComponentName> = Extract<RichComponent, { component: Name }>;
 
@@ -204,7 +206,10 @@ describe('projects', () => {
     const [live, concept] = projectsBlock().props.projects;
     renderBlock({
       component: 'projects',
-      props: { projects: [{ ...present(live), technologies: ['Bazel', 'Go'] }, present(concept)] },
+      props: {
+        projects: [{ ...present(live), technologies: ['Bazel', 'Go'] }, present(concept)],
+        labels: projectsBlock().props.labels,
+      },
     });
     const card = screen.getByRole('article', { name: 'Project: Pipewright' });
     expect(within(card).getByText('Main technologies')).toBeInTheDocument();
@@ -237,6 +242,7 @@ describe('projects', () => {
             ],
           },
         ],
+        labels: projectsBlock().props.labels,
       },
     });
     const links = screen.getAllByRole('link');
@@ -407,5 +413,38 @@ describe('RichBlock', () => {
     } as unknown as RichComponent;
     const { container } = renderBlock(forged);
     expect(container).toBeEmptyDOMElement();
+  });
+});
+
+describe("a card in the answer's language", () => {
+  const portugueseKit = createResponseKit(
+    localize(fixtureKnowledge, 'pt-BR'),
+    fixturePortugueseAnswers.labels,
+  );
+  const words = fixturePortugueseAnswers.labels;
+
+  it('names and tags a Portuguese timeline in Portuguese on an English page', async () => {
+    const user = userEvent.setup();
+    renderBlock(blockOf(portugueseKit.timeline(), 'timeline'));
+
+    const timeline = screen.getByRole('region', { name: words.cards.timeline });
+    expect(within(timeline).getByText(words.badges.current)).toBeInTheDocument();
+    expect(within(timeline).queryByText(fixtureAnswers.labels.badges.current)).toBeNull();
+    const [firstRole] = within(timeline).getAllByRole('button');
+    await user.click(present(firstRole));
+    expect(within(timeline).getByText(words.roleSections.responsibilities)).toBeInTheDocument();
+  });
+
+  it("offers a Portuguese contact card's actions in Portuguese", () => {
+    renderBlock(blockOf(portugueseKit.contactCard(), 'contact'));
+
+    expect(screen.getByRole('heading', { name: words.contact.heading })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Falar com Ada' })).toBeInTheDocument();
+    expect(screen.getByText('Fale com Ada sobre engenharia de plataforma.')).toBeInTheDocument();
+  });
+
+  it('labels a Portuguese note in Portuguese', () => {
+    renderBlock(portugueseKit.note('inference', 'Uma avaliação.'));
+    expect(screen.getByRole('complementary')).toHaveTextContent(words.notes.inference);
   });
 });

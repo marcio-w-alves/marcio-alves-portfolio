@@ -19,7 +19,7 @@ const SAMPLES: {
     type: 'component',
     id: 'p1',
     component: 'metrics',
-    props: { items: [{ value: '40%', label: 'faster builds', context: 'CI' }] },
+    props: { items: [{ value: '40%', label: 'faster builds', context: 'CI' }], label: 'Metrics' },
   },
   finish: {
     type: 'finish',

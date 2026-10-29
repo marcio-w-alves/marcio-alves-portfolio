@@ -3,7 +3,7 @@ import type { ModelBudgetPort } from '@/core/assistant/ports/model-budget.port';
 import type { AnswerSet } from '@/core/assistant/answer-set';
 import { createAssistant, type AnswerReport, type Assistant } from '@/core/assistant/assistant';
 import { createResponseKit } from '@/core/assistant/response-kit';
-import { createFastPath } from '@/core/assistant/system1/fast-path';
+import { createFastPath, type LanguageAnswers } from '@/core/assistant/system1/fast-path';
 import { urlsIn } from '@/core/assistant/system2/link-filter';
 import { promptSubject } from '@/core/assistant/system2/system-prompt';
 import {
@@ -18,7 +18,7 @@ import type { ToolFailure } from '@/core/assistant/tools/tool';
 import { mapTranslations, type Translations } from '@/core/i18n/locale';
 import { buildCorpus } from '@/core/knowledge/corpus';
 import { localize } from '@/core/knowledge/localize';
-import type { Knowledge, KnowledgeSource } from '@/core/knowledge/schema';
+import type { KnowledgeSource } from '@/core/knowledge/schema';
 import {
   assistantSettings,
   serverEnv,
@@ -146,8 +146,8 @@ export interface ContainerOptions extends Observers {
 
 interface ModelWiring {
   readonly record: KnowledgeSource;
-  /** The record in each language the site is written in. */
-  readonly knowledge: Translations<Knowledge>;
+  /** The record and the answers' words in each language the site is written in. */
+  readonly languages: Translations<LanguageAnswers>;
   readonly apiKey: string;
   readonly githubToken: string | undefined;
   readonly chatModel: string;
@@ -156,11 +156,14 @@ interface ModelWiring {
 }
 
 function buildModelAssistant(
-  { record, knowledge, apiKey, githubToken, chatModel, openAITimeoutMs, budget }: ModelWiring,
+  { record, languages, apiKey, githubToken, chatModel, openAITimeoutMs, budget }: ModelWiring,
   observers: Observers,
 ): GuardedModelAssistant {
   const client = createOpenAIClient(apiKey, { timeoutMs: openAITimeoutMs });
-  const kits = mapTranslations(knowledge, createResponseKit);
+  const kits = mapTranslations(languages, ({ knowledge, answers }) =>
+    createResponseKit(knowledge, answers.labels),
+  );
+  const { knowledge } = languages.en;
   const retrievalBreaker = createCircuitBreakerFor('retrieval');
   const search = createVectorKnowledgeSearch({
     embeddings: createOpenAIEmbeddings({
@@ -208,8 +211,8 @@ function buildModelAssistant(
     model,
     tools,
     clock: systemClock,
-    subject: promptSubject(knowledge.en),
-    knownUrls: [...urlsIn(knowledge.en), `mailto:${knowledge.en.contact.email}`, siteUrl().href],
+    subject: promptSubject(knowledge),
+    knownUrls: [...urlsIn(knowledge), `mailto:${knowledge.contact.email}`, siteUrl().href],
     onUsage: (usage, clientId) => {
       budget.record(usage, clientId);
       if (usage.estimated) {
@@ -241,7 +244,6 @@ export function buildContainer({
     knowledge: localize(record, locale),
     answers: answerSet,
   }));
-  const knowledge = mapTranslations(languages, (language) => language.knowledge);
   const budget = createBudget(settings);
   // Without a credential the site still answers everything the fast path
   // recognizes, and says plainly what it cannot.
@@ -249,7 +251,7 @@ export function buildContainer({
     ? buildModelAssistant(
         {
           record,
-          knowledge,
+          languages,
           apiKey: env.OPENAI_API_KEY,
           githubToken: env.GITHUB_TOKEN,
           chatModel: settings.chatModel,

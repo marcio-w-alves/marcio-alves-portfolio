@@ -18,9 +18,9 @@ export function ContactCard({
   linkedin,
   github,
   resumeUrl,
+  actions,
 }: ContactCardProps) {
   const messages = useMessages();
-  const { contact } = messages.rich;
   const { opensInNewTab, pdfOpensInNewTab } = messages.links;
   const titleId = useId();
   return (
@@ -53,7 +53,7 @@ export function ContactCard({
           className={ACTION_CLASSES}
         >
           <Icon name="mail" size="sm" />
-          {contact.email}
+          {actions.email}
         </ButtonLink>
         <ButtonLink
           href={linkedin}
@@ -62,7 +62,7 @@ export function ContactCard({
           className={ACTION_CLASSES}
         >
           <Icon name="link" size="sm" />
-          {contact.linkedin}
+          {actions.linkedin}
           <VisuallyHidden> {opensInNewTab}</VisuallyHidden>
         </ButtonLink>
         {resumeUrl ? (
@@ -74,7 +74,7 @@ export function ContactCard({
             className={ACTION_CLASSES}
           >
             <Icon name="file" size="sm" />
-            {contact.resume}
+            {actions.resume}
             <VisuallyHidden> {pdfOpensInNewTab}</VisuallyHidden>
           </ButtonLink>
         ) : null}
@@ -87,7 +87,7 @@ export function ContactCard({
             className={ACTION_CLASSES}
           >
             <Icon name="code" size="sm" />
-            {contact.github}
+            {actions.github}
             <VisuallyHidden> {opensInNewTab}</VisuallyHidden>
           </ButtonLink>
         ) : null}

@@ -1,3 +1,4 @@
+import { fixtureAnswers } from '@/testing/fixture-profile';
 import { describe, expect, it } from 'vitest';
 import { localize } from '@/core/knowledge/localize';
 import { fixtureKnowledge } from '@/testing/fixture-profile';
@@ -57,7 +58,7 @@ function rethrow(error: unknown): never {
   throw error;
 }
 
-const kit = createResponseKit(localize(fixtureKnowledge, 'en'));
+const kit = createResponseKit(localize(fixtureKnowledge, 'en'), fixtureAnswers.labels);
 const subject = promptSubject(kit.knowledge);
 
 /** The real allow-list; an action that throws unexpectedly fails the test. */
@@ -494,6 +495,7 @@ describe('model assistant — what reaches the visitor', () => {
             context: 'Acme',
           },
         ],
+        label: fixtureAnswers.labels.cards.metrics,
       },
     });
     expect(events.findIndex((event) => event.type === 'text-end')).toBeLessThan(

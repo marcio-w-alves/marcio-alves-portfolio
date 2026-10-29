@@ -126,7 +126,7 @@ function createLanguageFastPath(
   { knowledge, answers: answerSet }: LanguageAnswers,
   locale: Locale,
 ): LanguageFastPath {
-  const kit = createResponseKit(knowledge);
+  const kit = createResponseKit(knowledge, answerSet.labels);
   const answers = answerSet.answers(kit);
   const route = createRouter(knowledge, answerSet.vocabulary, locale);
   const findEvidence = createEvidenceFinder(knowledge);

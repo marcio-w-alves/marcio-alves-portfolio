@@ -1,4 +1,5 @@
 import type { ConversationContext } from '../chat/request';
+import type { AnswerLabels } from './answer-labels';
 import type { AssistantResponse } from './response';
 import type { ResponseKit } from './response-kit';
 import type { ScoredIntent, Vocabulary } from './system1/intents';
@@ -34,6 +35,8 @@ export interface Answers {
 export interface AnswerSet {
   /** The owner's own words for some intents, added to the router's generic rules. */
   readonly vocabulary: Vocabulary;
+  /** The words inside the answers' cards, in this locale. */
+  readonly labels: AnswerLabels;
   readonly topics: (kit: ResponseKit) => Readonly<Record<TopicId, TopicCopy>>;
   readonly answers: (kit: ResponseKit) => Answers;
 }

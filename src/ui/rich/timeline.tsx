@@ -1,5 +1,4 @@
 import type { MetricItem, RoleSection, RoleView } from '@/core/chat/components';
-import { useMessages } from '../i18n/i18n-provider';
 import { BulletList } from './bullet-list';
 import { SectionTitle } from './section-title';
 import { TagList } from './tag-list';
@@ -9,12 +8,12 @@ interface TimelineProps {
   readonly roles: readonly RoleView[];
   /** The roles open on first render; the visitor opens and closes the rest. */
   readonly expanded: readonly string[];
+  readonly label: string;
 }
 
-export function Timeline({ roles, expanded }: TimelineProps) {
-  const { rich } = useMessages();
+export function Timeline({ roles, expanded, label }: TimelineProps) {
   return (
-    <section aria-label={rich.timeline} className="@container/timeline animate-block-enter">
+    <section aria-label={label} className="@container/timeline animate-block-enter">
       <ol>
         {roles.map((role, index) => (
           <TimelineRole

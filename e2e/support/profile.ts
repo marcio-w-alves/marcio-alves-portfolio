@@ -40,16 +40,21 @@ function messagesByPath(catalog: unknown, path = ''): [string, string][] {
   );
 }
 
+/** Everything a language's pages write around the record: interface, pages and the cards' words. */
+function catalogsOf(locale: Locale) {
+  const { ui, site } = pagesIn(locale);
+  return { ui, site, labels: copyIn(profile, locale).answers.labels };
+}
+
 /**
- * The interface's English messages that read differently in `locale` — what a
- * page in that language must never show. Templates the browser still fills
- * are left out: they never appear as written. So is each language's own name,
- * which the switcher shows in that language on every page.
+ * The English messages that read differently in `locale` — what a page in
+ * that language must never show, the words inside its answers' cards
+ * included. Templates are left out: they never appear as written. So is each
+ * language's own name, which the switcher shows in that language on every page.
  */
 export function englishOnlyMessages(locale: Locale): string[] {
-  const english = pagesIn(DEFAULT_LOCALE);
-  const theirs = new Map(messagesByPath({ ui: pagesIn(locale).ui, site: pagesIn(locale).site }));
-  return messagesByPath({ ui: english.ui, site: english.site })
+  const theirs = new Map(messagesByPath(catalogsOf(locale)));
+  return messagesByPath(catalogsOf(DEFAULT_LOCALE))
     .filter(([path]) => !path.startsWith('ui.language.'))
     .filter(([path, message]) => theirs.get(path) !== message && !message.includes('{'))
     .map(([, message]) => message);
@@ -68,6 +73,9 @@ export const record = content.knowledge;
 
 /** The interface's catalog and the pages' copy, as the site renders them. */
 export const { ui, site } = content;
+
+/** The words inside the English answers' cards. */
+export const { labels } = copyIn(profile, 'en').answers;
 
 export function topicLabel(topic: TopicId): string {
   return content.topicCatalog.topicById(topic).label;

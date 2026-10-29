@@ -36,12 +36,14 @@ function intentOf(locale: Locale, question: string): string {
 }
 
 function topicsIn(locale: Locale) {
-  const kit = createResponseKit(localize(source, locale));
+  const kit = createResponseKit(localize(source, locale), ANSWERS[locale].labels);
   return createTopicCatalog(ANSWERS[locale].topics(kit)).topics;
 }
 
 function scoredIn(locale: Locale) {
-  return ANSWERS[locale].answers(createResponseKit(localize(source, locale))).scored;
+  return ANSWERS[locale].answers(
+    createResponseKit(localize(source, locale), ANSWERS[locale].labels),
+  ).scored;
 }
 
 const fastPath = createFastPath({

@@ -320,7 +320,7 @@ async function pool<T, R>(
 /** Runs the actions for real, so the trace is exactly what the model would have received. */
 async function traceOf(actions: NonNullable<CalibrationItem['actions']>): Promise<ToolTrace[]> {
   const registry = createToolRegistry({
-    kit: createResponseKit(knowledge),
+    kit: createResponseKit(knowledge, profile.copy.en.answers.labels),
     reportError: (error) => {
       console.error(error);
     },
