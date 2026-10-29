@@ -90,7 +90,7 @@ async function serve(
   for await (const chunk of incoming) chunks.push(chunk as Buffer);
   const request = new Request(`http://127.0.0.1${incoming.url ?? '/'}`, {
     method: incoming.method ?? 'GET',
-    headers: Object.entries(incoming.headers).flatMap(([name, value]) =>
+    headers: Object.entries(incoming.headers).flatMap(([name, value]): [string, string][] =>
       typeof value === 'string' ? [[name, value]] : [],
     ),
     ...(chunks.length > 0 ? { body: Buffer.concat(chunks) } : {}),
