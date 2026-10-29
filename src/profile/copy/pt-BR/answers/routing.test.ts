@@ -78,19 +78,25 @@ describe('router — every Portuguese suggestion leads where its English twin do
 
 describe('fast path — the Portuguese suggestion graph is closed', () => {
   it.each(['en', 'pt-BR'] as const)(
-    'answers every Portuguese question the site can suggest, in Portuguese, on the %s page',
+    'answers every Portuguese question the site can suggest, in Portuguese, on every %s page',
     (pageLocale) => {
+      // Each page starts from its own questions and keeps its context as the visitor follows up.
       const pending = topicsIn('pt-BR').flatMap((topic) =>
-        topic.questions.map((item) => item.question),
+        topic.questions.map((item) => ({ topic: topic.id, question: item.question })),
       );
       const visited = new Set<string>();
-      for (let question = pending.pop(); question !== undefined; question = pending.pop()) {
-        if (visited.has(question)) continue;
-        visited.add(question);
+      for (let node = pending.pop(); node !== undefined; node = pending.pop()) {
+        const { topic, question } = node;
+        if (visited.has(`${topic}:${question}`)) continue;
+        visited.add(`${topic}:${question}`);
         expect(detectLanguage(question), question).toBe('pt-BR');
-        const result = fastPath.answer(question, FRESH, pageLocale);
-        expect(result.kind, `"${question}" was escalated`).toBe('answered');
-        if (result.kind === 'answered') pending.push(...result.response.followUps);
+        const result = fastPath.answer(question, { ...FRESH, topic }, pageLocale);
+        expect(result.kind, `"${question}" on ${topic} was escalated`).toBe('answered');
+        if (result.kind === 'answered') {
+          pending.push(
+            ...result.response.followUps.map((followUp) => ({ topic, question: followUp })),
+          );
+        }
       }
       expect(visited.size).toBeGreaterThan(40);
     },

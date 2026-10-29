@@ -8,7 +8,9 @@ import { createTopicIntro } from '@/core/assistant/topic-pages';
 import { createTopicCatalog } from '@/core/assistant/topics';
 import { localize } from '@/core/knowledge/localize';
 import { withMetric, withRole } from '@/testing/fixture-profile/variants';
+import { detectLanguage } from '@/core/assistant/language';
 import { answers } from '.';
+import { answers as portugueseAnswers } from '../../pt-BR/answers';
 import { knowledge as source } from '../../../knowledge';
 
 /** What this profile's English answers say, checked against its own record. */
@@ -35,22 +37,36 @@ function plainText(response: AssistantResponse): string {
     .join('\n');
 }
 
-describe('fast path — the suggestion graph is closed', () => {
-  it('answers every question the interface can suggest, however the visitor navigates', () => {
-    const pending: string[] = topics.flatMap((topic) =>
-      topic.questions.map((item) => item.question),
-    );
-    const visited = new Set<string>();
-    while (pending.length > 0) {
-      const question = pending.pop() ?? '';
-      if (visited.has(question)) continue;
-      visited.add(question);
-      const result = fastPath(question, FRESH);
-      expect(result.kind, `"${question}" was escalated`).toBe('answered');
-      if (result.kind === 'answered') pending.push(...result.response.followUps);
-    }
-    expect(visited.size).toBeGreaterThan(40);
+describe('fast path — the English suggestion graph is closed', () => {
+  const bilingual = createFastPath({
+    en: { knowledge, answers },
+    'pt-BR': { knowledge: localize(source, 'pt-BR'), answers: portugueseAnswers },
   });
+
+  it.each(['en', 'pt-BR'] as const)(
+    'answers every English question the site can suggest, in English, on every %s page',
+    (pageLocale) => {
+      // Each page starts from its own questions and keeps its context as the visitor follows up.
+      const pending = topics.flatMap((topic) =>
+        topic.questions.map((item) => ({ topic: topic.id, question: item.question })),
+      );
+      const visited = new Set<string>();
+      for (let node = pending.pop(); node !== undefined; node = pending.pop()) {
+        const { topic, question } = node;
+        if (visited.has(`${topic}:${question}`)) continue;
+        visited.add(`${topic}:${question}`);
+        expect(detectLanguage(question), question).toBe('en');
+        const result = bilingual.answer(question, { ...FRESH, topic }, pageLocale);
+        expect(result.kind, `"${question}" on ${topic} was escalated`).toBe('answered');
+        if (result.kind === 'answered') {
+          pending.push(
+            ...result.response.followUps.map((followUp) => ({ topic, question: followUp })),
+          );
+        }
+      }
+      expect(visited.size).toBeGreaterThan(40);
+    },
+  );
 });
 
 describe('fast path — documented answers', () => {
