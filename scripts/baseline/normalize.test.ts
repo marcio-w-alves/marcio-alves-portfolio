@@ -37,8 +37,12 @@ const NOISE: Readonly<Record<string, readonly [string, string]>> = {
     page({ head: '<link rel="modulepreload" href="/b.js">' }),
   ],
   'next-static-path': [
-    page({ body: '<img src="/_next/static/media/photo.1a2b3c.jpg" alt="">' }),
-    page({ body: '<img src="/_next/static/media/photo.9f8e7d.jpg" alt="">' }),
+    page({ body: '<a href="/_next/static/chunks/25-co05vq3qo6.css">build</a>' }),
+    page({ body: '<a href="/_next/static/chunks/37kger8l_ntlf.css">build</a>' }),
+  ],
+  'next-build-id': [
+    page({ body: '<a href="/_next/static/k3Lx9QpA/_buildManifest.js">build</a>' }),
+    page({ body: '<a href="/_next/static/Zr42mWqT/_buildManifest.js">build</a>' }),
   ],
   'deployment-id': [
     page({ body: '<img src="/ada.jpg?dpl=dpl_8xKq1" alt="">' }),
@@ -103,6 +107,20 @@ describe('a change the table does not name', () => {
       {
         path: 'html>head[0]>link[0]@href',
         detail: '"https://ada.example/skills" → "https://ada.example/skill"',
+      },
+    ]);
+  });
+
+  it('reports a media file under /_next/static/media/ that changed, its name hashing its bytes', () => {
+    const changes = compareDocuments(
+      page({ body: '<img src="/_next/static/media/photo.1a2b3c.jpg" alt="">' }),
+      page({ body: '<img src="/_next/static/media/photo.9f8e7d.jpg" alt="">' }),
+    );
+
+    expect(changes).toEqual([
+      {
+        path: 'html>body[0]>main[0]>img[0]@src',
+        detail: '"/_next/static/media/photo.1a2b3c.jpg" → "/_next/static/media/photo.9f8e7d.jpg"',
       },
     ]);
   });

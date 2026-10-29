@@ -48,10 +48,18 @@ export const REWRITES: readonly Rewrite[] = [
   {
     id: 'next-static-path',
     reason:
-      'Files under /_next/static/ are named by build id and content hash, which change with ' +
-      'every build; their effect on the page is compared through the screenshots.',
-    pattern: /\/_next\/static\/[^\s"'(),]+/g,
-    replacement: '/_next/static/<build-file>',
+      'JavaScript and CSS chunks under /_next/static/chunks/ and /css/ are named by hashes of ' +
+      'the build, which change whenever any code does; their effect on the page is compared ' +
+      'through the tokens and the screenshots. Media files are not: their names hash their ' +
+      'own content, so a changed name is a changed file.',
+    pattern: /\/_next\/static\/(chunks|css)\/[^\s"'(),]+/g,
+    replacement: '/_next/static/$1/<build-file>',
+  },
+  {
+    id: 'next-build-id',
+    reason: 'The folder named after the build id (/_next/static/<build-id>/) changes every build.',
+    pattern: /\/_next\/static\/(?!(?:chunks|css|media)\/)[^/\s"'(),]+\//g,
+    replacement: '/_next/static/<build-id>/',
   },
   {
     id: 'deployment-id',
