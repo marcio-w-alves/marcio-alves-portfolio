@@ -26,11 +26,11 @@ import type { AssistantMessage, Conversation } from './messages';
 const knowledge = localize(fixtureKnowledge, 'en');
 const catalog = createTopicCatalog(fixtureAnswers.topics(createResponseKit(knowledge)));
 const topicIntro = createTopicIntro(catalog);
-const fastPath = createFastPath(knowledge, fixtureAnswers).answer;
+const { answer: fastPath } = createFastPath({ en: { knowledge, answers: fixtureAnswers } });
 
 /** The events the server would stream for this question, from the real fast path. */
 function eventsFor(question: string, conversation: Conversation): AssistantEvent[] {
-  const result = fastPath(question, contextOf(conversation));
+  const result = fastPath(question, contextOf(conversation), 'en');
   if (result.kind !== 'answered') throw new Error(`"${question}" is not a fast-path question`);
   return toEvents(result.response);
 }

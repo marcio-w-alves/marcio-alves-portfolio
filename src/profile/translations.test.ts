@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { AssistantResponse } from '@/core/assistant/response';
 import { createResponseKit } from '@/core/assistant/response-kit';
-import { SCORED_INTENTS } from '@/core/assistant/system1/router';
+import { SCORED_INTENTS } from '@/core/assistant/system1/intents';
 import { createEvidenceFinder, TECHNOLOGIES } from '@/core/assistant/system1/technologies';
 import type { ResponsePart } from '@/core/chat/components';
 import type { ConversationContext } from '@/core/chat/request';

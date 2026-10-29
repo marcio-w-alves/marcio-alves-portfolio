@@ -1,28 +1,48 @@
 import { describe, expect, it } from 'vitest';
 import { localize } from '@/core/knowledge/localize';
 import type { KnowledgeSource } from '@/core/knowledge/schema';
-import { fixtureAnswers, fixtureKnowledge } from '@/testing/fixture-profile';
+import { SUPPORTED_LOCALES, type Locale } from '@/core/i18n/locale';
+import {
+  fixtureAnswers,
+  fixtureKnowledge,
+  fixturePortugueseAnswers,
+} from '@/testing/fixture-profile';
 import { withMetric, withRole } from '@/testing/fixture-profile/variants';
 import type { ConversationContext } from '../../chat/request';
 import type { TopicId } from '../../chat/topic-id';
+import type { AnswerSet } from '../answer-set';
+import { detectLanguage } from '../language';
 import type { AssistantResponse } from '../response';
 import { toEvents } from '../response';
 import { createResponseKit } from '../response-kit';
 import { createTopicIntro } from '../topic-pages';
 import { createTopicCatalog } from '../topics';
 import { createFastPath } from './fast-path';
-import { SCORED_INTENTS, type ScoredIntent } from './router';
+import { SCORED_INTENTS, type ScoredIntent } from './intents';
 
 const FRESH: ConversationContext = { topic: 'overview', lastIntent: null, ctaShown: false };
 
+function bilingualFastPath(source: KnowledgeSource) {
+  return createFastPath({
+    en: { knowledge: localize(source, 'en'), answers: fixtureAnswers },
+    'pt-BR': { knowledge: localize(source, 'pt-BR'), answers: fixturePortugueseAnswers },
+  });
+}
+
 function fastPathOver(source: KnowledgeSource) {
-  return createFastPath(localize(source, 'en'), fixtureAnswers).answer;
+  const { answer } = bilingualFastPath(source);
+  return (question: string, context: ConversationContext, pageLocale: Locale = 'en') =>
+    answer(question, context, pageLocale);
 }
 
 const fastPath = fastPathOver(fixtureKnowledge);
 
-function answer(question: string, context: ConversationContext = FRESH): AssistantResponse {
-  const result = fastPath(question, context);
+function answer(
+  question: string,
+  context: ConversationContext = FRESH,
+  pageLocale: Locale = 'en',
+): AssistantResponse {
+  const result = fastPath(question, context, pageLocale);
   if (result.kind !== 'answered') throw new Error(`Escalated instead of answering: ${question}`);
   return result.response;
 }
@@ -117,21 +137,110 @@ describe('fast path — facts come from the record, not from the code', () => {
   });
 });
 
-describe('fast path — the suggestion graph is closed', () => {
-  it('answers every question the fixture suggests, however the visitor navigates', () => {
-    const { topics } = createTopicCatalog(
-      fixtureAnswers.topics(createResponseKit(localize(fixtureKnowledge, 'en'))),
+const ANSWERS_IN: Readonly<Record<Locale, AnswerSet>> = {
+  en: fixtureAnswers,
+  'pt-BR': fixturePortugueseAnswers,
+};
+
+/** Every question a language's pages suggest, as asked. */
+function suggestedIn(locale: Locale): string[] {
+  const kit = createResponseKit(localize(fixtureKnowledge, locale));
+  const { topics } = createTopicCatalog(ANSWERS_IN[locale].topics(kit));
+  return topics.flatMap((topic) => topic.questions.map((item) => item.question));
+}
+
+function followUpsOf(question: string, pageLocale: Locale): readonly string[] {
+  const result = fastPath(question, FRESH, pageLocale);
+  if (result.kind !== 'answered') throw new Error(`Escalated instead of answering: ${question}`);
+  return result.response.followUps;
+}
+
+describe('fast path — the suggestion graph is closed in each language', () => {
+  it.each(SUPPORTED_LOCALES)(
+    'answers every question the %s pages suggest, on either page, in that language',
+    (locale) => {
+      const pending = suggestedIn(locale);
+      const visited = new Set<string>();
+      for (let question = pending.pop(); question !== undefined; question = pending.pop()) {
+        if (visited.has(question)) continue;
+        visited.add(question);
+        expect(detectLanguage(question), question).toBe(locale);
+        for (const pageLocale of SUPPORTED_LOCALES) {
+          const followUps = followUpsOf(question, pageLocale);
+          expect(followUps.map(detectLanguage), `${question} on ${pageLocale}`).toEqual(
+            followUps.map(() => locale),
+          );
+          pending.push(...followUps);
+        }
+      }
+      expect(visited.size).toBeGreaterThan(3);
+    },
+  );
+});
+
+describe('fast path — the language of the answer', () => {
+  it('answers a Portuguese question in Portuguese on an English page', () => {
+    const response = answer('Me fale sobre a carreira da Ada.', FRESH, 'en');
+
+    expect(response.intent).toBe('career');
+    expect(response.followUps).toContain('Quais competências ela tem?');
+    expect(response.followUps.map(detectLanguage)).toEqual(response.followUps.map(() => 'pt-BR'));
+    expect(plainText(response)).toContain('Liderança de plataforma.');
+    expect(plainText(response)).not.toContain('Platform leadership.');
+  });
+
+  it('answers an English question in English on a Portuguese page', () => {
+    const response = answer("Tell me about Ada's career.", FRESH, 'pt-BR');
+
+    expect(response.followUps).toContain('Which skills does she have?');
+    expect(response.followUps.map(detectLanguage)).toEqual(response.followUps.map(() => 'en'));
+    expect(plainText(response)).toContain('Platform leadership.');
+    expect(plainText(response)).not.toContain('Liderança de plataforma.');
+  });
+
+  it("answers a question that does not tell its language in the page's", () => {
+    const onPortuguese = answer('React?', FRESH, 'pt-BR');
+    const onEnglish = answer('React?', FRESH, 'en');
+
+    expect(onPortuguese.intent).toBe('react');
+    expect(onPortuguese.followUps.map(detectLanguage)).toEqual(['pt-BR', 'pt-BR', 'pt-BR']);
+    expect(onEnglish.followUps.map(detectLanguage)).toEqual(['en', 'en', 'en']);
+  });
+
+  it('leaves a language it writes no answers in to the model', () => {
+    expect(fastPath('¿Dónde trabaja Ada?', FRESH, 'pt-BR')).toEqual({
+      kind: 'escalate',
+      nearest: null,
+    });
+  });
+
+  it('leaves Portuguese to the model when the profile writes no Portuguese answers', () => {
+    const englishOnly = createFastPath({
+      en: { knowledge: localize(fixtureKnowledge, 'en'), answers: fixtureAnswers },
+    });
+
+    expect(englishOnly.answer('Me fale sobre a carreira da Ada.', FRESH, 'en').kind).toBe(
+      'escalate',
     );
-    const pending = topics.flatMap((topic) => topic.questions.map((item) => item.question));
-    const visited = new Set<string>();
-    for (let question = pending.pop(); question !== undefined; question = pending.pop()) {
-      if (visited.has(question)) continue;
-      visited.add(question);
-      const result = fastPath(question, FRESH);
-      expect(result.kind, `"${question}" was escalated`).toBe('answered');
-      if (result.kind === 'answered') pending.push(...result.response.followUps);
-    }
-    expect(visited.size).toBeGreaterThan(3);
+    expect(englishOnly.answer('React?', FRESH, 'pt-BR').kind).toBe('answered');
+  });
+
+  it('declines a private question in Portuguese without citing anything', () => {
+    const response = answer('Qual é o salário dela?', FRESH, 'en');
+
+    expect(response.intent).toBe('privateInfo');
+    expect(response.sources).toEqual([]);
+    expect(plainText(response)).toBe('Isso é assunto particular de Ada.');
+  });
+
+  it("offers an escalated answer's follow-ups in the language asked for", () => {
+    const { followUpsFor } = bilingualFastPath(fixtureKnowledge);
+
+    expect(followUpsFor('career', FRESH, 'pt-BR')).toEqual([
+      'Me fale sobre a carreira da Ada.',
+      'Quais competências ela tem?',
+      'Como posso falar com a Ada?',
+    ]);
   });
 });
 
@@ -179,14 +288,14 @@ describe('fast path — a forged context', () => {
 
 describe('fast path — follow-ups for an escalated answer', () => {
   it('offers the follow-ups the copy wrote for the nearest intent, or the greeting when none', () => {
-    const { followUpsFor } = createFastPath(localize(fixtureKnowledge, 'en'), fixtureAnswers);
+    const { followUpsFor } = bilingualFastPath(fixtureKnowledge);
     const written = [
       "Tell me about Ada's career.",
       'Which skills does she have?',
       'How can I contact Ada?',
     ];
-    expect(followUpsFor('career', FRESH)).toEqual(written);
-    expect(followUpsFor(null, FRESH)).toEqual(written);
+    expect(followUpsFor('career', FRESH, 'en')).toEqual(written);
+    expect(followUpsFor(null, FRESH, 'en')).toEqual(written);
   });
 });
 

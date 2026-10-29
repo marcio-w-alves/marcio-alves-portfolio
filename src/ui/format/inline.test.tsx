@@ -37,12 +37,14 @@ describe('InlineText', () => {
   });
 
   it('links the résumé the fast path offers, on this site, in the same tab', () => {
-    const fastPath = createFastPath(localize(fixtureKnowledge, 'en'), fixtureAnswers);
-    const result = fastPath.answer('Can I see her resume?', {
-      topic: 'overview',
-      lastIntent: null,
-      ctaShown: false,
+    const fastPath = createFastPath({
+      en: { knowledge: localize(fixtureKnowledge, 'en'), answers: fixtureAnswers },
     });
+    const result = fastPath.answer(
+      'Can I see her resume?',
+      { topic: 'overview', lastIntent: null, ctaShown: false },
+      'en',
+    );
     const [lead] = result.kind === 'answered' ? result.response.parts : [];
     const text = lead?.type === 'text' ? lead.text : '';
 

@@ -1,4 +1,5 @@
 import type { HistoryTurn } from '@/core/chat/request';
+import type { Locale } from '@/core/i18n/locale';
 
 /**
  * The conversations the assistant is held to. Each states what a correct
@@ -39,6 +40,8 @@ export interface EvaluationCase {
   readonly id: string;
   readonly category: Category;
   readonly question: string;
+  /** The language of the page it is asked on; English when not given. */
+  readonly pageLocale?: Locale;
   readonly history?: readonly HistoryTurn[];
   readonly expect: Expectation;
 }

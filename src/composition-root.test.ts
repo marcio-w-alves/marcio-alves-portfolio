@@ -44,7 +44,7 @@ describe('production logs of a chat request', () => {
   it('records how each question was answered, as one JSON object per line', async () => {
     const logs = captureLogs();
     const handle = createChatHandler(
-      buildContainer({ record: fixtureKnowledge, answers: fixtureAnswers }),
+      buildContainer({ record: fixtureKnowledge, answers: { en: fixtureAnswers } }),
     );
 
     await ask(handle, "Tell me about Ada's career.");
@@ -119,7 +119,7 @@ describe('the record the container answers from', () => {
 
   it('answers from the knowledge and copy it is given, not from a record of its own', async () => {
     captureLogs();
-    const fixture = buildContainer({ record: fixtureKnowledge, answers: fixtureAnswers });
+    const fixture = buildContainer({ record: fixtureKnowledge, answers: { en: fixtureAnswers } });
 
     const answer = await answerText(fixture, 'Tell me more about Pipewright.');
 

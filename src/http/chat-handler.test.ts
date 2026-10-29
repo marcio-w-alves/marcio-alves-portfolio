@@ -17,7 +17,7 @@ import { fixtureAnswers, fixtureKnowledge } from '@/testing/fixture-profile';
 import { createChatHandler, MAX_BODY_BYTES } from './chat-handler';
 
 const knowledge = localize(fixtureKnowledge, 'en');
-const fastPath = createFastPath(knowledge, fixtureAnswers);
+const fastPath = createFastPath({ en: { knowledge, answers: fixtureAnswers } });
 const reported: unknown[] = [];
 const reportError = (error: unknown) => reported.push(error);
 const rateLimited: string[] = [];
@@ -110,7 +110,7 @@ describe('POST /api/chat — answering', () => {
           { id: 'c1', name: 'getExperience', arguments: '{"company":"globex"}' },
           'She built the Globex pipeline.',
         ),
-        tools: createToolRegistry({ kit: createResponseKit(knowledge), reportError }),
+        tools: { en: createToolRegistry({ kit: createResponseKit(knowledge), reportError }) },
         clock,
         subject: promptSubject(knowledge),
       }),

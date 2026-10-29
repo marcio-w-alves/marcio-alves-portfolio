@@ -1,7 +1,7 @@
 import type { ConversationContext } from '../chat/request';
 import type { AssistantResponse } from './response';
 import type { ResponseKit } from './response-kit';
-import type { ScoredIntent, Vocabulary } from './system1/router';
+import type { ScoredIntent, Vocabulary } from './system1/intents';
 import type { TechnologyEvidence } from './system1/technologies';
 import type { TopicId } from '../chat/topic-id';
 import type { TopicCopy } from './topics';

@@ -1,6 +1,10 @@
 import type { AnswerBuilder, AnswerSet } from '@/core/assistant/answer-set';
 import { bullets, text, type ResponseKit } from '@/core/assistant/response-kit';
-import { SCORED_INTENTS, type ScoredIntent } from '@/core/assistant/system1/router';
+import {
+  SCORED_INTENTS,
+  type ScoredIntent,
+  type Vocabulary,
+} from '@/core/assistant/system1/intents';
 import type { TopicQuestion } from '@/core/assistant/topics';
 
 /**
@@ -11,6 +15,8 @@ import type { TopicQuestion } from '@/core/assistant/topics';
 
 /** What the fixture's answers say around the record's facts, in one language. */
 interface Phrases {
+  /** Her own words for an intent, in this language. */
+  readonly vocabulary: Vocabulary;
   readonly followUps: readonly [career: string, skills: string, contact: string];
   readonly at: string;
   readonly payroll: string;
@@ -100,9 +106,9 @@ function scoredAnswers(kit: ResponseKit, phrases: Phrases): Record<ScoredIntent,
 }
 
 function answersIn(phrases: Phrases): AnswerSet {
-  const { topics: words, followUps } = phrases;
+  const { topics: words, followUps, vocabulary } = phrases;
   return {
-    vocabulary: { leadRole: [[/\bpayroll\b/, 3]] },
+    vocabulary,
     topics: ({ knowledge, timeline, skills }) => {
       const question = (asked: string, tag: string): TopicQuestion => ({ question: asked, tag });
       const page = (
@@ -216,6 +222,7 @@ function answersIn(phrases: Phrases): AnswerSet {
 }
 
 export const fixtureAnswers = answersIn({
+  vocabulary: { leadRole: [[/\bpayroll\b/, 3]] },
   followUps: [
     "Tell me about Ada's career.",
     'Which skills does she have?',
@@ -254,6 +261,8 @@ export const fixtureAnswers = answersIn({
 
 /** The same answers in Portuguese, over the record read in Portuguese. */
 export const fixturePortugueseAnswers = answersIn({
+  // The Portuguese rules read a question without its accents.
+  vocabulary: { leadRole: [[/\bfolha de pagamento\b/, 3]] },
   followUps: [
     'Me fale sobre a carreira da Ada.',
     'Quais competências ela tem?',

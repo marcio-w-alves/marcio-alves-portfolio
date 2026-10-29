@@ -1,13 +1,21 @@
 import type { Knowledge } from '@/core/knowledge/schema';
 import type { ResponsePart } from '../../chat/components';
 import type { ConversationContext } from '../../chat/request';
+import {
+  DEFAULT_LOCALE,
+  SUPPORTED_LOCALES,
+  type Locale,
+  type Translations,
+} from '../../i18n/locale';
 import type { AnswerSet } from '../answer-set';
+import { detectLanguage } from '../language';
 import type { AssistantResponse } from '../response';
 import { createResponseKit } from '../response-kit';
 import { summarizePage } from '../page-summary';
 import { createTopicIntro } from '../topic-pages';
 import { createTopicCatalog } from '../topics';
-import { createRouter, type ScoredIntent } from './router';
+import type { ScoredIntent } from './intents';
+import { createRouter } from './router';
 import { createEvidenceFinder } from './technologies';
 
 /**
@@ -15,6 +23,11 @@ import { createEvidenceFinder } from './technologies';
  * knowledge base, without spending a token. Anything else is escalated —
  * with the closest intent it saw, so the model-backed path can still offer
  * relevant follow-ups.
+ *
+ * A question is answered in its own language, or in the page's when it does
+ * not tell (D4): "Has he led teams?" in English on a Portuguese page, "React?"
+ * in the page's language. A language the profile writes no answers in goes to
+ * the model, which replies in it.
  */
 
 export type FastPathResult =
@@ -28,22 +41,45 @@ export interface PageShown {
   readonly cards: readonly string[];
 }
 
+/** One language's answers, over the record read in that language. */
+export interface LanguageAnswers {
+  readonly knowledge: Knowledge;
+  readonly answers: AnswerSet;
+}
+
 export interface FastPath {
-  readonly answer: (question: string, context: ConversationContext) => FastPathResult;
+  readonly answer: (
+    question: string,
+    context: ConversationContext,
+    pageLocale: Locale,
+  ) => FastPathResult;
   /**
-   * The follow-ups the fast path would offer for an intent — every one of them a
-   * question it can answer — so an escalated answer still suggests only
-   * questions that cost nothing.
+   * The follow-ups the fast path would offer for an intent, in a language —
+   * every one of them a question it can answer — so an escalated answer still
+   * suggests only questions that cost nothing.
    */
   readonly followUpsFor: (
     intent: ScoredIntent | null,
     context: ConversationContext,
+    locale: Locale,
   ) => readonly string[];
   /** What the visitor's topic page already shows, for the model to build on; null on the overview. */
-  readonly pageShown: (context: ConversationContext) => PageShown | null;
+  readonly pageShown: (context: ConversationContext, pageLocale: Locale) => PageShown | null;
   /** The answer of last resort, used only when the model-backed path is unavailable. */
-  readonly unknown: () => AssistantResponse;
+  readonly unknown: (locale: Locale) => AssistantResponse;
   /** For a visitor who has used up their share of model answers. */
+  readonly slowDown: (locale: Locale, followUps: readonly string[]) => AssistantResponse;
+}
+
+/** The fast path in one language. */
+interface LanguageFastPath {
+  readonly answer: (question: string, context: ConversationContext) => FastPathResult;
+  readonly followUpsFor: (
+    intent: ScoredIntent | null,
+    context: ConversationContext,
+  ) => readonly string[];
+  readonly pageShown: (context: ConversationContext) => PageShown | null;
+  readonly unknown: () => AssistantResponse;
   readonly slowDown: (followUps: readonly string[]) => AssistantResponse;
 }
 
@@ -55,10 +91,44 @@ const FOLLOW_UPS = 3;
 
 const partKey = (part: ResponsePart): string => JSON.stringify(part);
 
-export function createFastPath(knowledge: Knowledge, answerSet: AnswerSet): FastPath {
+const ESCALATE_UNRECOGNIZED: FastPathResult = { kind: 'escalate', nearest: null };
+
+export function createFastPath(languages: Translations<LanguageAnswers>): FastPath {
+  const english = createLanguageFastPath(languages.en, DEFAULT_LOCALE);
+  const paths = new Map<Locale, LanguageFastPath>([[DEFAULT_LOCALE, english]]);
+  for (const locale of SUPPORTED_LOCALES) {
+    const language = languages[locale];
+    if (locale !== DEFAULT_LOCALE && language) {
+      paths.set(locale, createLanguageFastPath(language, locale));
+    }
+  }
+  // The page's language always has a fast path: one the profile writes no
+  // answers in reads in English, like the rest of its untranslated text.
+  const inLocale = (locale: Locale): LanguageFastPath => paths.get(locale) ?? english;
+
+  function answer(question: string, context: ConversationContext, pageLocale: Locale) {
+    const detected = detectLanguage(question);
+    if (detected === 'other') return ESCALATE_UNRECOGNIZED;
+    if (detected === 'ambiguous') return inLocale(pageLocale).answer(question, context);
+    return paths.get(detected)?.answer(question, context) ?? ESCALATE_UNRECOGNIZED;
+  }
+
+  return {
+    answer,
+    followUpsFor: (intent, context, locale) => inLocale(locale).followUpsFor(intent, context),
+    pageShown: (context, pageLocale) => inLocale(pageLocale).pageShown(context),
+    unknown: (locale) => inLocale(locale).unknown(),
+    slowDown: (locale, followUps) => inLocale(locale).slowDown(followUps),
+  };
+}
+
+function createLanguageFastPath(
+  { knowledge, answers: answerSet }: LanguageAnswers,
+  locale: Locale,
+): LanguageFastPath {
   const kit = createResponseKit(knowledge);
   const answers = answerSet.answers(kit);
-  const route = createRouter(knowledge, answerSet.vocabulary);
+  const route = createRouter(knowledge, answerSet.vocabulary, locale);
   const findEvidence = createEvidenceFinder(knowledge);
   const catalog = createTopicCatalog(answerSet.topics(kit));
   const topicIntro = createTopicIntro(catalog);

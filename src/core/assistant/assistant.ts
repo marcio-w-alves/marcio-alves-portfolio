@@ -1,5 +1,7 @@
 import { INTERRUPTED, type AssistantEvent } from '../chat/events';
 import type { ConversationContext, HistoryTurn } from '../chat/request';
+import type { Locale } from '../i18n/locale';
+import { replyLocale } from './language';
 import type { AnswerCachePort } from './ports/answer-cache.port';
 import type { ClockPort } from './ports/clock.port';
 import type { ModelBudgetPort } from './ports/model-budget.port';
@@ -12,6 +14,8 @@ export interface AssistantRequest {
   readonly question: string;
   readonly history: readonly HistoryTurn[];
   readonly context: ConversationContext;
+  /** The language of the page the question was asked on. */
+  readonly pageLocale: Locale;
   /** Who is asking, for pacing; not an identity, and never shown to the model. */
   readonly clientId: string;
 }
@@ -96,10 +100,10 @@ export function createAssistant({
   onAnswered,
 }: Options): Assistant {
   async function* respond(
-    { question, history, context, clientId }: AssistantRequest,
+    { question, history, context, pageLocale, clientId }: AssistantRequest,
     signals: AnswerSignals | undefined,
   ): AsyncGenerator<AssistantEvent, Handling> {
-    const routed = fastPath.answer(question, context);
+    const routed = fastPath.answer(question, context, pageLocale);
     if (routed.kind === 'answered') {
       yield* toEvents(routed.response);
       return { path: 'fast', outcome: 'answered', intent: routed.response.intent };
@@ -109,31 +113,34 @@ export function createAssistant({
       outcome,
       intent: routed.nearest,
     });
+    const locale = replyLocale(question, pageLocale);
     if (!modelAssistant) {
-      yield* toEvents(fastPath.unknown());
+      yield* toEvents(fastPath.unknown(locale));
       return escalated('unavailable');
     }
 
-    const followUps = fastPath.followUpsFor(routed.nearest, context);
+    const followUps = fastPath.followUpsFor(routed.nearest, context, locale);
     // Only a question asked without history means the same thing every time —
-    // on the same page, since a topic page changes what is worth saying.
-    const cacheKey = history.length === 0 ? `${context.topic}:${normalize(question)}` : null;
+    // on the same page, since a topic page changes what is worth saying, and in
+    // the same language, since "React?" is answered in the page's.
+    const cacheKey =
+      history.length === 0 ? `${pageLocale}:${context.topic}:${normalize(question)}` : null;
     const cached = cacheKey === null ? undefined : answerCache.get(cacheKey);
     if (cached) {
       yield* cached;
       return escalated('cached');
     }
     if (!budget.admit(clientId)) {
-      yield* toEvents(fastPath.slowDown(followUps));
+      yield* toEvents(fastPath.slowDown(locale, followUps));
       return escalated('paced');
     }
 
     const emitted: AssistantEvent[] = [];
     const signal = signals && AbortSignal.any([signals.visitor, signals.deadline]);
     try {
-      const page = fastPath.pageShown(context);
+      const page = fastPath.pageShown(context, pageLocale);
       const { shareable } = yield* recording(
-        modelAssistant.answer({ question, clientId, history, followUps, page }, signal),
+        modelAssistant.answer({ question, clientId, history, followUps, page, pageLocale }, signal),
         emitted,
       );
       // Stored only once the answer finished, so an interrupted one is never replayed.
@@ -148,7 +155,7 @@ export function createAssistant({
       if (signals?.deadline.aborted) return escalated('interrupted');
       reportError(error);
       if (emitted.length === 0) {
-        yield* toEvents(fastPath.unknown());
+        yield* toEvents(fastPath.unknown(locale));
         return escalated('failed');
       }
       yield INTERRUPTED;

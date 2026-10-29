@@ -10,7 +10,7 @@ import { knowledge as source } from '../../../knowledge';
  * names visitors use for its companies, and its own vocabulary.
  */
 
-const route = createRouter(localize(source, 'en'), answers.vocabulary);
+const route = createRouter(localize(source, 'en'), answers.vocabulary, 'en');
 
 const FRESH: ConversationContext = { topic: 'overview', lastIntent: null, ctaShown: false };
 

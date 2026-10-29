@@ -15,6 +15,7 @@ import { createExternalTools } from '@/core/assistant/tools/external-tools';
 import { createToolRegistry } from '@/core/assistant/tools/registry';
 import { createSearchTools } from '@/core/assistant/tools/search-tools';
 import type { ToolFailure } from '@/core/assistant/tools/tool';
+import { mapTranslations, type Translations } from '@/core/i18n/locale';
 import { buildCorpus } from '@/core/knowledge/corpus';
 import { localize } from '@/core/knowledge/localize';
 import type { Knowledge, KnowledgeSource } from '@/core/knowledge/schema';
@@ -129,12 +130,12 @@ interface GuardedModelAssistant {
 
 export interface ContainerOptions extends Observers {
   /**
-   * Defaults to the profile's record. The answers read it in English, the
-   * search in every language it is written in.
+   * Defaults to the profile's record. Each language's answers read it in that
+   * language, the search in every language it is written in.
    */
   readonly record?: KnowledgeSource;
-  /** Defaults to the profile's English copy; written for the record above. */
-  readonly answers?: AnswerSet;
+  /** Defaults to the profile's copy in each language it writes; written for the record above. */
+  readonly answers?: Translations<AnswerSet>;
   /** Defaults to the validated process environment. */
   readonly env?: ServerEnv;
   /** Defaults to the settings in the process environment. */
@@ -145,7 +146,8 @@ export interface ContainerOptions extends Observers {
 
 interface ModelWiring {
   readonly record: KnowledgeSource;
-  readonly knowledge: Knowledge;
+  /** The record in each language the site is written in. */
+  readonly knowledge: Translations<Knowledge>;
   readonly apiKey: string;
   readonly githubToken: string | undefined;
   readonly chatModel: string;
@@ -158,7 +160,7 @@ function buildModelAssistant(
   observers: Observers,
 ): GuardedModelAssistant {
   const client = createOpenAIClient(apiKey, { timeoutMs: openAITimeoutMs });
-  const kit = createResponseKit(knowledge);
+  const kits = mapTranslations(knowledge, createResponseKit);
   const retrievalBreaker = createCircuitBreakerFor('retrieval');
   const search = createVectorKnowledgeSearch({
     embeddings: createOpenAIEmbeddings({
@@ -168,7 +170,7 @@ function buildModelAssistant(
     }),
     index: knowledgeIndex,
     corpus: buildCorpus(record),
-    citation: kit.citation,
+    citation: kits.en.citation,
     breaker: retrievalBreaker,
   });
   const github = createGithubApi({
@@ -177,22 +179,21 @@ function buildModelAssistant(
     ...(githubToken ? { token: githubToken } : {}),
     logger,
   });
-  const tools = createToolRegistry({
-    kit,
-    extra: [
-      ...createSearchTools(search, reportToolError),
-      ...createExternalTools({
-        kit,
-        references: createWikipediaReferences({
-          product: identity.userAgentProduct,
-          siteUrl: siteUrl(),
-          logger,
-        }),
-        github,
-      }),
-    ],
-    reportError: reportToolError,
+  const references = createWikipediaReferences({
+    product: identity.userAgentProduct,
+    siteUrl: siteUrl(),
+    logger,
   });
+  const tools = mapTranslations(kits, (kit) =>
+    createToolRegistry({
+      kit,
+      extra: [
+        ...createSearchTools(search, reportToolError),
+        ...createExternalTools({ kit, references, github }),
+      ],
+      reportError: reportToolError,
+    }),
+  );
   const breaker = createCircuitBreakerFor('model');
   const model = withCircuitBreaker(
     createOpenAILanguageModel({
@@ -207,8 +208,8 @@ function buildModelAssistant(
     model,
     tools,
     clock: systemClock,
-    subject: promptSubject(knowledge),
-    knownUrls: [...urlsIn(knowledge), `mailto:${knowledge.contact.email}`, siteUrl().href],
+    subject: promptSubject(knowledge.en),
+    knownUrls: [...urlsIn(knowledge.en), `mailto:${knowledge.en.contact.email}`, siteUrl().href],
     onUsage: (usage, clientId) => {
       budget.record(usage, clientId);
       if (usage.estimated) {
@@ -230,13 +231,17 @@ function buildModelAssistant(
  */
 export function buildContainer({
   record = profile.knowledge,
-  answers = profile.copy.en.answers,
+  answers = mapTranslations(profile.copy, (copy) => copy.answers),
   env = serverEnv(),
   settings = assistantSettings(),
   openAITimeoutMs = settings.openAITimeoutMs,
   ...observers
 }: ContainerOptions = {}): Container {
-  const knowledge = localize(record, 'en');
+  const languages = mapTranslations(answers, (answerSet, locale) => ({
+    knowledge: localize(record, locale),
+    answers: answerSet,
+  }));
+  const knowledge = mapTranslations(languages, (language) => language.knowledge);
   const budget = createBudget(settings);
   // Without a credential the site still answers everything the fast path
   // recognizes, and says plainly what it cannot.
@@ -256,7 +261,7 @@ export function buildContainer({
     : null;
   return {
     assistant: createAssistant({
-      fastPath: createFastPath(knowledge, answers),
+      fastPath: createFastPath(languages),
       modelAssistant: model?.assistant ?? null,
       budget,
       answerCache: createAnswerCache({ ttlMs: 60 * 60 * 1000, maxEntries: 500 }),

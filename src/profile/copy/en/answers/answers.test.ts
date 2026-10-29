@@ -17,7 +17,9 @@ const knowledge = localize(source, 'en');
 const catalog = createTopicCatalog(answers.topics(createResponseKit(knowledge)));
 const { topics } = catalog;
 const topicIntro = createTopicIntro(catalog);
-const fastPath = createFastPath(knowledge, answers).answer;
+const englishFastPath = createFastPath({ en: { knowledge, answers } });
+const fastPath = (question: string, context: ConversationContext) =>
+  englishFastPath.answer(question, context, 'en');
 
 const FRESH: ConversationContext = { topic: 'overview', lastIntent: null, ctaShown: false };
 
@@ -297,10 +299,10 @@ describe('fast path — a topic page never repeats itself', () => {
 });
 
 describe('what a topic page tells the model it already shows', () => {
-  const { pageShown } = createFastPath(knowledge, answers);
+  const { pageShown } = englishFastPath;
 
   it("summarizes the experience page's timeline of his roles", () => {
-    const page = pageShown({ ...FRESH, topic: 'experience' });
+    const page = pageShown({ ...FRESH, topic: 'experience' }, 'en');
     expect(page?.label).toBe('Experience');
     expect(page?.summary).toContain('Deel — Senior Frontend Engineer');
     expect(page?.cards).toEqual(['timeline']);
@@ -315,10 +317,10 @@ describe('the answers follow the record they are given', () => {
     'roots-team',
     { value: '1 → 6' },
   );
-  const changedPath = createFastPath(localize(changed, 'en'), answers).answer;
+  const changedPath = createFastPath({ en: { knowledge: localize(changed, 'en'), answers } });
 
   function changedAnswer(question: string): string {
-    const result = changedPath(question, FRESH);
+    const result = changedPath.answer(question, FRESH, 'en');
     if (result.kind !== 'answered') throw new Error(`Escalated instead of answering: ${question}`);
     return plainText(result.response);
   }
@@ -357,9 +359,9 @@ describe('the answers follow the record they are given', () => {
         },
       ],
     });
-    const awardPath = createFastPath(localize(silver, 'en'), answers).answer;
+    const awardPath = createFastPath({ en: { knowledge: localize(silver, 'en'), answers } });
     for (const question of ['Has he received any awards?', 'Has he built mobile apps?']) {
-      const result = awardPath(question, FRESH);
+      const result = awardPath.answer(question, FRESH, 'en');
       if (result.kind !== 'answered')
         throw new Error(`Escalated instead of answering: ${question}`);
       const text = plainText(result.response);

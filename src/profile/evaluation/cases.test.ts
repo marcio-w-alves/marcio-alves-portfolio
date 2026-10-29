@@ -50,7 +50,7 @@ describe('the evaluation cases', () => {
   });
 
   it('route every product-vs-person case to the path it declares', () => {
-    const route = createRouter(localize(knowledge, 'en'), answers.vocabulary);
+    const route = createRouter(localize(knowledge, 'en'), answers.vocabulary, 'en');
     const fresh = { topic: 'overview', lastIntent: null, ctaShown: false } as const;
     const cases = evaluation.filter(({ category }) => category === 'product-vs-person');
     expect(cases.some(({ expect: expectation }) => expectation.path === 'model')).toBe(true);

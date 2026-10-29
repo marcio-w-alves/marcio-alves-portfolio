@@ -7,6 +7,7 @@ import type { AnswerSource, AssistantEvent } from '@/core/chat/events';
 import { assistantSettings } from '@/env';
 import { MAX_OUTPUT_TOKENS } from '@/core/assistant/system2/model-assistant';
 import { SEARCH_UNAVAILABLE } from '@/core/assistant/tools/search-tools';
+import type { Locale } from '@/core/i18n/locale';
 import { localize } from '@/core/knowledge/localize';
 import { profile } from '@/profile';
 import knowledgeIndex from '@/profile/generated/knowledge-index.json';
@@ -123,12 +124,16 @@ function newVisitor(): string {
 
 function question(
   message: string,
-  { ip = newVisitor(), signal }: { ip?: string; signal?: AbortSignal } = {},
+  {
+    ip = newVisitor(),
+    signal,
+    locale = 'en',
+  }: { ip?: string; signal?: AbortSignal; locale?: Locale } = {},
 ): Request {
   return new Request('https://portfolio.test/api/chat', {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-real-ip': ip },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({ message, locale }),
     ...(signal ? { signal } : {}),
   });
 }
@@ -402,6 +407,64 @@ describe('POST /api/chat — a model answer', () => {
     expect(textOf(events)).toBe(
       `See [his GitHub](${record.contact.github}), [email him](mailto:${record.contact.email}) or log in.`,
     );
+  });
+});
+
+describe("POST /api/chat — the page's language", () => {
+  const portugueseRecord = localize(profile.knowledge, 'pt-BR');
+
+  it('tells the model which language the page is in, and reads the record to it in that language', async () => {
+    const sent = scriptedCompletions(
+      toolCallRound('getExperience', JSON.stringify({ company: askedRole.id })),
+      textRound('Ele liderou o time.'),
+    );
+
+    await allEventsOf(await postChat()(question(MODEL_QUESTION, { locale: 'pt-BR' })));
+
+    const [first, second] = sent;
+    expect(first?.messages[0]?.content).toContain(
+      'The visitor is reading the Brazilian Portuguese version of the site.',
+    );
+    expect(first?.messages[0]?.content).toContain(
+      'When that language cannot be told (a single word, a name, a technology), reply in Brazilian Portuguese.',
+    );
+    const toolResult = second?.messages.at(-1);
+    const portugueseRole = portugueseRecord.experience.find(({ id }) => id === askedRole.id);
+    expect(JSON.parse(toolResult?.content ?? 'null')).toEqual([
+      expect.objectContaining({ id: askedRole.id, summary: portugueseRole?.summary }),
+    ]);
+    expect(portugueseRole?.summary).not.toBe(askedRole.summary);
+  });
+
+  it('tells the model the page is in English on an English page', async () => {
+    const sent = scriptedCompletions(textRound('He led the team.'));
+
+    await allEventsOf(await postChat()(question(MODEL_QUESTION)));
+
+    expect(sent[0]?.messages[0]?.content).toContain(
+      'The visitor is reading the English version of the site.',
+    );
+  });
+
+  it("never replays one language's answer to a question that does not tell its language on the other", async () => {
+    const [first = '', second = ''] = companies;
+    const ambiguous = `${first} vs ${second}?`;
+    const sent = scriptedCompletions(textRound('In English.'), textRound('Em português.'));
+    const handle = postChat();
+    const ip = newVisitor();
+
+    const english = textOf(await allEventsOf(await handle(question(ambiguous, { ip }))));
+    const portuguese = textOf(
+      await allEventsOf(await handle(question(ambiguous, { ip, locale: 'pt-BR' }))),
+    );
+    const englishAgain = textOf(await allEventsOf(await handle(question(ambiguous, { ip }))));
+
+    expect(sent).toHaveLength(2);
+    expect([english, portuguese, englishAgain]).toEqual([
+      'In English.',
+      'Em português.',
+      'In English.',
+    ]);
   });
 });
 
