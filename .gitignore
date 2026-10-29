@@ -49,3 +49,6 @@ next-env.d.ts
 
 # Local agent tooling: worktrees are separate checkouts of this repo.
 .claude/
+
+# Plans and decision records are kept outside the repository.
+docs/

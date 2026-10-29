@@ -51,9 +51,9 @@ gate is fixed, never bypassed.
 
 - `src/core` stays framework-free: no Next.js, React or vendor SDK, only Zod.
   An outward need becomes a port, implemented in `src/infrastructure` and
-  bound in `src/composition-root.ts` ([ADR 0001](docs/adr/0001-framework-free-core.md)).
+  bound in `src/composition-root.ts`.
 - The assistant reaches data only through allow-listed actions with strict
-  schemas ([ADR 0003](docs/adr/0003-the-model-never-holds-the-record.md)).
+  schemas.
   Every fact in the knowledge base carries its source.
 - Styling is Tailwind utilities over the tokens in `src/ui/globals.css`, and
   nothing else. A value no utility can express is a missing token: add it to
@@ -67,8 +67,7 @@ gate is fixed, never bypassed.
 
 1. Edit `src/profile/knowledge/*`; every entry keeps its `source`. `src/profile/README.md`
    lists every file of the profile.
-2. `pnpm rag:build`. CI fails while the index is stale
-   ([ADR 0004](docs/adr/0004-committed-retrieval-index.md)).
+2. `pnpm rag:build`. CI fails while the index is stale.
 3. `pnpm eval:assistant`.
 
 ## Changing the design

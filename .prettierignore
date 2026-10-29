@@ -15,8 +15,6 @@ next-env.d.ts
 src/profile/generated/knowledge-index.json
 src/profile/generated/retrieval-probes.json
 
-# Generated from the plan markdown; it is a view, not a source.
-docs/plan/**/index.html
 
 # The knowledge-base document is kept as written; notes.json is generated from it.
 src/profile/knowledge/knowledge-base.md
