@@ -1,10 +1,10 @@
 import { checkCopyAlignment, checkLocaleCopy } from '../../../src/core/assistant/copy/check';
-import { ASSISTANT_LIMITS } from '../../../src/core/assistant/copy/limits';
 import { DEFAULT_LOCALE, type Locale } from '../../../src/core/i18n/locale';
 import { recordFigures } from '../../../src/core/knowledge/figures';
 import { localize } from '../../../src/core/knowledge/localize';
 import type { ProfileData } from '../../../src/profile/schema';
 import type { BundleProblem } from '../bundle/problems';
+import { compileOptionsFor } from './words';
 
 /**
  * A profile's words, proven over its own record before anything is built from
@@ -15,15 +15,16 @@ import type { BundleProblem } from '../bundle/problems';
  * problem in the bundle document it was written in.
  */
 
+/** Said where the core's message does not already say what to do about it. */
+const REMEDY = 'write it as profiles/example does';
+
 export function checkCopy(data: ProfileData): BundleProblem[] {
   return data.locales.flatMap((locale) => {
     const documents = data.copy[locale];
     // A published locale with no copy is the translations check's to report.
     if (!documents) return [];
     const problems = checkLocaleCopy(documents, {
-      locale,
-      limits: ASSISTANT_LIMITS,
-      identity: identityStrings(data),
+      ...compileOptionsFor(data, locale),
       knowledge: localize(data.knowledge, locale),
       figures: recordFigures(data.knowledge),
     });
@@ -35,16 +36,12 @@ export function checkCopy(data: ProfileData): BundleProblem[] {
   });
 }
 
-/** What the about page may say of the site itself: `{{identity.sourceRepository}}`. */
-function identityStrings({ identity }: ProfileData): Readonly<Record<string, string>> {
-  return identity.sourceRepository ? { sourceRepository: identity.sourceRepository } : {};
-}
-
 /** Where a copy problem is, as the copy itself addresses it: `topics.yaml`, `#career.parts[0]`. */
 interface Place {
   readonly document?: string;
   readonly at?: string;
   readonly problem: string;
+  readonly remedy: string;
 }
 
 /**
@@ -63,11 +60,24 @@ function placeEach(
     const place = placeOf(message, documents);
     found.set(`${place.document ?? ''}#${place.at ?? ''}: ${place.problem}`, place);
   }
-  return [...found.values()].map(({ document, at, problem }) => ({
+  return [...found.values()].map(({ document, at, problem, remedy }) => ({
     document: document === undefined ? folder : `${folder}${document}`,
     ...(at === undefined ? {} : { at }),
     problem,
+    remedy,
   }));
+}
+
+/**
+ * The core separates a problem from what to do about it with an em dash, as
+ * the bundle's problems do; where it wrote no remedy, the generic one keeps
+ * copy from being the one family of problems that says only what is wrong.
+ */
+function said(message: string): { problem: string; remedy: string } {
+  const at = message.lastIndexOf(' — ');
+  return at < 0
+    ? { problem: message, remedy: REMEDY }
+    : { problem: message.slice(0, at), remedy: message.slice(at + ' — '.length) };
 }
 
 /**
@@ -78,15 +88,20 @@ function placeEach(
  */
 function placeOf(message: string, documents: readonly string[]): Place {
   for (const document of documents) {
-    const at = message.indexOf(`${document}#`);
-    if (at >= 0) {
-      const rest = message.slice(at + document.length + 1);
-      const said = rest.indexOf(': ');
-      return { document, at: rest.slice(0, said), problem: rest.slice(said + ': '.length) };
+    const pointed = message.indexOf(`${document}#`);
+    if (pointed >= 0) {
+      const rest = message.slice(pointed + document.length + 1);
+      const problem = rest.indexOf(': ');
+      return {
+        document,
+        at: rest.slice(0, problem),
+        ...said(rest.slice(problem + ': '.length)),
+      };
     }
-    const alone = message.indexOf(`${document}: `);
-    if (alone >= 0)
-      return { document, problem: message.slice(alone + document.length + ': '.length) };
+    const named = message.indexOf(`${document}: `);
+    if (named >= 0) {
+      return { document, ...said(message.slice(named + document.length + ': '.length)) };
+    }
   }
-  return { problem: message };
+  return said(message);
 }

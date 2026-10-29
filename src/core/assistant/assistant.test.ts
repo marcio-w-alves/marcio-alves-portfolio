@@ -250,6 +250,40 @@ describe('assistant — when an answer cannot be rendered', () => {
     expect(events[0]).toMatchObject({ type: 'start', intent: 'resume' });
     expect(reported).toEqual([]);
   });
+
+  /**
+   * The follow-ups offered beside an escalated answer come from the copy too:
+   * for a question with no near intent, from the greeting. Asked in a third
+   * language, this one escalates without rendering anything — so the answer
+   * is sound and only the suggestions cannot be rendered.
+   */
+  const NO_NEAR_INTENT = '彼の経歴は？';
+
+  it('offers no suggestion rather than losing the answer it would go beside', async () => {
+    const { model, received } = sentenceModel();
+    const events = await collect(assistantWith(model, { over: brokenGreeting }), NO_NEAR_INTENT);
+
+    expect(received.map((modelRequest) => modelRequest.followUps)).toEqual([[]]);
+    expect(reported.map((error) => (error as Error).message)).toEqual([
+      expect.stringContaining('Unknown path "profile.notAField"'),
+    ]);
+    expect(events.at(-1)).toMatchObject({ type: 'finish', followUps: [] });
+    expect(answered).toMatchObject([{ path: 'model', outcome: 'answered' }]);
+  });
+
+  it('still tells a visitor who has used up their share, instead of nothing', async () => {
+    const events = await collect(
+      assistantWith(sentenceModel().model, { budget: budgetThat(false), over: brokenGreeting }),
+      NO_NEAR_INTENT,
+    );
+
+    expect(events[0]).toMatchObject({ type: 'start', intent: 'rateLimited' });
+    expect(events.at(-1)).toMatchObject({ type: 'finish' });
+    expect(answered).toMatchObject([{ path: 'model', outcome: 'paced' }]);
+    expect(reported.map((error) => (error as Error).message)).toEqual([
+      expect.stringContaining('Unknown path "profile.notAField"'),
+    ]);
+  });
 });
 
 describe('assistant — an answer cut short', () => {

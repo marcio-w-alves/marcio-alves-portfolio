@@ -92,8 +92,17 @@ async function materializeCommand(args: readonly string[]) {
   }
   // Materializing into the repository itself arrives with the site reading
   // these files; until then its generated files are committed and are not this
-  // command's to overwrite.
-  if (!values.out) throw new UsageError('materialize needs --out <dir>.');
+  // command's to overwrite. `pnpm build` passes no --out, so this is also what
+  // stops a production deployment from being told to build from a profile the
+  // site would not read: D4b may only drop it in the same change that puts the
+  // production rule back into selectSource and assertProfileFitsDeployment.
+  if (!values.out) {
+    throw new UsageError(
+      'src/profile is still what the site is built from, and a materialization cannot replace ' +
+        'it yet: unset PROFILE_BUNDLE_DIR and PROFILE_DATABASE_URL, or name --out <dir> to ' +
+        'materialize somewhere else.',
+    );
+  }
   const out = resolve(values.out);
   if (values['if-absent'] && (await isMaterialized(out))) {
     log(`A profile is already materialized in ${out}; leaving it as it is.`);

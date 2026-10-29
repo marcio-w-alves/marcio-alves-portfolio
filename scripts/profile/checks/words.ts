@@ -1,4 +1,4 @@
-import { compileLocaleCopy } from '../../../src/core/assistant/copy/compile';
+import { compileLocaleCopy, type CompileOptions } from '../../../src/core/assistant/copy/compile';
 import { ASSISTANT_LIMITS } from '../../../src/core/assistant/copy/limits';
 import { CopyError } from '../../../src/core/assistant/copy/prepare';
 import { TemplateError } from '../../../src/core/assistant/copy/template';
@@ -15,6 +15,22 @@ import type { ProfileData } from '../../../src/profile/schema';
  */
 
 export type Words = Translations<LanguageAnswers>;
+
+/**
+ * How a profile's copy is compiled, wherever it is compiled. The copy check
+ * and this module must agree on it to the letter: options that differ make
+ * one of them compile copy the other cannot, and a check that cannot compile
+ * the words does not run at all.
+ */
+export function compileOptionsFor(data: ProfileData, locale: Locale): CompileOptions {
+  const { sourceRepository } = data.identity;
+  return {
+    locale,
+    limits: ASSISTANT_LIMITS,
+    // What the about page may say of the site itself: `{{identity.sourceRepository}}`.
+    identity: sourceRepository ? { sourceRepository } : {},
+  };
+}
 
 /**
  * Null where the copy does not compile or render, or a published language has
@@ -37,8 +53,7 @@ function eachLanguage(data: ProfileData): Words | null {
     if (!documents) return null;
     languages[locale] = {
       knowledge: localize(data.knowledge, locale),
-      answers: compileLocaleCopy(documents, { locale, limits: ASSISTANT_LIMITS, identity: {} })
-        .answers,
+      answers: compileLocaleCopy(documents, compileOptionsFor(data, locale)).answers,
     };
   }
   const english = languages.en;

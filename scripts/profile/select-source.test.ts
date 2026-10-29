@@ -47,11 +47,6 @@ const selected: readonly [string, Env, Source][] = [
     { PROFILE_BUNDLE_DIR: DIR, VERCEL_ENV: 'production' },
     { kind: 'bundle', dir: DIR },
   ],
-  [
-    'PROFILE_SOURCE=typescript, the explicit way to say src/profile',
-    { PROFILE_SOURCE: 'typescript' },
-    { kind: 'typescript' },
-  ],
   ['nothing, without VERCEL_ENV', {}, { kind: 'typescript' }],
   ['nothing, in a preview', { VERCEL_ENV: 'preview' }, { kind: 'typescript' }],
   ['nothing, in development', { VERCEL_ENV: 'development' }, { kind: 'typescript' }],
@@ -82,7 +77,7 @@ const refused: readonly [string, Env, string][] = [
   [
     'an unknown PROFILE_SOURCE',
     { PROFILE_SOURCE: 'owner' },
-    'PROFILE_SOURCE is "owner"; it must be one of database, bundle, example, typescript.',
+    'PROFILE_SOURCE is "owner"; it must be one of database, bundle, example.',
   ],
   [
     'both the URL and the directory',

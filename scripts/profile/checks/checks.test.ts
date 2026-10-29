@@ -3,6 +3,7 @@ import { readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { stringify } from 'yaml';
 import { assistantActionNames } from './action-names';
 import { compileWords } from './words';
 import {
@@ -21,6 +22,9 @@ import {
  * fail on one planted fault in an otherwise valid copy of the example, and to
  * say where the fault is and what to do.
  */
+
+/** What a copy problem says to do where the core's own message does not say. */
+const REMEDY = ' — write it as profiles/example does';
 
 const TOOLS_DIR = fileURLToPath(new URL('../../../src/core/assistant/tools/', import.meta.url));
 
@@ -130,9 +134,9 @@ describe('the translations of a profile', () => {
 
     const problems = await problemsOf(dir);
 
-    expect(problems).toContain('copy/en/: topics.yaml: the copy needs this document');
-    expect(problems).toContain('copy/en/: labels.yaml: the copy needs this document');
-    expect(problems).toContain('copy/en/: answers/: the copy needs a "greeting" answer');
+    expect(problems).toContain(`copy/en/: topics.yaml: the copy needs this document${REMEDY}`);
+    expect(problems).toContain(`copy/en/: labels.yaml: the copy needs this document${REMEDY}`);
+    expect(problems).toContain(`copy/en/: answers/: the copy needs a "greeting" answer${REMEDY}`);
   });
 
   it('refuses a translated copy that lacks an answer of the English one', async () => {
@@ -142,8 +146,8 @@ describe('the translations of a profile', () => {
 
     expect(await problemsOf(dir)).toEqual([
       'copy/pt-BR/answers/answers.yaml#/identity: "identity" is missing — translate it from copy/en/answers/answers.yaml',
-      'copy/pt-BR/: answers/: no answer writes the "identity" intent, which the router still recognizes, so those questions would go to the model. Write it, or name it in facts.yaml#omit to say the omission is meant.',
-      'copy/pt-BR/: answers/: the pt-BR copy has no "identity" answer, which English has',
+      `copy/pt-BR/: answers/: no answer writes the "identity" intent, which the router still recognizes, so those questions would go to the model. Write it, or name it in facts.yaml#omit to say the omission is meant.${REMEDY}`,
+      `copy/pt-BR/: answers/: the pt-BR copy has no "identity" answer, which English has${REMEDY}`,
     ]);
   });
 });
@@ -425,8 +429,8 @@ describe('the words a profile writes', () => {
     await plantGreeting({ text: 'Hello from {{profile.notAField}}.' });
 
     expect(await problemsOf(dir)).toEqual([
-      'copy/en/answers/answers.yaml#greeting.parts[0].text:1:12: Unknown path "profile.notAField": there is no "notAField"',
-      'copy/pt-BR/answers/answers.yaml#greeting.parts[0].text:1:12: Unknown path "profile.notAField": there is no "notAField"',
+      `copy/en/answers/answers.yaml#greeting.parts[0].text:1:12: Unknown path "profile.notAField": there is no "notAField"${REMEDY}`,
+      `copy/pt-BR/answers/answers.yaml#greeting.parts[0].text:1:12: Unknown path "profile.notAField": there is no "notAField"${REMEDY}`,
     ]);
   });
 
@@ -453,7 +457,7 @@ describe('the interface words a profile overrides', () => {
 
     expect(await problemsOf(dir)).toEqual([
       'copy/en/ui.yaml#/emailSubjectLine: "emailSubjectLine" is not one of the default messages — word one of the default messages (src/ui/i18n/en.ts)',
-      'copy/pt-BR/ui.yaml#/emailSubjectLine: "emailSubjectLine" is not one of the default messages — word one of the default messages (src/ui/i18n/en.ts)',
+      'copy/pt-BR/ui.yaml#/emailSubjectLine: "emailSubjectLine" is not one of the default messages — word one of the default messages (src/ui/i18n/pt-BR.ts)',
     ]);
   });
 
@@ -475,7 +479,61 @@ describe('the interface words a profile overrides', () => {
 
     expect(await problemsOf(dir)).toEqual([
       'copy/en/ui.yaml#/actions/roleQuestionLabel: "roleQuestionLabel" is not one of the default messages — word one of the default messages (src/ui/i18n/en.ts)',
-      'copy/pt-BR/ui.yaml#/actions/roleQuestionLabel: "roleQuestionLabel" is not one of the default messages — word one of the default messages (src/ui/i18n/en.ts)',
+      'copy/pt-BR/ui.yaml#/actions/roleQuestionLabel: "roleQuestionLabel" is not one of the default messages — word one of the default messages (src/ui/i18n/pt-BR.ts)',
+    ]);
+  });
+});
+
+/**
+ * The owner's profile has what the example has not: a page about the site,
+ * whose text names `{{identity.sourceRepository}}`. Compiling that needs the
+ * identity, and a check that compiles the copy without it compiles nothing —
+ * which is how the checks over a profile's words came to be inert on the only
+ * real profile there is while the example passed (POR-94).
+ */
+describe('a profile with a page about the site', () => {
+  const ABOUT = {
+    label: 'About',
+    title: 'About this site',
+    description: 'How this site is put together.',
+    markdown: 'Its code is public at {{identity.sourceRepository}}.',
+  };
+
+  beforeEach(async () => {
+    await editDocument(dir, 'identity.yaml', (identity: Mapping) => {
+      identity.sourceRepository = 'https://github.com/ada/portfolio';
+    });
+    await reseedIndex(dir);
+    for (const locale of ['en', 'pt-BR']) {
+      await writeDocument(dir, `copy/${locale}/about.yaml`, stringify(ABOUT));
+    }
+  });
+
+  it('passes every check, so the checks over its words really ran', async () => {
+    const { data } = await checkBundle(dir);
+
+    expect(compileWords(data)).not.toBeNull();
+    expect(await problemsOf(dir)).toEqual([]);
+  });
+
+  it('still refuses a calibration action the assistant does not have', async () => {
+    await writeCalibration(dir, [
+      { answer: 'At Acme she cut build times by 90%.', action: 'getSalary' },
+    ]);
+
+    expect(await problemsOf(dir)).toEqual([
+      'evaluation/calibration.yaml#/0/actions/0/name: "getSalary" is not an action of the assistant — name one of the assistant\'s actions',
+    ]);
+  });
+
+  it('still refuses a suggested question the fast path does not answer', async () => {
+    await editDocument(dir, 'copy/en/answers/answers.yaml', (answers: CopyAnswers) => {
+      const greeting = answers.greeting;
+      if (greeting) greeting.followUps = ['Does {{first}} play chess on Tuesdays?'];
+    });
+
+    expect(await problemsOf(dir)).toEqual([
+      'copy/en/: the site suggests "Does Ada play chess on Tuesdays?", which the fast path does not answer — suggest a question an answer writes, or write the answer it leads to',
     ]);
   });
 });

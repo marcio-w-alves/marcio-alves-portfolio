@@ -295,7 +295,26 @@ describe('the materialize command', { timeout: CLI_TEST_TIMEOUT_MS }, () => {
     const run = await runProfile(['materialize', '--example']);
 
     expect(run.code).toBe(1);
-    expect(run.stderr).toContain('materialize needs --out <dir>.');
+    expect(run.stderr).toContain('src/profile is still what the site is built from');
+    expect(run.stderr).toContain('--out <dir>');
+  });
+
+  /**
+   * `pnpm build` passes no --out, so while the site is built from the
+   * TypeScript profile this is what stops a deployment from being told to
+   * build from a profile the site would not read — the job
+   * PRODUCTION_NEEDS_A_PROFILE used to do, until D4b puts that rule back.
+   */
+  it('refuses a production build pointed at a bundle it would not be read from', async () => {
+    const dir = await exampleCopy(scratch);
+
+    const run = await runProfile(['materialize'], {
+      VERCEL_ENV: 'production',
+      PROFILE_BUNDLE_DIR: dir,
+    });
+
+    expect(run.code).toBe(1);
+    expect(run.stderr).toContain('unset PROFILE_BUNDLE_DIR and PROFILE_DATABASE_URL');
   });
 
   // What a reachable database holds is proven against a real Postgres, in

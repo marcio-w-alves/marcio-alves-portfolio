@@ -16,11 +16,12 @@ type Group = Readonly<Record<string, unknown>>;
 const CATALOGS = {
   'ui.yaml': {
     of: (locale: Locale): Group => ({ ...DEFAULT_MESSAGES[locale].ui }),
-    source: 'src/ui/i18n/en.ts',
+    // One module per language, so a problem points at the one to read.
+    source: (locale: Locale) => `src/ui/i18n/${locale}.ts`,
   },
   'site.yaml': {
     of: (locale: Locale): Group => ({ ...DEFAULT_MESSAGES[locale].site }),
-    source: 'src/site/site-copy.ts',
+    source: () => 'src/site/site-copy.ts',
   },
 } as const;
 
@@ -31,7 +32,7 @@ export function checkOverrides(data: ProfileData): BundleProblem[] {
       const written = documents[name];
       if (written === undefined) return [];
       const document = `copy/${locale}/${name}`;
-      const remedy = `word one of the default messages (${catalog.source})`;
+      const remedy = `word one of the default messages (${catalog.source(locale)})`;
       if (!isGroup(written)) {
         return [{ document, problem: `is ${kindOf(written)}, not a group of messages`, remedy }];
       }

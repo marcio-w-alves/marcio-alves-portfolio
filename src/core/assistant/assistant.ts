@@ -107,8 +107,9 @@ export function createAssistant({
    * record, so copy that cannot be rendered must cost the visitor only what
    * it was going to say: the question is escalated like one the fast path
    * does not recognize, and a suggestion goes unmade, instead of the answer
-   * being lost. The answers of last resort have nothing behind them, so a
-   * failure there is the stream's to report.
+   * being lost. `unknown` and `slowDown` are templates too, but they are what
+   * everything else degrades to — there is nothing behind them to fall back
+   * on, so a failure there is the stream's to report.
    */
   function rendered<T>(render: () => T, whenBroken: T): T {
     try {
@@ -158,7 +159,9 @@ export function createAssistant({
     const emitted: AssistantEvent[] = [];
     const signal = signals && AbortSignal.any([signals.visitor, signals.deadline]);
     try {
-      const page = rendered(() => fastPath.pageShown(context, pageLocale), null);
+      // Not guarded: a topic page is rendered when the fast path is built, so
+      // one that cannot render fails the checks and the build, never a visitor.
+      const page = fastPath.pageShown(context, pageLocale);
       const { shareable } = yield* recording(
         modelAssistant.answer(
           { question, clientId, history, followUps, page, pageLocale, answerLocale: locale },

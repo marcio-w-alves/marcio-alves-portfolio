@@ -15,13 +15,17 @@ import type { Words } from './words';
 
 const FRESH = { topic: 'overview', lastIntent: null, ctaShown: false } as const;
 
-export function checkSuggestionGraph(words: Words, locales: readonly Locale[]): BundleProblem[] {
+/** Null where a render stopped the walk, so the caller knows this check did not run. */
+export function checkSuggestionGraph(
+  words: Words,
+  locales: readonly Locale[],
+): BundleProblem[] | null {
   try {
     return graphProblems(words, locales);
   } catch (error) {
     // Walking the graph renders every answer, and copy that does not render
     // has no graph: the copy check reports that instead.
-    if (error instanceof TemplateError) return [];
+    if (error instanceof TemplateError) return null;
     throw error;
   }
 }

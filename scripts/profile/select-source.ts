@@ -7,9 +7,11 @@
  * 2. Otherwise the database when its URL is set, and a bundle directory when
  *    one is named; both at once is ambiguous and refused.
  * 3. Nothing set: the TypeScript profile in `src/profile`, which is still
- *    what the site is built from. Once the site is built from a
- *    materialization instead, this is where an unconfigured production build
- *    fails and every other one takes the example.
+ *    what the site is built from. It is the unset fallback and nothing else —
+ *    no `PROFILE_SOURCE` names it, because no deployment needs to. Once the
+ *    site is built from a materialization instead, this is where an
+ *    unconfigured production build fails and every other one takes the
+ *    example.
  *
  * An empty variable counts as unset: that is how a deployment clears one.
  */
@@ -30,7 +32,7 @@ export class SelectionError extends Error {
   }
 }
 
-const SOURCES = ['database', 'bundle', 'example', 'typescript'] as const;
+const SOURCES = ['database', 'bundle', 'example'] as const;
 
 function setting(env: Env, name: string): string | undefined {
   const value = env[name];
@@ -69,8 +71,6 @@ function explicitSource(explicit: string, url?: string, dir?: string): Source {
       return { kind: 'bundle', dir };
     case 'example':
       return { kind: 'example' };
-    case 'typescript':
-      return { kind: 'typescript' };
     default:
       throw new SelectionError(
         `PROFILE_SOURCE is "${explicit}"; it must be one of ${SOURCES.join(', ')}.`,
