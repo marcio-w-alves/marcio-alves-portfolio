@@ -1,8 +1,8 @@
 import { createHash, randomBytes } from 'node:crypto';
-import { readFile, stat } from 'node:fs/promises';
+import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { EXAMPLE_DIR, runProfile } from '../testing/bundles';
+import { EXAMPLE_DIR, runProfile, scratchDir } from '../testing/bundles';
 import { withSession } from './connect';
 import { createRoleStatement, OWNER_ROLE, READER_ROLE } from './initialise';
 import { migrations } from './migrate';
@@ -137,6 +137,31 @@ describe('creating the store', () => {
     ).resolves.toEqual([{ ok: 1 }]);
     await db.query('admin', `drop role ${role}`);
   });
+
+  it('tightens the mode of a credentials file that was already there', async () => {
+    const scratch = await scratchDir('profile-credentials-');
+    const database = `${db.name}_modes`;
+    await db.query('admin', `create database ${database}`);
+    const admin = new URL(db.adminUrl);
+    admin.pathname = `/${database}`;
+    const path = join(scratch.path, 'credentials', `${db.host}__${database}.env`);
+    await mkdir(join(scratch.path, 'credentials'), { recursive: true });
+    // Someone, or an earlier version of this tool, left it readable.
+    await writeFile(path, '# left over\n', { mode: 0o644 });
+
+    const run = await runProfile(['init'], {
+      PROFILE_HOME: scratch.path,
+      PROFILE_ADMIN_DATABASE_URL: admin.toString(),
+      ...(process.env.NODE_EXTRA_CA_CERTS === undefined
+        ? {}
+        : { NODE_EXTRA_CA_CERTS: process.env.NODE_EXTRA_CA_CERTS }),
+    });
+
+    expect(run, run.stderr).toMatchObject({ code: 0 });
+    expect((await stat(path)).mode & 0o777).toBe(0o600);
+    await db.query('admin', `drop database ${database} with (force)`);
+    await scratch.remove();
+  }, 60_000);
 
   it('changes nothing when it runs a second time', async () => {
     const before = await db.counts();

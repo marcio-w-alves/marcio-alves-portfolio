@@ -284,7 +284,38 @@ async function dropLeftovers(open: Session, keep: string): Promise<void> {
     // Whatever a previous run left the role owning in this database, including
     // the grants on it; its own test database is already gone.
     await open.query(`drop owned by ${role} cascade`);
+    await dropRole(open, role);
+  }
+}
+
+/**
+ * `drop owned by` only reaches the database it runs in, so a role that owns a
+ * schema in another one — the usual cause being `pnpm profile init` run by
+ * hand against this cluster, which the documentation invites — cannot be
+ * dropped. Saying which database, and what to do about it, beats a bare 2BP01
+ * on every run from here on.
+ */
+async function dropRole(open: Session, role: string): Promise<void> {
+  try {
     await open.query(`drop role ${role}`);
+  } catch (error) {
+    if ((error as { code?: string }).code !== '2BP01') throw error;
+    const elsewhere = await open.query<{ datname: string }>(
+      `select distinct coalesce(d.datname, '(the whole cluster)') as datname
+         from pg_shdepend s
+         left join pg_database d on d.oid = s.dbid
+        where s.refobjid = (select oid from pg_roles where rolname = $1)
+          and d.datname is distinct from current_database()`,
+      [role],
+    );
+    const where = elsewhere.map(({ datname }) => datname).join(', ') || 'another database';
+    throw new Error(
+      `${role} still owns objects in ${where}, so the store tests cannot start from a cluster ` +
+        `without it. Drop that database (\`drop database <name>\`), or drop what the role owns ` +
+        `there and then the role. A \`pnpm profile init\` run by hand against this cluster is ` +
+        'the usual reason.',
+      { cause: error },
+    );
   }
 }
 
@@ -399,7 +430,11 @@ async function waitForLockWait(
 export interface CorruptedHead {
   /** The document whose bytes no longer hash to their key. */
   readonly path: string;
-  /** Puts the bytes back, and validates the constraint again. */
+  /** The key those bytes are filed under, as hex. */
+  readonly key: string;
+  /** Whether the bytes under that key hash to it again — whether something healed them. */
+  readonly isSound: () => Promise<boolean>;
+  /** Puts the bytes back by hand, and validates the constraint again. */
   readonly repair: () => Promise<void>;
 }
 
@@ -419,7 +454,10 @@ export async function corruptHead(db: TestDatabase, path = 'privacy.yaml'): Prom
       [path],
     ),
   );
-  await db.query('admin', 'alter table profile.blob drop constraint blob_is_content_addressed');
+  await db.query(
+    'admin',
+    'alter table profile.blob drop constraint if exists blob_is_content_addressed',
+  );
   await db.query(
     'admin',
     `update profile.blob set bytes = bytes || '\\x20'::bytea where sha256 = decode($1, 'hex')`,
@@ -427,6 +465,16 @@ export async function corruptHead(db: TestDatabase, path = 'privacy.yaml'): Prom
   );
   return {
     path,
+    key: sha,
+    isSound: async () =>
+      one(
+        await db.query<{ sound: boolean }>(
+          'admin',
+          `select sha256 = pg_catalog.sha256(bytes) as sound from profile.blob
+            where sha256 = decode($1, 'hex')`,
+          [sha],
+        ),
+      ).sound,
     repair: async () => {
       await db.query(
         'admin',
@@ -436,8 +484,8 @@ export async function corruptHead(db: TestDatabase, path = 'privacy.yaml'): Prom
       // Without `not valid`, adding it reads every row: the repair is checked.
       await db.query(
         'admin',
-        `alter table profile.blob add constraint blob_is_content_addressed
-           check (sha256 = pg_catalog.sha256(bytes))`,
+        `alter table profile.blob drop constraint if exists blob_is_content_addressed,
+           add constraint blob_is_content_addressed check (sha256 = pg_catalog.sha256(bytes))`,
       );
     },
   };

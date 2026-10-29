@@ -239,7 +239,14 @@ describe('a head that no longer reads', () => {
     expectNoCredential(listed.stdout + listed.stderr, db.readerUrl);
   });
 
-  it('is replaced by a restore, which keeps the damaged bytes as they are', async () => {
+  /**
+   * The document is `identity.yaml`, which no revision here ever edited: under
+   * dedup that is ONE blob row, shared by every revision, so the revision a
+   * restore goes back to holds the very bytes that rotted. This is the normal
+   * case, not the lucky one, and the restore has to leave a head that reads
+   * and say what it could not put back.
+   */
+  it('is written over by a restore, which says which bytes it could not put back', async () => {
     const { head: corruptId } = await db.counts();
     const wanted = one(
       await db.query<{ id: string; digest: string }>(
@@ -250,28 +257,64 @@ describe('a head that no longer reads', () => {
       ),
     );
     const taken = await readdir(join(db.home, 'backups')).catch((): string[] => []);
-    const corrupted = await corruptHead(db);
-    // Nothing else will touch it: a build refuses it, and so does an import.
+    const corrupted = await corruptHead(db, 'identity.yaml');
+    const shared = one(
+      await db.query<{ revisions: number }>(
+        'admin',
+        `select count(distinct revision_id)::int as revisions from profile.document
+          where blob_sha256 = decode($1, 'hex')`,
+        [corrupted.key],
+      ),
+    );
+    // Nothing that builds will touch it.
     const build = await db.asReader(['materialize', '--out', join(scratch.path, 'corrupt')]);
-    const refused = await db.asOwner(['import', await editedBundle('over-corrupt', 'over')]);
 
     const restored = await db.asOwner(['restore', wanted.id]);
 
+    // The damaged blob really is the one the restore target holds too.
+    expect(shared.revisions).toBeGreaterThan(1);
     expect(build.code).toBe(1);
-    expect(refused.code).toBe(1);
-    expect(refused.stderr).toContain('corrupt');
     expect(restored, restored.stderr).toMatchObject({ code: 0 });
-    expect(restored.stdout).toContain('does not read back');
-    // The damaged profile is on disk, named for what it is.
+    expect(restored.stdout).toContain('does not read back as revision');
+    expect(restored.stdout).toContain('identity.yaml');
+    // It says what it could not do, rather than reporting a clean restore.
+    expect(restored.stdout).toContain('does not read back either');
+    expect(restored.stdout).toContain('pnpm profile import');
     const [kept] = (await readdir(join(db.home, 'backups'))).filter(
       (name) => !taken.includes(name),
     );
     expect(kept).toMatch(new RegExp(`-rev${String(corruptId)}-unverified$`));
     expect(restored.stdout).toContain(join(db.home, 'backups', String(kept)));
-    // And the profile reads again, at the revision that was asked for.
-    expect((await db.counts()).digest).toBe(wanted.digest);
-    await corrupted.repair();
+    // And a build works now — before anything is put back by hand.
     const after = await db.asReader(['materialize', '--out', join(scratch.path, 'after-restore')]);
+    expect(after, after.stderr).toMatchObject({ code: 0 });
+  });
+
+  /**
+   * The repair the error names: the bundle is where the right bytes are, and
+   * they hash to the key the rotted ones are filed under, so the write heals
+   * the row every revision shares.
+   */
+  it('is put right by importing a bundle, which replaces the bytes that rotted', async () => {
+    // From the shipped example, so the damaged key is the one the example's
+    // own identity.yaml hashes to — the bytes an import brings back.
+    const fresh = await db.asOwner(['import', EXAMPLE_DIR]);
+    expect(fresh, fresh.stderr).toMatchObject({ code: 0 });
+    const corrupted = await corruptHead(db, 'identity.yaml');
+    expect(await corrupted.isSound()).toBe(false);
+    const refused = await db.asReader(['materialize', '--out', join(scratch.path, 'rotted')]);
+
+    const imported = await db.asOwner(['import', await editedBundle('healing', 'healed')]);
+
+    expect(refused.code).toBe(1);
+    expect(refused.stderr).toContain('import a bundle you hold');
+    expect(imported, imported.stderr).toMatchObject({ code: 0 });
+    expect(imported.stdout).toContain('does not read back as revision');
+    expect(imported.stdout).toContain('identity.yaml');
+    // The bytes under that key hash to it again: the damage is gone, not
+    // merely stepped around.
+    expect(await corrupted.isSound()).toBe(true);
+    const after = await db.asReader(['materialize', '--out', join(scratch.path, 'after-import')]);
     expect(after, after.stderr).toMatchObject({ code: 0 });
   });
 });

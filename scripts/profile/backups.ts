@@ -64,22 +64,23 @@ async function freshDirectory(parent: string, name: string): Promise<string> {
 }
 
 export interface BackupOptions {
-  /**
-   * The documents came out of the database without their hashes agreeing with
-   * what the revision claims — a corrupt head, read so that it can be
-   * replaced. The directory says so in its name.
-   */
-  readonly unverified?: boolean;
   readonly now?: Date;
 }
 
-/** Writes `snapshot` as a bundle under `PROFILE_HOME/backups/`, and returns where. */
+/**
+ * Writes `snapshot` as a bundle under `PROFILE_HOME/backups/`, and returns
+ * where. A snapshot whose documents are not the ones its revision claims — a
+ * damaged profile, read so that it can be written over — is marked
+ * `-unverified`, read off the bytes themselves rather than from what the
+ * caller believes, so the name cannot lie about what is in the directory.
+ */
 export async function writeBackup(
   env: Env,
   snapshot: Snapshot,
-  { unverified = false, now = new Date() }: BackupOptions = {},
+  { now = new Date() }: BackupOptions = {},
 ): Promise<string> {
   let dir: string | undefined;
+  const unverified = snapshot.revision.digest !== digestOf(snapshot.profile.documents);
   const name = `${stamp(now)}-rev${snapshot.revision.id}${unverified ? '-unverified' : ''}`;
   try {
     dir = await freshDirectory(await privateHomeDir(env, 'backups'), name);

@@ -1,7 +1,5 @@
-import type { Snapshot } from '../backups';
-import { CorruptStoreError, type ProfileStore } from '../store/profile-store';
 import type { Env } from '../store/urls';
-import { headOf } from './head';
+import { headToReplace, revisionToRestore } from './head';
 import { changeTo, replaceProfile } from './replace-profile';
 import { ownerStore } from './store-access';
 
@@ -10,11 +8,12 @@ import { ownerStore } from './store-access';
  * again, as a new revision. The history only ever grows, so restoring is
  * itself something that can be undone.
  *
- * This is also the way out of a head that no longer reads. Everything else
- * refuses a corrupt profile; restore is the command that replaces it, so it
- * keeps the stored bytes as they are — in a backup marked `-unverified`,
- * because they are not what the revision claims — and then writes the revision
- * it was asked for.
+ * It is also how a head that no longer reads is written over, so it reads both
+ * the head and the revision asked for as they are stored. What it cannot do is
+ * invent bytes: blobs are shared between revisions, so the revision asked for
+ * may hold the very bytes that rotted. Then the restore still leaves a head
+ * that reads, and says which documents are not what their revision claims —
+ * importing a bundle you hold is the only thing that puts those bytes back.
  */
 export async function restoreCommand(
   id: string,
@@ -22,9 +21,16 @@ export async function restoreCommand(
   log: (line: string) => void,
 ): Promise<void> {
   const store = ownerStore(env, 'restore');
-  const wanted = await store.readRevision(id);
-  const { head, verified } = await headToReplace(store, log);
-  if (verified && head?.revision.digest === wanted.revision.digest) {
+  const wanted = await revisionToRestore(store, id);
+  if (!wanted.snapshot) throw new Error(`Revision ${id} holds no documents.`);
+  const { snapshot: head, damaged } = await headToReplace(store);
+  if (damaged.length > 0) {
+    log(
+      `The profile at head does not read back as revision ${String(head?.revision.id)}: ` +
+        `${damaged.join(', ')}. Keeping it as it is stored, in a backup marked \`-unverified\`.`,
+    );
+  }
+  if (damaged.length === 0 && head?.revision.digest === wanted.snapshot.revision.digest) {
     log(`Revision ${head.revision.id} already holds that profile; no changes.`);
     return;
   }
@@ -33,36 +39,22 @@ export async function restoreCommand(
     env,
     head,
     change: {
-      ...changeTo(head, wanted.profile.documents, 'restore'),
-      note: `restored revision ${wanted.revision.id}`,
+      ...changeTo(head, wanted.snapshot.profile.documents, 'restore'),
+      note: `restored revision ${wanted.snapshot.revision.id}`,
     },
     log,
-    backup: { unverified: !verified },
   });
   log(
-    `Restored revision ${wanted.revision.id} as revision ${written.id} ` +
+    `Restored revision ${wanted.snapshot.revision.id} as revision ${written.id} ` +
       `(digest ${written.digest.slice(0, 12)}).`,
   );
-}
-
-interface HeadToReplace {
-  readonly head: Snapshot | undefined;
-  /** Whether the stored head read back as the profile its revision claims. */
-  readonly verified: boolean;
-}
-
-async function headToReplace(
-  store: ProfileStore,
-  log: (line: string) => void,
-): Promise<HeadToReplace> {
-  try {
-    return { head: await headOf(store), verified: true };
-  } catch (error) {
-    if (!(error instanceof CorruptStoreError)) throw error;
+  if (wanted.damaged.length > 0) {
     log(
-      'The profile at head does not read back as the revision it claims to be. Restoring over ' +
-        'it, and keeping the bytes as they are stored in a backup marked `-unverified`.',
+      `Revision ${wanted.snapshot.revision.id} does not read back either — ` +
+        `${wanted.damaged.join(', ')} ${wanted.damaged.length === 1 ? 'is' : 'are'} not what it ` +
+        'claims, because the damaged bytes are shared between revisions. The profile reads ' +
+        'again, and those documents hold the bytes as they rotted: import a bundle you hold ' +
+        '(`pnpm profile import <dir>`) to put them back.',
     );
-    return { head: await store.readHeadUnverified(), verified: false };
   }
 }

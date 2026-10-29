@@ -35,10 +35,12 @@ export class EmptyStoreError extends ReportedError {
 export class CorruptStoreError extends ReportedError {
   constructor(detail: string) {
     super(
-      `The stored profile is corrupt: ${detail}. Nothing was built from it. To get back to a ` +
-        'profile that reads: `pnpm profile revisions` lists the ones the database keeps, and ' +
-        '`pnpm profile restore <id>` makes one of them the profile again (it backs the corrupt ' +
-        'one up first, as `-unverified`). An import works again once the head reads.',
+      `The stored profile is corrupt: ${detail}. Nothing was built from it. The way back is to ` +
+        'import a bundle you hold — `pnpm profile import <dir>` replaces the bytes that rotted, ' +
+        'including a blob several revisions share, and your newest backup is under ' +
+        'PROFILE_HOME/backups. `pnpm profile restore <id>` helps only when another revision ' +
+        'does not hold the same damaged bytes; `pnpm profile revisions` lists them. Both back ' +
+        'the damaged profile up first, as `-unverified`.',
     );
   }
 }
@@ -70,6 +72,12 @@ export interface StoredRevision {
 export interface StoredProfile {
   readonly revision: WorkspaceRevision;
   readonly profile: ProfileDocuments;
+  /**
+   * The documents whose stored bytes do not hash to the key they are filed
+   * under — empty for anything read through `read` or `readRevision`, which
+   * refuse a revision that does not verify.
+   */
+  readonly damaged: readonly string[];
 }
 
 export interface ProfileStore extends ProfileWorkspace {
@@ -77,12 +85,13 @@ export interface ProfileStore extends ProfileWorkspace {
   /** The documents of one revision, not only the one at head. */
   readRevision(id: string): Promise<StoredProfile>;
   /**
-   * The head's documents as the database has them, without checking that they
-   * are what the revision claims. Only `restore` reads this, and only to back
-   * a corrupt head up before it replaces it: a build never ships what it
+   * The documents as the database has them, without checking that they are
+   * what the revision claims, and saying which of them are not. Only the two
+   * commands that replace a profile read this way, and only so that a damaged
+   * revision can be backed up and written over: a build never ships what it
    * cannot verify.
    */
-  readHeadUnverified(): Promise<StoredProfile>;
+  readUnverified(revision?: string): Promise<StoredProfile>;
   /** Drops every revision but the newest few and the head's, and the blobs left over. */
   prune(): Promise<void>;
 }
@@ -145,14 +154,22 @@ export function profileStore({ url, variable, command, clock }: StoreOptions): P
 
   const read = () => readRevisionWith('Reading the profile', HEAD, [], () => new EmptyStoreError());
 
-  const readHeadUnverified = () =>
-    readRevisionWith(
-      'Reading the profile as it is stored',
-      HEAD,
-      [],
-      () => new EmptyStoreError(),
-      false,
-    );
+  const readUnverified = (id?: string) =>
+    id === undefined
+      ? readRevisionWith(
+          'Reading the profile as it is stored',
+          HEAD,
+          [],
+          () => new EmptyStoreError(),
+          false,
+        )
+      : readRevisionWith(
+          `Reading revision ${id} as it is stored`,
+          REVISION,
+          [revisionId(id)],
+          () => new RevisionNotFoundError(id),
+          false,
+        );
 
   const readRevision = (id: string) =>
     readRevisionWith(
@@ -200,7 +217,7 @@ export function profileStore({ url, variable, command, clock }: StoreOptions): P
     });
   }
 
-  return { read, readHeadUnverified, write, readRevision, revisions, prune };
+  return { read, readUnverified, write, readRevision, revisions, prune };
 }
 
 function revisionId(id: string): string {
@@ -221,14 +238,17 @@ function asProfileChanged(error: unknown): never {
  * The documents of a revision, after checking that the bytes are the bytes
  * their keys say they are and that together they are the profile the revision
  * claims. A build fails on a corrupt profile instead of shipping it; only
- * `readHeadUnverified` asks for the documents without that check.
+ * `readUnverified` asks for the documents without that check, and says which
+ * of them did not hold up.
  */
 function snapshotOf(head: HeadRow, rows: readonly DocumentRow[], verify: boolean): StoredProfile {
   const documents = new Map<string, Document>();
+  const damaged: string[] = [];
   for (const { path, media_type: mediaType, blob_sha256: stored, bytes } of rows) {
     const found = createHash('sha256').update(bytes).digest();
-    if (verify && !found.equals(stored)) {
-      throw new CorruptStoreError(`the bytes of ${path} are not its blob`);
+    if (!found.equals(stored)) {
+      if (verify) throw new CorruptStoreError(`the bytes of ${path} are not its blob`);
+      damaged.push(path);
     }
     documents.set(path, { mediaType: mediaType as MediaType, bytes: new Uint8Array(bytes) });
   }
@@ -239,6 +259,7 @@ function snapshotOf(head: HeadRow, rows: readonly DocumentRow[], verify: boolean
   return {
     revision: { id: head.id, digest },
     profile: { format: head.bundle_format, documents },
+    damaged,
   };
 }
 
@@ -281,6 +302,17 @@ function applyChange(
   return documents;
 }
 
+/**
+ * The blobs of a revision, inserted once and shared by every revision that
+ * holds the same bytes.
+ *
+ * The write heals: a blob already there under the same key keeps its row, but
+ * if its bytes have rotted they are replaced by these. Every key is the
+ * SHA-256 of the bytes filed under it, computed here, so the only thing this
+ * can overwrite is bytes that were not what their key says — which is why
+ * importing a bundle you hold is the way back from a damaged blob, including
+ * one that several revisions share.
+ */
 async function insertBlobs(open: Session, documents: ReadonlyMap<string, Document>): Promise<void> {
   const blobs = new Map<string, Buffer>();
   for (const { bytes } of documents.values()) {
@@ -289,7 +321,9 @@ async function insertBlobs(open: Session, documents: ReadonlyMap<string, Documen
   }
   await open.query(
     `insert into profile.blob (sha256, bytes)
-     select * from unnest($1::bytea[], $2::bytea[]) on conflict (sha256) do nothing`,
+     select * from unnest($1::bytea[], $2::bytea[])
+         on conflict (sha256) do update set bytes = excluded.bytes
+          where profile.blob.bytes <> excluded.bytes`,
     [[...blobs.keys()].map((sha) => Buffer.from(sha, 'hex')), [...blobs.values()]],
   );
 }

@@ -149,19 +149,37 @@ at head, and a build from it must match the baseline (`pnpm baseline:compare`).
 ### When the profile at head does not read
 
 Every read re-hashes what the database hands it, so a profile whose bytes no longer match their
-keys fails the build with "the stored profile is corrupt" instead of being shipped. Getting out of
-it:
+keys fails the build with "the stored profile is corrupt" instead of being shipped.
+
+**Import a bundle you hold.** That is the repair, not a workaround:
 
 ```bash
-pnpm profile revisions                 # the ids the database still keeps, head first
-pnpm profile restore <an earlier id>   # becomes the profile again, as a new revision
+pnpm profile import ~/profile-work     # or the newest $PROFILE_HOME/backups/<UTC>-rev<id>/
 ```
 
-`restore` is the one command that will read a corrupt head, and only to keep it: it writes those
-bytes exactly as they are stored to `$PROFILE_HOME/backups/<UTC>-rev<id>-unverified/`, says it
-did, and then writes the revision you asked for. Keep that directory — it is the only copy of
-whatever was damaged. Once the head reads again, `pnpm profile import <a bundle you hold>` works
-as usual. If no stored revision reads either, use Neon's instant restore or a manual export.
+A blob is filed under the SHA-256 of its own bytes, so the bundle's bytes land under the very key
+whose bytes rotted and replace them. Nothing else can: hashes do not run backwards, and the
+database holds one copy of each blob.
+
+**`restore` helps only sometimes.** Blobs are shared — one row of bytes serves every revision that
+holds them, so `identity.yaml`, the assets and anything unchanged between revisions are a single
+row. If the damage is in a blob the revision you restore also holds, `restore` leaves a head that
+reads but still holding those rotted bytes, and says so, naming the documents. If the damage is in
+a blob only the current head holds, restoring is enough.
+
+```bash
+pnpm profile revisions                 # the ids the database keeps, head first
+pnpm profile restore <an earlier id>
+```
+
+Both commands read a damaged profile as it is stored and keep it first, in
+`$PROFILE_HOME/backups/<UTC>-rev<id>-unverified/` — the `-unverified` says the bytes in there are
+not what their revision claims. Keep that directory: it is the only copy of whatever was damaged.
+Both then check what they left at head, and fail loudly rather than report a profile that does not
+read as restored.
+
+If no bundle and no revision gives the bytes back, Neon's instant restore or an older manual
+export is what is left.
 
 Rotating a credential needs no code change: `alter role profile_reader password '…'` (or the Neon
 console), then update the deployment's variable and the CI secret, and redeploy.

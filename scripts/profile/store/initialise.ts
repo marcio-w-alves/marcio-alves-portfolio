@@ -58,6 +58,7 @@ export async function initialiseStore(
 
       const credentialsPath =
         passwords.size === 0 ? undefined : await writeCredentials(url, passwords, env);
+      await keepCredentialsPrivate(url, env);
       report(
         { rolesCreated, applied: applied.map(({ version }) => version), credentialsPath },
         log,
@@ -189,10 +190,8 @@ async function writeCredentials(
   passwords: ReadonlyMap<string, string>,
   env: Env,
 ): Promise<string> {
+  const path = await credentialsPathFor(adminUrl, env);
   const parsed = new URL(adminUrl);
-  const dir = await privateHomeDir(env, 'credentials');
-  const database = parsed.pathname.replace(/^\//, '');
-  const path = join(dir, `${parsed.hostname}__${database || 'postgres'}.env`);
   const lines = [
     `# ${OWNER_ROLE} writes the profile; keep it on your machine only.`,
     ...roleLine(OWNER_URL, OWNER_ROLE, parsed, passwords),
@@ -200,10 +199,27 @@ async function writeCredentials(
     ...roleLine(READER_URL, READER_ROLE, parsed, passwords),
   ];
   await writePrivateFile(path, `${lines.join('\n')}\n`);
-  // The mode a write asks for only applies to a file it creates, and this file
-  // holds the only copy of the passwords, so its mode is set either way.
-  await chmod(path, PRIVATE_FILE);
   return path;
+}
+
+async function credentialsPathFor(adminUrl: string, env: Env): Promise<string> {
+  const { hostname, pathname } = new URL(adminUrl);
+  const database = pathname.replace(/^\//, '');
+  return join(await privateHomeDir(env, 'credentials'), `${hostname}__${database}.env`);
+}
+
+/**
+ * The mode a write asks for applies only to a file it creates, and this file
+ * holds connection URLs whoever wrote it. So its mode is set on every run —
+ * including the runs that write nothing, which is when a file left readable by
+ * an earlier version, or by hand, would otherwise stay that way.
+ */
+async function keepCredentialsPrivate(adminUrl: string, env: Env): Promise<void> {
+  try {
+    await chmod(await credentialsPathFor(adminUrl, env), PRIVATE_FILE);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+  }
 }
 
 function roleLine(
