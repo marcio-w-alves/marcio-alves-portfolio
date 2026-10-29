@@ -95,12 +95,16 @@ describe('comparing a build with the baseline', { timeout: TOOL_TEST_TIMEOUT_MS 
       baseline,
       '--capture',
       sameBuild,
+      '--profile',
+      'fixture',
     ]);
     const planted = await runTool('compare.mts', [
       '--baseline',
       baseline,
       '--capture',
       plantedBuild,
+      '--profile',
+      'fixture',
     ]);
 
     expect(identical.code).toBe(0);
@@ -202,7 +206,14 @@ describe('provenance', { timeout: TOOL_TEST_TIMEOUT_MS }, () => {
     await mkdir(join(unfinished, 'answers'), { recursive: true });
 
     const manifest = await readManifest(baseline);
-    const refused = await runTool('compare.mts', ['--baseline', unfinished, '--capture', baseline]);
+    const refused = await runTool('compare.mts', [
+      '--baseline',
+      unfinished,
+      '--capture',
+      baseline,
+      '--profile',
+      'fixture',
+    ]);
 
     const head = execFileSync('git', ['-C', REPOSITORY, 'rev-parse', 'HEAD'], { encoding: 'utf8' });
     expect(manifest.commit).toBe(head.trim());

@@ -15,6 +15,7 @@ import { resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { capture } from './capture-site';
 import { isProfileName } from './checkout-profile';
+import { assertProfileAllowedHere } from './ci-guard';
 import { systemClock } from './pacing';
 
 const { values } = parseArgs({
@@ -29,6 +30,7 @@ const { values } = parseArgs({
 });
 
 try {
+  assertProfileAllowedHere(values.profile, process.env);
   if (!values.target) throw new Error('Pass --target <url> of the running site.');
   if (!isProfileName(values.profile)) throw new Error(`Unknown profile "${values.profile}".`);
   const dir = await capture({

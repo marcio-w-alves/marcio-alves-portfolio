@@ -14,6 +14,7 @@ import { parseArgs } from 'node:util';
 import { capture } from './capture-site';
 import { captureFiles } from './capture-layout';
 import { isProfileName } from './checkout-profile';
+import { assertProfileAllowedHere } from './ci-guard';
 import { compareCaptures } from './compare-captures';
 import { compareEvaluations } from './compare-evaluations';
 import { formatDifference } from './difference';
@@ -51,6 +52,7 @@ async function targetCapture(baseline: string): Promise<string> {
 }
 
 try {
+  assertProfileAllowedHere(values.profile, process.env);
   if (!values.baseline) throw new Error('Pass --baseline <dir>.');
   const baseline = resolve(values.baseline);
   const { commit, date } = await readManifest(baseline);
