@@ -61,6 +61,21 @@ interface Options {
   readonly onAnswered?: (report: AnswerReport) => void;
 }
 
+/** Passes every event through, keeping a copy, and hands back what the source returns. */
+async function* recording<T, R>(source: AsyncGenerator<T, R>, into: T[]): AsyncGenerator<T, R> {
+  try {
+    for (;;) {
+      const step = await source.next();
+      if (step.done) return step.value;
+      into.push(step.value);
+      yield step.value;
+    }
+  } finally {
+    // A visitor who leaves stops this generator; the source must stop with it.
+    await source.return(undefined as R);
+  }
+}
+
 /**
  * Both paths behind one contract, and the policy for spending on the model.
  *
@@ -117,15 +132,12 @@ export function createAssistant({
     const signal = signals && AbortSignal.any([signals.visitor, signals.deadline]);
     try {
       const page = fastPath.pageShown(context);
-      for await (const event of modelAssistant.answer(
-        { question, history, followUps, page },
-        signal,
-      )) {
-        emitted.push(event);
-        yield event;
-      }
+      const { shareable } = yield* recording(
+        modelAssistant.answer({ question, clientId, history, followUps, page }, signal),
+        emitted,
+      );
       // Stored only once the answer finished, so an interrupted one is never replayed.
-      if (cacheKey !== null && emitted.at(-1)?.type === 'finish') {
+      if (cacheKey !== null && shareable && emitted.at(-1)?.type === 'finish') {
         answerCache.set(cacheKey, emitted);
       }
       return escalated('answered');

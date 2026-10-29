@@ -73,6 +73,14 @@ describe('getTechnologyBrief', () => {
     expect(result.data).toMatchObject({ inHisRecord: { verdict: 'coursework only' } });
   });
 
+  it('marks a result carrying an article as third-party text, and one without as not', async () => {
+    const { port } = referencesFrom({ 'Bazel (software)': article('Bazel (software)') });
+    expect((await call('getTechnologyBrief', { technology: 'Bazel' }, port)).thirdParty).toBe(true);
+    expect(
+      (await call('getTechnologyBrief', { technology: 'Nix' }, port)).thirdParty,
+    ).toBeUndefined();
+  });
+
   it('does not look anything up for a subject that has no article', async () => {
     const { port, asked } = referencesFrom({});
     const result = await call('getTechnologyBrief', { technology: 'Nix' }, port);
@@ -193,6 +201,13 @@ describe('GitHub and LinkedIn', () => {
     expect(result.sources).toEqual([
       { id: 'github', label: 'GitHub profile', url: 'https://github.com/ada-rivera-example' },
     ]);
+  });
+
+  it('marks what GitHub returned as third-party text', async () => {
+    const references = referencesFrom({}).port;
+    expect((await call('getGithubProfile', {}, references, LIVE_GITHUB)).thirdParty).toBe(true);
+    expect((await call('getRepositories', {}, references, LIVE_GITHUB)).thirdParty).toBe(true);
+    expect((await call('getRepositories', {}, references)).thirdParty).toBeUndefined();
   });
 
   it('reports the GitHub profile as unavailable instead of inventing one', async () => {

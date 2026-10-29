@@ -3,7 +3,7 @@ import { createModelBudget } from './model-budget';
 
 const DAY = 24 * 60 * 60 * 1000;
 
-function budget({ answersPerWindow = 100, dailyTokens = 1000 } = {}) {
+function budget({ answersPerWindow = 100, dailyTokens = 1000, clientDailyTokens = 1000 } = {}) {
   let clock = 0;
   let exhaustions = 0;
   return {
@@ -11,6 +11,7 @@ function budget({ answersPerWindow = 100, dailyTokens = 1000 } = {}) {
       answersPerWindow,
       windowMs: 60_000,
       dailyTokens,
+      clientDailyTokens,
       now: () => clock,
       onExhausted: () => {
         exhaustions += 1;
@@ -27,14 +28,14 @@ describe('model budget', () => {
   it('stops admitting model answers once the day’s tokens are spent', () => {
     const daily = budget({ dailyTokens: 1000 });
     expect(daily.admit('a')).toBe(true);
-    daily.record({ inputTokens: 900, outputTokens: 100 });
+    daily.record({ inputTokens: 900, outputTokens: 100 }, 'a');
     expect(daily.admit('a')).toBe(false);
     expect(daily.admit('someone-else')).toBe(false);
   });
 
   it('starts a fresh budget the next UTC day', () => {
     const daily = budget({ dailyTokens: 10 });
-    daily.record({ inputTokens: 10, outputTokens: 0 });
+    daily.record({ inputTokens: 10, outputTokens: 0 }, 'a');
     expect(daily.admit('a')).toBe(false);
     daily.at(DAY);
     expect(daily.admit('a')).toBe(true);
@@ -50,7 +51,7 @@ describe('model budget', () => {
 
   it('does not use up a visitor’s allowance on a day whose budget is already gone', () => {
     const both = budget({ answersPerWindow: 1, dailyTokens: 10 });
-    both.record({ inputTokens: 10, outputTokens: 0 });
+    both.record({ inputTokens: 10, outputTokens: 0 }, 'b');
     expect(both.admit('a')).toBe(false);
     both.at(DAY);
     expect(both.admit('a')).toBe(true);
@@ -58,14 +59,30 @@ describe('model budget', () => {
 
   it('announces the day’s budget running out once, and again only on a later day', () => {
     const daily = budget({ dailyTokens: 100 });
-    daily.record({ inputTokens: 60, outputTokens: 0 });
+    daily.record({ inputTokens: 60, outputTokens: 0 }, 'a');
     expect(daily.exhaustions()).toBe(0);
-    daily.record({ inputTokens: 30, outputTokens: 10 });
-    daily.record({ inputTokens: 50, outputTokens: 0 });
+    daily.record({ inputTokens: 30, outputTokens: 10 }, 'a');
+    daily.record({ inputTokens: 50, outputTokens: 0 }, 'a');
     expect(daily.exhaustions()).toBe(1);
     daily.at(DAY);
-    daily.record({ inputTokens: 100, outputTokens: 0 });
+    daily.record({ inputTokens: 100, outputTokens: 0 }, 'a');
     expect(daily.exhaustions()).toBe(2);
+  });
+});
+
+describe('model budget — per client', () => {
+  it('stops one client who spent their share while others still get answers', () => {
+    const shared = budget({ dailyTokens: 1000, clientDailyTokens: 100 });
+    shared.record({ inputTokens: 80, outputTokens: 20 }, 'script');
+    expect(shared.admit('script')).toBe(false);
+    expect(shared.admit('visitor')).toBe(true);
+  });
+
+  it('gives a client a fresh share the next UTC day', () => {
+    const shared = budget({ dailyTokens: 1000, clientDailyTokens: 100 });
+    shared.record({ inputTokens: 100, outputTokens: 0 }, 'script');
+    shared.at(DAY);
+    expect(shared.admit('script')).toBe(true);
   });
 });
 

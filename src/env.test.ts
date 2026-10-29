@@ -13,6 +13,7 @@ describe('assistant settings', () => {
       requestsPerTenMinutes: 40,
       modelAnswersPerTenMinutes: 15,
       dailyModelTokens: 2_000_000,
+      clientDailyModelTokens: 150_000,
       chatRequestTimeoutMs: 60_000,
     });
   });

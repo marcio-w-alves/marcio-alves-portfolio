@@ -25,6 +25,8 @@ export interface ToolResult {
    */
   readonly evidence?: Readonly<Record<string, string>>;
   readonly effect?: ToolEffect;
+  /** Set when `data` holds text read live from a third party, which anyone may have edited. */
+  readonly thirdParty?: true;
 }
 
 export type ToolOutcome =

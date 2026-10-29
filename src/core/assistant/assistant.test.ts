@@ -38,12 +38,16 @@ function budgetThat(admits: boolean): ModelBudgetPort & { readonly admitted: str
   };
 }
 
-function fakeModel(script: (request: ModelAssistantRequest) => AsyncGenerator<AssistantEvent>) {
+function fakeModel(
+  script: (request: ModelAssistantRequest) => AsyncGenerator<AssistantEvent, unknown>,
+  { shareable = true } = {},
+) {
   const received: ModelAssistantRequest[] = [];
   const model: ModelAssistant = {
-    answer: (modelRequest) => {
+    answer: async function* (modelRequest) {
       received.push(modelRequest);
-      return script(modelRequest);
+      yield* script(modelRequest);
+      return { shareable };
     },
   };
   return { model, received };
@@ -196,7 +200,7 @@ describe('assistant — an answer cut short', () => {
     async *answer(_request, signal) {
       yield { type: 'start', intent: 'model', related: null };
       yield { type: 'text-start', id: 'p0' };
-      await new Promise((_resolve, reject) => {
+      return new Promise<never>((_resolve, reject) => {
         signal?.addEventListener('abort', () => {
           reject(signal.reason as Error);
         });
@@ -258,6 +262,28 @@ describe('assistant — spending on the model', () => {
     await collect(assistant, 'What is TypeScript?', history);
     expect(received).toHaveLength(2);
     expect(answerCache.store.size).toBe(0);
+  });
+
+  it('never replays an answer built on text read live from a third party', async () => {
+    const { model, received } = fakeModel(
+      async function* (modelRequest) {
+        yield { type: 'start', intent: 'model', related: null };
+        yield { type: 'finish', followUps: modelRequest.followUps, sources: [] };
+      },
+      { shareable: false },
+    );
+    const answerCache = memoryCache();
+    const assistant = assistantWith(model, { answerCache });
+    await collect(assistant, 'What is TypeScript?');
+    await collect(assistant, 'What is TypeScript?');
+    expect(received).toHaveLength(2);
+    expect(answerCache.store.size).toBe(0);
+  });
+
+  it('charges the model answer to the client who asked', async () => {
+    const { model, received } = sentenceModel();
+    await collect(assistantWith(model), 'What is TypeScript?');
+    expect(received[0]?.clientId).toBe('visitor-1');
   });
 
   it('never caches an answer that was interrupted', async () => {

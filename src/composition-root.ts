@@ -95,6 +95,7 @@ function createBudget(settings: AssistantSettings): ModelBudgetPort {
     answersPerWindow: settings.modelAnswersPerTenMinutes,
     windowMs: TEN_MINUTES,
     dailyTokens: settings.dailyModelTokens,
+    clientDailyTokens: settings.clientDailyModelTokens,
     onExhausted: () => {
       logger.warn('model.budget_exhausted', { dailyTokens: settings.dailyModelTokens });
     },
@@ -208,8 +209,8 @@ function buildModelAssistant(
     clock: systemClock,
     subject: promptSubject(knowledge),
     knownUrls: [...urlsIn(knowledge), `mailto:${knowledge.contact.email}`, siteUrl().href],
-    onUsage: (usage) => {
-      budget.record(usage);
+    onUsage: (usage, clientId) => {
+      budget.record(usage, clientId);
       if (usage.estimated) {
         logger.info('model.usage_estimated', {
           inputTokens: usage.inputTokens,

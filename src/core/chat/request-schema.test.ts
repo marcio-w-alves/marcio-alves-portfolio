@@ -16,3 +16,17 @@ describe('the language a question is asked in', () => {
     expect(chatRequestSchema.safeParse({ ...QUESTION, locale: 'fr' }).success).toBe(false);
   });
 });
+
+describe('the text of a question', () => {
+  it('is refused when it holds a lone surrogate, which the model provider would refuse', () => {
+    expect(chatRequestSchema.safeParse({ message: 'Hi \ud800' }).success).toBe(false);
+    expect(
+      chatRequestSchema.safeParse({ ...QUESTION, history: [{ role: 'user', text: '\udc00' }] })
+        .success,
+    ).toBe(false);
+  });
+
+  it('is accepted with emoji and accents, which are whole characters', () => {
+    expect(chatRequestSchema.safeParse({ message: 'Olá 👋 — o que ele fez?' }).success).toBe(true);
+  });
+});
