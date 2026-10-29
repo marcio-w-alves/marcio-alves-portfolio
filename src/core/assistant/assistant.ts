@@ -140,7 +140,10 @@ export function createAssistant({
     try {
       const page = fastPath.pageShown(context, pageLocale);
       const { shareable } = yield* recording(
-        modelAssistant.answer({ question, clientId, history, followUps, page, pageLocale }, signal),
+        modelAssistant.answer(
+          { question, clientId, history, followUps, page, pageLocale, answerLocale: locale },
+          signal,
+        ),
         emitted,
       );
       // Stored only once the answer finished, so an interrupted one is never replayed.

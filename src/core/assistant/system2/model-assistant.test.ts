@@ -77,6 +77,7 @@ async function collect(model: LanguageModelPort, question = 'question', history 
     clientId: 'visitor',
     history,
     pageLocale: 'en',
+    answerLocale: 'en',
     followUps: ['Next?'],
   })) {
     events.push(event);
@@ -171,6 +172,7 @@ describe('model assistant — answering through actions', () => {
         clientId: 'visitor',
         history,
         pageLocale: 'en',
+        answerLocale: 'en',
         followUps: [],
       }),
     );
@@ -198,6 +200,7 @@ describe('model assistant — conversation memory is bounded', () => {
         clientId: 'visitor',
         history,
         pageLocale: 'en',
+        answerLocale: 'en',
         followUps: [],
       }),
     );
@@ -309,6 +312,7 @@ describe('model assistant — spending', () => {
         clientId: 'visitor',
         history: [],
         pageLocale: 'en',
+        answerLocale: 'en',
         followUps: [],
       }),
     );
@@ -334,6 +338,7 @@ describe('model assistant — spending', () => {
         clientId: 'visitor',
         history: [],
         pageLocale: 'en',
+        answerLocale: 'en',
         followUps: [],
       }),
     };
@@ -426,6 +431,7 @@ describe('model assistant — on a topic page', () => {
         clientId: 'visitor',
         history: [],
         pageLocale: 'en',
+        answerLocale: 'en',
         followUps: [],
         page: { label: 'Skills', summary: 'Skills by area: Frontend: React', cards: ['skills'] },
       }),
@@ -450,6 +456,7 @@ describe('model assistant — on a topic page', () => {
         clientId: 'visitor',
         history: [],
         pageLocale: 'en',
+        answerLocale: 'en',
         followUps: [],
         page: { label: 'Skills', summary: 'Skills by area', cards: ['skills'] },
       }),
@@ -467,6 +474,7 @@ describe('model assistant — on a topic page', () => {
         clientId: 'visitor',
         history: [],
         pageLocale: 'en',
+        answerLocale: 'en',
         followUps: [],
         page: null,
       }),
@@ -549,6 +557,7 @@ describe('model assistant — what reaches the visitor', () => {
       clientId: 'visitor',
       history: [],
       pageLocale: 'en',
+      answerLocale: 'en',
       followUps: [],
     })) {
       events.push(event);
@@ -593,6 +602,7 @@ describe('model assistant — what reaches the visitor', () => {
       clientId: 'visitor',
       history: [],
       pageLocale: 'en',
+      answerLocale: 'en',
       followUps: [],
     })) {
       events.push(event);
@@ -637,6 +647,7 @@ describe('model assistant — what reaches the visitor', () => {
       clientId: 'visitor',
       history: [],
       pageLocale: 'en',
+      answerLocale: 'en',
       followUps: [],
     })) {
       events.push(event);
@@ -667,6 +678,7 @@ describe('model assistant — what reaches the visitor', () => {
       clientId: 'visitor',
       history: [],
       pageLocale: 'en',
+      answerLocale: 'en',
       followUps: [],
     })) {
       events.push(event);
@@ -702,6 +714,7 @@ describe('model assistant — what reaches the visitor', () => {
         clientId: 'visitor',
         history: [],
         pageLocale: 'en',
+        answerLocale: 'en',
         followUps: [],
       }),
     );
@@ -739,7 +752,14 @@ describe('model assistant — what reaches the visitor', () => {
 
     await Array.fromAsync(
       assistant.answer(
-        { question: 'q', clientId: 'visitor', history: [], pageLocale: 'en', followUps: [] },
+        {
+          question: 'q',
+          clientId: 'visitor',
+          history: [],
+          pageLocale: 'en',
+          answerLocale: 'en',
+          followUps: [],
+        },
         request.signal,
       ),
     );
@@ -785,6 +805,7 @@ describe('model assistant — what reaches the visitor', () => {
         clientId: 'visitor',
         history: [],
         pageLocale: 'en',
+        answerLocale: 'en',
         followUps: [],
       }),
     );
@@ -815,6 +836,7 @@ describe('model assistant — what reaches the visitor', () => {
         clientId: 'visitor',
         history: [],
         pageLocale: 'en',
+        answerLocale: 'en',
         followUps: [],
       });
       for (;;) {
@@ -845,6 +867,7 @@ describe('model assistant — what reaches the visitor', () => {
         clientId: 'visitor-7',
         history: [],
         pageLocale: 'en',
+        answerLocale: 'en',
         followUps: [],
       }),
     );
@@ -877,6 +900,7 @@ describe('model assistant — what reaches the visitor', () => {
         clientId: 'visitor',
         history: [],
         pageLocale: 'en',
+        answerLocale: 'en',
         followUps: [],
       })) {
         seen.push(event);
@@ -949,6 +973,7 @@ async function answerWithSearch(
     clientId: 'visitor',
     history: [],
     pageLocale: 'en',
+    answerLocale: 'en',
     followUps: [],
   })) {
     events.push(event);

@@ -10,6 +10,8 @@ import { SEARCH_UNAVAILABLE } from '@/core/assistant/tools/search-tools';
 import type { Locale } from '@/core/i18n/locale';
 import { localize } from '@/core/knowledge/localize';
 import { profile } from '@/profile';
+import { answers as englishAnswers } from '@/profile/copy/en/answers';
+import { answers as portugueseAnswers } from '@/profile/copy/pt-BR/answers';
 import knowledgeIndex from '@/profile/generated/knowledge-index.json';
 import { createHealthHandler } from './health-handler';
 import { createChatHandler } from './chat-handler';
@@ -412,28 +414,60 @@ describe('POST /api/chat — a model answer', () => {
 
 describe("POST /api/chat — the page's language", () => {
   const portugueseRecord = localize(profile.knowledge, 'pt-BR');
+  const askedId = askedRole.id;
+  const portugueseRole = portugueseRecord.experience.find(({ id }) => id === askedId);
+  const [firstCompany = '', secondCompany = ''] = companies;
+  const PORTUGUESE_MODEL_QUESTION = `Compare a liderança dele na ${firstCompany} e na ${secondCompany}.`;
 
-  it('tells the model which language the page is in, and reads the record to it in that language', async () => {
+  /** Reads one role, then shows the timeline, then answers: what the model was given and shown. */
+  async function readAndShow(message: string, locale: Locale) {
     const sent = scriptedCompletions(
-      toolCallRound('getExperience', JSON.stringify({ company: askedRole.id })),
-      textRound('Ele liderou o time.'),
+      toolCallRound('getExperience', JSON.stringify({ company: askedId })),
+      toolCallRound('showTimeline', JSON.stringify({ companies: [askedId] })),
+      textRound('Done.'),
     );
+    const events = await allEventsOf(await postChat()(question(message, { locale })));
+    const card = events.find((event) => event.type === 'component');
+    return {
+      prompt: sent[0]?.messages[0]?.content ?? '',
+      role: (JSON.parse(sent[1]?.messages.at(-1)?.content ?? '[]') as unknown[])[0],
+      card: card?.type === 'component' && card.component === 'timeline' ? card.props : null,
+    };
+  }
 
-    await allEventsOf(await postChat()(question(MODEL_QUESTION, { locale: 'pt-BR' })));
+  it("reads the record and words the cards in a Portuguese question's language on an English page", async () => {
+    const { prompt, role, card } = await readAndShow(PORTUGUESE_MODEL_QUESTION, 'en');
 
-    const [first, second] = sent;
-    expect(first?.messages[0]?.content).toContain(
+    expect(prompt).toContain('The visitor is reading the English version of the site.');
+    expect(role).toEqual(
+      expect.objectContaining({ id: askedRole.id, summary: portugueseRole?.summary }),
+    );
+    expect(portugueseRole?.summary).not.toBe(askedRole.summary);
+    expect(card?.label).toBe(portugueseAnswers.labels.cards.timeline);
+    expect(card?.roles[0]?.summary).toBe(portugueseRole?.summary);
+  });
+
+  it("reads the record and words the cards in an English question's language on a Portuguese page", async () => {
+    const { prompt, role, card } = await readAndShow(MODEL_QUESTION, 'pt-BR');
+
+    expect(prompt).toContain(
       'The visitor is reading the Brazilian Portuguese version of the site.',
     );
-    expect(first?.messages[0]?.content).toContain(
+    expect(prompt).toContain(
       'When that language cannot be told (a single word, a name, a technology), reply in Brazilian Portuguese.',
     );
-    const toolResult = second?.messages.at(-1);
-    const portugueseRole = portugueseRecord.experience.find(({ id }) => id === askedRole.id);
-    expect(JSON.parse(toolResult?.content ?? 'null')).toEqual([
+    expect(role).toEqual(expect.objectContaining({ id: askedRole.id, summary: askedRole.summary }));
+    expect(card?.label).toBe(englishAnswers.labels.cards.timeline);
+    expect(card?.roles[0]?.summary).toBe(askedRole.summary);
+  });
+
+  it("reads the record in the page's language when the question cannot tell", async () => {
+    const { role, card } = await readAndShow(`${firstCompany} vs ${secondCompany}?`, 'pt-BR');
+
+    expect(role).toEqual(
       expect.objectContaining({ id: askedRole.id, summary: portugueseRole?.summary }),
-    ]);
-    expect(portugueseRole?.summary).not.toBe(askedRole.summary);
+    );
+    expect(card?.label).toBe(portugueseAnswers.labels.cards.timeline);
   });
 
   it('tells the model the page is in English on an English page', async () => {

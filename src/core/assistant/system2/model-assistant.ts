@@ -43,6 +43,11 @@ export interface ModelAssistantRequest {
   readonly history: readonly HistoryTurn[];
   /** The language of the page, which breaks a tie when the question's cannot be told. */
   readonly pageLocale: Locale;
+  /**
+   * The language the answer is given in: the question's, or the page's on a
+   * tie. The actions read the record in it, so facts and cards match the answer.
+   */
+  readonly answerLocale: Locale;
   /** Questions the fast path can answer, offered after this answer. */
   readonly followUps: readonly string[];
   /** The topic page the visitor is reading, when not the overview. */
@@ -74,7 +79,7 @@ interface Options {
   readonly model: LanguageModelPort;
   /**
    * The actions, reading the record in each language the site is written in:
-   * the page's, so the cards an answer shows read like the page around them.
+   * the answer's language is the one used, so its facts and cards read like it.
    */
   readonly tools: Translations<ToolRegistry>;
   readonly clock: ClockPort;
@@ -416,9 +421,12 @@ export function createModelAssistant({
   }
 
   return {
-    async *answer({ question, clientId, history, followUps, page, pageLocale }, signal) {
+    async *answer(
+      { question, clientId, history, followUps, page, pageLocale, answerLocale },
+      signal,
+    ) {
       const instructions = systemPrompt(clock.now(), subject, pageLocale);
-      const registry = tools[pageLocale] ?? tools.en;
+      const registry = tools[answerLocale] ?? tools.en;
       const messages = startMessages(question, history, instructions, page);
       const linkable = createLinkAllowList(knownUrls);
       const reply = createReply((url) => linkable.allows(url), subject);

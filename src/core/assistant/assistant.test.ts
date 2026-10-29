@@ -422,7 +422,7 @@ describe("assistant — in the visitor's language", () => {
     return { ...request(question), pageLocale };
   }
 
-  it('hands the model the page language and Portuguese follow-ups for a Portuguese question', async () => {
+  it('asks the model for a Portuguese answer, with Portuguese follow-ups, on an English page', async () => {
     const { model, received } = sentenceModel();
 
     await Array.fromAsync(
@@ -430,7 +430,19 @@ describe("assistant — in the visitor's language", () => {
     );
 
     expect(received[0]?.pageLocale).toBe('en');
+    expect(received[0]?.answerLocale).toBe('pt-BR');
     expect(received[0]?.followUps).toEqual(PORTUGUESE_FOLLOW_UPS);
+  });
+
+  it('asks the model for an English answer on a Portuguese page', async () => {
+    const { model, received } = sentenceModel();
+
+    await Array.fromAsync(
+      bilingualAssistant(model).answer(asked('Compare her work at Acme and Globex.', 'pt-BR')),
+    );
+
+    expect(received[0]?.pageLocale).toBe('pt-BR');
+    expect(received[0]?.answerLocale).toBe('en');
   });
 
   it("offers the page's follow-ups around a question in a language the site does not speak", async () => {
@@ -439,6 +451,7 @@ describe("assistant — in the visitor's language", () => {
     await Array.fromAsync(bilingualAssistant(model).answer(asked('¿Dónde trabaja Ada?', 'pt-BR')));
 
     expect(received[0]?.pageLocale).toBe('pt-BR');
+    expect(received[0]?.answerLocale).toBe('pt-BR');
     expect(received[0]?.followUps).toEqual(PORTUGUESE_FOLLOW_UPS);
   });
 
