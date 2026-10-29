@@ -4,7 +4,12 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { EXAMPLE_DIR, runProfile, scratchDir, type Scratch } from '../testing/bundles';
 import { withSession, TIMEOUTS } from './connect';
 import { MAX_ATTEMPTS } from './retry';
-import { createTestDatabase, expectNoCredential, type TestDatabase } from './testing/database';
+import {
+  corruptHead,
+  createTestDatabase,
+  expectNoCredential,
+  type TestDatabase,
+} from './testing/database';
 import { blackHole, withoutTls } from './testing/servers';
 import { READER_URL } from './urls';
 
@@ -68,28 +73,41 @@ describe('reading the stored profile', () => {
 
   it('refuses a stored profile whose bytes no longer hash to their key', async () => {
     const target = out('corrupt');
-    // The constraint that makes this impossible is dropped first, so the test
-    // plants the fault in the data, not in the reader.
-    await db.query('admin', 'alter table profile.blob drop constraint blob_is_content_addressed');
-    await db.query(
-      'admin',
-      `update profile.blob set bytes = bytes || '\\x20'::bytea
-         where sha256 = (select blob_sha256 from profile.document
-                          where path = 'privacy.yaml'
-                            and revision_id = (select revision_id from profile.head))`,
-    );
+    const corrupted = await corruptHead(db);
 
     const run = await db.asReader(['materialize', '--out', target]);
+    await corrupted.repair();
 
-    await db.query(
-      'admin',
-      `alter table profile.blob add constraint blob_is_content_addressed
-         check (sha256 = pg_catalog.sha256(bytes)) not valid`,
-    );
     expect(run.code).toBe(1);
     expect(run.stderr).toContain('corrupt');
     expect(run.stderr).toContain('privacy.yaml');
+    expect(run.stderr).toContain('pnpm profile restore');
     expect(await materialized(target)).toEqual([]);
+    // And the profile reads again, so what runs after this tests itself.
+    const after = await db.asReader(['materialize', '--out', out('after-repair')]);
+    expect(after, after.stderr).toMatchObject({ code: 0 });
+  });
+
+  it('reads over verified TLS whatever the URL asks for', async () => {
+    const asking = new URL(db.readerUrl);
+    asking.searchParams.set('sslmode', 'disable');
+    const withoutTheCa = { ...db.env({ PROFILE_DATABASE_URL: asking.toString() }) };
+    delete withoutTheCa.NODE_EXTRA_CA_CERTS;
+
+    const run = await runProfile(
+      ['materialize', '--out', out('sslmode-disable')],
+      db.env({ PROFILE_DATABASE_URL: asking.toString() }),
+    );
+    const unverified = await runProfile(
+      ['materialize', '--out', out('sslmode-no-ca')],
+      withoutTheCa,
+    );
+
+    // TLS is this module's decision, not the URL's: the read succeeds, and it
+    // was TLS, because trusting the CA is the only thing that let it.
+    expect(run, run.stderr).toMatchObject({ code: 0 });
+    expect(unverified.code).toBe(1);
+    expect(unverified.stderr).toContain('unable to verify');
   });
 
   it('carries its timeouts and its name into every session', async () => {
@@ -148,7 +166,10 @@ describe('a database the build cannot reach', () => {
 
     const missing = await runProfile(
       ['materialize', '--out', out('unknown-host')],
-      db.env({ PROFILE_DATABASE_URL: unknownHost }),
+      // Outside a production deployment, where the example is what a build
+      // would otherwise take: a database that was named and cannot be read is
+      // still a failure, not a fall back.
+      db.env({ PROFILE_SOURCE: 'database', PROFILE_DATABASE_URL: unknownHost }),
     );
     const refused = await runProfile(
       ['materialize', '--out', out('wrong-password')],
@@ -157,6 +178,8 @@ describe('a database the build cannot reach', () => {
 
     expect(missing.code).toBe(1);
     expect(missing.stderr).toContain('1 attempt:');
+    expect(missing.stdout).not.toContain('example');
+    expect(await materialized(out('unknown-host'))).toEqual([]);
     expect(refused.code).toBe(1);
     expect(refused.stderr).toContain('1 attempt:');
     expect(refused.stderr).toContain('28P01');

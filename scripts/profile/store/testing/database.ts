@@ -26,16 +26,61 @@ import { OWNER_URL, READER_URL } from '../urls';
  */
 
 export const ADMIN_URL_VARIABLE = 'PROFILE_TEST_ADMIN_URL';
+export const ALLOW_REMOTE_VARIABLE = 'PROFILE_TEST_ALLOW_REMOTE';
 
-export function testAdminUrl(): string {
-  const url = process.env[ADMIN_URL_VARIABLE];
+/**
+ * These tests drop databases and roles, and `PROFILE_TEST_ADMIN_URL` is two
+ * words away from `PROFILE_ADMIN_DATABASE_URL`, which the owner holds in a
+ * shell. So the harness takes only a database it can see is a throw-away: on
+ * this machine, and with no profile in it.
+ */
+const DESTRUCTIVE =
+  'the store tests destroy roles and databases; point ' +
+  `${ADMIN_URL_VARIABLE} at the local container from postgres.sh`;
+
+const LOOPBACK: ReadonlySet<string> = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
+
+export type Env = Readonly<Record<string, string | undefined>>;
+
+export function assertLocalAdminUrl(url: string, env: Env = process.env): void {
+  if (env[ALLOW_REMOTE_VARIABLE] === '1') return;
+  const { hostname } = new URL(url);
+  if (LOOPBACK.has(hostname)) return;
+  throw new Error(
+    `${ADMIN_URL_VARIABLE} points at ${hostname}, which is not this machine: ${DESTRUCTIVE}. ` +
+      `Set ${ALLOW_REMOTE_VARIABLE}=1 only for a database you mean to lose.`,
+  );
+}
+
+export function testAdminUrl(env: Env = process.env): string {
+  const url = env[ADMIN_URL_VARIABLE];
   if (!url) {
     throw new Error(
       `${ADMIN_URL_VARIABLE} is not set. The store tests run against a real Postgres: start one ` +
         'with `scripts/profile/store/testing/postgres.sh start` and export what it prints.',
     );
   }
+  assertLocalAdminUrl(url, env);
   return url;
+}
+
+/** A database that already holds a profile is somebody's profile, not a fixture. */
+async function assertHoldsNoProfile(url: string): Promise<void> {
+  const stored = await asAdmin(url, async (open) => {
+    const [table] = await open.query<{ there: boolean }>(
+      `select to_regclass('profile.head') is not null as there`,
+    );
+    if (table?.there !== true) return 0;
+    const [head] = await open.query<{ revisions: number }>(
+      'select count(*)::int as revisions from profile.head',
+    );
+    return head?.revisions ?? 0;
+  });
+  if (stored > 0) {
+    throw new Error(
+      `${ADMIN_URL_VARIABLE} points at a database that already holds a profile: ${DESTRUCTIVE}.`,
+    );
+  }
 }
 
 export type Role = 'admin' | 'owner' | 'reader';
@@ -86,7 +131,7 @@ export interface TestDatabase {
     extra?: Readonly<Record<string, string>>,
   ) => RunningCommand;
   /** Waits until a session of that application is waiting for a lock. */
-  waitForLockWait: (applicationName: string) => Promise<number>;
+  waitForLockWait: (applicationName: string, expected?: number) => Promise<number[]>;
   terminate: (applicationName: string) => Promise<void>;
   counts: () => Promise<StoreCounts>;
   /** Runs `pnpm profile <args>` with the owner credential, as the owner would. */
@@ -120,6 +165,7 @@ async function asAdmin<T>(url: string, work: (session: Session) => Promise<T>): 
 
 export async function createTestDatabase(): Promise<TestDatabase> {
   const base = testAdminUrl();
+  await assertHoldsNoProfile(base);
   const name = `profile_test_${randomBytes(6).toString('hex')}`;
   const host = new URL(base).hostname;
   await asAdmin(base, async (open) => {
@@ -164,7 +210,8 @@ export async function createTestDatabase(): Promise<TestDatabase> {
     asReader: (args, extra = {}) =>
       runProfile(args, env({ PROFILE_DATABASE_URL: readerUrl, ...extra })),
     holdHead: () => holdHead(adminUrl),
-    waitForLockWait: (applicationName) => waitForLockWait(query, applicationName),
+    waitForLockWait: (applicationName, expected = 1) =>
+      waitForLockWait(query, applicationName, expected),
     terminate: async (applicationName) => {
       await query(
         'admin',
@@ -300,6 +347,9 @@ async function holdHead(adminUrl: string): Promise<HeldLock> {
   });
   const holding = asAdmin(adminUrl, async (open) => {
     await open.query('begin');
+    // The tools take a lock for five seconds at most; this session is not a
+    // tool, and must not give its lock up because a runner was slow.
+    await open.query('set lock_timeout = 0');
     await open.query('update profile.head set updated_at = now()');
     taken();
     await released;
@@ -317,31 +367,82 @@ async function holdHead(adminUrl: string): Promise<HeldLock> {
 const LOCK_POLL_MS = 25;
 const LOCK_WAIT_TIMEOUT_MS = 20_000;
 
-/** Waits for a condition in the database, never for the clock. */
+/**
+ * Waits for a condition in the database, never for the clock: that `expected`
+ * sessions of that application are waiting for a lock. A test that starts two
+ * commands waits for both, or it races the one it did not see.
+ */
 async function waitForLockWait(
   query: TestDatabase['query'],
   applicationName: string,
-): Promise<number> {
+  expected: number,
+): Promise<number[]> {
   const deadline = Date.now() + LOCK_WAIT_TIMEOUT_MS;
   for (;;) {
-    const [waiting] = await query<{ pid: number }>(
+    const waiting = await query<{ pid: number }>(
       'admin',
       `select pid from pg_stat_activity
         where application_name = $1 and wait_event_type = 'Lock'`,
       [applicationName],
     );
-    if (waiting) return waiting.pid;
+    if (waiting.length >= expected) return waiting.map(({ pid }) => pid);
     if (Date.now() > deadline) {
-      throw new Error(`No ${applicationName} session ever waited for a lock.`);
+      throw new Error(
+        `Only ${String(waiting.length)} of ${String(expected)} ${applicationName} sessions ` +
+          'ever waited for a lock.',
+      );
     }
     await new Promise((resolve) => setTimeout(resolve, LOCK_POLL_MS));
   }
 }
 
+export interface CorruptedHead {
+  /** The document whose bytes no longer hash to their key. */
+  readonly path: string;
+  /** Puts the bytes back, and validates the constraint again. */
+  readonly repair: () => Promise<void>;
+}
+
 /**
- * Neither the URL, nor the password in it, nor anything else secret may reach
- * the output of a command — a build log is public.
+ * A head that does not read: one blob's bytes changed under its key. The
+ * constraint that makes this impossible is dropped first, so the fault is in
+ * the data, the way a damaged page or a bad restore would leave it — never in
+ * the reader.
  */
+export async function corruptHead(db: TestDatabase, path = 'privacy.yaml'): Promise<CorruptedHead> {
+  const { sha, bytes } = one(
+    await db.query<{ sha: string; bytes: Buffer }>(
+      'admin',
+      `select encode(b.sha256, 'hex') as sha, b.bytes from profile.blob b
+         join profile.document d on d.blob_sha256 = b.sha256
+        where d.path = $1 and d.revision_id = (select revision_id from profile.head)`,
+      [path],
+    ),
+  );
+  await db.query('admin', 'alter table profile.blob drop constraint blob_is_content_addressed');
+  await db.query(
+    'admin',
+    `update profile.blob set bytes = bytes || '\\x20'::bytea where sha256 = decode($1, 'hex')`,
+    [sha],
+  );
+  return {
+    path,
+    repair: async () => {
+      await db.query(
+        'admin',
+        `update profile.blob set bytes = $2 where sha256 = decode($1, 'hex')`,
+        [sha, bytes],
+      );
+      // Without `not valid`, adding it reads every row: the repair is checked.
+      await db.query(
+        'admin',
+        `alter table profile.blob add constraint blob_is_content_addressed
+           check (sha256 = pg_catalog.sha256(bytes))`,
+      );
+    },
+  };
+}
+
 /** The one row a query was written to return. */
 export function one<Row>(rows: readonly Row[]): Row {
   const [row] = rows;

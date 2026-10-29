@@ -96,7 +96,9 @@ describe('two imports at once', () => {
     const held = await db.holdHead();
     const first = db.startAsOwner(['import', await editedBundle('race-a', 'first')]);
     const second = db.startAsOwner(['import', await editedBundle('race-b', 'second')]);
-    await db.waitForLockWait('profile-import');
+    // Both of them: the one that had not reached the head yet would not be
+    // racing at all.
+    await db.waitForLockWait('profile-import', 2);
 
     await held.release();
     const results = await Promise.all([first.finished, second.finished]);

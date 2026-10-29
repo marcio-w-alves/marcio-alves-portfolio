@@ -1,8 +1,10 @@
 import { randomBytes } from 'node:crypto';
+import { chmod } from 'node:fs/promises';
 import { join } from 'node:path';
 import { privateHomeDir, writePrivateFile } from '../home';
 import { withSession, type Session } from './connect';
 import { applyMigrations } from './migrate';
+import { scramVerifier } from './scram';
 import type { Credential, Env } from './urls';
 import { OWNER_URL, READER_URL } from './urls';
 
@@ -21,6 +23,7 @@ export const READER_ROLE = 'profile_reader';
 const PASSWORD_BYTES = 32;
 /** The reader is a build, and a build opens one connection at a time. */
 const READER_CONNECTIONS = 5;
+const PRIVATE_FILE = 0o600;
 
 export interface Initialised {
   /** The file the generated credentials were written to, if any were generated. */
@@ -101,15 +104,27 @@ function report(
   }
 }
 
+/**
+ * The statement that creates a login role, with the password as the
+ * SCRAM-SHA-256 verifier of it, so the plaintext is in no statement the server
+ * can keep, show or log. Postgres quotes the identifier and the literal, so
+ * neither is spliced into SQL by hand.
+ */
+export function createRoleStatement(
+  open: Session,
+  role: string,
+  password: string,
+): Promise<string> {
+  return statement(open, 'create role %I login password %L', [role, scramVerifier(password)]);
+}
+
 /** Whether the role was created; an existing role keeps the password it has. */
 async function createRole(open: Session, role: string, password: string): Promise<boolean> {
   const [existing] = await open.query('select 1 from pg_catalog.pg_roles where rolname = $1', [
     role,
   ]);
   if (existing) return false;
-  // Postgres quotes the identifier and the literal, so the generated password
-  // is never spliced into SQL by hand.
-  await open.query(await statement(open, 'create role %I login password %L', [role, password]));
+  await open.query(await createRoleStatement(open, role, password));
   return true;
 }
 
@@ -185,6 +200,9 @@ async function writeCredentials(
     ...roleLine(READER_URL, READER_ROLE, parsed, passwords),
   ];
   await writePrivateFile(path, `${lines.join('\n')}\n`);
+  // The mode a write asks for only applies to a file it creates, and this file
+  // holds the only copy of the passwords, so its mode is set either way.
+  await chmod(path, PRIVATE_FILE);
   return path;
 }
 

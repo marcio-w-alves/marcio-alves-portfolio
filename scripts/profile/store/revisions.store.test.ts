@@ -11,7 +11,13 @@ import {
   type Scratch,
 } from '../testing/bundles';
 import { REVISIONS_KEPT } from './profile-store';
-import { createTestDatabase, one, type TestDatabase } from './testing/database';
+import {
+  corruptHead,
+  createTestDatabase,
+  expectNoCredential,
+  one,
+  type TestDatabase,
+} from './testing/database';
 
 /**
  * The history the database keeps: enough of it to undo a mistake, bounded so
@@ -190,5 +196,82 @@ describe('the bounded history', () => {
 
     expect(gone.code).toBe(1);
     expect(gone.stderr).toContain('not found');
+  });
+
+  /**
+   * Pruning is housekeeping after a committed write. Reporting a revision that
+   * is live as a failure would send the owner looking for a profile that is
+   * already there, or make him import it a second time.
+   */
+  it('reports a written profile as written even when the pruning fails', async () => {
+    await db.query('admin', 'revoke delete on profile.revision from profile_owner');
+
+    const imported = await db.asOwner(['import', await editedBundle('prune-denied', 'unprunable')]);
+
+    await db.query('admin', 'grant delete on profile.revision to profile_owner');
+    const { head, digest } = await db.counts();
+    expect(imported, imported.stderr).toMatchObject({ code: 0 });
+    expect(imported.stdout).toContain(`revision ${String(head)}`);
+    expect(imported.stdout).toContain(String(digest).slice(0, 12));
+    expect(imported.stdout).toContain('next write will do it');
+    expectNoCredential(imported.stdout + imported.stderr, db.ownerUrl);
+  });
+});
+
+describe('a head that no longer reads', () => {
+  it('lists the revisions, so the owner can see what to go back to', async () => {
+    const listed = await db.asReader(['revisions']);
+
+    const lines = listed.stdout.trimEnd().split('\n');
+    const [first] = lines;
+    const ids = lines.map((line) => Number(line.slice(1).trim().split(' ')[0]));
+    const { head, digest } = await db.counts();
+    expect(listed, listed.stderr).toMatchObject({ code: 0 });
+    expect(first?.startsWith('*')).toBe(true);
+    expect(first).toContain(String(head));
+    expect(first).toContain(String(digest).slice(0, 12));
+    expect([...ids].sort((a, b) => b - a)).toEqual(ids);
+    expect(lines.slice(1).every((line) => line.startsWith(' '))).toBe(true);
+    expect(listed.stdout).toContain('profile_owner');
+    expect(listed.stdout).toContain('import');
+    // Twelve characters of each digest, not the whole of any.
+    expect(listed.stdout).not.toContain(String(digest));
+    expectNoCredential(listed.stdout + listed.stderr, db.readerUrl);
+  });
+
+  it('is replaced by a restore, which keeps the damaged bytes as they are', async () => {
+    const { head: corruptId } = await db.counts();
+    const wanted = one(
+      await db.query<{ id: string; digest: string }>(
+        'admin',
+        `select id::text as id, encode(digest, 'hex') as digest from profile.revision
+          where id <> $1::bigint order by id desc limit 1`,
+        [corruptId],
+      ),
+    );
+    const taken = await readdir(join(db.home, 'backups')).catch((): string[] => []);
+    const corrupted = await corruptHead(db);
+    // Nothing else will touch it: a build refuses it, and so does an import.
+    const build = await db.asReader(['materialize', '--out', join(scratch.path, 'corrupt')]);
+    const refused = await db.asOwner(['import', await editedBundle('over-corrupt', 'over')]);
+
+    const restored = await db.asOwner(['restore', wanted.id]);
+
+    expect(build.code).toBe(1);
+    expect(refused.code).toBe(1);
+    expect(refused.stderr).toContain('corrupt');
+    expect(restored, restored.stderr).toMatchObject({ code: 0 });
+    expect(restored.stdout).toContain('does not read back');
+    // The damaged profile is on disk, named for what it is.
+    const [kept] = (await readdir(join(db.home, 'backups'))).filter(
+      (name) => !taken.includes(name),
+    );
+    expect(kept).toMatch(new RegExp(`-rev${String(corruptId)}-unverified$`));
+    expect(restored.stdout).toContain(join(db.home, 'backups', String(kept)));
+    // And the profile reads again, at the revision that was asked for.
+    expect((await db.counts()).digest).toBe(wanted.digest);
+    await corrupted.repair();
+    const after = await db.asReader(['materialize', '--out', join(scratch.path, 'after-restore')]);
+    expect(after, after.stderr).toMatchObject({ code: 0 });
   });
 });

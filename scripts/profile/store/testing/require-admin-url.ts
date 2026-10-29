@@ -6,5 +6,12 @@ import { testAdminUrl } from './database';
  * nothing is worse than a red one.
  */
 export default function setup(): void {
-  testAdminUrl();
+  try {
+    testAdminUrl();
+  } catch (error) {
+    // Vitest reports a failing global setup as a stack, and the stack is not
+    // the point: what to do about it is.
+    console.error(`\n${error instanceof Error ? error.message : String(error)}\n`);
+    throw error;
+  }
 }

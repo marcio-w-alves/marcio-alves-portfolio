@@ -1,11 +1,20 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { EXAMPLE_DIR, runProfile } from '../testing/bundles';
-import { OWNER_ROLE, READER_ROLE } from './initialise';
+import { withSession } from './connect';
+import { createRoleStatement, OWNER_ROLE, READER_ROLE } from './initialise';
 import { migrations } from './migrate';
-import { createTestDatabase, expectNoCredential, one, type TestDatabase } from './testing/database';
+import { ITERATIONS } from './scram';
+import {
+  ADMIN_URL_VARIABLE,
+  assertLocalAdminUrl,
+  createTestDatabase,
+  expectNoCredential,
+  one,
+  type TestDatabase,
+} from './testing/database';
 
 /**
  * The store as `pnpm profile init` creates it, against a real Postgres: the
@@ -87,6 +96,48 @@ describe('creating the store', () => {
     );
   });
 
+  it('sends the password as a verifier, so no statement carries the plaintext', async () => {
+    const password = randomBytes(32).toString('base64url');
+    const role = `profile_test_role_${randomBytes(4).toString('hex')}`;
+    const asNewRole = new URL(db.adminUrl);
+    asNewRole.username = role;
+    asNewRole.password = password;
+
+    const sql = await withSession(
+      { url: db.adminUrl, variable: ADMIN_URL_VARIABLE, applicationName: 'profile-test' },
+      'Building a create-role statement',
+      (open) => createRoleStatement(open, role, password),
+    );
+
+    // This text is what pg_stat_activity shows, what collected statement
+    // statistics keep, and what `log_statement` writes.
+    expect(sql).not.toContain(password);
+    expect(sql).toContain(`SCRAM-SHA-256$${String(ITERATIONS)}:`);
+    // And it is a verifier, not a different password: the role logs in with
+    // the plaintext the server never saw.
+    await db.query('admin', sql);
+    const stored = one(
+      await db.query<{ rolpassword: string }>(
+        'admin',
+        'select rolpassword from pg_authid where rolname = $1',
+        [role],
+      ),
+    );
+    expect(stored.rolpassword).toBe(sql.slice(sql.indexOf('SCRAM-SHA-256'), -1));
+    await expect(
+      withSession(
+        {
+          url: asNewRole.toString(),
+          variable: ADMIN_URL_VARIABLE,
+          applicationName: 'profile-test',
+        },
+        'Logging in as the new role',
+        (open) => open.query('select 1 as ok'),
+      ),
+    ).resolves.toEqual([{ ok: 1 }]);
+    await db.query('admin', `drop role ${role}`);
+  });
+
   it('changes nothing when it runs a second time', async () => {
     const before = await db.counts();
 
@@ -143,7 +194,7 @@ describe('the migrations', () => {
     expect(changed.stderr).toContain(`${String(version).padStart(4, '0')}_${name}.sql`);
   });
 
-  it('applies them once when two runs start at the same time', async () => {
+  it('does nothing twice when two runs find the schema up to date', async () => {
     const both = await Promise.all([db.asOwner(['migrate']), db.asOwner(['migrate'])]);
     const { applied } = one(
       await db.query<{ applied: number }>(
@@ -153,8 +204,54 @@ describe('the migrations', () => {
     );
 
     expect(both.map(({ code }) => code)).toEqual([0, 0]);
+    expect(both.every(({ stdout }) => stdout.includes('already up to date'))).toBe(true);
     expect(applied).toBe((await migrations()).length);
   });
+
+  /**
+   * The case the advisory lock is there for: both runs have something to
+   * apply. Without it one of them creates the objects and the other fails on
+   * what is already there — which is what a first deployment of a new schema
+   * looks like when two jobs start together.
+   */
+  it('applies a pending migration once when two runs start at the same time', async () => {
+    const fresh = `${db.name}_pending`;
+    await db.query('admin', `create database ${fresh}`);
+    const owner = new URL(db.ownerUrl);
+    owner.pathname = `/${fresh}`;
+    const admin = new URL(db.adminUrl);
+    admin.pathname = `/${fresh}`;
+    const inFresh = <Row>(url: URL, sql: string) =>
+      withSession(
+        { url: url.toString(), variable: ADMIN_URL_VARIABLE, applicationName: 'profile-test' },
+        'A query against the fresh database',
+        (open) => open.query(sql) as Promise<Row[]>,
+      );
+    await inFresh(admin, `create schema profile authorization ${OWNER_ROLE}`);
+    const migrate = () => db.asOwner(['migrate'], { PROFILE_OWNER_DATABASE_URL: owner.toString() });
+
+    const both = await Promise.all([migrate(), migrate()]);
+
+    expect(
+      both.map(({ code }) => code),
+      both.map(({ stderr }) => stderr).join('\n'),
+    ).toEqual([0, 0]);
+    // One of them applied it; both are satisfied, and the objects exist once.
+    expect(both.filter(({ stdout }) => stdout.includes('Applied'))).toHaveLength(1);
+    expect(
+      await inFresh<{ applied: number }>(
+        owner,
+        'select count(*)::int as applied from profile.schema_migration',
+      ),
+    ).toEqual([{ applied: (await migrations()).length }]);
+    expect(
+      await inFresh<{ tables: number }>(
+        owner,
+        `select count(*)::int as tables from pg_tables where schemaname = 'profile'`,
+      ),
+    ).toEqual([{ tables: 5 }]);
+    await db.query('admin', `drop database ${fresh} with (force)`);
+  }, 60_000);
 });
 
 describe('the read-only role', () => {
@@ -239,5 +336,48 @@ describe('what the schema itself refuses', () => {
 
   it.each(malformed)('refuses $what', async ({ sql }) => {
     expect(await sqlStateOf(db.query('owner', sql))).toBe('23514');
+  });
+});
+
+/**
+ * These tests drop databases and roles, and the variable that points them at a
+ * database is two words away from the one the owner holds in a shell. So the
+ * harness takes only a database it can see is a throw-away.
+ */
+describe('what the harness will point itself at', () => {
+  const remote = 'postgres://neondb_owner:secret@ep-cool-name.eu-central-1.aws.neon.tech/neondb';
+
+  const local = [
+    'postgres://postgres:p@localhost:5432/postgres',
+    'postgres://postgres:p@127.0.0.1:5432/postgres',
+    'postgres://postgres:p@[::1]:5432/postgres',
+  ];
+
+  it.each(local)('takes %s, which is on this machine', (url) => {
+    expect(() => {
+      assertLocalAdminUrl(url, {});
+    }).not.toThrow();
+  });
+
+  it('refuses a database somewhere else unless it is told to', () => {
+    expect(() => {
+      assertLocalAdminUrl(remote, {});
+    }).toThrow(/destroy roles and databases/);
+    expect(() => {
+      assertLocalAdminUrl(remote, {});
+    }).toThrow(/aws\.neon\.tech/);
+    expect(() => {
+      assertLocalAdminUrl(remote, { PROFILE_TEST_ALLOW_REMOTE: '1' });
+    }).not.toThrow();
+  });
+
+  it('refuses a database that already holds a profile', async () => {
+    const pointedAt = process.env[ADMIN_URL_VARIABLE];
+    // This database holds the example, imported above: a profile, not a fixture.
+    process.env[ADMIN_URL_VARIABLE] = db.adminUrl;
+
+    await expect(createTestDatabase()).rejects.toThrow(/already holds a profile/);
+
+    process.env[ADMIN_URL_VARIABLE] = pointedAt;
   });
 });

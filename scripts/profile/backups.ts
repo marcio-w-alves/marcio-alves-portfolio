@@ -63,18 +63,34 @@ async function freshDirectory(parent: string, name: string): Promise<string> {
   }
 }
 
+export interface BackupOptions {
+  /**
+   * The documents came out of the database without their hashes agreeing with
+   * what the revision claims — a corrupt head, read so that it can be
+   * replaced. The directory says so in its name.
+   */
+  readonly unverified?: boolean;
+  readonly now?: Date;
+}
+
 /** Writes `snapshot` as a bundle under `PROFILE_HOME/backups/`, and returns where. */
-export async function writeBackup(env: Env, snapshot: Snapshot, now = new Date()): Promise<string> {
+export async function writeBackup(
+  env: Env,
+  snapshot: Snapshot,
+  { unverified = false, now = new Date() }: BackupOptions = {},
+): Promise<string> {
   let dir: string | undefined;
+  const name = `${stamp(now)}-rev${snapshot.revision.id}${unverified ? '-unverified' : ''}`;
   try {
-    const parent = await privateHomeDir(env, 'backups');
-    dir = await freshDirectory(parent, `${stamp(now)}-rev${snapshot.revision.id}`);
+    dir = await freshDirectory(await privateHomeDir(env, 'backups'), name);
     await writeBundleDirectory(dir, snapshot.profile.documents, { mode: PRIVATE_FILE });
   } catch (error) {
     if (error instanceof ReportedError) throw error;
     throw new BackupNotWrittenError(error);
   }
-  if (digestOf(await readBundleDirectory(dir)) !== snapshot.revision.digest) {
+  // That the backup holds the bytes it was given. For a head that read clean
+  // this is also its digest; for a corrupt one it is the most that is true.
+  if (digestOf(await readBundleDirectory(dir)) !== digestOf(snapshot.profile.documents)) {
     throw new BackupNotVerifiedError(dir);
   }
   return dir;

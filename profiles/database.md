@@ -56,17 +56,21 @@ credential into every environment.
 1. Create a Neon project (the Free plan is enough; a profile is a few MB) and copy the connection
    string of the database's own owner, e.g.
    `postgres://neondb_owner:…@ep-….aws.neon.tech/neondb?sslmode=require`.
-2. Create the store:
+2. Create the store. Put the admin URL in a file rather than on the command line, so it does not
+   end up in your shell history:
 
    ```bash
-   PROFILE_ADMIN_DATABASE_URL='postgres://neondb_owner:…@ep-….aws.neon.tech/neondb' \
-     pnpm profile init
+   install -m 600 /dev/null ~/.config/profile-admin-url     # then paste the URL into it
+   PROFILE_ADMIN_DATABASE_URL="$(cat ~/.config/profile-admin-url)" pnpm profile init
+   rm ~/.config/profile-admin-url                           # it is needed once
    ```
 
    It creates the two roles with 256-bit random passwords, the `profile` schema, and the
    migrations, and writes both connection URLs to
-   `$PROFILE_HOME/credentials/<host>__<database>.env` (mode `0600`). It never prints a password.
-   Run it again and it changes nothing.
+   `$PROFILE_HOME/credentials/<host>__<database>.env` (mode `0600`). It never prints a password,
+   and the password itself never reaches the server: what `create role` carries is its
+   SCRAM-SHA-256 verifier, so nothing a statement log or `pg_stat_activity` keeps is worth
+   stealing. Run it again and it changes nothing.
 
 3. Copy `PROFILE_OWNER_DATABASE_URL` from that file into `.env.local`, and `PROFILE_DATABASE_URL`
    into the deployment's environment (production and preview) and the CI secret.
@@ -141,6 +145,23 @@ Four layers, in the order you would reach for them.
 
 Whatever the layer, a restore is checked the same way: `pnpm profile revisions` shows the digest
 at head, and a build from it must match the baseline (`pnpm baseline:compare`).
+
+### When the profile at head does not read
+
+Every read re-hashes what the database hands it, so a profile whose bytes no longer match their
+keys fails the build with "the stored profile is corrupt" instead of being shipped. Getting out of
+it:
+
+```bash
+pnpm profile revisions                 # the ids the database still keeps, head first
+pnpm profile restore <an earlier id>   # becomes the profile again, as a new revision
+```
+
+`restore` is the one command that will read a corrupt head, and only to keep it: it writes those
+bytes exactly as they are stored to `$PROFILE_HOME/backups/<UTC>-rev<id>-unverified/`, says it
+did, and then writes the revision you asked for. Keep that directory — it is the only copy of
+whatever was damaged. Once the head reads again, `pnpm profile import <a bundle you hold>` works
+as usual. If no stored revision reads either, use Neon's instant restore or a manual export.
 
 Rotating a credential needs no code change: `alter role profile_reader password '…'` (or the Neon
 console), then update the deployment's variable and the CI secret, and redeploy.

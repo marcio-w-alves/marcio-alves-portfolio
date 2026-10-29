@@ -34,7 +34,12 @@ export class EmptyStoreError extends ReportedError {
 
 export class CorruptStoreError extends ReportedError {
   constructor(detail: string) {
-    super(`The stored profile is corrupt: ${detail}. Restore an earlier revision or re-import.`);
+    super(
+      `The stored profile is corrupt: ${detail}. Nothing was built from it. To get back to a ` +
+        'profile that reads: `pnpm profile revisions` lists the ones the database keeps, and ' +
+        '`pnpm profile restore <id>` makes one of them the profile again (it backs the corrupt ' +
+        'one up first, as `-unverified`). An import works again once the head reads.',
+    );
   }
 }
 
@@ -71,6 +76,13 @@ export interface ProfileStore extends ProfileWorkspace {
   revisions(): Promise<StoredRevision[]>;
   /** The documents of one revision, not only the one at head. */
   readRevision(id: string): Promise<StoredProfile>;
+  /**
+   * The head's documents as the database has them, without checking that they
+   * are what the revision claims. Only `restore` reads this, and only to back
+   * a corrupt head up before it replaces it: a build never ships what it
+   * cannot verify.
+   */
+  readHeadUnverified(): Promise<StoredProfile>;
   /** Drops every revision but the newest few and the head's, and the blobs left over. */
   prune(): Promise<void>;
 }
@@ -119,18 +131,28 @@ export function profileStore({ url, variable, command, clock }: StoreOptions): P
     select: string,
     values: readonly unknown[],
     missing: () => Error,
+    verify = true,
   ): Promise<StoredProfile> {
     return readWithRetries<StoredProfile>(retrying, operation, async (open) =>
       open.transaction('repeatable read read only', async () => {
         const [head] = await open.query<HeadRow>(select, values);
         if (!head) throw missing();
         const documents = await open.query<DocumentRow>(DOCUMENTS, [head.id]);
-        return snapshotOf(head, documents);
+        return snapshotOf(head, documents, verify);
       }),
     );
   }
 
   const read = () => readRevisionWith('Reading the profile', HEAD, [], () => new EmptyStoreError());
+
+  const readHeadUnverified = () =>
+    readRevisionWith(
+      'Reading the profile as it is stored',
+      HEAD,
+      [],
+      () => new EmptyStoreError(),
+      false,
+    );
 
   const readRevision = (id: string) =>
     readRevisionWith(
@@ -178,7 +200,7 @@ export function profileStore({ url, variable, command, clock }: StoreOptions): P
     });
   }
 
-  return { read, write, readRevision, revisions, prune };
+  return { read, readHeadUnverified, write, readRevision, revisions, prune };
 }
 
 function revisionId(id: string): string {
@@ -198,17 +220,20 @@ function asProfileChanged(error: unknown): never {
 /**
  * The documents of a revision, after checking that the bytes are the bytes
  * their keys say they are and that together they are the profile the revision
- * claims. A build fails on a corrupt profile instead of shipping it.
+ * claims. A build fails on a corrupt profile instead of shipping it; only
+ * `readHeadUnverified` asks for the documents without that check.
  */
-function snapshotOf(head: HeadRow, rows: readonly DocumentRow[]): StoredProfile {
+function snapshotOf(head: HeadRow, rows: readonly DocumentRow[], verify: boolean): StoredProfile {
   const documents = new Map<string, Document>();
   for (const { path, media_type: mediaType, blob_sha256: stored, bytes } of rows) {
     const found = createHash('sha256').update(bytes).digest();
-    if (!found.equals(stored)) throw new CorruptStoreError(`the bytes of ${path} are not its blob`);
+    if (verify && !found.equals(stored)) {
+      throw new CorruptStoreError(`the bytes of ${path} are not its blob`);
+    }
     documents.set(path, { mediaType: mediaType as MediaType, bytes: new Uint8Array(bytes) });
   }
   const digest = head.digest.toString('hex');
-  if (digestOf(documents) !== digest) {
+  if (verify && digestOf(documents) !== digest) {
     throw new CorruptStoreError(`revision ${head.id} does not hold the documents of its digest`);
   }
   return {

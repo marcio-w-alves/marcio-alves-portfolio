@@ -117,8 +117,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
 
+      # The script writes the two variables to $GITHUB_ENV itself, and prints
+      # only the mask for the password it generated.
       - name: Start Postgres with TLS
-        run: scripts/profile/store/testing/postgres.sh start >> "$GITHUB_ENV"
+        run: scripts/profile/store/testing/postgres.sh start
 
       - run: pnpm test:store
 

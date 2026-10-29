@@ -10,8 +10,9 @@
 #   pnpm test:store
 #   scripts/profile/store/testing/postgres.sh stop
 #
-# It prints `KEY=value` lines, which is also what GitHub Actions appends to
-# $GITHUB_ENV.
+# It prints `KEY=value` lines. Under GitHub Actions it appends them to
+# $GITHUB_ENV itself and prints only the mask for the password, so the password
+# cannot reach a log through this script's own output.
 set -euo pipefail
 
 name=${PROFILE_TEST_POSTGRES_NAME:-profile-store-postgres}
@@ -64,8 +65,18 @@ start() {
     sleep 1
   done
   docker exec "$name" pg_isready -U postgres >/dev/null
-  echo "PROFILE_TEST_ADMIN_URL=postgres://postgres:${password}@localhost:${port}/postgres"
-  echo "NODE_EXTRA_CA_CERTS=${certs}/ca.crt"
+  if [ -n "${GITHUB_ENV:-}" ]; then
+    # The runner reads ::add-mask:: from the step's output; the variables go to
+    # the environment file, which no log shows.
+    echo "::add-mask::${password}"
+    {
+      echo "PROFILE_TEST_ADMIN_URL=postgres://postgres:${password}@localhost:${port}/postgres"
+      echo "NODE_EXTRA_CA_CERTS=${certs}/ca.crt"
+    } >>"$GITHUB_ENV"
+  else
+    echo "PROFILE_TEST_ADMIN_URL=postgres://postgres:${password}@localhost:${port}/postgres"
+    echo "NODE_EXTRA_CA_CERTS=${certs}/ca.crt"
+  fi
 }
 
 stop() {
