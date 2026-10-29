@@ -1,6 +1,5 @@
 import type { ProjectLabels, ProjectView } from '@/core/chat/components';
 import { interpolate } from '@/core/i18n/format';
-import { useMessages } from '../i18n/i18n-provider';
 import { ButtonLink, Icon, Tag, VisuallyHidden } from '../primitives';
 import { BulletList } from './bullet-list';
 import { SectionTitle } from './section-title';
@@ -30,7 +29,6 @@ function ProjectPreview({
   readonly project: ProjectView;
   readonly labels: ProjectLabels;
 }) {
-  const messages = useMessages();
   const links = project.links.filter((link) => isWebUrl(link.url));
   return (
     <article
@@ -91,7 +89,7 @@ function ProjectPreview({
           {links.map(({ label, url }) => (
             <ButtonLink key={url} href={url} size="sm" target="_blank" rel="noopener noreferrer">
               {label}
-              <VisuallyHidden> {messages.links.opensInNewTab}</VisuallyHidden>
+              <VisuallyHidden> {labels.opensInNewTab}</VisuallyHidden>
               <Icon name="arrowUpRight" size="xs" />
             </ButtonLink>
           ))}

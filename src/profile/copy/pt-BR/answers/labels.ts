@@ -25,6 +25,10 @@ export const labels: AnswerLabels = {
     outcomes: 'Resultados',
   },
   notes: { inference: 'Avaliação', example: 'Exemplo ilustrativo', info: 'Observação' },
+  links: {
+    opensInNewTab: '(abre em uma nova aba)',
+    pdfOpensInNewTab: '(PDF, abre em uma nova aba)',
+  },
   contact: {
     heading: 'Vamos trabalhar juntos?',
     text: 'Fale com {firstName} sobre oportunidades de engenharia, arquitetura e produto.',

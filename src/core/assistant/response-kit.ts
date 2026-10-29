@@ -187,6 +187,7 @@ export function createResponseKit(knowledge: Knowledge, labels: AnswerLabels): R
           linkedin: labels.contact.linkedin,
           resume: labels.contact.resume,
           github: labels.contact.github,
+          ...labels.links,
         },
       },
     };
@@ -246,7 +247,10 @@ export function createResponseKit(knowledge: Knowledge, labels: AnswerLabels): R
       return {
         type: 'component',
         component: 'projects',
-        props: { projects: list.map(projectView), labels: labels.project },
+        props: {
+          projects: list.map(projectView),
+          labels: { ...labels.project, opensInNewTab: labels.links.opensInNewTab },
+        },
       };
     },
     contactCard,

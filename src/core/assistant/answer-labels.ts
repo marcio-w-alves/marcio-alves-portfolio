@@ -36,6 +36,8 @@ export interface AnswerLabels {
     readonly outcomes: string;
   };
   readonly notes: Readonly<Record<NoteTone, string>>;
+  /** Read after a card's link that opens in a new tab. */
+  readonly links: { readonly opensInNewTab: string; readonly pdfOpensInNewTab: string };
   readonly contact: {
     readonly heading: string;
     /** `{firstName}`. */

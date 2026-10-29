@@ -60,6 +60,8 @@ export interface ProjectLabels {
   readonly technologies: string;
   readonly considerations: string;
   readonly outcomes: string;
+  /** Read after a link that opens in a new tab. */
+  readonly opensInNewTab: string;
 }
 
 /** The contact card's actions, in the answer's language. */
@@ -68,6 +70,10 @@ export interface ContactActions {
   readonly linkedin: string;
   readonly resume: string;
   readonly github: string;
+  /** Read after a link that opens in a new tab. */
+  readonly opensInNewTab: string;
+  /** Read after the résumé link, a PDF that opens in a new tab. */
+  readonly pdfOpensInNewTab: string;
 }
 
 /**

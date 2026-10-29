@@ -21,7 +21,6 @@ export function ContactCard({
   actions,
 }: ContactCardProps) {
   const messages = useMessages();
-  const { opensInNewTab, pdfOpensInNewTab } = messages.links;
   const titleId = useId();
   return (
     <section
@@ -63,7 +62,7 @@ export function ContactCard({
         >
           <Icon name="link" size="sm" />
           {actions.linkedin}
-          <VisuallyHidden> {opensInNewTab}</VisuallyHidden>
+          <VisuallyHidden> {actions.opensInNewTab}</VisuallyHidden>
         </ButtonLink>
         {resumeUrl ? (
           <ButtonLink
@@ -75,7 +74,7 @@ export function ContactCard({
           >
             <Icon name="file" size="sm" />
             {actions.resume}
-            <VisuallyHidden> {pdfOpensInNewTab}</VisuallyHidden>
+            <VisuallyHidden> {actions.pdfOpensInNewTab}</VisuallyHidden>
           </ButtonLink>
         ) : null}
         {github ? (
@@ -88,7 +87,7 @@ export function ContactCard({
           >
             <Icon name="code" size="sm" />
             {actions.github}
-            <VisuallyHidden> {opensInNewTab}</VisuallyHidden>
+            <VisuallyHidden> {actions.opensInNewTab}</VisuallyHidden>
           </ButtonLink>
         ) : null}
       </div>

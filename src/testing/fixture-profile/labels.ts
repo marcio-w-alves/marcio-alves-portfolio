@@ -25,6 +25,7 @@ export const englishLabels: AnswerLabels = {
     outcomes: 'Outcomes',
   },
   notes: { inference: 'Assessment', example: 'Illustrative example', info: 'Note' },
+  links: { opensInNewTab: '(opens in a new tab)', pdfOpensInNewTab: '(PDF, opens in a new tab)' },
   contact: {
     heading: 'Interested in working together?',
     text: 'Get in touch with {firstName} about platform engineering.',
@@ -60,6 +61,10 @@ export const portugueseLabels: AnswerLabels = {
     outcomes: 'Resultados',
   },
   notes: { inference: 'Avaliação', example: 'Exemplo ilustrativo', info: 'Observação' },
+  links: {
+    opensInNewTab: '(abre em uma nova aba)',
+    pdfOpensInNewTab: '(PDF, abre em uma nova aba)',
+  },
   contact: {
     heading: 'Vamos trabalhar juntas?',
     text: 'Fale com {firstName} sobre engenharia de plataforma.',

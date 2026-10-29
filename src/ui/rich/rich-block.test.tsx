@@ -441,6 +441,20 @@ describe("a card in the answer's language", () => {
     expect(screen.getByRole('heading', { name: words.contact.heading })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Falar com Ada' })).toBeInTheDocument();
     expect(screen.getByText('Fale com Ada sobre engenharia de plataforma.')).toBeInTheDocument();
+    // On an English page, a screen reader still hears the whole card in Portuguese.
+    expect(
+      screen.getByRole('link', { name: /^Ver LinkedIn ?\(abre em uma nova aba\)$/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /^Ver currículo ?\(PDF, abre em uma nova aba\)$/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("tells a screen reader a Portuguese project card's link opens a new tab, in Portuguese", () => {
+    renderBlock(blockOf(portugueseKit.projects(['pipewright']), 'projects'));
+
+    const [link] = screen.getAllByRole('link');
+    expect(link).toHaveAccessibleName(/\(abre em uma nova aba\)$/);
   });
 
   it('labels a Portuguese note in Portuguese', () => {

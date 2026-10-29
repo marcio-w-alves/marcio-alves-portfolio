@@ -25,6 +25,7 @@ export const labels: AnswerLabels = {
     outcomes: 'Outcomes',
   },
   notes: { inference: 'Assessment', example: 'Illustrative example', info: 'Note' },
+  links: { opensInNewTab: '(opens in a new tab)', pdfOpensInNewTab: '(PDF, opens in a new tab)' },
   contact: {
     heading: 'Interested in working together?',
     text: 'Get in touch with {firstName} to discuss engineering, architecture, and product opportunities.',
