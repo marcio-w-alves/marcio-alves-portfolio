@@ -3,10 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
-import type { KnowledgeSource } from '@/core/knowledge/schema';
 import type { Term } from '@/profile/identifying-terms';
-
-export { recordFigures } from '@/core/knowledge/figures';
 
 /**
  * Finds the owner's identifying words — name, contact, employers, products,

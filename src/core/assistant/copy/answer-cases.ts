@@ -27,7 +27,8 @@ function context(ctaShown: boolean): ConversationContext {
   return { topic: 'overview', lastIntent: null, ctaShown };
 }
 
-const SUGGESTED = ['Suggested question one?', 'Suggested question two?'];
+/** What a slowed-down visitor is offered by the caller, not by the copy. */
+export const SUGGESTED = ['Suggested question one?', 'Suggested question two?'];
 
 function scoredCases(knowledge: Knowledge): AnswerCase[] {
   return [false, true].flatMap((ctaShown) =>

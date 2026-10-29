@@ -3,7 +3,7 @@ import { compileLocaleCopy } from '@/core/assistant/copy/compile';
 import { createRouter } from '@/core/assistant/system1/router';
 import type { Locale } from '@/core/i18n/locale';
 import { localize } from '@/core/knowledge/localize';
-import { answerTranscript, transcriptDifferences } from '../answer-transcript';
+import { answerTranscript, suggestedQuestions, transcriptDifferences } from '../answer-transcript';
 import { exampleCopy } from '../copy-documents';
 import { fixtureAnswers, fixturePortugueseAnswers } from './answers';
 import {
@@ -49,22 +49,13 @@ describe.each(LOCALES)('the example copy in %s', (locale) => {
   });
 
   it('routes every question it suggests the same way', () => {
-    const expected = answerTranscript(typescript.answers, knowledge);
-    const questions = [
-      ...new Set(
-        Object.values(expected).flatMap((entry) => {
-          const { followUps = [], questions: asked = [] } = entry as {
-            followUps?: string[];
-            questions?: { question: string }[];
-          };
-          return [...followUps, ...asked.map(({ question }) => question)];
-        }),
-      ),
-    ];
+    const questions = suggestedQuestions(answerTranscript(typescript.answers, knowledge));
     const context = { topic: 'overview', lastIntent: null, ctaShown: false } as const;
     const before = createRouter(knowledge, typescript.answers.vocabulary, locale);
     const after = createRouter(knowledge, data().answers.vocabulary, locale);
-    expect(questions.length).toBeGreaterThan(3);
+    // The example suggests six distinct questions; a floor just under that
+    // catches a comparison that collapsed to almost nothing.
+    expect(questions.length).toBeGreaterThan(5);
     expect(questions.map((question) => after(question, context))).toEqual(
       questions.map((question) => before(question, context)),
     );

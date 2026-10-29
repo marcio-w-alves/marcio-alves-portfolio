@@ -145,6 +145,9 @@ describe('the format of a bundle', () => {
 
   it('refuses copy for a language the profile does not publish', async () => {
     await writeDocument(dir, 'bundle.yaml', 'format: 1\nlocales: [en]\n');
+    // The example publishes Portuguese and ships its copy; this is a profile
+    // that stopped publishing it and left one document behind.
+    await rm(join(dir, 'copy', 'pt-BR'), { recursive: true });
     await writeDocument(dir, 'copy/pt-BR/ui.yaml', 'emailSubject: Vaga\n');
 
     expect(await problemsOf(dir)).toEqual([

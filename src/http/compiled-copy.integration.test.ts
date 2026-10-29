@@ -6,7 +6,7 @@ import type { CopyDocuments } from '@/core/assistant/copy/copy-document';
 import type { AssistantEvent } from '@/core/chat/events';
 import type { Locale, Translations } from '@/core/i18n/locale';
 import { localize } from '@/core/knowledge/localize';
-import { answerTranscript } from '@/testing/answer-transcript';
+import { answerTranscript, suggestedQuestions } from '@/testing/answer-transcript';
 import { exampleCopy } from '@/testing/copy-documents';
 import { withoutAnswer } from '@/testing/copy-variants';
 import { fixtureAnswers, fixturePortugueseAnswers } from '@/testing/fixture-profile/answers';
@@ -56,18 +56,7 @@ async function eventsOf(response: Response): Promise<AssistantEvent[]> {
 
 /** Every question a locale's copy suggests: the topics' and every answer's follow-ups. */
 function questionsOf(answers: AnswerSet, locale: Locale): string[] {
-  const transcript = answerTranscript(answers, localize(fixtureKnowledge, locale));
-  return [
-    ...new Set(
-      Object.values(transcript).flatMap((entry) => {
-        const { followUps = [], questions = [] } = (entry ?? {}) as {
-          followUps?: string[];
-          questions?: { question: string }[];
-        };
-        return [...followUps, ...questions.map(({ question }) => question)];
-      }),
-    ),
-  ];
+  return suggestedQuestions(answerTranscript(answers, localize(fixtureKnowledge, locale)));
 }
 
 const TYPESCRIPT = { en: fixtureAnswers, 'pt-BR': fixturePortugueseAnswers };

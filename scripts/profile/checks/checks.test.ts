@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createResponseKit } from '../../../src/core/assistant/response-kit';
@@ -71,6 +71,13 @@ describe('the shape of a profile', () => {
 });
 
 describe('the translations of a profile', () => {
+  /**
+   * The example ships copy in both languages, so a test about copy that is
+   * missing or written in one language only starts from a bundle with none,
+   * and writes exactly the documents it is about.
+   */
+  const withoutCopy = () => rm(join(dir, 'copy'), { recursive: true });
+
   it('refuses a Portuguese text that states a figure its English one does not', async () => {
     await editDocument(dir, 'knowledge/experience.yaml', (record: Experience) => {
       const [highlight] = record.experience[1]?.highlights ?? [];
@@ -99,6 +106,7 @@ describe('the translations of a profile', () => {
   });
 
   it('refuses a published language whose copy was never written', async () => {
+    await withoutCopy();
     await writeDocument(dir, 'copy/en/ui.yaml', 'emailSubject: Platform role\n');
 
     expect(await problemsOf(dir)).toEqual([
@@ -107,6 +115,8 @@ describe('the translations of a profile', () => {
   });
 
   it('asks for no translation of a profile that has written no copy at all', async () => {
+    await withoutCopy();
+
     expect(await problemsOf(dir)).toEqual([]);
   });
 

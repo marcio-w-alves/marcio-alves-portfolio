@@ -1,5 +1,5 @@
 import type { AnswerSet } from '@/core/assistant/answer-set';
-import { answerCases } from '@/core/assistant/copy/answer-cases';
+import { SUGGESTED, answerCases } from '@/core/assistant/copy/answer-cases';
 import { createResponseKit } from '@/core/assistant/response-kit';
 import { TOPIC_IDS } from '@/core/chat/topic-id';
 import type { Knowledge } from '@/core/knowledge/schema';
@@ -59,4 +59,26 @@ export function transcriptDifferences(expected: unknown, actual: unknown, path =
   return keys.flatMap((key) =>
     transcriptDifferences(expected[key], actual[key], step(path, key, inArray)),
   );
+}
+
+/**
+ * Every question a transcript offers a visitor: the follow-ups of each answer
+ * and the questions each topic page suggests, without repeats. They are what
+ * a profile promises the fast path can answer, which is why the tests ask
+ * them all. The follow-ups handed to a slowed-down visitor are the caller's,
+ * not the copy's, so they are left out.
+ */
+export function suggestedQuestions(transcript: Transcript): string[] {
+  const given = new Set<string>(SUGGESTED);
+  return [
+    ...new Set(
+      Object.values(transcript).flatMap((entry) => {
+        const { followUps = [], questions = [] } = (entry ?? {}) as {
+          followUps?: readonly string[];
+          questions?: readonly { question: string }[];
+        };
+        return [...followUps, ...questions.map(({ question }) => question)];
+      }),
+    ),
+  ].filter((question) => !given.has(question));
 }
