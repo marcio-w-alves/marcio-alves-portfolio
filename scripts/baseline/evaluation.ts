@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { caseGrade, type CaseReport } from '../evaluation/report';
 import { fileOf } from './capture-layout';
@@ -64,7 +65,10 @@ export async function runEvaluation(
   destination: string,
 ): Promise<EvaluationOutcome> {
   await makePrivateDir(destination);
-  const scratch = await mkdtemp(join(destination, 'run-'));
+  // Not under the destination: tsx opens a Unix socket in the temporary
+  // directory, and a socket path past 104 bytes cannot be bound on macOS.
+  // mkdtemp makes it private to the owner, and it is removed below.
+  const scratch = await mkdtemp(join(tmpdir(), 'portfolio-eval-'));
   try {
     const exitCode = await evaluate(checkout, args, scratch);
     const reports = await readReport(join(scratch, REPORT_NAME));
@@ -100,7 +104,7 @@ function evaluate(
       timeout: EVALUATION_TIMEOUT_MS,
       env: {
         ...gitEnvironment(),
-        // os.tmpdir() reads it, so the report lands here rather than in the shared temp folder.
+        // os.tmpdir() reads it, so the report lands in this run's own folder.
         TMPDIR: scratch,
         OPENAI_CHAT_MODEL: EVALUATION_MODEL,
         EVAL_JUDGE_MODEL: EVALUATION_MODEL,
