@@ -9,6 +9,7 @@ import { createTopicCatalog } from '@/core/assistant/topics';
 import type { ConversationContext } from '@/core/chat/request';
 import type { Locale } from '@/core/i18n/locale';
 import { localize } from '@/core/knowledge/localize';
+import { scoredAnswer } from '@/testing/scored-answer';
 import { answers } from '.';
 import { knowledge as source } from '../../../knowledge';
 import { answers as englishAnswers } from '../../en/answers';
@@ -40,10 +41,10 @@ function topicsIn(locale: Locale) {
   return createTopicCatalog(ANSWERS[locale].topics(kit)).topics;
 }
 
-function scoredIn(locale: Locale) {
+function answersIn(locale: Locale) {
   return ANSWERS[locale].answers(
     createResponseKit(localize(source, locale), ANSWERS[locale].labels),
-  ).scored;
+  );
 }
 
 const fastPath = createFastPath({
@@ -67,8 +68,8 @@ describe('router — every Portuguese suggestion leads where its English twin do
   it.each(SCORED_INTENTS)(
     'routes the follow-ups of the %s answer like the English ones',
     (intent) => {
-      const portuguese = scoredIn('pt-BR')[intent](FRESH, '').followUps;
-      const twins = scoredIn('en')[intent](FRESH, '').followUps;
+      const portuguese = scoredAnswer(answersIn('pt-BR'), intent)(FRESH, '').followUps;
+      const twins = scoredAnswer(answersIn('en'), intent)(FRESH, '').followUps;
       expect(portuguese.map((question) => intentOf('pt-BR', question))).toEqual(
         twins.map((question) => intentOf('en', question)),
       );

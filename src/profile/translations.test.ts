@@ -8,6 +8,7 @@ import type { ConversationContext } from '@/core/chat/request';
 import { SUPPORTED_LOCALES } from '@/core/i18n/locale';
 import { localize } from '@/core/knowledge/localize';
 import type { Knowledge, Localized } from '@/core/knowledge/schema';
+import { scoredAnswer } from '@/testing/scored-answer';
 import { profile } from '.';
 import { validateProfile } from './schema';
 
@@ -213,9 +214,14 @@ function everyAnswer(): [string, string][] {
   const answers = portuguese.answers.answers(kit);
   const findEvidence = createEvidenceFinder(record);
   return [
-    ...SCORED_INTENTS.flatMap((intent) => answerTexts(intent, answers.scored[intent](FRESH, ''))),
+    ...SCORED_INTENTS.flatMap((intent) =>
+      answerTexts(intent, scoredAnswer(answers, intent)(FRESH, '')),
+    ),
     ...record.languages.flatMap((language) =>
-      answerTexts(`languages:${language.name}`, answers.scored.languages(FRESH, language.name)),
+      answerTexts(
+        `languages:${language.name}`,
+        scoredAnswer(answers, 'languages')(FRESH, language.name),
+      ),
     ),
     ...record.experience.flatMap((role) =>
       answerTexts(`company:${role.id}`, answers.company(role.id)),
@@ -227,7 +233,7 @@ function everyAnswer(): [string, string][] {
       answerTexts(`technology:${technology.name}`, answers.technology([findEvidence(technology)])),
     ),
     ...answerTexts('greeting', answers.greeting()),
-    ...answerTexts('identity', answers.scored.identity(FRESH, '')),
+    ...answerTexts('identity', scoredAnswer(answers, 'identity')(FRESH, '')),
     ...answerTexts('privateInfo', answers.privateInfo()),
     ...answerTexts('offPurpose', answers.offPurpose()),
     ...answerTexts('unknown', answers.unknown()),

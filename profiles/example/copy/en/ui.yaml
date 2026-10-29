@@ -1,0 +1,4 @@
+# Where the interface says something her own way; `{company}` is filled in the browser.
+emailSubject: Platform role
+actions:
+  roleQuestion: What did she do at {company}?

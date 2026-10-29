@@ -1,0 +1,50 @@
+# The same pages in Portuguese, over the record read in Portuguese.
+overview:
+  label: Visão geral
+  intro: '{{profile.name}}, {{profile.title}}.'
+  description: 'Visão geral: {{profile.name}}, {{profile.title}}. Pergunte aqui sobre o trabalho documentado de {{profile.name}}.'
+  questions:
+    - { question: 'Me fale sobre a carreira da {{first}}.', tag: Carreira, short: A carreira dela }
+    - { question: Ela liderou o time de folha de pagamento?, tag: Folha de pagamento }
+    - { question: Quais competências ela tem?, tag: Competências }
+  page: []
+experience:
+  label: Experiência
+  intro: '{{experience | count}} cargos desde {{profile.careerStartYear}}.'
+  description: 'Experiência: {{experience | count}} cargos desde {{profile.careerStartYear}}. Pergunte aqui sobre o trabalho documentado de {{profile.name}}.'
+  questions:
+    - { question: 'Me fale sobre a carreira da {{first}}.', tag: Carreira }
+    - { question: 'O que ela fez na {{role.globex.company}}?', tag: '{{role.globex.company}}' }
+  page:
+    - timeline: all
+    - text: '{{practice.careerArc | bullets}}'
+skills:
+  label: Competências
+  intro: Competências de plataforma.
+  description: 'Competências: Competências de plataforma. Pergunte aqui sobre o trabalho documentado de {{profile.name}}.'
+  questions:
+    - { question: Quais competências ela tem?, tag: Competências }
+    - { question: Ela conhece React?, tag: React }
+  page:
+    - skills: all
+projects:
+  label: Projetos
+  intro: '{{projects | map name | join " e "}}.'
+  description: 'Projetos: {{projects | map name | join " e "}}. Pergunte aqui sobre o trabalho documentado de {{profile.name}}.'
+  questions:
+    - { question: 'Me fale sobre a carreira da {{first}}.', tag: Carreira }
+  page: []
+philosophy:
+  label: Filosofia
+  intro: '{{principles | map title | join ", "}}'
+  description: 'Filosofia: {{principles | map title | join ", "}} Pergunte aqui sobre o trabalho documentado de {{profile.name}}.'
+  questions:
+    - { question: 'Me fale sobre a carreira da {{first}}.', tag: Carreira }
+  page: []
+education:
+  label: Formação
+  intro: '{{education.school}}'
+  description: 'Formação: {{education.school}} Pergunte aqui sobre o trabalho documentado de {{profile.name}}.'
+  questions:
+    - { question: 'Me fale sobre a carreira da {{first}}.', tag: Carreira }
+  page: []

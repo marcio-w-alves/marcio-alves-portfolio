@@ -121,8 +121,10 @@ describe('the limits of a bundle', () => {
 
   it('reads up to 400 documents and refuses the 401st', async () => {
     // English alone, so the filler is one document each rather than a pair
-    // the translation check would hold to its English twin.
+    // the translation check would hold to its English twin. The example's
+    // Portuguese copy goes with the language it was written for.
     await writeDocument(dir, 'bundle.yaml', 'format: 1\nlocales: [en]\n');
+    await rm(join(dir, 'copy', 'pt-BR'), { recursive: true });
     const shipped = (await readdir(dir, { recursive: true, withFileTypes: true })).filter((entry) =>
       entry.isFile(),
     ).length;

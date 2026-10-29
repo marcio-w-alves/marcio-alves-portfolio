@@ -3,7 +3,6 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
-import type { KnowledgeSource } from '@/core/knowledge/schema';
 import type { Term } from '@/profile/identifying-terms';
 
 /**
@@ -61,19 +60,6 @@ export function repositoryFiles(paths: readonly string[]): SourceFile[] {
     .filter((path) => path && existsSync(join(repositoryRoot, path)))
     .map((path) => ({ path, text: readFileSync(join(repositoryRoot, path), 'utf8') }))
     .filter(({ text }) => !text.includes('\0'));
-}
-
-/** The record's own figures — metric values and the years of its dates — that code must not repeat. */
-export function recordFigures(knowledge: KnowledgeSource): string[] {
-  const { profile, education, experience, metrics } = knowledge;
-  const years = [
-    profile.careerStartYear,
-    education.year,
-    ...experience.flatMap(({ start, end }) =>
-      [start, end ?? start].map((date) => date.slice(0, 4)),
-    ),
-  ].map(String);
-  return [...new Set([...Object.values(metrics).map((metric) => metric.value), ...years])];
 }
 
 function stringLiterals(source: ts.SourceFile): { text: string; line: number }[] {

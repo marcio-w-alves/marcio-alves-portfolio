@@ -1,0 +1,50 @@
+# The fictional person's pages: a label, an introduction read from the record, and questions.
+overview:
+  label: Overview
+  intro: '{{profile.name}}, {{profile.title}}.'
+  description: "Overview: {{profile.name}}, {{profile.title}}. Ask about {{profile.name}}'s documented work here."
+  questions:
+    - { question: "Tell me about {{first}}'s career.", tag: Career, short: Her career }
+    - { question: Did she lead the payroll team?, tag: Payroll }
+    - { question: Which skills does she have?, tag: Skills }
+  page: []
+experience:
+  label: Experience
+  intro: '{{experience | count}} roles since {{profile.careerStartYear}}.'
+  description: "Experience: {{experience | count}} roles since {{profile.careerStartYear}}. Ask about {{profile.name}}'s documented work here."
+  questions:
+    - { question: "Tell me about {{first}}'s career.", tag: Career }
+    - { question: 'What did she do at {{role.globex.company}}?', tag: '{{role.globex.company}}' }
+  page:
+    - timeline: all
+    - text: '{{practice.careerArc | bullets}}'
+skills:
+  label: Skills
+  intro: Platform skills.
+  description: "Skills: Platform skills. Ask about {{profile.name}}'s documented work here."
+  questions:
+    - { question: Which skills does she have?, tag: Skills }
+    - { question: Does she know React?, tag: React }
+  page:
+    - skills: all
+projects:
+  label: Projects
+  intro: '{{projects | map name | join " and "}}.'
+  description: 'Projects: {{projects | map name | join " and "}}. Ask about {{profile.name}}''s documented work here.'
+  questions:
+    - { question: "Tell me about {{first}}'s career.", tag: Career }
+  page: []
+philosophy:
+  label: Philosophy
+  intro: '{{principles | map title | join ", "}}'
+  description: 'Philosophy: {{principles | map title | join ", "}} Ask about {{profile.name}}''s documented work here.'
+  questions:
+    - { question: "Tell me about {{first}}'s career.", tag: Career }
+  page: []
+education:
+  label: Education
+  intro: '{{education.school}}'
+  description: "Education: {{education.school}} Ask about {{profile.name}}'s documented work here."
+  questions:
+    - { question: "Tell me about {{first}}'s career.", tag: Career }
+  page: []
