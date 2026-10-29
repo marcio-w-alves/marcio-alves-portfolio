@@ -12,6 +12,9 @@ pnpm profile check <bundle dir>                 # every check, nothing written
 pnpm profile materialize --out <dir>            # the files the site is built from
 ```
 
+Where a profile lives, how to create its database and how to back it up and
+restore it: [`database.md`](./database.md).
+
 ## What a bundle holds
 
 | Path                                                   | Holds                                                                                                                                                                          |
