@@ -3,7 +3,8 @@ import { join } from 'node:path';
 import { chromium, type Browser, type BrowserContext } from '@playwright/test';
 import { captureFiles, fileOf } from './capture-layout';
 import type { PageInput } from './inputs';
-import { makePrivateDir, writePrivateFile, writePrivateJson } from './private-files';
+import { makePrivateDir, writePrivateFile } from '../profile/home';
+import { writePrivateJson } from './private-files';
 
 /**
  * Every page in a real browser, as a visitor sees it once it has loaded: its

@@ -1,0 +1,107 @@
+# The example profile: Ada Rivera is fictional. Replace this bundle with your own.
+practice:
+  designProcess:
+    - en: Start from the developer journey.
+      pt-BR: Começar pela jornada de quem desenvolve.
+  decisionCriteria:
+    - en: Build or buy
+      pt-BR: Construir ou comprar
+  workflow:
+    - en: Measure the bottleneck first.
+      pt-BR: Medir o gargalo primeiro.
+  caseStudies:
+    acme:
+      problem:
+        en: Slow builds.
+        pt-BR: Builds lentos.
+      angles:
+        - en: Remote caching.
+          pt-BR: Cache remoto.
+  skillDepth:
+    - area:
+        en: Strong
+        pt-BR: Sólido
+      items:
+        en: Build systems
+        pt-BR: Sistemas de build
+  toolset:
+    - area:
+        en: Build
+        pt-BR: Build
+      items:
+        en: Bazel, Pipewright
+        pt-BR: Bazel, Pipewright
+  fullStack:
+    summary:
+      en: Platform first.
+      pt-BR: Plataforma em primeiro lugar.
+    byCompany:
+      - en: '**Acme** — build platform.'
+        pt-BR: '**Acme** — plataforma de build.'
+    ownProducts:
+      en: Small tools for monorepos.
+      pt-BR: Pequenas ferramentas para monorepos.
+  aiEngineering:
+    summary:
+      en: Uses AI to triage build failures.
+      pt-BR: Usa IA para triar falhas de build.
+    tools:
+      - en: '**Assistant** — log triage.'
+        pt-BR: '**Assistente** — triagem de logs.'
+    practices:
+      - en: '**Verification** — every fix is reviewed.'
+        pt-BR: '**Verificação** — toda correção é revisada.'
+    inProducts:
+      en: Classifies flaky tests.
+      pt-BR: Classifica testes instáveis.
+  leadershipPractice:
+    style:
+      en: Leads by paving roads.
+      pt-BR: Lidera pavimentando caminhos.
+    balance:
+      en: Half coding, half leading.
+      pt-BR: Metade programando, metade liderando.
+    habits:
+      - en: Writes design notes.
+        pt-BR: Escreve notas de design.
+  studies:
+    - en: '**Build systems** — hermetic builds.'
+      pt-BR: '**Sistemas de build** — builds herméticos.'
+  learningStyle:
+    en: Learns by building tools.
+    pt-BR: Aprende construindo ferramentas.
+  productDepth:
+    pipewright:
+      en: Incremental builds over a dependency graph.
+      pt-BR: Builds incrementais sobre um grafo de dependências.
+    loomstack:
+      en: Ownership metadata for services.
+      pt-BR: Metadados de responsabilidade por serviço.
+  goals:
+    roles:
+      en: Platform leadership.
+      pt-BR: Liderança de plataforma.
+    mode:
+      en: Remote.
+      pt-BR: Remoto.
+    challenges:
+      en: Large monorepos.
+      pt-BR: Monorepos grandes.
+  interests:
+    - en: '**Climbing** — bouldering.'
+      pt-BR: '**Escalada** — boulder.'
+  careerArc:
+    - en: '**2012 — 2018** — infrastructure.'
+      pt-BR: '**2012 — 2018** — infraestrutura.'
+  frontendArchitecture:
+    - en: Thin clients over platform APIs.
+      pt-BR: Clientes leves sobre APIs de plataforma.
+  performanceApproach:
+    - en: Profile before optimizing.
+      pt-BR: Medir antes de otimizar.
+  qualityPractices:
+    - en: Hermetic tests.
+      pt-BR: Testes herméticos.
+  mobileExplorations:
+    en: No mobile work.
+    pt-BR: Nenhum trabalho com mobile.

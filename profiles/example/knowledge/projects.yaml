@@ -1,0 +1,58 @@
+# The example profile: Ada Rivera is fictional. Replace this bundle with your own.
+projects:
+  - id: pipewright
+    name: Pipewright
+    category:
+      en: Developer tooling
+      pt-BR: Ferramentas para desenvolvedores
+    status:
+      en: Public beta
+      pt-BR: Beta público
+    live: true
+    description:
+      en: A small CI runner for monorepos.
+      pt-BR: Um pequeno executor de CI para monorepos.
+    scopeLabel:
+      en: Key features
+      pt-BR: Principais funcionalidades
+    scope:
+      - en: Affected-target builds
+        pt-BR: Builds só dos alvos afetados
+    platforms:
+      - en: Web
+        pt-BR: Web
+    technologies: []
+    considerations: []
+    outcomes:
+      - en: Builds its own monorepo in under a minute.
+        pt-BR: Faz o build do próprio monorepo em menos de um minuto.
+    links:
+      - label:
+          en: Visit pipewright.example
+          pt-BR: Visite pipewright.example
+        url: https://pipewright.example
+    source: projects
+  - id: loomstack
+    name: Loomstack
+    category:
+      en: Infrastructure
+      pt-BR: Infraestrutura
+    status:
+      en: Concept
+      pt-BR: Conceito
+    live: false
+    description:
+      en: A planned service catalogue.
+      pt-BR: Um catálogo de serviços planejado.
+    scopeLabel:
+      en: Planned scope
+      pt-BR: Escopo planejado
+    scope:
+      - en: Service ownership
+        pt-BR: Responsabilidade por serviço
+    platforms: []
+    technologies: []
+    considerations: []
+    outcomes: []
+    links: []
+    source: projects

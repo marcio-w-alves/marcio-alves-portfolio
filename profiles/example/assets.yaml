@@ -1,0 +1,7 @@
+# The example profile: Ada Rivera is fictional. Replace this bundle with your own.
+- file: assets/ada-rivera.jpg
+  path: /ada-rivera.jpg
+  mediaType: image/jpeg
+- file: assets/ada-rivera-cv.pdf
+  path: /ada-rivera-cv.pdf
+  mediaType: application/pdf

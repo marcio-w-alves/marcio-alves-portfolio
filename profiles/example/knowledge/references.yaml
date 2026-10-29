@@ -1,0 +1,7 @@
+# The example profile: Ada Rivera is fictional. Replace this bundle with your own.
+references:
+  technologies:
+    Bazel: Bazel (software)
+    Go: Go (programming language)
+    Terraform: Terraform (software)
+    Nix: null

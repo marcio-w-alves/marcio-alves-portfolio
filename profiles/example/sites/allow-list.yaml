@@ -1,0 +1,13 @@
+# The example profile: Ada Rivera is fictional. Replace this bundle with your own.
+- subject:
+    kind: project
+    id: pipewright
+  urls:
+    - https://pipewright.example/
+  termsNote: Ada's own product.
+- subject:
+    kind: company
+    id: acme
+  urls:
+    - https://www.acme.example/about
+  termsNote: Company page; robots.txt allows it.

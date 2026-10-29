@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { EvaluationCase } from '../../src/profile/evaluation/cases';
+import type { EvaluationCase } from '../../src/profile/evaluation';
 import { grade, requiredPasses, runsFor } from './grading';
 
 describe('grading a case over several runs', () => {

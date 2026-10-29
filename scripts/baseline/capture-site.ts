@@ -9,7 +9,8 @@ import { BASELINE_TOOL_VERSION, writeManifest, type CaptureManifest } from './ma
 import { assertOutsideRepository, defaultBaselineDir } from './output-dir';
 import { isLocalTarget, type Clock } from './pacing';
 import { capturePages } from './pages';
-import { makePrivateDir, readJson, writePrivateJson } from './private-files';
+import { makePrivateDir } from '../profile/home';
+import { readJson, writePrivateJson } from './private-files';
 import { captureRoutes } from './routes';
 
 /**

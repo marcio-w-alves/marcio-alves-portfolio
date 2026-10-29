@@ -4,12 +4,11 @@ import {
   findFigureLiterals,
   findOwnerLiterals,
   findOwnerWords,
-  ownerTerms,
-  ownerWords,
   recordFigures,
   repositoryFiles,
   type SourceFile,
 } from '@/testing/whitelabel';
+import { ownerTerms, ownerWords } from '@/profile/identifying-terms';
 // The profile on disk, never the one a test run binds in its place: this
 // checks the files a fork keeps against the profile it actually ships.
 import { profile } from '../profile';

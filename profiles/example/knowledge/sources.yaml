@@ -1,0 +1,35 @@
+# The example profile: Ada Rivera is fictional. Replace this bundle with your own.
+sourceLabels:
+  cv:
+    en: CV
+    pt-BR: Currículo
+  cv.acme:
+    en: CV
+    pt-BR: Currículo
+  cv.globex:
+    en: CV
+    pt-BR: Currículo
+  cv.initech:
+    en: CV
+    pt-BR: Currículo
+  cv.education:
+    en: CV
+    pt-BR: Currículo
+  cv.skills:
+    en: CV
+    pt-BR: Currículo
+  cv.courses:
+    en: CV
+    pt-BR: Currículo
+  cv.languages:
+    en: CV
+    pt-BR: Currículo
+  projects:
+    en: Product sites
+    pt-BR: Sites dos produtos
+  principles:
+    en: Principles
+    pt-BR: Princípios
+  notes:
+    en: Notes
+    pt-BR: Anotações

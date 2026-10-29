@@ -1,0 +1,23 @@
+# The example profile: Ada Rivera is fictional. Replace this bundle with your own.
+education:
+  degree:
+    en: MSc in Distributed Systems
+    pt-BR: Mestrado em Sistemas Distribuídos
+  school: Universidade do Porto
+  schoolShort: UP
+  location:
+    en: Porto, Portugal
+    pt-BR: Porto, Portugal
+  year: 2012
+  source: cv.education
+languages:
+  - name:
+      en: Portuguese
+      pt-BR: Português
+    level: Native
+    source: cv.languages
+  - name:
+      en: English
+      pt-BR: Inglês
+    level: Fluent
+    source: cv.languages

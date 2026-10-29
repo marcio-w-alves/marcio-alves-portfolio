@@ -2,7 +2,8 @@ import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { captureFiles, fileOf, idsIn } from './capture-layout';
 import type { RouteInput } from './inputs';
-import { writePrivateFile, writePrivateJson } from './private-files';
+import { writePrivateFile } from '../profile/home';
+import { writePrivateJson } from './private-files';
 
 /** A metadata route or a file, as the site serves it: status, type and exact bytes. */
 export interface CapturedRoute {
