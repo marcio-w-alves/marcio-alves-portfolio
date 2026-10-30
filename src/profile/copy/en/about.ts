@@ -5,8 +5,10 @@ import {
   MAX_ROUNDS,
 } from '@/core/assistant/system2/model-assistant';
 import type { AboutPageCopy } from '@/site/about-page';
+import { identity } from '../../identity';
 
-export const REPOSITORY = 'https://github.com/marcio-w-alves/marcio-alves-portfolio';
+/** Where this site's code is published; a bundle holds it with the identity. */
+export const REPOSITORY = identity.sourceRepository;
 
 /** The one page without a chat: how this site itself is built, in his words. */
 export const about: AboutPageCopy = {

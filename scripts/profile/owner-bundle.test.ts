@@ -2,7 +2,6 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { profile } from '../../src/profile';
-import { REPOSITORY } from '../../src/profile/copy/en/about';
 import { CALIBRATION } from '../../src/profile/evaluation/calibration';
 import { RETRIEVAL_PROBES } from '../../src/profile/retrieval-probes';
 import { profileHome } from './home';
@@ -36,9 +35,7 @@ describe.skipIf(!written)(
       const { sans, display, mono } = data.brand.fonts;
 
       expect(data.locales).toEqual(profile.locales);
-      // The bundle's identity also holds where the site's code is published,
-      // which the TypeScript profile keeps in its about copy.
-      expect(data.identity).toEqual({ ...profile.identity, sourceRepository: REPOSITORY });
+      expect(data.identity).toEqual(profile.identity);
       expect({
         ...data.brand,
         fonts: {

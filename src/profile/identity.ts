@@ -1,7 +1,10 @@
 import type { Identity } from './schema';
 
-/** Who the site is about, and how it names itself to the services it calls. */
-export const identity: Identity = {
+/**
+ * Who the site is about, and how it names itself to the services it calls.
+ * This site does publish its source, so the page about it can count on that.
+ */
+export const identity: Identity & { readonly sourceRepository: string } = {
   name: 'Marcio Alves',
   firstName: 'Marcio',
   lastName: 'Alves',
@@ -14,4 +17,5 @@ export const identity: Identity = {
   siteHost: 'marciomariani.dev',
   userAgentProduct: 'MarcioAlvesPortfolio',
   nonIdentifyingTerms: ['Freelance'],
+  sourceRepository: 'https://github.com/marcio-w-alves/marcio-alves-portfolio',
 };

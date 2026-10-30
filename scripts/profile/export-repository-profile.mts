@@ -14,7 +14,6 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stringify } from 'yaml';
 import { profile } from '../../src/profile';
-import { REPOSITORY as SOURCE_REPOSITORY } from '../../src/profile/copy/en/about';
 import { CALIBRATION } from '../../src/profile/evaluation/calibration';
 import { RETRIEVAL_PROBES } from '../../src/profile/retrieval-probes';
 import { BUNDLE_FORMAT, DOCUMENTS, KNOWLEDGE_DOCUMENTS } from './bundle/layout';
@@ -44,9 +43,7 @@ const assets = [
 
 const documents: Record<string, string> = {
   [DOCUMENTS.bundle]: yaml({ format: BUNDLE_FORMAT, locales }),
-  // The about page names where the site's code is published; as TypeScript it
-  // reads that from the copy module, and a bundle holds it with the identity.
-  [DOCUMENTS.identity]: yaml({ ...identity, sourceRepository: SOURCE_REPOSITORY }),
+  [DOCUMENTS.identity]: yaml(identity),
   [DOCUMENTS.brand]: yaml({
     ...brand,
     fonts: {
