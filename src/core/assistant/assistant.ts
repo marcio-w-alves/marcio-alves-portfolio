@@ -6,7 +6,7 @@ import type { AnswerCachePort } from './ports/answer-cache.port';
 import type { ClockPort } from './ports/clock.port';
 import type { ModelBudgetPort } from './ports/model-budget.port';
 import { toEvents } from './response';
-import type { FastPath } from './system1/fast-path';
+import type { FastPath, FastPathResult } from './system1/fast-path';
 import { normalize } from './system1/router';
 import type { ModelAssistant } from './system2/model-assistant';
 
@@ -50,6 +50,9 @@ export interface AnswerReport {
 }
 
 type Handling = Pick<AnswerReport, 'path' | 'outcome' | 'intent'>;
+
+/** What a question becomes when the copy that was going to answer it cannot be rendered. */
+const ESCALATED: FastPathResult = { kind: 'escalate', nearest: null };
 
 interface Options {
   /** Answers what it recognizes from the record, for free. */
@@ -99,11 +102,29 @@ export function createAssistant({
   reportError,
   onAnswered,
 }: Options): Assistant {
+  /**
+   * Everything the fast path says is the profile's copy rendered over its
+   * record, so copy that cannot be rendered must cost the visitor only what
+   * it was going to say: the question is escalated like one the fast path
+   * does not recognize, and a suggestion goes unmade, instead of the answer
+   * being lost. `unknown` and `slowDown` are templates too, but they are what
+   * everything else degrades to — there is nothing behind them to fall back
+   * on, so a failure there is the stream's to report.
+   */
+  function rendered<T>(render: () => T, whenBroken: T): T {
+    try {
+      return render();
+    } catch (error) {
+      reportError(error);
+      return whenBroken;
+    }
+  }
+
   async function* respond(
     { question, history, context, pageLocale, clientId }: AssistantRequest,
     signals: AnswerSignals | undefined,
   ): AsyncGenerator<AssistantEvent, Handling> {
-    const routed = fastPath.answer(question, context, pageLocale);
+    const routed = rendered(() => fastPath.answer(question, context, pageLocale), ESCALATED);
     if (routed.kind === 'answered') {
       yield* toEvents(routed.response);
       return { path: 'fast', outcome: 'answered', intent: routed.response.intent };
@@ -119,7 +140,7 @@ export function createAssistant({
       return escalated('unavailable');
     }
 
-    const followUps = fastPath.followUpsFor(routed.nearest, context, locale);
+    const followUps = rendered(() => fastPath.followUpsFor(routed.nearest, context, locale), []);
     // Only a question asked without history means the same thing every time —
     // on the same page, since a topic page changes what is worth saying, and in
     // the same language, since "React?" is answered in the page's.
@@ -138,6 +159,8 @@ export function createAssistant({
     const emitted: AssistantEvent[] = [];
     const signal = signals && AbortSignal.any([signals.visitor, signals.deadline]);
     try {
+      // Not guarded: a topic page is rendered when the fast path is built, so
+      // one that cannot render fails the checks and the build, never a visitor.
       const page = fastPath.pageShown(context, pageLocale);
       const { shareable } = yield* recording(
         modelAssistant.answer(

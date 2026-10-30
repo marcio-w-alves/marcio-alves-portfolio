@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import { compileLocaleCopy } from '@/core/assistant/copy/compile';
 import type { Locale } from '@/core/i18n/locale';
 import { localize } from '@/core/knowledge/localize';
+import { exampleCopy } from '@/testing/copy-documents';
+import { textAnswer, withAnswer } from '@/testing/copy-variants';
 import {
   fixtureAnswers,
   fixtureKnowledge,
@@ -76,12 +79,12 @@ const reported: unknown[] = [];
 const answered: AnswerReport[] = [];
 function assistantWith(
   model: ModelAssistant | null,
-  { budget = budgetThat(true), answerCache = memoryCache() } = {},
+  { budget = budgetThat(true), answerCache = memoryCache(), over = fastPath } = {},
 ) {
   reported.length = 0;
   answered.length = 0;
   return createAssistant({
-    fastPath,
+    fastPath: over,
     modelAssistant: model,
     budget,
     answerCache,
@@ -199,6 +202,87 @@ describe('assistant — when the model is unavailable', () => {
       error: { code: 'interrupted', retryable: true },
     });
     expect(events.filter((event) => event.type === 'start')).toHaveLength(1);
+  });
+});
+
+describe('assistant — when an answer cannot be rendered', () => {
+  /**
+   * The example's copy with the greeting naming a field the record has not:
+   * it compiles, and throws where the fast path renders it. Every answer is a
+   * template render over the profile's data now, so one broken answer must
+   * cost the visitor that answer and nothing more.
+   */
+  const brokenGreeting = (() => {
+    const copy = compileLocaleCopy(
+      withAnswer(exampleCopy('en'), 'greeting', textAnswer('{{profile.notAField}}')),
+      { locale: 'en', limits: {}, identity: {} },
+    );
+    const knowledge = localize(fixtureKnowledge, 'en');
+    return createFastPath({ en: { knowledge, answers: copy.answers } });
+  })();
+
+  it('reports the render failure and hands the question to the model', async () => {
+    const { model, received } = sentenceModel();
+    const events = await collect(assistantWith(model, { over: brokenGreeting }), 'Hello');
+
+    expect(received.map((modelRequest) => modelRequest.question)).toEqual(['Hello']);
+    expect(reported.map((error) => (error as Error).message)).toContainEqual(
+      expect.stringContaining('Unknown path "profile.notAField"'),
+    );
+    expect(events.at(-1)).toMatchObject({ type: 'finish' });
+    expect(answered).toMatchObject([{ path: 'model', outcome: 'answered', intent: null }]);
+  });
+
+  it('answers honestly with no model, instead of interrupting the stream', async () => {
+    const events = await collect(assistantWith(null, { over: brokenGreeting }), 'Hello');
+
+    expect(events[0]).toEqual({ type: 'start', intent: 'unknown', related: null });
+    expect(events.map((event) => event.type)).not.toContain('error');
+    expect(answered).toMatchObject([{ path: 'model', outcome: 'unavailable' }]);
+  });
+
+  it('still answers the questions whose own copy renders', async () => {
+    const events = await collect(
+      assistantWith(null, { over: brokenGreeting }),
+      'Can I see her CV?',
+    );
+
+    expect(events[0]).toMatchObject({ type: 'start', intent: 'resume' });
+    expect(reported).toEqual([]);
+  });
+
+  /**
+   * The follow-ups offered beside an escalated answer come from the copy too:
+   * for a question with no near intent, from the greeting. Asked in a third
+   * language, this one escalates without rendering anything — so the answer
+   * is sound and only the suggestions cannot be rendered.
+   */
+  const NO_NEAR_INTENT = '彼の経歴は？';
+
+  it('offers no suggestion rather than losing the answer it would go beside', async () => {
+    const { model, received } = sentenceModel();
+    const events = await collect(assistantWith(model, { over: brokenGreeting }), NO_NEAR_INTENT);
+
+    expect(received.map((modelRequest) => modelRequest.followUps)).toEqual([[]]);
+    expect(reported.map((error) => (error as Error).message)).toEqual([
+      expect.stringContaining('Unknown path "profile.notAField"'),
+    ]);
+    expect(events.at(-1)).toMatchObject({ type: 'finish', followUps: [] });
+    expect(answered).toMatchObject([{ path: 'model', outcome: 'answered' }]);
+  });
+
+  it('still tells a visitor who has used up their share, instead of nothing', async () => {
+    const events = await collect(
+      assistantWith(sentenceModel().model, { budget: budgetThat(false), over: brokenGreeting }),
+      NO_NEAR_INTENT,
+    );
+
+    expect(events[0]).toMatchObject({ type: 'start', intent: 'rateLimited' });
+    expect(events.at(-1)).toMatchObject({ type: 'finish' });
+    expect(answered).toMatchObject([{ path: 'model', outcome: 'paced' }]);
+    expect(reported.map((error) => (error as Error).message)).toEqual([
+      expect.stringContaining('Unknown path "profile.notAField"'),
+    ]);
   });
 });
 

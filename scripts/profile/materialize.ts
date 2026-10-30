@@ -19,8 +19,16 @@ import type { ProfileWorkspace } from './workspace/workspace';
  * previous files whole.
  */
 
+/**
+ * A profile the build can materialize. The TypeScript profile is not one: its
+ * generated files are written by hand and committed, and until the site is
+ * built from a materialization instead they are not this command's to
+ * overwrite.
+ */
+export type MaterializedSource = Exclude<Source, { readonly kind: 'typescript' }>;
+
 export interface MaterializeOptions {
-  readonly source: Source;
+  readonly source: MaterializedSource;
   /** The directory the files are written under, as the repository root lays them out. */
   readonly out: string;
   /** The shipped example bundle, `profiles/example`. */
@@ -29,7 +37,7 @@ export interface MaterializeOptions {
 }
 
 export interface Manifest {
-  readonly source: Source['kind'];
+  readonly source: MaterializedSource['kind'];
   readonly revision: string;
   readonly digest: string;
   readonly format: number;
@@ -53,7 +61,7 @@ export async function isMaterialized(out: string): Promise<boolean> {
   );
 }
 
-function workspaceFor(source: Source, exampleDir: string): ProfileWorkspace {
+function workspaceFor(source: MaterializedSource, exampleDir: string): ProfileWorkspace {
   switch (source.kind) {
     case 'example':
       return bundleDirectory(exampleDir);

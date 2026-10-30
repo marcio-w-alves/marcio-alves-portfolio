@@ -32,6 +32,8 @@ export interface Identity {
    * as a "Freelance" employer: the whitelabel check lets them appear anywhere.
    */
   readonly nonIdentifyingTerms: readonly string[];
+  /** Where the site's source code is published, for the page about the site. */
+  readonly sourceRepository?: string;
 }
 
 /**
@@ -80,6 +82,7 @@ const identitySchema = z.strictObject({
   siteHost: z.hostname(),
   userAgentProduct: z.string().regex(/^[\w.-]+$/, 'Must be a User-Agent product token'),
   nonIdentifyingTerms: z.array(z.string()),
+  sourceRepository: httpsUrl.optional(),
 });
 
 const fontStackSchema = z.strictObject({
@@ -265,11 +268,6 @@ export interface BrandData extends Omit<Brand, 'fonts'> {
   readonly fonts: Readonly<Record<FontRole, FontStackData>>;
 }
 
-export interface IdentityData extends Identity {
-  /** Where the site's source code is published, for the page about the site. */
-  readonly sourceRepository?: string;
-}
-
 /**
  * One language's copy as the profile holds it: each document under
  * `copy/<locale>/`, keyed by its path there (`answers/career.yaml`,
@@ -302,7 +300,7 @@ export type AssetMediaType = (typeof ASSET_MEDIA_TYPES)[number];
  */
 export interface ProfileData {
   readonly locales: readonly Locale[];
-  readonly identity: IdentityData;
+  readonly identity: Identity;
   readonly brand: BrandData;
   readonly knowledge: KnowledgeSource;
   readonly siteAllowList: readonly SiteEntry[];
@@ -318,7 +316,7 @@ const copyDocumentsSchema = z.record(z.string(), z.unknown());
 /** The shape of `ProfileData`. Rules across its parts are the profile checks', not this schema's. */
 export const profileDataSchema = z.strictObject({
   locales: localesSchema,
-  identity: identitySchema.extend({ sourceRepository: httpsUrl.optional() }),
+  identity: identitySchema,
   brand: brandSchema.extend({
     fonts: z.strictObject({
       sans: fontStackSchema.extend({ face: z.enum(FONT_FACES) }),

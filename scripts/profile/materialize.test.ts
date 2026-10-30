@@ -8,7 +8,6 @@ import { profileDataSchema } from '../../src/profile/schema';
 import { digestOf } from './bundle/digest';
 import { readBundleDirectory } from './bundle/read-directory';
 import { stageDirectory, stagePublicFiles } from './materialize';
-import { PRODUCTION_NEEDS_A_PROFILE } from './select-source';
 import {
   checkBundle,
   CLI_TEST_TIMEOUT_MS,
@@ -59,7 +58,7 @@ describe('materializing the example', { timeout: CLI_TEST_TIMEOUT_MS }, () => {
     const { data } = await checkBundle(EXAMPLE_DIR);
     const bundle = (path: string) => readFile(join(EXAMPLE_DIR, path));
 
-    const run = await runProfile(['materialize', '--out', out]);
+    const run = await runProfile(['materialize', '--out', out, '--example']);
 
     expect(run.code).toBe(0);
     expect(profileDataSchema.safeParse(await readJson(generated('profile.json'))).success).toBe(
@@ -89,7 +88,7 @@ describe('materializing the example', { timeout: CLI_TEST_TIMEOUT_MS }, () => {
   it('logs where the profile came from and how long it took, and none of what it says', async () => {
     const { data } = await checkBundle(EXAMPLE_DIR);
 
-    const { stdout } = await runProfile(['materialize', '--out', out]);
+    const { stdout } = await runProfile(['materialize', '--out', out, '--example']);
     const digest = digestOf(await readBundleDirectory(EXAMPLE_DIR));
 
     expect(stdout).toMatch(
@@ -108,13 +107,19 @@ describe('materializing the example', { timeout: CLI_TEST_TIMEOUT_MS }, () => {
 });
 
 describe('the profile a build is made from', { timeout: CLI_TEST_TIMEOUT_MS }, () => {
-  it('refuses a production build with no profile, and writes nothing', async () => {
-    const run = await runProfile(['materialize', '--out', out], { VERCEL_ENV: 'production' });
+  // Until the site is built from a materialization, a build with no profile
+  // source is a build from the TypeScript profile in src/profile — in
+  // production too, which is where it is still serving from.
+  it.each([{ VERCEL_ENV: 'production' }, {}])(
+    'leaves the TypeScript profile alone when nothing is set (%j)',
+    async (env) => {
+      const run = await runProfile(['materialize', '--out', out], env);
 
-    expect(run.code).toBe(1);
-    expect(run.stderr.trim()).toBe(PRODUCTION_NEEDS_A_PROFILE);
-    await expect(stat(out)).rejects.toThrow();
-  });
+      expect(run.code).toBe(0);
+      expect(run.stdout).toContain('the site is built from the TypeScript profile in src/profile');
+      await expect(stat(out)).rejects.toThrow();
+    },
+  );
 
   it('builds the example in production only when asked to', async () => {
     const run = await runProfile(['materialize', '--out', out], {
@@ -126,8 +131,8 @@ describe('the profile a build is made from', { timeout: CLI_TEST_TIMEOUT_MS }, (
     expect(await readJson(generated('manifest.json'))).toMatchObject({ source: 'example' });
   });
 
-  it('builds the example when no deployment is named', async () => {
-    const run = await runProfile(['materialize', '--out', out]);
+  it('builds the example when asked to, with nothing else set', async () => {
+    const run = await runProfile(['materialize', '--out', out, '--example']);
 
     expect(run.code).toBe(0);
     expect(await readJson(generated('manifest.json'))).toMatchObject({ source: 'example' });
@@ -152,7 +157,7 @@ describe('the profile a build is made from', { timeout: CLI_TEST_TIMEOUT_MS }, (
 
 describe('a materialization that fails', { timeout: CLI_TEST_TIMEOUT_MS }, () => {
   it('leaves the previous files exactly as they were', async () => {
-    expect((await runProfile(['materialize', '--out', out])).code).toBe(0);
+    expect((await runProfile(['materialize', '--out', out, '--example'])).code).toBe(0);
     const before = await snapshot(out);
     const dir = await exampleCopy(scratch);
     await writeDocument(
@@ -169,12 +174,34 @@ describe('a materialization that fails', { timeout: CLI_TEST_TIMEOUT_MS }, () =>
     );
     expect(await snapshot(out)).toEqual(before);
   });
+
+  it('stops the build on a template that states a figure of the record (AC-22.1)', async () => {
+    const dir = await exampleCopy(scratch);
+    for (const locale of ['en', 'pt-BR']) {
+      await editDocument(
+        dir,
+        `copy/${locale}/answers/answers.yaml`,
+        (answers: { greeting?: { parts: unknown[] } }) => {
+          const greeting = answers.greeting;
+          if (greeting) greeting.parts = [{ text: '{{profile.name}} has been here since 2012.' }];
+        },
+      );
+    }
+
+    const run = await runProfile(['materialize', '--out', out], { PROFILE_BUNDLE_DIR: dir });
+
+    expect(run.code).toBe(1);
+    expect(run.stderr).toContain(
+      'copy/en/answers/answers.yaml#greeting.parts[0].text: writes the record\'s figure "2012" literally',
+    );
+    await expect(stat(out)).rejects.toThrow();
+  });
 });
 
 describe('the public files of a profile', { timeout: CLI_TEST_TIMEOUT_MS }, () => {
   it('removes the ones the previous run wrote and the next profile lacks, and keeps the rest', async () => {
     const dir = await exampleCopy(scratch);
-    expect((await runProfile(['materialize', '--out', out])).code).toBe(0);
+    expect((await runProfile(['materialize', '--out', out, '--example'])).code).toBe(0);
     await writeFile(join(out, 'public', 'hand-placed.txt'), 'mine');
     await editDocument(dir, 'assets.yaml', (assets: { path: string }[]) => {
       const photo = assets.find(({ path }) => path === '/ada-rivera.jpg');
@@ -265,10 +292,29 @@ describe('the materialization an install makes', { timeout: CLI_TEST_TIMEOUT_MS 
 
 describe('the materialize command', { timeout: CLI_TEST_TIMEOUT_MS }, () => {
   it('needs the directory to write under, until the repository’s own files are generated', async () => {
-    const run = await runProfile(['materialize']);
+    const run = await runProfile(['materialize', '--example']);
 
     expect(run.code).toBe(1);
-    expect(run.stderr).toContain('materialize needs --out <dir>.');
+    expect(run.stderr).toContain('src/profile is still what the site is built from');
+    expect(run.stderr).toContain('--out <dir>');
+  });
+
+  /**
+   * `pnpm build` passes no --out, so while the site is built from the
+   * TypeScript profile this is what stops a deployment from being told to
+   * build from a profile the site would not read — the job
+   * PRODUCTION_NEEDS_A_PROFILE used to do, until D4b puts that rule back.
+   */
+  it('refuses a production build pointed at a bundle it would not be read from', async () => {
+    const dir = await exampleCopy(scratch);
+
+    const run = await runProfile(['materialize'], {
+      VERCEL_ENV: 'production',
+      PROFILE_BUNDLE_DIR: dir,
+    });
+
+    expect(run.code).toBe(1);
+    expect(run.stderr).toContain('unset PROFILE_BUNDLE_DIR and PROFILE_DATABASE_URL');
   });
 
   // What a reachable database holds is proven against a real Postgres, in

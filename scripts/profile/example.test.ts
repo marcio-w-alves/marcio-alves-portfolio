@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
@@ -9,8 +9,14 @@ import {
   fixtureSiteAllowList,
   profile as fixtureProfile,
 } from '../../src/testing/fixture-profile';
-import { checkBundle, EXAMPLE_DIR } from './testing/bundles';
-import { seededIndex, seededProbes } from './seeded-index';
+import {
+  checkBundle,
+  CLI_TEST_TIMEOUT_MS,
+  EXAMPLE_DIR,
+  exampleCopy,
+  runExampleBuilder,
+  scratchDir,
+} from './testing/bundles';
 
 /**
  * The shipped example is the fictional fixture the tests have always used,
@@ -20,6 +26,13 @@ import { seededIndex, seededProbes } from './seeded-index';
  */
 
 const example = await checkBundle(EXAMPLE_DIR);
+
+/** The documents the keyless builder writes, which no one edits by hand. */
+const GENERATED = [
+  'generated/notes.json',
+  'generated/knowledge-index.json',
+  'generated/retrieval-probes.json',
+];
 
 describe('the example bundle', () => {
   it('decodes to the fixture record, identity, brand, allow-list, cases and calibration', () => {
@@ -51,14 +64,31 @@ describe('the example bundle', () => {
     expect(example.data.locales).toEqual(['en', 'pt-BR']);
   });
 
-  it('commits the index and probe embeddings the seeded builder writes, byte for byte', async () => {
-    const read = (path: string) => readFile(join(EXAMPLE_DIR, path), 'utf8');
+  it(
+    'commits the notes, index and probe embeddings the keyless builder writes, byte for byte',
+    { timeout: CLI_TEST_TIMEOUT_MS },
+    async () => {
+      const scratch = await scratchDir();
+      try {
+        const dir = await exampleCopy(scratch);
+        // Overwritten first, so a builder that wrote nothing could not pass.
+        for (const path of GENERATED) {
+          await writeFile(join(dir, path), '{"written":"by this test"}\n');
+        }
 
-    expect(await read('generated/knowledge-index.json')).toBe(seededIndex(example.data.knowledge));
-    expect(await read('generated/retrieval-probes.json')).toBe(
-      seededProbes(Object.values(example.data.retrievalProbes)),
-    );
-  });
+        const run = await runExampleBuilder(dir);
+
+        expect(run.code).toBe(0);
+        for (const path of GENERATED) {
+          expect(await readFile(join(dir, path)), path).toEqual(
+            await readFile(join(EXAMPLE_DIR, path)),
+          );
+        }
+      } finally {
+        await scratch.remove();
+      }
+    },
+  );
 });
 
 /** Width and height from a JPEG's start-of-frame segment. */

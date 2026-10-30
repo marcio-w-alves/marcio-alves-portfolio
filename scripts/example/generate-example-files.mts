@@ -4,8 +4,12 @@
  * embeddings (see `scripts/profile/seeded-index.ts`). Run it after editing the
  * example's record, notes or probes; its checks fail until then.
  *
- *   pnpm exec tsx scripts/example/generate-example-files.mts
+ *   pnpm exec tsx scripts/example/generate-example-files.mts [bundle dir]
+ *
+ * The directory is the example's own unless one is named, which is how a test
+ * drives this builder over a copy instead of the committed bundle.
  */
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseNotes } from '../../src/core/knowledge/notes';
 import type { KnowledgeSource } from '../../src/core/knowledge/schema';
@@ -15,13 +19,14 @@ import { seededIndex, seededProbes } from '../profile/seeded-index';
 import { bundleDirectory } from '../profile/workspace/bundle-directory';
 import type { Document } from '../profile/workspace/workspace';
 
-const EXAMPLE = fileURLToPath(new URL('../../profiles/example/', import.meta.url));
+const DEFAULT_DIR = fileURLToPath(new URL('../../profiles/example/', import.meta.url));
+const bundle = process.argv[2] === undefined ? DEFAULT_DIR : resolve(process.argv[2]);
 const json = (text: string): Document => ({
   mediaType: 'application/json',
   bytes: new TextEncoder().encode(text),
 });
 
-const workspace = bundleDirectory(EXAMPLE);
+const workspace = bundleDirectory(bundle);
 
 const before = await workspace.read();
 const notes = parseNotes(decodeBundle(before.profile.documents).knowledgeBase);
@@ -47,4 +52,4 @@ await workspace.write(
   },
   afterNotes,
 );
-console.log(`Wrote the example's notes, seeded index and probes → ${EXAMPLE}generated/`);
+console.log(`Wrote the notes, seeded index and probes of ${bundle}`);
