@@ -43,6 +43,7 @@ interface Dependencies {
 export function createExternalTools({ kit, references, github }: Dependencies): Tool[] {
   const { knowledge, citation, roleById } = kit;
   const { firstName } = knowledge.profile;
+  const homeCity = knowledge.profile.location.city;
   const technologyReferences = knowledge.references.technologies;
   const evidenceReport = createEvidenceReporter(kit);
 
@@ -99,7 +100,7 @@ export function createExternalTools({ kit, references, github }: Dependencies): 
 
   const getCityBrief = defineTool({
     name: 'getCityBrief',
-    description: `The city ${firstName} is based in, from a public encyclopedia — or a statement that it is not documented.`,
+    description: `The city ${firstName} is based in${homeCity ? ` (${homeCity})` : ''}, from a public encyclopedia — or a statement that it is not documented. Use it for a question about that city, including one that only names it — never for any other city.`,
     input: {},
     execute: async () => {
       const { city, country } = knowledge.profile.location;

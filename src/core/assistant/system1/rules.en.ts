@@ -70,7 +70,15 @@ function definition({ first }: Subject): RegExp {
 
 function companyProfile(anyCompany: string): RegExp {
   return new RegExp(
-    `\\b(what (kind|type|sort) of (company|business|startup)|what does (the company|${anyCompany}) do)\\b`,
+    `\\b(what (kind|type|sort) of (company|business|startup)|what does (the company|${anyCompany}) do|how(?:'s| is) (the company|${anyCompany}))\\b`,
+  );
+}
+
+// "Which city is he based in?" asks where he lives; these ask about the place.
+function cityProfile(city: string | null): RegExp {
+  const place = city ? `the city|${city}` : 'the city';
+  return new RegExp(
+    `\\b(how(?:'s| is) (${place})|what(?:'s| is) (${place})\\b.*\\blike|(tell me|more|know) about (${place}))\\b`,
   );
 }
 
@@ -303,5 +311,6 @@ export const englishRules: LanguageRules = {
   whyDecision,
   definition,
   companyProfile,
+  cityProfile,
   intents: intentRules,
 };
