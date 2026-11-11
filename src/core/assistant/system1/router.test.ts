@@ -38,6 +38,23 @@ describe('router — the companies of the record', () => {
   it.each(roles)('escalates a question about what %s does as a business', (company) => {
     expect(intentOf(`What does ${company} do?`)).toBe('escalate');
   });
+
+  it.each(roles)('escalates a question about how %s itself is doing', (company) => {
+    expect(intentOf(`How is ${company} doing today?`)).toBe('escalate');
+    expect(intentOf(`What is ${company} like?`)).toBe('escalate');
+  });
+});
+
+describe('router — the city of the record', () => {
+  it.each([
+    ['What is the city he lives in like?'],
+    ['What is Porto like?'],
+    ['How is Porto?'],
+    ['Tell me about Porto.'],
+    ['Tell me more about the city he lives in.'],
+  ])('escalates %j, which asks about the city rather than where he lives', (question) => {
+    expect(intentOf(question)).toBe('escalate');
+  });
 });
 
 describe('router — guards', () => {
@@ -404,8 +421,18 @@ describe('router — Portuguese', () => {
     ['Escreva um poema sobre o mar.'],
     ['Qual era a nota dela na faculdade?'],
     ['¿Dónde trabaja?'],
+    ['Como está a Acme hoje?'],
+    ['Como é a Globex?'],
+    ['Como é a cidade que ela mora?'],
+    ['Como é o Porto?'],
+    ['Me fale sobre a cidade onde ela mora.'],
   ])('escalates %j', (question) => {
     expect(intentInPortuguese(question)).toBe('escalate');
+  });
+
+  it('still answers where she lives and what she did at a company from the record', () => {
+    expect(intentInPortuguese('Em que cidade ela mora?')).toBe('location');
+    expect(intentInPortuguese('Como foi o trabalho dela na Acme?')).toBe('company:acme');
   });
 
   it('continues the conversation from a generic follow-up', () => {

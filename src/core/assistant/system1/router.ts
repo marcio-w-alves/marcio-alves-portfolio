@@ -199,12 +199,18 @@ function companyMatchers(
   });
 }
 
+// The record may qualify the city ("Porto, Portugal"); visitors name the city alone.
+function cityName(city: string | null, prepare: LanguageRules['prepare']): string | null {
+  return city && escaped(prepare(city.replace(/,.*$/, '').toLowerCase()));
+}
+
 interface Patterns {
   readonly language: LanguageRules;
   readonly guards: Readonly<Record<Guard, RegExp>>;
   readonly whyDecision: RegExp;
   readonly definition: RegExp;
   readonly companyProfile: RegExp;
+  readonly cityProfile: RegExp;
   readonly rules: IntentRules;
 }
 
@@ -223,6 +229,7 @@ export function createRouter(knowledge: Knowledge, vocabulary: Vocabulary, local
     whyDecision: language.whyDecision(subject),
     definition: language.definition(subject),
     companyProfile: language.companyProfile(companies.map(({ names }) => names).join('|')),
+    cityProfile: language.cityProfile(cityName(knowledge.profile.location.city, language.prepare)),
     rules: withVocabulary(language.intents(subject), vocabulary),
   };
   const projectNames = knowledge.projects.map((project) => ({
@@ -248,7 +255,7 @@ interface RecordMatchers {
 function routeWith(
   text: string,
   context: ConversationContext,
-  { language, guards, whyDecision, definition, companyProfile, rules }: Patterns,
+  { language, guards, whyDecision, definition, companyProfile, cityProfile, rules }: Patterns,
   { mentionedCompanies, matchProject }: RecordMatchers,
 ): Route {
   if (!text || language.foreign.test(text)) return { intent: 'escalate', nearest: null };
@@ -269,7 +276,7 @@ function routeWith(
 
   const project = matchProject(text);
   if (project) return { intent: 'project', project };
-  if (definition.test(text) || companyProfile.test(text))
+  if (definition.test(text) || companyProfile.test(text) || cityProfile.test(text))
     return { intent: 'escalate', nearest: best.intent };
 
   const technologies = matchTechnologies(text);

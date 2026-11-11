@@ -92,5 +92,7 @@ export interface LanguageRules {
   readonly definition: (subject: Subject) => RegExp;
   /** "What does <company> do?", given every name the record gives its companies. */
   readonly companyProfile: (anyCompany: string) => RegExp;
+  /** "What is <city> like?", about the city itself; `city` is absent when the record names none. */
+  readonly cityProfile: (city: string | null) => RegExp;
   readonly intents: (subject: Subject) => IntentRules;
 }

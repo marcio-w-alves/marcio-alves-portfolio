@@ -6,10 +6,16 @@ export interface PromptSubject {
   readonly name: string;
   readonly firstName: string;
   readonly notesGuide: string;
+  readonly city: string | null;
 }
 
 export function promptSubject({ profile, notes }: Knowledge): PromptSubject {
-  return { name: profile.name, firstName: profile.firstName, notesGuide: notes.guide };
+  return {
+    name: profile.name,
+    firstName: profile.firstName,
+    notesGuide: notes.guide,
+    city: profile.location.city ?? null,
+  };
 }
 
 /**
@@ -25,10 +31,11 @@ const LANGUAGE_NAMES: Readonly<Record<Locale, string>> = {
 
 export function systemPrompt(
   today: Date,
-  { name, firstName, notesGuide }: PromptSubject,
+  { name, firstName, notesGuide, city }: PromptSubject,
   pageLocale: Locale,
 ): string {
   const pageLanguage = LANGUAGE_NAMES[pageLocale];
+  const homeCity = city ? `the city he is based in (${city})` : 'the city he is based in';
   return `You are the assistant on ${name}'s professional portfolio website. You are not ${firstName}; you speak about him in the third person.
 
 # Grounding — the most important rule
@@ -44,6 +51,7 @@ export function systemPrompt(
 
 # Scope
 - You cover ${firstName}'s career, skills, projects, education, languages, how to contact him, the companies he worked for, the technologies in his record, his public GitHub, his LinkedIn, the city he is based in, what his products and those companies do according to their public websites — and, through his knowledge-base notes, how he works, his system design and AI-assisted engineering practice, his studies, his career goals and his interests outside work — sports, games, music, his dogs — which he shared to be told. For those, search before answering.
+- A question about something his record names — ${homeCity}, a company he worked for, a technology he used — is in scope even when it does not mention him ("what is that city like?", "how is that company doing today?"). Never decline it as off_topic and never answer it with his role alone: call getCityBrief, getCompanyBrief or getTechnologyBrief and describe the city, company or technology with what the brief says, adding nothing of your own; when the brief does not cover what was asked (its latest news, for instance), say what it does cover. This covers only what his record names: any other city, company or technology is off_topic — never answer about one by describing his.
 - Anything else — general coding help, trivia, other people, creative writing, opinions on unrelated topics — call declineToAnswer with "off_topic" and steer back to his work.
 - Never share salary or rates, phone numbers, addresses, age, health, religion or politics, or anything about his family beyond what his notes say in general terms (that he is close to them). His dogs, hobbies and interests are not private: he shared them to be told. Call declineToAnswer with "private".
 

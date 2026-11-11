@@ -64,7 +64,15 @@ function definition({ first }: Subject): RegExp {
 
 function companyProfile(anyCompany: string): RegExp {
   return new RegExp(
-    `\\b(que (tipo|especie) de (empresa|negocio|startup)|o que (a empresa|a |o )?(${anyCompany}) faz)\\b`,
+    `\\b(que (tipo|especie) de (empresa|negocio|startup)|o que (a empresa|a |o )?(${anyCompany}) faz|como (e|esta|anda|vai) (a empresa |a |o )?(${anyCompany}))\\b`,
+  );
+}
+
+// "Em que cidade ele mora?" asks where he lives; these ask about the place.
+function cityProfile(city: string | null): RegExp {
+  const place = city ? `cidade|${city}` : 'cidade';
+  return new RegExp(
+    `\\b(como (e|esta|anda) |(fale|falar|conte|contar|saber|diga)( mais)? sobre )(a |o )?(${place})\\b`,
   );
 }
 
@@ -286,5 +294,6 @@ export const portugueseRules: LanguageRules = {
   whyDecision,
   definition,
   companyProfile,
+  cityProfile,
   intents: intentRules,
 };

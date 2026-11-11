@@ -152,6 +152,15 @@ describe('getCompanyBrief', () => {
 });
 
 describe('getCityBrief', () => {
+  it('names the city in its description, so a question that only names the city finds it', () => {
+    const tool = createExternalTools({
+      kit,
+      references: referencesFrom({}).port,
+      github: UNREACHABLE_GITHUB,
+    }).find((t) => t.name === 'getCityBrief');
+    expect(tool?.description).toContain('(Porto)');
+  });
+
   it('describes the city he says he lives in from its encyclopedia article', async () => {
     const { port, asked } = referencesFrom({
       Porto: article('Porto', 'Porto is a city in northern Portugal.'),

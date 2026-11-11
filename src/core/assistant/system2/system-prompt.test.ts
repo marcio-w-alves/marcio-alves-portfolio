@@ -39,6 +39,18 @@ describe('the system prompt', () => {
     },
   );
 
+  it('counts a question about his city, a company or a technology of his record as in scope, even when it does not mention him', () => {
+    expect(prompt).toContain(
+      'A question about something his record names — the city he is based in (Porto), a company he worked for, a technology he used — is in scope even when it does not mention him',
+    );
+  });
+
+  it('keeps a city, company or technology his record does not name out of scope', () => {
+    expect(prompt).toContain(
+      'This covers only what his record names: any other city, company or technology is off_topic — never answer about one by describing his.',
+    );
+  });
+
   it('counts what the products and companies do, from their sites, as in scope', () => {
     expect(prompt).toContain(
       'what his products and those companies do according to their public websites',
